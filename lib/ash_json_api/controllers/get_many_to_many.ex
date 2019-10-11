@@ -13,11 +13,11 @@ defmodule AshJsonApi.Controllers.GetManyToMany do
 
     with {:ok, request} <- AshJsonApi.Request.from(conn, related_resource, :get_many_to_many),
          {:record, {:ok, record}} when not is_nil(record) <-
-           {:record, Ash.get_by_id(resource, id)},
-         {:ok, query} <- Ash.relationship_query(related_resource, relationship),
+           {:record, Ash.Data.get_by_id(resource, id)},
+         {:ok, query} <- Ash.Data.relationship_query(related_resource, relationship),
          {:ok, %Paginator{query: query} = paginator} <-
            AshJsonApi.Paginator.paginate(request, query),
-         {:run_query, {:ok, related}} <- {:run_query, Ash.get_many(query, related_resource)},
+         {:run_query, {:ok, related}} <- {:run_query, Ash.Data.get_many(query, related_resource)},
          {:ok, found, includes} <- AshJsonApi.Includes.Includer.get_includes(related, request) do
       serialized = AshJsonApi.Serializer.serialize_many(request, paginator, found, includes)
 

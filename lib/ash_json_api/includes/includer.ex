@@ -13,7 +13,7 @@ defmodule AshJsonApi.Includes.Includer do
       when is_list(records) do
     include_keyword = includes_to_keyword(includes)
 
-    with {:ok, preloaded} <- Ash.side_load(records, include_keyword, resource),
+    with {:ok, preloaded} <- Ash.Data.side_load(records, include_keyword, resource),
          {preloaded_with_linkage, includes_list} <- get_includes_list(preloaded, include_keyword) do
       {:ok, preloaded_with_linkage, includes_list}
     end

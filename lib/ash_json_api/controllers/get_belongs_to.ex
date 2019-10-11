@@ -12,8 +12,8 @@ defmodule AshJsonApi.Controllers.GetBelongsTo do
     with {:ok, request} <-
            AshJsonApi.Request.from(conn, related_resource, :get_belongs_to),
          {:record, {:ok, record}} when not is_nil(record) <-
-           {:record, Ash.get_by_id(resource, id)},
-         {:run_query, {:ok, related}} <- {:run_query, Ash.get_related(record, relationship)},
+           {:record, Ash.Data.get_by_id(resource, id)},
+         {:run_query, {:ok, related}} <- {:run_query, Ash.Data.get_related(record, relationship)},
          {:ok, found, includes} <- AshJsonApi.Includes.Includer.get_includes(related, request) do
       serialized = AshJsonApi.Serializer.serialize_one(request, found, includes)
 

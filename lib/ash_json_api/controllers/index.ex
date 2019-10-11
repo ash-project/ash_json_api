@@ -8,9 +8,9 @@ defmodule AshJsonApi.Controllers.Index do
     resource = options[:resource]
 
     with {:ok, request} <- AshJsonApi.Request.from(conn, resource, :index),
-         {:ok, query} <- Ash.resource_to_query(resource),
+         {:ok, query} <- Ash.Data.resource_to_query(resource),
          {:ok, paginator} <- AshJsonApi.Paginator.paginate(request, query),
-         {:ok, found} <- Ash.get_many(paginator.query, resource),
+         {:ok, found} <- Ash.Data.get_many(paginator.query, resource),
          {:ok, records, includes} <-
            AshJsonApi.Includes.Includer.get_includes(found, request) do
       serialized = AshJsonApi.Serializer.serialize_many(request, paginator, records, includes)

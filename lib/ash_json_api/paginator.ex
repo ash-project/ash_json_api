@@ -1,6 +1,5 @@
 defmodule AshJsonApi.Paginator do
   defstruct [:limit, :offset, :total, :query]
-  require Ecto.Query
   alias AshJsonApi.Request
 
   @type t :: %__MODULE__{
@@ -13,8 +12,8 @@ defmodule AshJsonApi.Paginator do
   @spec paginate(Request.t(), Ash.query()) :: {:ok, t()} | {:error, Ash.error()}
   def paginate(%{resource: resource} = request, query) do
     with %{limit: limit, offset: offset} = paginator <- paginator(request),
-         {:ok, query} <- Ash.offset(query, offset, resource),
-         {:ok, query} <- Ash.limit(query, limit, resource) do
+         {:ok, query} <- Ash.Data.offset(query, offset, resource),
+         {:ok, query} <- Ash.Data.limit(query, limit, resource) do
       {:ok, %{paginator | query: query}}
     end
   end
