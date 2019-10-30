@@ -9,11 +9,10 @@ defmodule AshJsonApi.Controllers.GetBelongsTo do
     relationship = options[:relationship]
     related_resource = relationship.destination
 
-    with {:ok, request} <-
-           AshJsonApi.Request.from(conn, related_resource, :get_belongs_to),
+    with {:ok, request} <- AshJsonApi.Request.from(conn, related_resource, :get_belongs_to),
          {:record, {:ok, record}} when not is_nil(record) <-
            {:record, Ash.Data.get_by_id(resource, id)},
-         {:run_query, {:ok, related}} <- {:run_query, Ash.Data.get_related(record, relationship)},
+         {:ok, related} <- Ash.Data.get_related(record, relationship),
          {:ok, found, includes} <- AshJsonApi.Includes.Includer.get_includes(related, request) do
       serialized = AshJsonApi.Serializer.serialize_one(request, found, includes)
 
@@ -24,10 +23,10 @@ defmodule AshJsonApi.Controllers.GetBelongsTo do
       {:error, error} ->
         raise "whups: #{inspect(error)}"
 
-      {:run_query, {:error, error}} ->
+      {:record, {:error, error}} ->
         raise "whups: #{inspect(error)}"
 
-      {:record, nil} ->
+      {:record, {:ok, nil}} ->
         conn
         # |> put_resp_content_type("text/plain")
         |> Plug.Conn.send_resp(404, "uh oh")

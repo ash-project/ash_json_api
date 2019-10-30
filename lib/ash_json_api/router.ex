@@ -16,11 +16,13 @@ defmodule AshJsonApi.Router do
 
       plug(:dispatch)
 
-      for resource <- Ash.resources() do
+      Ash.resources()
+      |> Enum.filter(&(AshJsonApi in &1.mix_ins()))
+      |> Enum.map(fn resource ->
         Code.ensure_compiled(resource)
 
         AshJsonApi.RouteBuilder.build_resource_routes(resource)
-      end
+      end)
 
       match(_, to: AshJsonApi.Controllers.NoRouteFound)
     end

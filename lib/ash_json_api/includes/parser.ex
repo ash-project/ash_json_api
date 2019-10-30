@@ -26,11 +26,8 @@ defmodule AshJsonApi.Includes.Parser do
 
   defp allowed_preloads(resource) do
     resource
-    |> Ash.relationships()
-    |> Enum.filter(& &1.side_load)
-    |> Enum.into(%{}, fn relationship ->
-      {to_string(relationship.name), to_nested_map(relationship.side_load)}
-    end)
+    |> AshJsonApi.includes()
+    |> to_nested_map()
   end
 
   defp to_nested_map(list) when is_list(list) do

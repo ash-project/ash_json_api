@@ -1,4 +1,33 @@
 defmodule AshJsonApi.Serializer do
+  def serialize_to_many_relationship(request, source_record, relationship, records) do
+    links =
+      %{self: at_host(request, request.url)}
+      |> add_related_link(request, source_record, relationship)
+
+    %{
+      links: links,
+      data: Enum.map(records, &serialize_relationship_data(&1, relationship))
+    }
+  end
+
+  def serialize_to_one_relationship(request, source_record, relationship, record) do
+    links =
+      %{self: at_host(request, request.url)}
+      |> add_related_link(request, source_record, relationship)
+
+    %{
+      links: links,
+      data: serialize_relationship_data(record, relationship)
+    }
+  end
+
+  def serialize_relationship_data(record, relationship) do
+    %{
+      id: record.id,
+      type: Ash.type(relationship.destination)
+    }
+  end
+
   def serialize_many(request, paginator, records, includes, meta \\ nil) do
     data = Enum.map(records, &serialize_one_record(request, &1))
     json_api = %{version: "1.0"}
@@ -161,11 +190,26 @@ defmodule AshJsonApi.Serializer do
       type: Ash.type(resource),
       attributes: serialize_attributes(record),
       relationships: serialize_relationships(request, record),
-      links: %{
-        self: at_host(request, Ash.Routes.get(resource, record.id))
-      }
+      links: %{} |> add_one_record_self_link(request, record)
     }
     |> add_meta(record)
+  end
+
+  defp add_one_record_self_link(links, request, %resource{id: id}) do
+    resource
+    |> AshJsonApi.route(%{action: :get, primary?: true})
+    |> case do
+      nil ->
+        links
+
+      %{route: route} ->
+        link =
+          request
+          |> with_path_params(%{"id" => id})
+          |> at_host(route)
+
+        Map.put(links, "self", link)
+    end
   end
 
   defp add_meta(json_record, %{__json_api_meta__: meta}) when is_map(meta),
@@ -174,46 +218,90 @@ defmodule AshJsonApi.Serializer do
   defp add_meta(json_record, _), do: json_record
 
   defp serialize_relationships(request, record) do
-    record
-    |> Ash.to_resource()
+    resource = Ash.to_resource(record)
+    fields = AshJsonApi.fields(resource)
+
+    resource
     |> Ash.relationships()
-    |> Enum.filter(& &1.expose?)
+    |> Stream.filter(&(&1.name in fields))
     |> Enum.into(%{}, fn relationship ->
-      value = %{
-        links: %{
-          # TODO: related
-          self: at_host(with_path_params(request, %{"id" => record.id}), relationship.path)
-        },
-        data: render_linkage(record, relationship),
-        meta: %{}
-      }
+      value =
+        %{
+          links: relationship_links(record, request, relationship),
+          meta: %{}
+        }
+        |> add_linkage(record, relationship)
 
       {relationship.name, value}
     end)
   end
 
-  defp render_linkage(record, %{destination: destination, cardinality: :one, name: name}) do
+  defp relationship_links(record, request, relationship) do
+    %{}
+    |> add_relationship_link(request, record, relationship)
+    |> add_related_link(request, record, relationship)
+  end
+
+  defp add_relationship_link(links, request, %resource{id: id}, relationship) do
+    resource
+    |> AshJsonApi.route(%{
+      relationship: relationship.name,
+      primary?: true,
+      action: :get_relationship
+    })
+    |> case do
+      nil ->
+        links
+
+      %{route: route} ->
+        link =
+          request
+          |> with_path_params(%{"id" => id})
+          |> at_host(route)
+
+        Map.put(links, "relationship", link)
+    end
+  end
+
+  defp add_related_link(links, request, %resource{id: id}, relationship) do
+    resource
+    |> AshJsonApi.route(%{relationship: relationship.name, primary?: true, action: :get_related})
+    |> case do
+      nil ->
+        links
+
+      %{route: route} ->
+        link =
+          request
+          |> with_path_params(%{"id" => id})
+          |> at_host(route)
+
+        Map.put(links, "related", link)
+    end
+  end
+
+  defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
     case record do
       %{__linkage__: %{^name => [id]}} ->
-        %{id: id, type: Ash.type(destination)}
+        Map.put(payload, :data, %{id: id, type: Ash.type(destination)})
 
       # There could be another case here if a bug in the system gave us a list
       # of more than one shouldn't happen though
 
       _ ->
-        nil
+        payload
     end
   end
 
-  defp render_linkage(record, %{destination: destination, cardinality: :many, name: name}) do
+  defp add_linkage(payload, record, %{destination: destination, cardinality: :many, name: name}) do
     case record do
       %{__linkage__: %{^name => linkage}} ->
         type = Ash.type(destination)
 
-        Enum.map(linkage, &%{id: &1, type: type})
+        Map.put(payload, :data, Enum.map(linkage, &%{id: &1, type: type}))
 
       _ ->
-        []
+        payload
     end
   end
 
@@ -243,9 +331,11 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp serialize_attributes(%resource{} = record) do
+    fields = AshJsonApi.fields(resource)
+
     resource
     |> Ash.attributes()
-    |> Stream.filter(& &1.expose?)
+    |> Stream.filter(&(&1.name in fields))
     |> Stream.reject(&(&1.name == :id))
     |> Enum.into(%{}, fn attribute ->
       {attribute.name, Map.get(record, attribute.name)}

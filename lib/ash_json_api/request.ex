@@ -37,7 +37,7 @@ defmodule AshJsonApi.Request do
       {:ok, request}
     else
       %Includes.Parser{disallowed: disallowed} ->
-        {:error, AshJsonApi.Error.InvalidInclude.new(invalid_includes: disallowed)}
+        {:error, {:invalid_includes, disallowed}}
     end
   end
 end
