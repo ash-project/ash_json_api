@@ -6,6 +6,8 @@ defmodule AshJsonApi do
       import AshJsonApi.JsonApi, only: [json_api: 1]
       Module.register_attribute(__MODULE__, :json_api_routes, accumulate: true)
       Module.register_attribute(__MODULE__, :json_api_fields, accumulate: true)
+      Module.register_attribute(__MODULE__, :json_api_relationships, accumulate: true)
+      Module.register_attribute(__MODULE__, :json_api_join_fields, accumulate: true)
 
       @json_api_includes []
       @mix_ins AshJsonApi
@@ -16,10 +18,18 @@ defmodule AshJsonApi do
   @doc false
   def before_compile_hook(_env) do
     quote do
-      @json_api_routes AshJsonApi.mark_primaries(@json_api_routes)
+      @sanitized_json_api_routes AshJsonApi.sanitize_routes(@relationships, @json_api_routes)
+
+      unless @ash_primary_key == :id do
+        raise "A json API resource must have a primary key called `:id`"
+      end
+
+      def json_api_join_fields() do
+        @json_api_join_fields
+      end
 
       def json_api_routes() do
-        @json_api_routes
+        @sanitized_json_api_routes
       end
 
       def json_api_fields() do
@@ -40,6 +50,14 @@ defmodule AshJsonApi do
     end)
   end
 
+  def join_fields(resource, association) do
+    join_fields(resource)[association]
+  end
+
+  def join_fields(resource) do
+    resource.json_api_join_fields()
+  end
+
   def routes(resource) do
     resource.json_api_routes()
   end
@@ -53,8 +71,9 @@ defmodule AshJsonApi do
   end
 
   @doc false
-  def mark_primaries(all_routes) do
+  def sanitize_routes(relationships, all_routes) do
     all_routes
+    |> Enum.reject(&pruned?(relationships, &1))
     |> Enum.group_by(&Map.take(&1, [:action, :relationship]))
     |> Enum.flat_map(fn {info, routes} ->
       case routes do
@@ -75,6 +94,20 @@ defmodule AshJsonApi do
           end
       end
     end)
+  end
+
+  defp pruned?(_relationships, %{prune: nil}), do: false
+
+  defp pruned?(relationships, %{
+         prune: {:require_relationship_cardinality, :many},
+         relationship: relationship_name
+       }) do
+    relationship =
+      Enum.find(relationships, fn relationship ->
+        relationship.name == relationship_name
+      end)
+
+    match?(%{cardinality: cardinality} when cardinality != :many, relationship)
   end
 
   defp format_action(%{action: action, relationship: nil}), do: "`#{action}`"

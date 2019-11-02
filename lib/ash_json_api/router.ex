@@ -4,7 +4,6 @@ defmodule AshJsonApi.Router do
       # TODO: Make it so that these can have their routes printed
       # And get that into phoenix
       use Plug.Router
-      require AshJsonApi.RouteBuilder
 
       plug(:match)
 
@@ -19,9 +18,25 @@ defmodule AshJsonApi.Router do
       Ash.resources()
       |> Enum.filter(&(AshJsonApi in &1.mix_ins()))
       |> Enum.map(fn resource ->
-        Code.ensure_compiled(resource)
+        for %{
+              route: route,
+              action: action_name,
+              controller: controller,
+              method: method,
+              relationship: relationship_name
+            } <-
+              AshJsonApi.routes(resource) do
+          opts =
+            [
+              relationship: Ash.relationship(resource, relationship_name),
+              action: Ash.action(resource, action_name),
+              resource: resource
+            ]
+            |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 
-        AshJsonApi.RouteBuilder.build_resource_routes(resource)
+          IO.inspect("#{method}: #{route}")
+          match(route, via: method, to: controller, init_opts: opts)
+        end
       end)
 
       match(_, to: AshJsonApi.Controllers.NoRouteFound)

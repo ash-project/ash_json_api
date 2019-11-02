@@ -6,8 +6,9 @@ defmodule AshJsonApi.Serializer do
 
     %{
       links: links,
-      data: Enum.map(records, &serialize_relationship_data(&1, relationship))
+      data: Enum.map(records, &serialize_relationship_data(&1, source_record, relationship))
     }
+    |> Jason.encode!()
   end
 
   def serialize_to_one_relationship(request, source_record, relationship, record) do
@@ -17,15 +18,9 @@ defmodule AshJsonApi.Serializer do
 
     %{
       links: links,
-      data: serialize_relationship_data(record, relationship)
+      data: serialize_relationship_data(record, source_record, relationship)
     }
-  end
-
-  def serialize_relationship_data(record, relationship) do
-    %{
-      id: record.id,
-      type: Ash.type(relationship.destination)
-    }
+    |> Jason.encode!()
   end
 
   def serialize_many(request, paginator, records, includes, meta \\ nil) do
@@ -59,6 +54,33 @@ defmodule AshJsonApi.Serializer do
     |> add_includes(request, includes)
     |> add_top_level_meta(meta)
     |> Jason.encode!()
+  end
+
+  defp serialize_relationship_data(record, source_record, relationship) do
+    %{
+      id: record.id,
+      type: Ash.type(relationship.destination)
+    }
+    |> add_relationship_meta(record, source_record, relationship)
+  end
+
+  defp add_relationship_meta(payload, %{__join_row__: join_row}, %source_resource{}, %{name: name}) do
+    case AshJsonApi.join_fields(source_resource, name) do
+      [_ | _] = fields ->
+        meta =
+          Enum.reduce(fields, %{}, fn field, acc ->
+            Map.put(acc, field, Map.get(join_row, field))
+          end)
+
+        Map.put(payload, :meta, meta)
+
+      _ ->
+        payload
+    end
+  end
+
+  defp add_relationship_meta(payload, _, _, _) do
+    payload
   end
 
   defp add_top_level_meta(payload, meta) when is_map(meta), do: Map.put(payload, :meta, meta)
@@ -282,7 +304,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
     case record do
-      %{__linkage__: %{^name => [id]}} ->
+      %{__linkage__: %{^name => [%{id: id}]}} ->
         Map.put(payload, :data, %{id: id, type: Ash.type(destination)})
 
       # There could be another case here if a bug in the system gave us a list
@@ -293,12 +315,23 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp add_linkage(payload, record, %{destination: destination, cardinality: :many, name: name}) do
+  defp add_linkage(
+         payload,
+         record,
+         %{destination: destination, cardinality: :many, name: name} = relationship
+       ) do
     case record do
       %{__linkage__: %{^name => linkage}} ->
         type = Ash.type(destination)
 
-        Map.put(payload, :data, Enum.map(linkage, &%{id: &1, type: type}))
+        Map.put(
+          payload,
+          :data,
+          Enum.map(
+            linkage,
+            &(%{id: &1.id, type: type} |> add_relationship_meta(&1, record, relationship))
+          )
+        )
 
       _ ->
         payload

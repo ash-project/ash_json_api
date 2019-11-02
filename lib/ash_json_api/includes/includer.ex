@@ -59,7 +59,7 @@ defmodule AshJsonApi.Includes.Includer do
     record
     |> Map.put_new(:__linkage__, %{})
     |> Map.update!(:__linkage__, fn linkage ->
-      Map.put(linkage, relationship, Enum.map(related, & &1.id))
+      Map.put(linkage, relationship, related)
     end)
   end
 
@@ -74,15 +74,21 @@ defmodule AshJsonApi.Includes.Includer do
   end
 
   defp put_path(keyword, [key]) do
-    atom_key = String.to_existing_atom(key)
+    atom_key = atomize(key)
     Keyword.put_new(keyword, atom_key, [])
   end
 
   defp put_path(keyword, [key | rest]) do
-    atom_key = String.to_existing_atom(key)
+    atom_key = atomize(key)
 
     keyword
     |> Keyword.put_new(atom_key, [])
     |> Keyword.update!(atom_key, &put_path(&1, rest))
+  end
+
+  defp atomize(atom) when is_atom(atom), do: atom
+
+  defp atomize(string) when is_bitstring(string) do
+    String.to_existing_atom(string)
   end
 end
