@@ -9,13 +9,15 @@ defmodule AshJsonApi.Request do
     :path_params,
     :query_params,
     :includes,
+    :includes_keyword,
     :attributes,
     :relationships,
     :resource_identifiers,
     :body,
     :url,
     :json_api_prefix,
-    :errors,
+    :user,
+    errors: [],
     # assigns is used by controllers to store state while piping
     # the request around
     assigns: %{}
@@ -37,7 +39,8 @@ defmodule AshJsonApi.Request do
       path_params: conn.path_params,
       query_params: conn.query_params,
       body: conn.body_params,
-      errors: [],
+      includes_keyword: includes_to_keyword(includes.allowed),
+      user: nil,
       attributes: parse_attributes(resource, conn),
       relationships: parse_relationships(resource, conn),
       resource_identifiers: parse_resource_identifiers(resource, conn),
@@ -66,9 +69,34 @@ defmodule AshJsonApi.Request do
   def add_error(request, error_or_errors) do
     error_or_errors
     |> List.wrap()
-    |> Enum.reduce(request, fn error ->
+    |> Enum.reduce(request, fn error, request ->
       %{request | errors: [error | request.errors]}
     end)
+  end
+
+  defp includes_to_keyword(includes) do
+    Enum.reduce(includes, [], fn path, acc ->
+      put_path(acc, path)
+    end)
+  end
+
+  defp put_path(keyword, [key]) do
+    atom_key = atomize(key)
+    Keyword.put_new(keyword, atom_key, [])
+  end
+
+  defp put_path(keyword, [key | rest]) do
+    atom_key = atomize(key)
+
+    keyword
+    |> Keyword.put_new(atom_key, [])
+    |> Keyword.update!(atom_key, &put_path(&1, rest))
+  end
+
+  defp atomize(atom) when is_atom(atom), do: atom
+
+  defp atomize(string) when is_bitstring(string) do
+    String.to_existing_atom(string)
   end
 
   defp parse_attributes(resource, %{body_params: %{"data" => %{"attributes" => attributes}}})

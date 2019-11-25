@@ -12,37 +12,46 @@ defmodule AshJsonApi.Controllers.Helpers do
   alias AshJsonApi.{Error, Request}
 
   def render_or_render_errors(request, conn, function) do
-    chain(request, function, fn request ->
-      Response.render_errors(conn, request)
-    end)
+    chain(request, function,
+      fallback: fn request ->
+        Response.render_errors(conn, request)
+      end
+    )
   end
 
   def fetch_includes(request) do
     chain(request, fn request ->
-      case AshJsonApi.Includes.Includer.get_includes(request.assigns.result, request) do
-        {:ok, new_result, includes} ->
-          request
-          |> Request.assign(:result, new_result)
-          |> Request.assign(:includes, includes)
+      {new_result, includes} =
+        AshJsonApi.Includes.Includer.get_includes(request.assigns.result, request)
 
-        {:error, error} ->
-          error =
-            Error.FrameworkError.new(
-              internal_description: "Failed to include | #{inspect(error)}"
-            )
-
-          Request.add_error(request, error)
-      end
+      request
+      |> Request.assign(:result, new_result)
+      |> Request.assign(:includes, includes)
     end)
   end
 
   def fetch_records(request) do
     chain(request, fn request ->
-      params = Map.get(request.assigns, :params) || %{}
+      params =
+        request.assigns
+        |> Map.get(:params)
+        |> Kernel.||(%{})
+        |> Map.put(:user, request.user)
 
-      case Ash.read(request.resource, params, request.action) do
+      params_with_include =
+        if request.includes_keyword do
+          Map.put(params, :include, request.includes_keyword)
+        else
+          params
+        end
+
+      case Ash.read(request.resource, params_with_include, request.action) do
         {:ok, paginator} ->
           Request.assign(request, :result, paginator)
+
+        {:error, :unauthorized} ->
+          error = Error.Forbidden.new([])
+          Request.add_error(request, error)
 
         {:error, db_error} ->
           error =
@@ -62,7 +71,20 @@ defmodule AshJsonApi.Controllers.Helpers do
     |> chain(fn %{resource: resource, action: action} = request ->
       id = request.assigns.id
 
-      case Ash.get(resource, id, %{}, action) do
+      params =
+        request.assigns
+        |> Map.get(:params)
+        |> Kernel.||(%{})
+        |> Map.put(:user, request.user)
+
+      params_with_include =
+        if request.includes_keyword do
+          Map.put(params, :include, request.includes_keyword)
+        else
+          params
+        end
+
+      case Ash.get(resource, id, params_with_include, action) do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error)
@@ -71,6 +93,10 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.assign(request, :result, record)
 
         {:error, %AshJsonApi.Error{} = error} ->
+          Request.add_error(request, error)
+
+        {:error, :unauthorized} ->
+          error = Error.Forbidden.new([])
           Request.add_error(request, error)
 
         {:error, db_error} ->

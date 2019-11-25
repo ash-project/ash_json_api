@@ -2,42 +2,28 @@ defmodule AshJsonApi.Includes.Includer do
   alias AshJsonApi.Request
 
   @spec get_includes(record_or_records :: struct | list(struct) | nil, Request.t()) ::
-          {:ok, struct | list(struct), list(struct)} | {:error, Ash.error()}
+          {struct | list(struct), list(struct)}
   def get_includes(nil, _) do
-    {:ok, nil, []}
+    {nil, []}
   end
 
   def get_includes(record_or_records, %Request{includes: includes}) when includes == %{},
-    do: {:ok, record_or_records, []}
+    do: {record_or_records, []}
 
-  def get_includes(records, %Request{includes: includes, resource: resource})
+  def get_includes(records, %Request{includes_keyword: includes_keyword})
       when is_list(records) do
-    include_keyword = includes_to_keyword(includes)
-
-    with {:ok, preloaded} <- Ash.Data.side_load(records, include_keyword, resource),
-         {preloaded_with_linkage, includes_list} <- get_includes_list(preloaded, include_keyword) do
-      {:ok, preloaded_with_linkage, includes_list}
-    end
+    get_includes_list(records, includes_keyword)
   end
 
   def get_includes(%Ash.DataLayer.Paginator{results: results} = paginator, request) do
-    case get_includes(results, request) do
-      {:ok, records, includes} ->
-        {:ok, %{paginator | results: records}, includes}
-
-      other ->
-        other
-    end
+    {records, includes} = get_includes(results, request)
+    {%{paginator | results: records}, includes}
   end
 
   def get_includes(record, request) do
-    case get_includes([record], request) do
-      {:ok, [record], includes} ->
-        {:ok, record, includes}
+    {[record], includes} = get_includes([record], request)
 
-      other ->
-        other
-    end
+    {record, includes}
   end
 
   defp get_includes_list(related, []), do: {related, []}
@@ -76,30 +62,5 @@ defmodule AshJsonApi.Includes.Includer do
 
   defp flatten_includes_list({related, includes_list}) do
     {related, List.flatten(includes_list)}
-  end
-
-  defp includes_to_keyword(includes) do
-    Enum.reduce(includes, [], fn path, acc ->
-      put_path(acc, path)
-    end)
-  end
-
-  defp put_path(keyword, [key]) do
-    atom_key = atomize(key)
-    Keyword.put_new(keyword, atom_key, [])
-  end
-
-  defp put_path(keyword, [key | rest]) do
-    atom_key = atomize(key)
-
-    keyword
-    |> Keyword.put_new(atom_key, [])
-    |> Keyword.update!(atom_key, &put_path(&1, rest))
-  end
-
-  defp atomize(atom) when is_atom(atom), do: atom
-
-  defp atomize(string) when is_bitstring(string) do
-    String.to_existing_atom(string)
   end
 end
