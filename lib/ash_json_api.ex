@@ -72,7 +72,7 @@ defmodule AshJsonApi do
 
   @doc false
   # TODO: Remember why you wrote this and make sure it does what you thought it did then
-  def sanitize_routes(relationships, all_routes) do
+  def sanitize_routes(_relationships, all_routes) do
     all_routes
     |> Enum.group_by(fn route ->
       {route.method, route.route}

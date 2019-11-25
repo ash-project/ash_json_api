@@ -8,7 +8,6 @@ defmodule AshJsonApi.JsonApi.Route do
     :fields,
     :controller,
     :relationship,
-    :paginate?,
     :primary?
   ]
 
@@ -21,7 +20,6 @@ defmodule AshJsonApi.JsonApi.Route do
       action_type: opts[:action_type],
       primary?: opts[:primary?],
       method: opts[:method],
-      paginate?: opts[:paginate?],
       controller: opts[:controller],
       relationship: opts[:relationship]
     }

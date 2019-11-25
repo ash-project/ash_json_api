@@ -11,3 +11,4 @@
 * Should implement a complete validation step, that first checks for a valid request according to json api, then validates against the resource being requested
 * Logging should be routed through ash so it can be configured/customized
 * Set logger metadata when we parse the request
+* Errors should have about pages

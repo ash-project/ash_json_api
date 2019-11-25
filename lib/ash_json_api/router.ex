@@ -24,16 +24,14 @@ defmodule AshJsonApi.Router do
               controller: controller,
               method: method,
               action_type: action_type,
-              relationship: relationship_name,
-              paginate?: paginate?
+              relationship: relationship_name
             } = route_struct <-
               AshJsonApi.Router.routes(resource) do
           opts =
             [
               relationship: Ash.relationship(resource, relationship_name),
               action: Ash.action(resource, action_name, action_type),
-              resource: resource,
-              paginate?: paginate?
+              resource: resource
             ]
             |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 

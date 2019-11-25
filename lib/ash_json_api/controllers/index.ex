@@ -10,16 +10,15 @@ defmodule AshJsonApi.Controllers.Index do
   def call(conn, options) do
     resource = options[:resource]
     action = options[:action]
-    paginate? = options[:paginate?]
 
     request = AshJsonApi.Request.from(conn, resource, action)
 
     with %{errors: []} <- request,
-         {:params, {:ok, params}} <- {:params, params(conn.query_params, paginate?)},
+         {:params, {:ok, params}} <- {:params, params(conn.query_params)},
          {:read, {:ok, paginator}} <- {:read, Ash.read(resource, params, action)},
          {:include, {:ok, records, includes}} <-
            {:include, AshJsonApi.Includes.Includer.get_includes(paginator.results, request)} do
-      Response.render_many(conn, request, paginator, records, includes, paginate?)
+      Response.render_many(conn, request, paginator, records, includes, action.paginate?)
     else
       {:include, {:error, _error}} ->
         error = Error.FrameworkError.new(internal_description: "Failed to include")
@@ -42,10 +41,10 @@ defmodule AshJsonApi.Controllers.Index do
     end
   end
 
-  defp params(query_params, paginate?) do
+  defp params(query_params) do
     with {:ok, params} <- add_limit(%{}, query_params),
          {:ok, params} <- add_offset(params, params) do
-      {:ok, Map.put(params, :paginate?, paginate?)}
+      {:ok, params}
     else
       {:error, error} ->
         {:error, error}
