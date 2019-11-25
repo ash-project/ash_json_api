@@ -23,23 +23,36 @@ defmodule AshJsonApi.Router do
               action: action_name,
               controller: controller,
               method: method,
-              relationship: relationship_name
-            } <-
-              AshJsonApi.routes(resource) do
+              action_type: action_type,
+              relationship: relationship_name,
+              paginate?: paginate?
+            } = route_struct <-
+              AshJsonApi.Router.routes(resource) do
           opts =
             [
               relationship: Ash.relationship(resource, relationship_name),
-              action: Ash.action(resource, action_name),
-              resource: resource
+              action: Ash.action(resource, action_name, action_type),
+              resource: resource,
+              paginate?: paginate?
             ]
             |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 
-          IO.inspect("#{method}: #{route}")
           match(route, via: method, to: controller, init_opts: opts)
         end
       end)
 
       match(_, to: AshJsonApi.Controllers.NoRouteFound)
     end
+  end
+
+  # TODO: This is pretty naive
+  def routes(resource) do
+    resource
+    |> AshJsonApi.routes()
+    |> Enum.sort_by(fn route ->
+      route.route
+      |> String.graphemes()
+      |> Enum.count(&(&1 == ":"))
+    end)
   end
 end

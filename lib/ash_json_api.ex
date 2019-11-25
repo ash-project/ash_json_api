@@ -71,29 +71,44 @@ defmodule AshJsonApi do
   end
 
   @doc false
+  # TODO: Remember why you wrote this and make sure it does what you thought it did then
   def sanitize_routes(relationships, all_routes) do
     all_routes
-    |> Enum.reject(&pruned?(relationships, &1))
-    |> Enum.group_by(&Map.take(&1, [:action, :relationship]))
-    |> Enum.flat_map(fn {info, routes} ->
-      case routes do
+    |> Enum.group_by(fn route ->
+      {route.method, route.route}
+    end)
+    |> Enum.flat_map(fn {{method, route}, group} ->
+      case group do
         [route] ->
-          [%{route | primary?: true}]
+          [route]
 
-        routes ->
-          case Enum.count(routes, & &1.primary?) do
-            0 ->
-              # TODO: Format these prettier
-              raise "Must declare a primary route for #{format_action(info)}, as there are more than one."
-
-            1 ->
-              routes
-
-            _ ->
-              raise "Duplicate primary routes declared for #{format_action(info)}, but there can only be one primary route."
-          end
+        _ ->
+          raise "Duplicate routes defined for #{method}: #{route}"
       end
     end)
+
+    # |> Enum.reject(&pruned?(relationships, &1))
+    # |> Enum.reject(&is_nil(&1.relationship))
+    # |> Enum.group_by(&Map.take(&1, [:action, :relationship]))
+    # |> Enum.flat_map(fn {info, routes} ->
+    #   case routes do
+    #     [route] ->
+    #       [%{route | primary?: true}]
+
+    #     routes ->
+    #       case Enum.count(routes, & &1.primary?) do
+    #         0 ->
+    #           # TODO: Format these prettier
+    #           raise "Must declare a primary route for #{format_action(info)}, as there are more than one."
+
+    #         1 ->
+    #           routes
+
+    #         _ ->
+    #           raise "Duplicate primary routes declared for #{format_action(info)}, but there can only be one primary route."
+    #       end
+    #   end
+    # end)
   end
 
   defp pruned?(_relationships, %{prune: nil}), do: false

@@ -23,10 +23,11 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
-  def serialize_many(request, paginator, records, includes, meta \\ nil) do
+  def serialize_many(request, paginator, records, includes, meta \\ nil, paginate? \\ true) do
     data = Enum.map(records, &serialize_one_record(request, &1))
     json_api = %{version: "1.0"}
-    links = many_links(request, paginator)
+
+    links = many_links(request, paginator, paginate?)
 
     %{data: data, json_api: json_api, links: links}
     |> add_includes(request, includes)
@@ -93,17 +94,23 @@ defmodule AshJsonApi.Serializer do
     Map.put(payload, :includes, includes)
   end
 
-  defp many_links(%{url: url} = request, paginator) do
+  defp many_links(%{url: url} = request, paginator, paginate?) do
     uri = URI.parse(request.url)
     query = Plug.Conn.Query.decode(uri.query || "")
 
-    %{
-      first: first_link(uri, query, paginator),
-      self: url
-    }
-    |> add_last_link(uri, query, paginator)
-    |> add_prev_link(uri, query, paginator)
-    |> add_next_link(uri, query, paginator)
+    if paginate? do
+      %{
+        first: first_link(uri, query, paginator),
+        self: url
+      }
+      |> add_last_link(uri, query, paginator)
+      |> add_prev_link(uri, query, paginator)
+      |> add_next_link(uri, query, paginator)
+    else
+      %{
+        self: url
+      }
+    end
   end
 
   defp first_link(uri, query, paginator) do
