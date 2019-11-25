@@ -1,4 +1,7 @@
 defmodule AshJsonApi.Controllers.Create do
+  alias AshJsonApi.Controllers.Response
+  alias AshJsonApi.Error
+
   def init(options) do
     # initialize options
     options
@@ -8,7 +11,9 @@ defmodule AshJsonApi.Controllers.Create do
     resource = options[:resource]
     action = options[:action]
 
-    with {:ok, request} <- AshJsonApi.Request.from(conn, resource, :create),
+    request = AshJsonApi.Request.from(conn, resource, action)
+
+    with %{errors: []} <- request,
          {:record, {:ok, record}} when not is_nil(record) <-
            {:record,
             Ash.run_create_action(
@@ -18,28 +23,30 @@ defmodule AshJsonApi.Controllers.Create do
               request.relationships,
               request.query_params
             )},
-         {:ok, record, includes} <-
-           AshJsonApi.Includes.Includer.get_includes(record, request) do
+         {:include, {:ok, record, includes}} <-
+           {:include, AshJsonApi.Includes.Includer.get_includes(record, request)} do
       serialized = AshJsonApi.Serializer.serialize_one(request, record, includes)
 
       conn
       |> Plug.Conn.put_resp_content_type("application/vnd.api+json")
       |> Plug.Conn.send_resp(200, serialized)
     else
-      {:id, :error} ->
-        raise "whups, no id"
+      %{errors: errors} ->
+        Response.render_errors(conn, request, errors)
 
-      {:error, error} ->
-        raise "whups: #{inspect(error)}"
+      {:record, {:error, db_error}} ->
+        error =
+          Error.FrameworkError.new(
+            internal_description:
+              "failed to create record for resource: #{inspect(resource)} | #{inspect(db_error)}"
+          )
 
-      {:record, {:error, error}} ->
-        raise "whups: #{inspect(error)}"
+        Response.render_errors(conn, request, error)
 
-      {:record, {:ok, nil}} ->
-        conn
-        # |> put_resp_content_type("text/plain")
-        |> Plug.Conn.send_resp(404, "uh oh")
+      {:include, {:error, _error}} ->
+        error = Error.FrameworkError.new(internal_description: "Failed to include")
+
+        Response.render_errors(conn, request, error)
     end
-    |> Plug.Conn.halt()
   end
 end

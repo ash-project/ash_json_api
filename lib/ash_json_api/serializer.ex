@@ -23,8 +23,8 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
-  def serialize_many(request, paginator, records, includes, meta \\ nil, paginate? \\ true) do
-    data = Enum.map(records, &serialize_one_record(request, &1))
+  def serialize_many(request, paginator, includes, paginate? \\ true, meta \\ nil) do
+    data = Enum.map(paginator.results, &serialize_one_record(request, &1))
     json_api = %{version: "1.0"}
 
     links = many_links(request, paginator, paginate?)

@@ -15,7 +15,10 @@ defmodule AshJsonApi.Request do
     :body,
     :url,
     :json_api_prefix,
-    :errors
+    :errors,
+    # assigns is used by controllers to store state while piping
+    # the request around
+    assigns: %{}
   ]
 
   @type t() :: %__MODULE__{}
@@ -48,12 +51,20 @@ defmodule AshJsonApi.Request do
       disallowed ->
         error = AshJsonApi.Error.InvalidIncludes.new(includes: disallowed)
 
-        add_errors(request, error)
+        add_error(request, error)
     end
   end
 
-  defp add_errors(request, errors) do
-    errors
+  def assign(request, key, value) do
+    %{request | assigns: Map.put(request.assigns, key, value)}
+  end
+
+  def update_assign(request, key, default, function) do
+    %{request | assigns: Map.update(request.assigns, key, default, function)}
+  end
+
+  def add_error(request, error_or_errors) do
+    error_or_errors
     |> List.wrap()
     |> Enum.reduce(request, fn error ->
       %{request | errors: [error | request.errors]}

@@ -1,6 +1,8 @@
 locals_without_parens = [
+  get: 1,
   get: 2,
-  get: 3,
+  index: 1,
+  index: 2,
   join_fields: 2,
   create: 1,
   update: 2,
@@ -8,8 +10,6 @@ locals_without_parens = [
   create: 2,
   delete: 1,
   delete: 2,
-  index: 2,
-  index: 3,
   fields: 1,
   include: 1,
   relationship: 1,

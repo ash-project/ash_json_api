@@ -1,11 +1,9 @@
 defmodule AshJsonApi.Controllers.Response do
   require Logger
 
-  def render_errors(conn, request, errors, opts \\ []) do
-    errors = List.wrap(errors)
-
+  def render_errors(conn, request, opts \\ []) do
     unless opts[:log?] == false do
-      Enum.each(errors, fn error ->
+      Enum.each(request.errors, fn error ->
         Logger.log(
           error.log_level,
           fn -> AshJsonApi.Error.format_log(error) end,
@@ -14,8 +12,8 @@ defmodule AshJsonApi.Controllers.Response do
       end)
     end
 
-    status = opts[:status_code] || error_status_code(errors)
-    serialized = AshJsonApi.Serializer.serialize_errors(request, List.wrap(errors))
+    status = opts[:status_code] || error_status_code(request.errors)
+    serialized = AshJsonApi.Serializer.serialize_errors(request, request.errors)
 
     send_resp(conn, status, serialized)
   end
@@ -30,7 +28,6 @@ defmodule AshJsonApi.Controllers.Response do
         conn,
         request,
         paginator,
-        records,
         includes,
         paginate? \\ true,
         top_level_meta \\ nil
@@ -39,7 +36,6 @@ defmodule AshJsonApi.Controllers.Response do
       AshJsonApi.Serializer.serialize_many(
         request,
         paginator,
-        records,
         includes,
         top_level_meta,
         paginate?

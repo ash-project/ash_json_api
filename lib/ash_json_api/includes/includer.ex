@@ -2,12 +2,13 @@ defmodule AshJsonApi.Includes.Includer do
   alias AshJsonApi.Request
 
   @spec get_includes(record_or_records :: struct | list(struct) | nil, Request.t()) ::
-          {:ok, struct | list(struct), list(struct)}
-  def get_incldues(nil, _) do
+          {:ok, struct | list(struct), list(struct)} | {:error, Ash.error()}
+  def get_includes(nil, _) do
     {:ok, nil, []}
   end
 
-  def get_includes(_record_or_records, %Request{includes: includes}) when includes == %{}, do: %{}
+  def get_includes(record_or_records, %Request{includes: includes}) when includes == %{},
+    do: {:ok, record_or_records, []}
 
   def get_includes(records, %Request{includes: includes, resource: resource})
       when is_list(records) do
@@ -16,6 +17,16 @@ defmodule AshJsonApi.Includes.Includer do
     with {:ok, preloaded} <- Ash.Data.side_load(records, include_keyword, resource),
          {preloaded_with_linkage, includes_list} <- get_includes_list(preloaded, include_keyword) do
       {:ok, preloaded_with_linkage, includes_list}
+    end
+  end
+
+  def get_includes(%Ash.DataLayer.Paginator{results: results} = paginator, request) do
+    case get_includes(results, request) do
+      {:ok, records, includes} ->
+        {:ok, %{paginator | results: records}, includes}
+
+      other ->
+        other
     end
   end
 

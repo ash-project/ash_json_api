@@ -1,0 +1,192 @@
+defmodule AshJsonApi.Controllers.Helpers do
+  @moduledoc """
+  Tools for control flow around a request, and common controller utilities.
+
+  `chain/2` lets us pipe cleanly, only doing stateful things if no errors
+  have been generated yet.
+
+  TODO: Ash will need to have its own concept of errors, and this
+  will need to convert those errors into API level errors.
+  """
+  alias AshJsonApi.Controllers.Response
+  alias AshJsonApi.{Error, Request}
+
+  def render_or_render_errors(request, conn, function) do
+    chain(request, function, fn request ->
+      Response.render_errors(conn, request)
+    end)
+  end
+
+  def fetch_includes(request) do
+    chain(request, fn request ->
+      case AshJsonApi.Includes.Includer.get_includes(request.assigns.result, request) do
+        {:ok, new_result, includes} ->
+          request
+          |> Request.assign(:result, new_result)
+          |> Request.assign(:includes, includes)
+
+        {:error, error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description: "Failed to include | #{inspect(error)}"
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  def fetch_records(request) do
+    chain(request, fn request ->
+      params = Map.get(request.assigns, :params) || %{}
+
+      case Ash.read(request.resource, params, request.action) do
+        {:ok, paginator} ->
+          Request.assign(request, :result, paginator)
+
+        {:error, db_error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "Failed to read resource #{inspect(request.resource)} | #{inspect(db_error)}"
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  def fetch_record_from_path(request) do
+    request
+    |> fetch_id_path_param()
+    |> chain(fn %{resource: resource, action: action} = request ->
+      id = request.assigns.id
+
+      case Ash.get(resource, id, %{}, action) do
+        {:ok, nil} ->
+          error = Error.NotFound.new(id: id, resource: resource)
+          Request.add_error(request, error)
+
+        {:ok, record} ->
+          Request.assign(request, :result, record)
+
+        {:error, %AshJsonApi.Error{} = error} ->
+          Request.add_error(request, error)
+
+        {:error, db_error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "failed to retrieve record by id for resource: #{inspect(resource)}, id: #{
+                  inspect(id)
+                } | #{inspect(db_error)}"
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  def fetch_id_path_param(request) do
+    chain(request, fn request ->
+      case request.path_params do
+        %{"id" => id} ->
+          Request.assign(request, :id, id)
+
+        _ ->
+          error =
+            Error.FrameworkError.new(
+              internal_description: "id path parameter not present in get route: #{request.url}"
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  # This doesn't need to use chain, because its stateless and safe to
+  # do anytime. Returning multiple errors is a nice feature of JSON API
+  def fetch_pagination_parameters(request) do
+    request
+    |> add_limit()
+    |> add_offset()
+  end
+
+  defp add_limit(request) do
+    with %{"page" => page} <- request.query_params,
+         %{"limit" => limit} <- page,
+         {:integer, {integer, ""}} <- {:integer, Integer.parse(limit)} do
+      Request.update_assign(request, :page, %{limit: integer}, &Map.put(&1, :limit, limit))
+    else
+      {:integer, {_integer, _remaining}} ->
+        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[limit]"))
+
+      _ ->
+        request
+    end
+  end
+
+  defp add_offset(request) do
+    with %{"page" => page} <- request.query_params,
+         %{"offset" => offset} <- page,
+         {:integer, {integer, ""}} <- {:integer, Integer.parse(offset)} do
+      Request.update_assign(request, :page, %{offset: integer}, &Map.put(&1, :offset, offset))
+    else
+      {:integer, {_integer, _remaining}} ->
+        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[offset]"))
+
+      _ ->
+        request
+    end
+  end
+
+  # TODO: consider if something like this is necessary
+  # If users are calling into these helpers, we might need to verify
+  # that our assumptions are correct before accessing the assigns
+  # Additionally, if users call into these helpers, we almost definitely
+  # should rename this module (and maybe should anyway)
+
+  # def require_assigns(request, required_assigns) do
+  #   chain(request, fn ->
+  #     if Enum.all?(required_assigns, &Map.has_key?(request.assigns, &1)) do
+  #       request
+  #     else
+  #       error = Error.FrameworkError.new(
+  #         internal_description: "state mismatch"
+  #       )
+  #     end
+  #   end)
+  # end
+
+  def chain(request, func, opts \\ []) do
+    case request.errors do
+      [] ->
+        func.(request)
+
+      _ ->
+        case Keyword.fetch(opts, :fallback) do
+          {:ok, fallback} ->
+            fallback.(request)
+
+          _ ->
+            request
+        end
+    end
+  end
+
+  # @spec with_request(
+  #         Plug.Conn.t(),
+  #         Ash.resource(),
+  #         Ash.action(),
+  #         (AshJsonApi.Request.t() -> Plug.Conn.t())
+  #       ) :: Plug.Conn.t()
+  # def with_request(conn, resource, action, function) do
+  #   case AshJsonApi.Request.from(conn, resource, action) do
+  #     %{errors: []} = request ->
+  #       function.(request)
+
+  #     %{errors: errors} = request ->
+  #       Response.render_errors(conn, request, errors)
+  #   end
+  # end
+end
