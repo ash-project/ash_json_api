@@ -14,39 +14,50 @@ defmodule AshJsonApi.Request do
     :resource_identifiers,
     :body,
     :url,
-    :json_api_prefix
+    :json_api_prefix,
+    :errors
   ]
 
   @type t() :: %__MODULE__{}
 
   @type error :: {:error, AshJsonApi.Error.InvalidInclude.t()}
 
-  @spec from(conn :: Plug.Conn.t(), resource :: Ash.Resource.t(), action :: atom) ::
-          {:ok, t()} | {:error, error}
+  @spec from(conn :: Plug.Conn.t(), resource :: Ash.Resource.t(), action :: atom) :: t
   def from(conn, resource, action) do
-    with %Includes.Parser{allowed: allowed, disallowed: []} <-
-           Includes.Parser.parse_and_validate_includes(resource, conn.query_params) do
-      request = %__MODULE__{
-        resource: resource,
-        action: action,
-        includes: allowed,
-        url: Plug.Conn.request_url(conn),
-        path_params: conn.path_params,
-        query_params: conn.query_params,
-        body: conn.body_params,
-        attributes: parse_attributes(resource, conn),
-        relationships: parse_relationships(resource, conn),
-        resource_identifiers: parse_resource_identifiers(resource, conn),
-        json_api_prefix: Application.get_env(:ash, :json_api_prefix) || ""
-      }
+    includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
-      Logger.info("Got request: #{inspect(request)}")
+    request = %__MODULE__{
+      resource: resource,
+      action: action,
+      includes: includes.allowed,
+      url: Plug.Conn.request_url(conn),
+      path_params: conn.path_params,
+      query_params: conn.query_params,
+      body: conn.body_params,
+      errors: [],
+      attributes: parse_attributes(resource, conn),
+      relationships: parse_relationships(resource, conn),
+      resource_identifiers: parse_resource_identifiers(resource, conn),
+      json_api_prefix: Application.get_env(:ash, :json_api_prefix) || ""
+    }
 
-      {:ok, request}
-    else
-      %Includes.Parser{disallowed: disallowed} ->
-        {:error, {:invalid_includes, disallowed}}
+    case includes.disallowed do
+      [] ->
+        request
+
+      disallowed ->
+        error = AshJsonApi.Error.InvalidIncludes.new(includes: disallowed)
+
+        add_errors(request, error)
     end
+  end
+
+  defp add_errors(request, errors) do
+    errors
+    |> List.wrap()
+    |> Enum.reduce(request, fn error ->
+      %{request | errors: [error | request.errors]}
+    end)
   end
 
   defp parse_attributes(resource, %{body_params: %{"data" => %{"attributes" => attributes}}})
@@ -87,7 +98,8 @@ defmodule AshJsonApi.Request do
 
   defp parse_relationships(_, _), do: %{}
 
-  defp parse_resource_identifiers(_resource, %{body_params: %{"data" => data}}) when is_list(data) do
+  defp parse_resource_identifiers(_resource, %{body_params: %{"data" => data}})
+       when is_list(data) do
     for %{"id" => id, "type" => _type} = identifier <- data do
       case Map.fetch(identifier, "meta") do
         {:ok, meta} -> Map.put(meta, :id, id)
@@ -96,11 +108,14 @@ defmodule AshJsonApi.Request do
     end
   end
 
-  defp parse_resource_identifiers(_resource, %{body_params: %{"data" => data}}) when is_nil(data) do
+  defp parse_resource_identifiers(_resource, %{body_params: %{"data" => data}})
+       when is_nil(data) do
     nil
   end
 
-  defp parse_resource_identifiers(_resource, %{body_params: %{"data" => %{"id" => id, "type" => _type}}}) do
+  defp parse_resource_identifiers(_resource, %{
+         body_params: %{"data" => %{"id" => id, "type" => _type}}
+       }) do
     %{id: id}
   end
 

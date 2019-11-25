@@ -1,4 +1,7 @@
 defmodule AshJsonApi.Controllers.Get do
+  alias AshJsonApi.Controllers.Response
+  alias AshJsonApi.Error
+
   def init(options) do
     # initialize options
     options
@@ -8,31 +11,51 @@ defmodule AshJsonApi.Controllers.Get do
     resource = options[:resource]
     action = options[:action]
 
-    with {:ok, request} <- AshJsonApi.Request.from(conn, resource, action),
+    request = AshJsonApi.Request.from(conn, resource, action)
+    request = %{request | path_params: %{}}
+
+    with %{errors: []} <- request,
          {:id, {:ok, id}} <- {:id, Map.fetch(request.path_params, "id")},
          {:record, {:ok, record}} when not is_nil(record) <-
            {:record, Ash.get(resource, id, %{}, action)},
-         {:ok, record, includes} <-
-           AshJsonApi.Includes.Includer.get_includes(record, request) do
-      serialized = AshJsonApi.Serializer.serialize_one(request, record, includes)
-
-      conn
-      |> Plug.Conn.put_resp_content_type("application/vnd.api+json")
-      |> Plug.Conn.send_resp(200, serialized)
+         {:include, {:ok, record, includes}} <-
+           {:include, AshJsonApi.Includes.Includer.get_includes(record, request)} do
+      Response.render_one(conn, request, 200, record, includes)
     else
+      {:include, {:error, _error}} ->
+        error = Error.FrameworkError.new(internal_description: "Failed to include")
+
+        Response.render_errors(conn, request, error)
+
       {:id, :error} ->
-        raise "whups, no id"
+        error =
+          Error.FrameworkError.new(
+            internal_description: "id path parameter not present in get route: #{request.url}"
+          )
 
-      {:error, error} ->
-        raise "whups: #{inspect(error)}"
+        Response.render_errors(conn, request, error)
 
-      {:record, {:error, error}} ->
-        raise "whups: #{inspect(error)}"
+      %{errors: errors} ->
+        Response.render_errors(conn, request, errors)
+
+      {:record, {:error, db_error}} ->
+        id = Map.get(request.path_params, "id")
+
+        error =
+          Error.FrameworkError.new(
+            internal_description:
+              "failed to retrieve record by id for resource: #{inspect(resource)}, id: #{
+                inspect(id)
+              } | #{inspect(db_error)}"
+          )
+
+        Response.render_errors(conn, request, error)
 
       {:record, {:ok, nil}} ->
-        conn
-        # |> put_resp_content_type("text/plain")
-        |> Plug.Conn.send_resp(404, "uh oh")
+        id = Map.get(request.path_params, "id")
+        error = Error.NotFound.new(id: id, resource: resource)
+
+        Response.render_errors(conn, request, error)
     end
   end
 end

@@ -57,6 +57,53 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
+  def serialize_errors(request, error_or_errors, meta \\ nil) do
+    json_api = %{version: "1.0"}
+
+    errors =
+      error_or_errors
+      |> List.wrap()
+      |> Enum.map(&serialize_one_error(&1, request))
+
+    %{errors: errors, json_api: json_api}
+    |> add_top_level_meta(meta)
+    |> Jason.encode!()
+  end
+
+  defp serialize_one_error(error, request) do
+    %{}
+    |> add_if_defined(:id, error.id)
+    |> add_if_defined(:status, error.status)
+    |> add_if_defined(:code, error.code)
+    |> add_if_defined(:title, error.title)
+    |> add_if_defined(:detail, error.detail)
+    |> add_if_defined([:source, :pointer], error.source_pointer)
+    |> add_if_defined([:source, :parameter], error.source_parameter)
+    |> add_if_defined(:meta, error.meta)
+    |> add_about_link(error.about, request)
+  end
+
+  defp add_about_link(payload, about, request) when is_bitstring(about) do
+    url = at_host(request, about)
+    Map.put(payload, :links, %{about: url})
+  end
+
+  defp add_about_link(payload, _, _request), do: payload
+
+  defp add_if_defined(params, _, :undefined) do
+    params
+  end
+
+  defp add_if_defined(params, [key1, key2], value) do
+    params
+    |> Map.put_new(key1, %{})
+    |> Map.update!(key1, &Map.put(&1, key2, value))
+  end
+
+  defp add_if_defined(params, key, value) do
+    Map.put(params, key, value)
+  end
+
   defp serialize_relationship_data(record, source_record, relationship) do
     %{
       id: record.id,

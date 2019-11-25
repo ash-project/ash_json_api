@@ -1,4 +1,7 @@
 defmodule AshJsonApi.Controllers.Index do
+  alias AshJsonApi.Controllers.Response
+  alias AshJsonApi.Error
+
   def init(options) do
     # initialize options
     options
@@ -9,34 +12,37 @@ defmodule AshJsonApi.Controllers.Index do
     action = options[:action]
     paginate? = options[:paginate?]
 
-    with {:ok, request} <- AshJsonApi.Request.from(conn, resource, action),
-         {:ok, params} <- params(conn.query_params, paginate?),
-         {:ok, paginator} <- Ash.read(resource, params, action),
-         {:ok, records, includes} <-
-           AshJsonApi.Includes.Includer.get_includes(paginator.results, request) do
-      IO.inspect(params)
+    request = AshJsonApi.Request.from(conn, resource, action)
 
-      serialized =
-        AshJsonApi.Serializer.serialize_many(
-          request,
-          paginator,
-          records,
-          includes,
-          nil,
-          paginate?
-        )
-
-      conn
-      |> Plug.Conn.put_resp_content_type("application/vnd.api+json")
-      |> Plug.Conn.send_resp(200, serialized)
-      |> Plug.Conn.halt()
+    with %{errors: []} <- request,
+         {:params, {:ok, params}} <- {:params, params(conn.query_params, paginate?)},
+         {:read, {:ok, paginator}} <- {:read, Ash.read(resource, params, action)},
+         {:include, {:ok, records, includes}} <-
+           {:include, AshJsonApi.Includes.Includer.get_includes(paginator.results, request)} do
+      Response.render_many(conn, request, paginator, records, includes, paginate?)
     else
-      {:error, error} ->
-        raise "whups #{inspect(error)}"
+      {:include, {:error, _error}} ->
+        error = Error.FrameworkError.new(internal_description: "Failed to include")
+
+        Response.render_errors(conn, request, error)
+
+      {:read, {:error, _error}} ->
+        error =
+          Error.FrameworkError.new(
+            internal_description: "Failed to read resource #{inspect(resource)}"
+          )
+
+        Response.render_errors(conn, request, error)
+
+      %{errors: errors} ->
+        Response.render_errors(conn, request, errors)
+
+      {:params, {:error, error}} ->
+        Response.render_errors(conn, request, error)
     end
   end
 
-  def params(query_params, paginate?) do
+  defp params(query_params, paginate?) do
     with {:ok, params} <- add_limit(%{}, query_params),
          {:ok, params} <- add_offset(params, params) do
       {:ok, Map.put(params, :paginate?, paginate?)}
@@ -48,7 +54,7 @@ defmodule AshJsonApi.Controllers.Index do
 
   defp add_limit(params, query_params) do
     with %{"page" => page} <- query_params,
-         %{"limit" => limit} <- IO.inspect(page),
+         %{"limit" => limit} <- page,
          {:integer, {integer, ""}} <- {:integer, Integer.parse(limit)} do
       {:ok,
        params
@@ -56,7 +62,7 @@ defmodule AshJsonApi.Controllers.Index do
        |> Map.update!(:page, &Map.put(&1, :limit, integer))}
     else
       {:integer, {_integer, _remaining}} ->
-        {:error, "invalid limit parameter"}
+        {:error, Error.InvalidPagination.new(parameter: "page[limit]")}
 
       _ ->
         {:ok, params}
@@ -73,7 +79,7 @@ defmodule AshJsonApi.Controllers.Index do
        |> Map.update!(:page, &Map.put(&1, :offset, integer))}
     else
       {:integer, {_integer, _remaining}} ->
-        {:error, "invalid offset parameter"}
+        {:error, Error.InvalidPagination.new(parameter: "page[offset]")}
 
       _ ->
         {:ok, params}
