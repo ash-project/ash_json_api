@@ -32,15 +32,14 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def fetch_records(request) do
     chain(request, fn request ->
-      params =
-        request.assigns
-        |> Map.get(:params)
-        |> Kernel.||(%{})
-        |> Map.put(:user, request.user)
-        |> Map.put(:side_load, request.includes_keyword || [])
-        |> Map.put(:action, request.action)
+      params = %{
+        user: request.user,
+        side_load: request.includes_keyword,
+        action: request.action,
+        page: Map.get(request.assigns, :page, %{})
+      }
 
-      case Ash.read(request.resource, params) do
+      case Ash.read_authorized(request.resource, params) do
         {:ok, paginator} ->
           Request.assign(request, :result, paginator)
 
@@ -63,18 +62,16 @@ defmodule AshJsonApi.Controllers.Helpers do
   def fetch_record_from_path(request) do
     request
     |> fetch_id_path_param()
-    |> chain(fn %{resource: resource, action: action} = request ->
+    |> chain(fn %{resource: resource} = request ->
       id = request.assigns.id
 
-      params =
-        request.assigns
-        |> Map.get(:params)
-        |> Kernel.||(%{})
-        |> Map.put(:user, request.user)
-        |> Map.put(:side_load, request.includes_keyword || [])
-        |> Map.put(:action, request.action)
+      params = %{
+        user: request.user,
+        side_load: request.includes_keyword,
+        action: request.action
+      }
 
-      case Ash.get(resource, id, params) do
+      case Ash.get_authorized(resource, id, params) do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error)
