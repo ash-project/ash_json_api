@@ -37,15 +37,10 @@ defmodule AshJsonApi.Controllers.Helpers do
         |> Map.get(:params)
         |> Kernel.||(%{})
         |> Map.put(:user, request.user)
+        |> Map.put(:side_load, request.includes_keyword || [])
+        |> Map.put(:action, request.action)
 
-      params_with_include =
-        if request.includes_keyword do
-          Map.put(params, :include, request.includes_keyword)
-        else
-          params
-        end
-
-      case Ash.read(request.resource, params_with_include, request.action) do
+      case Ash.read(request.resource, params) do
         {:ok, paginator} ->
           Request.assign(request, :result, paginator)
 
@@ -76,15 +71,10 @@ defmodule AshJsonApi.Controllers.Helpers do
         |> Map.get(:params)
         |> Kernel.||(%{})
         |> Map.put(:user, request.user)
+        |> Map.put(:side_load, request.includes_keyword || [])
+        |> Map.put(:action, request.action)
 
-      params_with_include =
-        if request.includes_keyword do
-          Map.put(params, :include, request.includes_keyword)
-        else
-          params
-        end
-
-      case Ash.get(resource, id, params_with_include, action) do
+      case Ash.get(resource, id, params) do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error)

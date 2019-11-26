@@ -31,21 +31,23 @@ defmodule AshJsonApi.Request do
   def from(conn, resource, action) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
-    request = %__MODULE__{
-      resource: resource,
-      action: action,
-      includes: includes.allowed,
-      url: Plug.Conn.request_url(conn),
-      path_params: conn.path_params,
-      query_params: conn.query_params,
-      body: conn.body_params,
-      includes_keyword: includes_to_keyword(includes.allowed),
-      user: nil,
-      attributes: parse_attributes(resource, conn),
-      relationships: parse_relationships(resource, conn),
-      resource_identifiers: parse_resource_identifiers(resource, conn),
-      json_api_prefix: Application.get_env(:ash, :json_api_prefix) || ""
-    }
+    request =
+      %__MODULE__{
+        resource: resource,
+        action: action,
+        includes: includes.allowed,
+        url: Plug.Conn.request_url(conn),
+        path_params: conn.path_params,
+        query_params: conn.query_params,
+        body: conn.body_params,
+        includes_keyword: includes_to_keyword(includes.allowed),
+        user: Map.get(conn.assigns, :user),
+        attributes: parse_attributes(resource, conn),
+        relationships: parse_relationships(resource, conn),
+        resource_identifiers: parse_resource_identifiers(resource, conn),
+        json_api_prefix: Application.get_env(:ash, :json_api_prefix) || ""
+      }
+      |> IO.inspect()
 
     case includes.disallowed do
       [] ->

@@ -16,8 +16,7 @@ defmodule AshJsonApi.Controllers.PatchRelationship do
            {:record, Ash.Data.get_by_id(resource, id)},
          {:updated, {:ok, updated}} <-
            {:updated,
-            Ash.Data.replace_related(record, relationship, request.resource_identifiers)}
-           |> IO.inspect(),
+            Ash.Data.replace_related(record, relationship, request.resource_identifiers)},
          {:ok, record, related} <-
            AshJsonApi.Includes.Includer.get_includes(updated, %{
              request
