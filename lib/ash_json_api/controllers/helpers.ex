@@ -36,10 +36,11 @@ defmodule AshJsonApi.Controllers.Helpers do
         user: request.user,
         side_load: request.includes_keyword,
         action: request.action,
-        page: Map.get(request.assigns, :page, %{})
+        page: Map.get(request.assigns, :page, %{}),
+        authorize?: true
       }
 
-      case Ash.read_authorized(request.resource, params) do
+      case Ash.read(request.resource, params) do
         {:ok, paginator} ->
           Request.assign(request, :result, paginator)
 
@@ -68,10 +69,11 @@ defmodule AshJsonApi.Controllers.Helpers do
       params = %{
         user: request.user,
         side_load: request.includes_keyword,
-        action: request.action
+        action: request.action,
+        authorize?: true
       }
 
-      case Ash.get_authorized(resource, id, params) do
+      case Ash.get(resource, id, params) do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error)
