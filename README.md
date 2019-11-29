@@ -12,3 +12,4 @@
 * Logging should be routed through ash so it can be configured/customized
 * Set logger metadata when we parse the request
 * Errors should have about pages
+* Create the ability to dynamically create a resource in a test

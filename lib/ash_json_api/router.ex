@@ -27,6 +27,8 @@ defmodule AshJsonApi.Router do
               relationship: relationship_name
             } = route_struct <-
               AshJsonApi.Router.routes(resource) do
+          IO.inspect(route_struct)
+
           opts =
             [
               relationship: Ash.relationship(resource, relationship_name),

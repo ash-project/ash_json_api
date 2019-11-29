@@ -22,3 +22,5 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 ash_json_api-*.tar
 
+# Ignoring Elixir Language Server
+.elixir_ls/
