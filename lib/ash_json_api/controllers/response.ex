@@ -2,18 +2,36 @@ defmodule AshJsonApi.Controllers.Response do
   require Logger
 
   def render_errors(conn, request, opts \\ []) do
+    errors =
+      request.errors
+      |> List.flatten()
+      |> Enum.map(fn error ->
+        if is_bitstring(error) do
+          AshJsonApi.Error.FrameworkError.new(internal_description: error)
+        else
+          error
+        end
+      end)
+
     unless opts[:log?] == false do
-      Enum.each(request.errors, fn error ->
-        Logger.log(
-          error.log_level,
-          fn -> AshJsonApi.Error.format_log(error) end,
-          opts[:logger_metadata] || []
-        )
+      Enum.each(errors, fn error ->
+        if is_bitstring(error) do
+          Logger.error(
+            AshJsonApi.Error.format_log(error),
+            opts[:logger_metadata] || []
+          )
+        else
+          Logger.log(
+            error.log_level,
+            fn -> AshJsonApi.Error.format_log(error) end,
+            opts[:logger_metadata] || []
+          )
+        end
       end)
     end
 
-    status = opts[:status_code] || error_status_code(request.errors)
-    serialized = AshJsonApi.Serializer.serialize_errors(request, request.errors)
+    status = opts[:status_code] || error_status_code(errors)
+    serialized = AshJsonApi.Serializer.serialize_errors(request, errors)
 
     send_resp(conn, status, serialized)
   end

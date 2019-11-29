@@ -18,6 +18,10 @@ defmodule AshJsonApi.Error do
     struct!(__MODULE__, opts)
   end
 
+  def format_log(error) when is_bitstring(error) do
+    format_log(AshJsonApi.Error.FrameworkError.new([]))
+  end
+
   def format_log(error) do
     code =
       if is_bitstring(error.code) do
