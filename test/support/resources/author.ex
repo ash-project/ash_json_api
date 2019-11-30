@@ -1,5 +1,5 @@
-defmodule AshJsonApi.Test.Resources.Post do
-  use Ash.Resource, name: "posts", type: "post"
+defmodule AshJsonApi.Test.Resources.Author do
+  use Ash.Resource, name: "authors", type: "author"
   use AshJsonApi
   use Ash.DataLayer.Ets, private?: true
 
@@ -10,7 +10,6 @@ defmodule AshJsonApi.Test.Resources.Post do
     end
 
     fields [:name]
-    # relationship_routes :author
   end
 
   actions do
@@ -21,9 +20,5 @@ defmodule AshJsonApi.Test.Resources.Post do
 
   attributes do
     attribute(:name, :string)
-  end
-
-  relationships do
-    belongs_to :author, AshJsonApi.Test.Resources.Author
   end
 end
