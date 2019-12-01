@@ -83,7 +83,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
   @tag :spec_may
   describe "The top-level links object MAY contain self and related links, as described above for relationship objects." do
-    # Do we want to implement ment this?
+    # Do we want to implement this?
   end
 
   # 404 Not Found
@@ -95,12 +95,14 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   # Other Responses
   @tag :spec_may
   describe "A server MAY respond with other HTTP status codes." do
+    # Do we want to implement this?
     # I'm not sure how to test this...
   end
 
   @tag :spec_may
   describe "A server MAY include error details with error responses." do
-    # Need to come up with error scenarios if we are going to implement this
+    # Do we want to implement this?
+    # Need to come up with error scenarios if so
   end
 
   @tag :spec_must
