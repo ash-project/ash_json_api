@@ -1,6 +1,4 @@
-# TODO: Get this file to actually run when `mix test` is run...
-# TODO: can we rename this module to 404NotFound or is that not allowed in Elixir?
-defmodule AshJsonApiTest.FetchingData.FetchingResources.FourOhFourNotFound do
+defmodule AshJsonApiTest.FetchingData.FetchingResources.NotFound do
   use ExUnit.Case
   use Plug.Test
   @router_opts AshJsonApi.Test.Router.init([])

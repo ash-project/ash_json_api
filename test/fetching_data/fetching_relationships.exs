@@ -7,7 +7,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
   @tag :spec_must
   describe "A server MUST support fetching relationship data for every relationship URL provided as a self link as part of a relationship’s links object." do
-    # TODO: Figure out how to test this
+    # I'm not sure how to test this...
   end
 
   # 200 OK
@@ -78,13 +78,12 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   end
 
   @tag :spec_must
-  test "The primary data in the response document MUST match the appropriate value for resource linkage, as described above for relationship objects." do
-
+  describe "The primary data in the response document MUST match the appropriate value for resource linkage, as described above for relationship objects." do
   end
 
   @tag :spec_may
-  test "The top-level links object MAY contain self and related links, as described above for relationship objects." do
-
+  describe "The top-level links object MAY contain self and related links, as described above for relationship objects." do
+    # Do we want to implement ment this?
   end
 
   # 404 Not Found
@@ -96,13 +95,16 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   # Other Responses
   @tag :spec_may
   describe "A server MAY respond with other HTTP status codes." do
+    # I'm not sure how to test this...
   end
 
   @tag :spec_may
   describe "A server MAY include error details with error responses." do
+    # Need to come up with error scenarios if we are going to implement this
   end
 
   @tag :spec_must
   describe "A server MUST prepare responses in accordance with HTTP semantics." do
+    # I'm not sure how to test this...
   end
 end

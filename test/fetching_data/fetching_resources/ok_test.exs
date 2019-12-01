@@ -1,6 +1,4 @@
-# TODO: Get this file to actually run when `mix test` is run...
-# TODO: can we rename this module to 200OK or is that not allowed in Elixir?
-defmodule AshJsonApiTest.FetchingData.FetchingResources.TwoHundredOk do
+defmodule AshJsonApiTest.FetchingData.FetchingResources.Ok do
   use ExUnit.Case
   use Plug.Test
   @router_opts AshJsonApi.Test.Router.init([])

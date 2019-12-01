@@ -1,4 +1,3 @@
-# TODO: Get this file to actually run when `mix test` is run...
 defmodule AshJsonApiTest.FetchingData.FetchingResources.OtherResponses do
   use ExUnit.Case
   use Plug.Test
