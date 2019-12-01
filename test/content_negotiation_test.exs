@@ -37,7 +37,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("content-type", "application/vnd.api+json;")
 
       # Invoke the plug
@@ -59,8 +60,12 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
-        |> put_req_header("content-type", "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\"")
+      conn =
+        conn
+        |> put_req_header(
+          "content-type",
+          "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\""
+        )
 
       # Invoke the plug
       conn = AshJsonApi.Test.Router.call(conn, @router_opts)
@@ -98,7 +103,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("content-type", "")
 
       # Invoke the plug
@@ -120,7 +126,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("content-type", "foo")
 
       # Invoke the plug
@@ -142,7 +149,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("content-type", "text/html")
 
       # Invoke the plug
@@ -164,7 +172,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("content-type", "application/vnd.api+json; charset=\"utf-8\"")
 
       # Invoke the plug
@@ -189,7 +198,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("accept", "application/vnd.api+json;")
 
       # Invoke the plug
@@ -213,8 +223,12 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
-        |> put_req_header("accept", "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\"")
+      conn =
+        conn
+        |> put_req_header(
+          "accept",
+          "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\""
+        )
 
       # Invoke the plug
       conn = AshJsonApi.Test.Router.call(conn, @router_opts)
@@ -252,7 +266,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("accept", "")
 
       # Invoke the plug
@@ -274,7 +289,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("accept", "foo")
 
       # Invoke the plug
@@ -296,7 +312,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("accept", "text/html")
 
       # Invoke the plug
@@ -320,7 +337,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       # Set the header
       # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-      conn = conn
+      conn =
+        conn
         |> put_req_header("accept", "application/vnd.api+json; charset=\"utf-8\"")
 
       # Invoke the plug

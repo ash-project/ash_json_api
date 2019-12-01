@@ -134,7 +134,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     test "individual resource without data" do
       # TODO: come up with a better test name to distinguish this from the test above
       # Create a test connection
-      conn = conn(:get, "/posts/#{Ash.UUID.generate}")
+      conn = conn(:get, "/posts/#{Ash.UUID.generate()}")
 
       # Invoke the plug
       conn = AshJsonApi.Test.Router.call(conn, @router_opts)

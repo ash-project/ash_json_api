@@ -1,4 +1,3 @@
-
 defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   use ExUnit.Case
   use Plug.Test
@@ -45,8 +44,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
     test "non-empty to-one relationship" do
       # Create a post with an author
-      {:ok, author} = Ash.create(AshJsonApi.Test.Resources.Author, %{attributes: %{name: "William Shakespeare"}})
-      {:ok, post} = Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}}, %{relationships: %{author: author}})
+      {:ok, author} =
+        Ash.create(AshJsonApi.Test.Resources.Author, %{attributes: %{name: "William Shakespeare"}})
+
+      {:ok, post} =
+        Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}}, %{
+          relationships: %{author: author}
+        })
 
       # Create a test connection
       conn = conn(:get, "/posts/#{post.id}/relationships/author")
@@ -61,9 +65,16 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
     test "non-empty to-many relationship" do
       # Create a post with an author
-      {:ok, comment_1} = Ash.create(AshJsonApi.Test.Resources.Comment, %{attributes: %{text: "First Comment"}})
-      {:ok, comment_2} = Ash.create(AshJsonApi.Test.Resources.Comment, %{attributes: %{text: "Second Comment"}})
-      {:ok, post} = Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}}, %{relationships: %{comments: [comment_1, comment_2]}})
+      {:ok, comment_1} =
+        Ash.create(AshJsonApi.Test.Resources.Comment, %{attributes: %{text: "First Comment"}})
+
+      {:ok, comment_2} =
+        Ash.create(AshJsonApi.Test.Resources.Comment, %{attributes: %{text: "Second Comment"}})
+
+      {:ok, post} =
+        Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}}, %{
+          relationships: %{comments: [comment_1, comment_2]}
+        })
 
       # Create a test connection
       conn = conn(:get, "/posts/#{post.id}/relationships/comments")
