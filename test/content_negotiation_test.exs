@@ -26,6 +26,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
   end
 
+  @tag :spec_must
   describe "Servers MUST respond with a 415 Unsupported Media Type status code if a request specifies the header Content-Type: application/vnd.api+json with any media type parameters." do
     test "request Content-Type header is JSON:API" do
       # Create a post
@@ -177,6 +178,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
   end
 
+  @tag :spec_must
   describe "Servers MUST respond with a 406 Not Acceptable status code if a request’s Accept header contains the JSON:API media type and all instances of that media type are modified with media type parameters." do
     test "request Accept header is JSON:API" do
       # Create a post
