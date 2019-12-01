@@ -1,4 +1,3 @@
-
 defmodule AshJsonApiTest.FetchingData.FetchingResources do
   use ExUnit.Case
   use Plug.Test
@@ -8,7 +7,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   # 200 OK
   @tag :spec_must
   describe "A server MUST respond to a successful request to fetch an individual resource or resource collection with a 200 OK response." do
-    test "individual resources" do
+    test "individual resource" do
       # Create a post
       {:ok, post} = Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "foo"}})
 
