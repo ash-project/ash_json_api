@@ -25,5 +25,6 @@ defmodule AshJsonApi.Test.Resources.Post do
 
   relationships do
     belongs_to :author, AshJsonApi.Test.Resources.Author
+    has_many :comments, AshJsonApi.Test.Resources.Comment
   end
 end
