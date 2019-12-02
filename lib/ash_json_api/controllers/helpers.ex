@@ -42,7 +42,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         sort: request.sort
       }
 
-      case Ash.read(request.resource, params) do
+      case request.api.read(request.resource, params) do
         {:ok, paginator} ->
           Request.assign(request, :result, paginator)
 
@@ -75,7 +75,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         authorize?: true
       }
 
-      case Ash.get(resource, id, params) do
+      case request.api.get(resource, id, params) do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error)

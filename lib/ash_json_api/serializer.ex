@@ -258,9 +258,7 @@ defmodule AshJsonApi.Serializer do
     }
   end
 
-  defp serialize_one_record(request, record) do
-    resource = Ash.to_resource(record)
-
+  defp serialize_one_record(request, %resource{} = record) do
     %{
       id: record.id,
       type: Ash.type(resource),
@@ -293,8 +291,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_meta(json_record, _), do: json_record
 
-  defp serialize_relationships(request, record) do
-    resource = Ash.to_resource(record)
+  defp serialize_relationships(request, %resource{} = record) do
     fields = AshJsonApi.fields(resource)
 
     resource

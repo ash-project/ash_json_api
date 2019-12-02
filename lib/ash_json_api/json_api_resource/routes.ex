@@ -1,9 +1,9 @@
-defmodule AshJsonApi.JsonApi.Routes do
+defmodule AshJsonApi.JsonApiResource.Routes do
   defmacro routes(do: body) do
     quote do
-      import AshJsonApi.JsonApi.Routes
+      import AshJsonApi.JsonApiResource.Routes
       unquote(body)
-      import AshJsonApi.JsonApi.Routes, only: []
+      import AshJsonApi.JsonApiResource.Routes, only: []
     end
   end
 
@@ -15,9 +15,9 @@ defmodule AshJsonApi.JsonApi.Routes do
         raise "Route for get action *must* contain an `:id` path parameter"
       end
 
-      @json_api_routes AshJsonApi.JsonApi.Route.new(
+      @json_api_routes AshJsonApi.JsonApiResource.Route.new(
                          route:
-                           AshJsonApi.JsonApi.Routes.prefix(
+                           AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
                              @name,
                              Keyword.get(opts, :prefix?, true)
@@ -35,9 +35,9 @@ defmodule AshJsonApi.JsonApi.Routes do
     quote bind_quoted: [action: action, opts: opts] do
       route = opts[:route] || "/"
 
-      @json_api_routes AshJsonApi.JsonApi.Route.new(
+      @json_api_routes AshJsonApi.JsonApiResource.Route.new(
                          route:
-                           AshJsonApi.JsonApi.Routes.prefix(
+                           AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
                              @name,
                              Keyword.get(opts, :prefix?, true)
@@ -56,9 +56,9 @@ defmodule AshJsonApi.JsonApi.Routes do
     quote bind_quoted: [action: action, opts: opts] do
       route = opts[:route] || "/"
 
-      @json_api_routes AshJsonApi.JsonApi.Route.new(
+      @json_api_routes AshJsonApi.JsonApiResource.Route.new(
                          route:
-                           AshJsonApi.JsonApi.Routes.prefix(
+                           AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
                              @name,
                              Keyword.get(opts, :prefix?, true)
@@ -76,9 +76,9 @@ defmodule AshJsonApi.JsonApi.Routes do
     quote bind_quoted: [action: action, opts: opts] do
       route = opts[:route] || "/:id"
 
-      @json_api_routes AshJsonApi.JsonApi.Route.new(
+      @json_api_routes AshJsonApi.JsonApiResource.Route.new(
                          route:
-                           AshJsonApi.JsonApi.Routes.prefix(
+                           AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
                              @name,
                              Keyword.get(opts, :prefix?, true)
@@ -96,9 +96,9 @@ defmodule AshJsonApi.JsonApi.Routes do
     quote bind_quoted: [action: action, opts: opts] do
       route = opts[:route] || "/:id"
 
-      @json_api_routes AshJsonApi.JsonApi.Route.new(
+      @json_api_routes AshJsonApi.JsonApiResource.Route.new(
                          route:
-                           AshJsonApi.JsonApi.Routes.prefix(
+                           AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
                              @name,
                              Keyword.get(opts, :prefix?, true)
@@ -134,9 +134,9 @@ defmodule AshJsonApi.JsonApi.Routes do
   #       raise "Route for post to relationship action *must* contain an `:id` path parameter"
   #     end
 
-  #     @json_api_routes AshJsonApi.JsonApi.Route.new(
+  #     @json_api_routes AshJsonApi.JsonApiResource.Route.new(
   #                        route:
-  #                          AshJsonApi.JsonApi.Routes.prefix(
+  #                          AshJsonApi.JsonApiResource.Routes.prefix(
   #                            route,
   #                            @name,
   #                            Keyword.get(opts, :prefix?, true)
@@ -159,9 +159,9 @@ defmodule AshJsonApi.JsonApi.Routes do
   #       raise "Route for patch to relationship action *must* contain an `:id` path parameter"
   #     end
 
-  #     @json_api_routes AshJsonApi.JsonApi.Route.new(
+  #     @json_api_routes AshJsonApi.JsonApiResource.Route.new(
   #                        route:
-  #                          AshJsonApi.JsonApi.Routes.prefix(
+  #                          AshJsonApi.JsonApiResource.Routes.prefix(
   #                            route,
   #                            @name,
   #                            Keyword.get(opts, :prefix?, true)
@@ -183,9 +183,9 @@ defmodule AshJsonApi.JsonApi.Routes do
   #       raise "Route for delete to relationship action *must* contain an `:id` path parameter"
   #     end
 
-  #     @json_api_routes AshJsonApi.JsonApi.Route.new(
+  #     @json_api_routes AshJsonApi.JsonApiResource.Route.new(
   #                        route:
-  #                          AshJsonApi.JsonApi.Routes.prefix(
+  #                          AshJsonApi.JsonApiResource.Routes.prefix(
   #                            route,
   #                            @name,
   #                            Keyword.get(opts, :prefix?, true)
@@ -208,9 +208,9 @@ defmodule AshJsonApi.JsonApi.Routes do
   #       raise "Route for get action *must* contain an `:id` path parameter"
   #     end
 
-  #     @json_api_routes AshJsonApi.JsonApi.Route.new(
+  #     @json_api_routes AshJsonApi.JsonApiResource.Route.new(
   #                        route:
-  #                          AshJsonApi.JsonApi.Routes.prefix(
+  #                          AshJsonApi.JsonApiResource.Routes.prefix(
   #                            route,
   #                            @name,
   #                            Keyword.get(opts, :prefix?, true)
@@ -232,9 +232,9 @@ defmodule AshJsonApi.JsonApi.Routes do
   #       raise "Route for get action *must* contain an `:id` path parameter"
   #     end
 
-  #     @json_api_routes AshJsonApi.JsonApi.Route.new(
+  #     @json_api_routes AshJsonApi.JsonApiResource.Route.new(
   #                        route:
-  #                          AshJsonApi.JsonApi.Routes.prefix(
+  #                          AshJsonApi.JsonApiResource.Routes.prefix(
   #                            route,
   #                            @name,
   #                            Keyword.get(opts, :prefix?, true)

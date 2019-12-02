@@ -1,4 +1,4 @@
-defmodule AshJsonApi.JsonApi.Route do
+defmodule AshJsonApi.JsonApiResource.Route do
   defstruct [
     :route,
     :prune,

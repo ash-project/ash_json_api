@@ -2,6 +2,7 @@
 
 ## TODO
 * Validate no overlapping routes
+* Make it so that `mix phx.routes` can print the routes from a `Plug.Router` so that our routes can be printed too.
 * Validate all fields exist that are in the fields list
 * Validate includes
 * Do the whole request in a transaction *all the time*

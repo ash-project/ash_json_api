@@ -10,9 +10,10 @@ defmodule AshJsonApi.Controllers.Index do
   def call(conn, options) do
     resource = options[:resource]
     action = options[:action]
+    api = options[:api]
 
     conn
-    |> Request.from(resource, action)
+    |> Request.from(resource, action, api)
     |> Helpers.fetch_pagination_parameters()
     |> Helpers.fetch_records()
     |> Helpers.fetch_includes()

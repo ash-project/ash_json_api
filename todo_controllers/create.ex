@@ -11,7 +11,7 @@ defmodule AshJsonApi.Controllers.Create do
     resource = options[:resource]
     action = options[:action]
 
-    request = AshJsonApi.Request.from(conn, resource, action)
+    request = AshJsonApi.Request.from(conn, resource, action, options[:api])
 
     with %{errors: []} <- request,
          {:record, {:ok, record}} when not is_nil(record) <-

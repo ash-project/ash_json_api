@@ -4,6 +4,7 @@ defmodule AshJsonApi.Request do
   alias AshJsonApi.Includes
 
   defstruct [
+    :api,
     :action,
     :resource,
     :path_params,
@@ -29,11 +30,13 @@ defmodule AshJsonApi.Request do
 
   @type error :: {:error, AshJsonApi.Error.InvalidInclude.t()}
 
-  @spec from(conn :: Plug.Conn.t(), resource :: Ash.Resource.t(), action :: atom) :: t
-  def from(conn, resource, action) do
+  @spec from(conn :: Plug.Conn.t(), resource :: Ash.Resource.t(), action :: atom, Keyword.t()) ::
+          t
+  def from(conn, resource, action, api, opts \\ []) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
     %__MODULE__{
+      api: api,
       resource: resource,
       action: action,
       includes: includes.allowed,
@@ -43,7 +46,7 @@ defmodule AshJsonApi.Request do
       user: Map.get(conn.assigns, :user),
       body: conn.body_params,
       # TODO: no global config
-      json_api_prefix: Application.get_env(:ash, :json_api_prefix) || ""
+      json_api_prefix: opts[:prefix] || ""
     }
     |> parse_includes()
     |> parse_filter()
