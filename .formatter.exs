@@ -19,7 +19,10 @@ locals_without_parens = [
   related: 2,
   related: 3,
   relationship_routes: 2,
-  relationship_routes: 1
+  relationship_routes: 1,
+  prefix: 1,
+  serve_schema: 1,
+  host: 1
 ]
 
 [

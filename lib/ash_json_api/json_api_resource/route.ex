@@ -8,6 +8,7 @@ defmodule AshJsonApi.JsonApiResource.Route do
     :fields,
     :controller,
     :relationship,
+    :type,
     :primary?
   ]
 
@@ -16,6 +17,7 @@ defmodule AshJsonApi.JsonApiResource.Route do
     %__MODULE__{
       route: opts[:route],
       prune: opts[:prune],
+      type: opts[:type],
       action: opts[:action],
       action_type: opts[:action_type],
       primary?: opts[:primary?],

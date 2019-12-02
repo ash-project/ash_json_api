@@ -30,6 +30,22 @@ defmodule AshJsonApi.Test do
   end
 
   def post(api, path, body, opts \\ []) do
+    schema = AshJsonApi.JsonSchema.generate(api)
+    full_path = Path.join(AshJsonApi.prefix(api) || "", path)
+
+    endpoint_schema =
+      Enum.find(schema, fn element ->
+        match?(%{"method" => "POST", "href" => ^full_path}, element)
+      end)
+
+    unless endpoint_schema do
+      raise "Invalid endpoint, no schema found for POST #{path}"
+    end
+
+    endpoint_schema
+    |> JsonXema.new()
+    |> JsonXema.validate!(body)
+
     result =
       :get
       |> conn(path, Jason.encode!(body))

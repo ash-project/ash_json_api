@@ -26,6 +26,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          controller: AshJsonApi.Controllers.Get,
                          action: action || :default,
                          action_type: :read,
+                         type: :get,
                          primary?: opts[:primary?] || false
                        )
     end
@@ -46,6 +47,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          controller: AshJsonApi.Controllers.Index,
                          action: action || :default,
                          action_type: :read,
+                         type: :index,
                          paginate?: Keyword.get(opts, :paginate?, true),
                          primary?: opts[:primary?] || false
                        )
@@ -66,6 +68,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          method: :post,
                          controller: AshJsonApi.Controllers.Create,
                          action: action || :default,
+                         type: :create,
                          action_type: :create,
                          primary?: opts[:primary?] || false
                        )
@@ -86,6 +89,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          method: :patch,
                          controller: AshJsonApi.Controllers.Update,
                          action: action || :default,
+                         tyep: :update,
                          action_type: :update,
                          primary?: opts[:primary?] || false
                        )
@@ -104,6 +108,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :delete,
+                         type: :delete,
                          controller: AshJsonApi.Controllers.Delete,
                          action: action || :default,
                          action_type: :destroy,

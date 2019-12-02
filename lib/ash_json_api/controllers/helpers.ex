@@ -157,24 +157,6 @@ defmodule AshJsonApi.Controllers.Helpers do
     end
   end
 
-  # TODO: consider if something like this is necessary
-  # If users are calling into these helpers, we might need to verify
-  # that our assumptions are correct before accessing the assigns
-  # Additionally, if users call into these helpers, we almost definitely
-  # should rename this module (and maybe should anyway)
-
-  # def require_assigns(request, required_assigns) do
-  #   chain(request, fn ->
-  #     if Enum.all?(required_assigns, &Map.has_key?(request.assigns, &1)) do
-  #       request
-  #     else
-  #       error = Error.FrameworkError.new(
-  #         internal_description: "state mismatch"
-  #       )
-  #     end
-  #   end)
-  # end
-
   def chain(request, func, opts \\ []) do
     case request.errors do
       [] ->

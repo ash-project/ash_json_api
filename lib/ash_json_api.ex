@@ -27,6 +27,18 @@ defmodule AshJsonApi do
     resource.json_api_includes()
   end
 
+  def host(api) do
+    api.host()
+  end
+
+  def prefix(api) do
+    api.prefix()
+  end
+
+  def serve_schema(api) do
+    api.serve_schema()
+  end
+
   @doc false
   # TODO: Remember why you wrote this and make sure it does what you thought it did then
   def sanitize_routes(_relationships, all_routes) do

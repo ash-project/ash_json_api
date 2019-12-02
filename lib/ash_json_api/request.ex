@@ -32,7 +32,7 @@ defmodule AshJsonApi.Request do
 
   @spec from(conn :: Plug.Conn.t(), resource :: Ash.Resource.t(), action :: atom, Keyword.t()) ::
           t
-  def from(conn, resource, action, api, opts \\ []) do
+  def from(conn, resource, action, api) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
     %__MODULE__{
@@ -46,7 +46,7 @@ defmodule AshJsonApi.Request do
       user: Map.get(conn.assigns, :user),
       body: conn.body_params,
       # TODO: no global config
-      json_api_prefix: opts[:prefix] || ""
+      json_api_prefix: AshJsonApi.prefix(api)
     }
     |> parse_includes()
     |> parse_filter()

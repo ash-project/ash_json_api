@@ -1,6 +1,11 @@
 defmodule AshJsonApi.Api.Router do
   defmacro __using__(opts) do
-    quote bind_quoted: [api: opts[:api], prefix: opts[:prefix], resources: opts[:resources]],
+    quote bind_quoted: [
+            api: opts[:api],
+            prefix: opts[:prefix],
+            resources: opts[:resources],
+            serve_schema: opts[:serve_schema]
+          ],
           location: :keep do
       defmodule Router do
         # And get that into phoenix
@@ -45,6 +50,14 @@ defmodule AshJsonApi.Api.Router do
             match(route, via: method, to: controller, init_opts: opts)
           end
         end)
+
+        if serve_schema do
+          match("/schema",
+            via: :get,
+            to: AshJsonApi.Controllers.Schema,
+            init_opts: [api: api]
+          )
+        end
 
         match(_, to: AshJsonApi.Controllers.NoRouteFound)
       end
