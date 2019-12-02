@@ -1,7 +1,6 @@
 defmodule AshJsonApiTest.FetchingData do
   use ExUnit.Case
   use Plug.Test
-  @router_opts AshJsonApi.Test.Router.init([])
   @module_tag :json_api_spec_1_0
 
   # describe "Fetching Resources" do

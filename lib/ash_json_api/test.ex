@@ -2,6 +2,8 @@ defmodule AshJsonApi.Test do
   use Plug.Test
   import ExUnit.Assertions
 
+  @schema "test/support/response_schema" |> File.read!() |> Jason.decode!() |> JsonXema.new()
+
   def get(api, path, opts \\ []) do
     result =
       :get
@@ -16,6 +18,10 @@ defmodule AshJsonApi.Test do
     end
 
     if Keyword.get(opts, :decode?, true) do
+      resp_body = Jason.decode!(result.resp_body)
+
+      JsonXema.validate!(@schema, resp_body)
+
       %{result | resp_body: Jason.decode!(result.resp_body)}
     else
       result
@@ -36,7 +42,10 @@ defmodule AshJsonApi.Test do
     end
 
     if Keyword.get(opts, :decode?, true) do
-      %{result | resp_body: Jason.decode!(result.resp_body)}
+      resp_body = Jason.decode!(result.resp_body)
+
+      JsonXema.validate!(@schema, resp_body)
+      %{result | resp_body: resp_body}
     else
       result
     end

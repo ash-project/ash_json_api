@@ -29,7 +29,7 @@ defmodule AshJsonApi.Serializer do
 
     links = many_links(request, paginator, paginate?)
 
-    %{data: data, json_api: json_api, links: links}
+    %{data: data, jsonapi: json_api, links: links}
     |> add_includes(request, includes)
     |> add_top_level_meta(meta)
     |> Jason.encode!()
@@ -41,7 +41,7 @@ defmodule AshJsonApi.Serializer do
     json_api = %{version: "1.0"}
     links = one_links(request)
 
-    %{data: nil, json_api: json_api, links: links}
+    %{data: nil, jsonapi: json_api, links: links}
     |> add_top_level_meta(meta)
     |> Jason.encode!()
   end
@@ -51,7 +51,7 @@ defmodule AshJsonApi.Serializer do
     json_api = %{version: "1.0"}
     links = one_links(request)
 
-    %{data: data, json_api: json_api, links: links}
+    %{data: data, jsonapi: json_api, links: links}
     |> add_includes(request, includes)
     |> add_top_level_meta(meta)
     |> Jason.encode!()
@@ -65,7 +65,7 @@ defmodule AshJsonApi.Serializer do
       |> List.wrap()
       |> Enum.map(&serialize_one_error(&1, request))
 
-    %{errors: errors, json_api: json_api}
+    %{errors: errors, jsonapi: json_api}
     |> add_top_level_meta(meta)
     |> Jason.encode!()
   end
@@ -172,6 +172,7 @@ defmodule AshJsonApi.Serializer do
     uri
     |> Map.put(:query, new_query)
     |> URI.to_string()
+    |> URI.encode_www_form()
   end
 
   defp many_self_link(uri, query, paginator) do
@@ -186,6 +187,7 @@ defmodule AshJsonApi.Serializer do
     uri
     |> Map.put(:query, new_query)
     |> URI.to_string()
+    |> URI.encode_www_form()
   end
 
   defp add_next_link(links, _uri, _query, %{offset: offset, limit: limit, total: total})
@@ -205,6 +207,7 @@ defmodule AshJsonApi.Serializer do
       uri
       |> Map.put(:query, new_query)
       |> URI.to_string()
+      |> URI.encode_www_form()
 
     Map.put(links, :next, link)
   end
@@ -224,6 +227,7 @@ defmodule AshJsonApi.Serializer do
       uri
       |> Map.put(:query, new_query)
       |> URI.to_string()
+      |> URI.encode_www_form()
 
     Map.put(links, :prev, link)
   end
@@ -245,13 +249,14 @@ defmodule AshJsonApi.Serializer do
       uri
       |> Map.put(:query, new_query)
       |> URI.to_string()
+      |> URI.encode_www_form()
 
     Map.put(links, "last", link)
   end
 
   defp one_links(request) do
     %{
-      self: request.url
+      self: URI.encode_www_form(request.url)
     }
   end
 
@@ -409,6 +414,7 @@ defmodule AshJsonApi.Serializer do
       |> Path.join()
     end)
     |> URI.to_string()
+    |> URI.encode_www_form()
   end
 
   defp serialize_attributes(%resource{} = record) do
