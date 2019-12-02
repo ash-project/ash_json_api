@@ -148,7 +148,7 @@ defmodule AshJsonApi.Serializer do
     if paginate? do
       %{
         first: first_link(uri, query, paginator),
-        self: url
+        self: many_self_link(uri, query, paginator)
       }
       |> add_last_link(uri, query, paginator)
       |> add_prev_link(uri, query, paginator)
@@ -166,6 +166,20 @@ defmodule AshJsonApi.Serializer do
       |> Map.put("page", %{
         limit: paginator.limit,
         offset: 0
+      })
+      |> Plug.Conn.Query.encode()
+
+    uri
+    |> Map.put(:query, new_query)
+    |> URI.to_string()
+  end
+
+  defp many_self_link(uri, query, paginator) do
+    new_query =
+      query
+      |> Map.put("page", %{
+        limit: paginator.limit,
+        offset: paginator.offset
       })
       |> Plug.Conn.Query.encode()
 
@@ -195,23 +209,6 @@ defmodule AshJsonApi.Serializer do
     Map.put(links, :next, link)
   end
 
-  defp add_next_link(links, uri, query, paginator) do
-    new_query =
-      query
-      |> Map.put("page", %{
-        limit: paginator.limit,
-        offset: 0
-      })
-      |> Plug.Conn.Query.encode()
-
-    link =
-      uri
-      |> Map.put(:query, new_query)
-      |> URI.to_string()
-
-    Map.put(links, :prev, link)
-  end
-
   defp add_prev_link(links, _uri, _query, %{offset: 0}), do: links
 
   defp add_prev_link(links, uri, query, paginator) do
@@ -219,7 +216,7 @@ defmodule AshJsonApi.Serializer do
       query
       |> Map.put("page", %{
         limit: paginator.limit,
-        offset: 0
+        offset: max(paginator.limit - paginator.offset, 0)
       })
       |> Plug.Conn.Query.encode()
 

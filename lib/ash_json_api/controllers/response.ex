@@ -55,8 +55,8 @@ defmodule AshJsonApi.Controllers.Response do
         request,
         paginator,
         includes,
-        top_level_meta,
-        paginate?
+        paginate?,
+        top_level_meta
       )
 
     send_resp(conn, 200, serialized)
