@@ -133,7 +133,7 @@ defmodule AshJsonApi.Controllers.Helpers do
     with %{"page" => page} <- request.query_params,
          %{"limit" => limit} <- page,
          {:integer, {integer, ""}} <- {:integer, Integer.parse(limit)} do
-      Request.update_assign(request, :page, %{limit: integer}, &Map.put(&1, :limit, limit))
+      Request.update_assign(request, :page, %{limit: integer}, &Map.put(&1, :limit, integer))
     else
       {:integer, {_integer, _remaining}} ->
         Request.add_error(request, Error.InvalidPagination.new(parameter: "page[limit]"))
@@ -147,7 +147,7 @@ defmodule AshJsonApi.Controllers.Helpers do
     with %{"page" => page} <- request.query_params,
          %{"offset" => offset} <- page,
          {:integer, {integer, ""}} <- {:integer, Integer.parse(offset)} do
-      Request.update_assign(request, :page, %{offset: integer}, &Map.put(&1, :offset, offset))
+      Request.update_assign(request, :page, %{offset: integer}, &Map.put(&1, :offset, integer))
     else
       {:integer, {_integer, _remaining}} ->
         Request.add_error(request, Error.InvalidPagination.new(parameter: "page[offset]"))

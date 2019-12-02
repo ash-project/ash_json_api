@@ -2,6 +2,7 @@ defmodule AshJsonApi.Test do
   use Plug.Test
   import ExUnit.Assertions
 
+  @external_resource "test/support/response_schema"
   @schema "test/support/response_schema" |> File.read!() |> Jason.decode!() |> JsonXema.new()
 
   def get(api, path, opts \\ []) do
