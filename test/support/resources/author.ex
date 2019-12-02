@@ -1,24 +1,24 @@
-defmodule AshJsonApi.Test.Resources.Author do
-  use Ash.Resource, name: "authors", type: "author"
-  use AshJsonApi
-  use Ash.DataLayer.Ets, private?: true
+# defmodule AshJsonApi.Test.Resources.Author do
+#   use Ash.Resource, name: "authors", type: "author"
+#   use AshJsonApi
+#   use Ash.DataLayer.Ets, private?: true
 
-  json_api do
-    routes do
-      get(:default)
-      index(:default)
-    end
+#   json_api do
+#     routes do
+#       get(:default)
+#       index(:default)
+#     end
 
-    fields [:name]
-  end
+#     fields [:name]
+#   end
 
-  actions do
-    defaults([:read, :create],
-      rules: [allow(:static, result: true)]
-    )
-  end
+#   actions do
+#     defaults([:read, :create],
+#       rules: [allow(:static, result: true)]
+#     )
+#   end
 
-  attributes do
-    attribute(:name, :string)
-  end
-end
+#   attributes do
+#     attribute(:name, :string)
+#   end
+# end

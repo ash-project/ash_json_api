@@ -10,6 +10,7 @@ defmodule AshJsonApi.Error.NotFound do
   def new(opts) do
     opts
     |> Keyword.put(:detail, detail(opts))
+    |> Keyword.put(:log_level, :info)
     |> Keyword.drop([:id, :resource])
     |> super()
   end
@@ -26,7 +27,7 @@ defmodule AshJsonApi.Error.NotFound do
         "No record with id: #{id}"
 
       {_, {:ok, resource}} ->
-        "No record with id: #{id}"
+        "No #{resource} record with id: #{id}"
 
       _ ->
         "No record found."

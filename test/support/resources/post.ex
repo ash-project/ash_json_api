@@ -1,30 +1,30 @@
-defmodule AshJsonApi.Test.Resources.Post do
-  use Ash.Resource, name: "posts", type: "post"
-  use AshJsonApi
-  use Ash.DataLayer.Ets, private?: true
+# defmodule AshJsonApi.Test.Resources.Post do
+#   use Ash.Resource, name: "posts", type: "post"
+#   use AshJsonApi
+#   use Ash.DataLayer.Ets, private?: true
 
-  json_api do
-    routes do
-      get(:default)
-      index(:default)
-    end
+#   json_api do
+#     routes do
+#       get(:default)
+#       index(:default)
+#     end
 
-    fields [:name]
-    # relationship_routes :author
-  end
+#     fields [:name]
+#     # relationship_routes :author
+#   end
 
-  actions do
-    defaults([:read, :create],
-      rules: [allow(:static, result: true)]
-    )
-  end
+#   actions do
+#     defaults([:read, :create],
+#       rules: [allow(:static, result: true)]
+#     )
+#   end
 
-  attributes do
-    attribute(:name, :string)
-  end
+#   attributes do
+#     attribute(:name, :string)
+#   end
 
-  relationships do
-    belongs_to(:author, AshJsonApi.Test.Resources.Author)
-    has_many(:comments, AshJsonApi.Test.Resources.Comment)
-  end
-end
+#   relationships do
+#     belongs_to(:author, AshJsonApi.Test.Resources.Author)
+#     has_many(:comments, AshJsonApi.Test.Resources.Comment)
+#   end
+# end
