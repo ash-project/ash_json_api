@@ -1,7 +1,7 @@
 defmodule AshJsonApi.ContentNegotiationTest do
   use ExUnit.Case
   use Plug.Test
-  @router_opts AshJsonApi.Test.Router.init([])
+  # @router_opts AshJsonApi.Test.Router.init([])
   @module_tag :json_api_spec_1_0
 
   @tag :spec_must
@@ -14,7 +14,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       conn = conn(:get, "/posts/#{post.id}")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -42,7 +42,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("content-type", "application/vnd.api+json;")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -68,7 +68,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         )
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -85,7 +85,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       conn = conn("get", "/posts/#{post.id}", "")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -108,7 +108,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("content-type", "")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -131,7 +131,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("content-type", "foo")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -154,7 +154,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("content-type", "text/html")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -177,7 +177,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("content-type", "application/vnd.api+json; charset=\"utf-8\"")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -203,7 +203,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("accept", "application/vnd.api+json;")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -231,7 +231,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         )
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -248,7 +248,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       conn = conn("get", "/posts/#{post.id}", "")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -271,7 +271,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("accept", "")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -294,7 +294,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("accept", "foo")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -317,7 +317,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("accept", "text/html")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent
@@ -342,7 +342,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
         |> put_req_header("accept", "application/vnd.api+json; charset=\"utf-8\"")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response has been senet
       assert conn.state == :sent

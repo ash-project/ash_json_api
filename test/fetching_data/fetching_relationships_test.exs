@@ -1,7 +1,7 @@
 defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   use ExUnit.Case
   use Plug.Test
-  @router_opts AshJsonApi.Test.Router.init([])
+  # @router_opts AshJsonApi.Test.Router.init([])
   @module_tag :json_api_spec_1_0
 
   @tag :spec_must
@@ -20,7 +20,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
       conn = conn(:get, "/posts/#{post.id}/relationships/author")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response and status
       assert conn.state == :sent
@@ -35,7 +35,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
       conn = conn(:get, "/posts/#{post.id}/relationships/comments")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response and status
       assert conn.state == :sent
@@ -56,7 +56,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
       conn = conn(:get, "/posts/#{post.id}/relationships/author")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response and status
       assert conn.state == :sent
@@ -80,7 +80,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
       conn = conn(:get, "/posts/#{post.id}/relationships/comments")
 
       # Invoke the plug
-      conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
 
       # Assert the response and status
       assert conn.state == :sent
