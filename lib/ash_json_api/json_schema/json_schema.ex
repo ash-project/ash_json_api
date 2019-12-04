@@ -32,6 +32,65 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  def route_schema(%{method: method} = route, api, resource) when method in [:delete, :get] do
+    {href, properties} = route_href(route, api)
+
+    {href_schema, query_param_string} = href_schema(route, api, resource, properties)
+
+    %{
+      "href" => href <> query_param_string,
+      "hrefSchema" => href_schema,
+      "description" => "pending",
+      "method" => route.method |> to_string() |> String.upcase(),
+      "rel" => to_string(route.type),
+      "targetSchema" => target_schema(route, api, resource),
+      "headerSchema" => header_schema()
+    }
+  end
+
+  def route_schema(route, api, resource) do
+    {href, properties} = route_href(route, api)
+
+    unless properties == [] or properties == ["id"] do
+      raise "Haven't figured out more complex route parameters yet."
+    end
+
+    {href_schema, query_param_string} = href_schema(route, api, resource, properties)
+
+    %{
+      "href" => href <> query_param_string,
+      "hrefSchema" => href_schema,
+      "description" => "pending",
+      "method" => route.method |> to_string() |> String.upcase(),
+      "rel" => to_string(route.type),
+      "schema" => route_in_schema(route, api, resource),
+      "targetSchema" => target_schema(route, api, resource),
+      "headerSchema" => header_schema()
+    }
+  end
+
+  defp header_schema() do
+    # TODO: Figure this one out.
+    %{
+      "type" => "object",
+      "properties" => %{
+        "content-type" => %{
+          "type" => "array",
+          "items" => %{
+            "const" => "application/vnd.api+json"
+          }
+        },
+        "accept" => %{
+          "type" => "array",
+          "items" => %{
+            "type" => "string"
+          }
+        }
+      },
+      "additionalProperties" => true
+    }
+  end
+
   # This is for our representation of a resource *in the response*
   def resource_object_schema(resource) do
     %{
@@ -200,7 +259,7 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp resource_relationship_link_data(resource, rel) do
+  defp resource_relationship_link_data(_resource, _rel) do
     # TODO: link to relationships when those routes are available
     nil
   end
@@ -220,8 +279,9 @@ defmodule AshJsonApi.JsonSchema do
           "description" => "Resource identifiers of the related #{Ash.type(destination)}",
           "type" => "object",
           "required" => ["type", "id"],
+          "additionalProperties" => false,
           "properties" => %{
-            "type" => %{"enum" => Ash.type(destination)},
+            "type" => %{"const" => Ash.type(destination)},
             "id" => %{"type" => "string"}
             # TODO: support meta here.
           }
@@ -261,41 +321,201 @@ defmodule AshJsonApi.JsonSchema do
     raise "unimplemented type #{type}"
   end
 
-  defp route_schema(%{method: method} = route, api, resource) when method in [:delete, :get] do
-    href = route_href(route, api)
+  defp href_schema(route, api, resource, properties) do
+    base_properties =
+      Enum.into(properties, %{}, fn prop ->
+        {prop, %{"type" => "string"}}
+      end)
 
+    {query_param_properties, query_param_string} = query_param_properties(route, api, resource)
+
+    {%{
+       "required" => properties,
+       "properties" => Map.merge(query_param_properties, base_properties)
+     }, query_param_string}
+  end
+
+  defp query_param_properties(%{type: :index}, api, resource) do
+    props = %{
+      "filter" => %{
+        "type" => "object",
+        "properties" => filter_props(resource)
+      },
+      "sort" => %{
+        "type" => "string",
+        "format" => sort_format(resource)
+      },
+      "page" => %{
+        "type" => "object",
+        "properties" => page_props(api, resource)
+      },
+      "include" => %{
+        "type" => "string",
+        "format" => include_format(resource)
+      }
+    }
+
+    {props, "{?filter,sort,page,include}"}
+  end
+
+  defp query_param_properties(_route, _api, resource) do
+    props = %{
+      "include" => %{
+        "type" => "string",
+        "format" => include_format(resource)
+      }
+    }
+
+    {props, "{?include}"}
+  end
+
+  defp sort_format(resource) do
+    sorts =
+      resource
+      |> AshJsonApi.fields()
+      |> Enum.flat_map(fn field ->
+        case Ash.attribute(resource, field) do
+          nil ->
+            []
+
+          _attr ->
+            [field, "-#{field}"]
+        end
+      end)
+
+    "(#{Enum.join(sorts, "|")}),*"
+  end
+
+  defp page_props(_api, _resource) do
     %{
-      "href" => href,
-      "description" => "pending",
-      "method" => route.method |> to_string() |> String.upcase(),
-      "rel" => to_string(route.type),
-      "targetSchema" => target_schema(route, api, resource)
+      "limit" => %{
+        "type" => "string",
+        "pattern" => "^[1-9][0-9]*$"
+      },
+      "offset" => %{
+        "type" => "string",
+        "pattern" => "^[1-9][0-9]*$"
+      }
     }
   end
 
-  defp route_schema(route, api, resource) do
-    href = route_href(route, api)
+  defp include_format(_resource) do
+    # TODO: include format
+    "pending"
+  end
+
+  defp filter_props(resource) do
+    resource
+    |> AshJsonApi.fields()
+    |> Enum.reduce(%{}, fn field, acc ->
+      cond do
+        attr = Ash.attribute(resource, field) ->
+          Map.put(acc, to_string(field), attribute_filter_schema(attr))
+
+        rel = Ash.relationship(resource, field) ->
+          Map.put(acc, to_string(field), relationship_filter_schema(rel))
+
+        true ->
+          raise "Invalid field"
+      end
+    end)
+  end
+
+  defp attribute_filter_schema(attr) do
+    # TODO make this better/incorporate validation!
+    # Ideally, delegate this to some kind of `Ash.Type`
+    case attr.type do
+      :string ->
+        %{
+          "type" => "string"
+        }
+    end
+  end
+
+  defp relationship_filter_schema(_rel) do
+    # TODO: For `to_many` relationships we should support passing a list of ids
+    # or a comma separated list of ids
+    # TODO: figure out the whole "id" type thing
 
     %{
-      "href" => href,
-      "description" => "pending",
-      "method" => route.method |> to_string() |> String.upcase(),
-      "rel" => to_string(route.type),
-      "schema" => route_in_schema(route, api, resource),
-      "targetSchema" => target_schema(route, api, resource)
+      "type" => "string"
     }
   end
 
-  defp route_in_schema(%{type: type}, api, resource) when type in [:index, :get, :delete] do
+  defp route_in_schema(%{type: type}, _api, _resource) when type in [:index, :get, :delete] do
     %{}
   end
 
-  defp route_in_schema(%{type: type} = route, api, resource) when type in [:create] do
-    raise "support create!"
+  defp route_in_schema(%{type: type}, _api, resource) when type in [:create] do
+    %{
+      "type" => "object",
+      "required" => ["data"],
+      "additionalProperties" => false,
+      "properties" => %{
+        "data" => %{
+          "type" => "object",
+          "additionalProperties" => false,
+          "properties" => %{
+            "attributes" => %{
+              "type" => "object",
+              "additionalProperties" => false,
+              "properties" => write_attributes(resource)
+            },
+            "relationships" => %{
+              "type" => "object",
+              "additionalProperties" => false,
+              "properties" => write_relationships(resource)
+            }
+          }
+        }
+      }
+    }
   end
 
   defp route_in_schema(%{type: type}, _, _) do
     raise "#{type} not supported yet!"
+  end
+
+  defp write_attributes(resource) do
+    resource
+    |> AshJsonApi.fields()
+    |> Enum.reduce(%{}, fn field, acc ->
+      attr = Ash.attribute(resource, field)
+
+      if attr do
+        Map.put(acc, to_string(field), resource_field_type(resource, attr))
+      else
+        acc
+      end
+    end)
+  end
+
+  defp write_relationships(resource) do
+    resource
+    |> AshJsonApi.fields()
+    |> Enum.reduce(%{}, fn field, acc ->
+      rel = Ash.relationship(resource, field)
+
+      if rel do
+        data = resource_relationship_field_data(resource, rel)
+        links = resource_relationship_link_data(resource, rel)
+
+        object =
+          if links do
+            %{"data" => data, "links" => links}
+          else
+            %{"data" => data}
+          end
+
+        Map.put(
+          acc,
+          to_string(field),
+          object
+        )
+      else
+        acc
+      end
+    end)
   end
 
   defp target_schema(route, _api, resource) do
@@ -337,6 +557,19 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp route_href(route, api) do
-    Path.join(AshJsonApi.prefix(api) || "", route.route)
+    {path, path_params} =
+      api
+      |> AshJsonApi.prefix()
+      |> Kernel.||("")
+      |> Path.join(route.route)
+      |> Path.split()
+      |> Enum.reduce({[], []}, fn part, {path, path_params} ->
+        case part do
+          ":" <> name -> {["{#{name}}" | path], [name | path_params]}
+          part -> {[part | path], path_params}
+        end
+      end)
+
+    {path |> Enum.reverse() |> Path.join(), path_params}
   end
 end

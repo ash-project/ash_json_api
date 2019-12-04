@@ -62,10 +62,41 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
+  def create_record(request) do
+    chain(request, fn %{api: api, resource: resource} ->
+      params = %{
+        user: request.user,
+        side_load: request.includes_keyword,
+        action: request.action,
+        authorize?: true,
+        attributes: request.attributes,
+        relationships: request.relationships
+      }
+
+      case api.create(resource, params) do
+        {:ok, record} ->
+          Request.assign(request, :result, record)
+
+        {:error, :unauthorized} ->
+          error = Error.Forbidden.new([])
+          Request.add_error(request, error)
+
+        {:error, _error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "something went wrong while creating. Error messaging is incomplete so far."
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
   def fetch_record_from_path(request) do
     request
     |> fetch_id_path_param()
-    |> chain(fn %{resource: resource} = request ->
+    |> chain(fn %{api: api, resource: resource} = request ->
       id = request.assigns.id
 
       params = %{
@@ -75,16 +106,13 @@ defmodule AshJsonApi.Controllers.Helpers do
         authorize?: true
       }
 
-      case request.api.get(resource, id, params) do
+      case api.get(resource, id, params) do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error)
 
         {:ok, record} ->
           Request.assign(request, :result, record)
-
-        {:error, %AshJsonApi.Error{} = error} ->
-          Request.add_error(request, error)
 
         {:error, :unauthorized} ->
           error = Error.Forbidden.new([])

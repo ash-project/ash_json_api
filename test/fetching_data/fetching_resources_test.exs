@@ -145,7 +145,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   @tag :spec_must
   describe "A server MUST respond with 404 Not Found when processing a request to fetch a single resource that does not exist, except when the request warrants a 200 OK response with null as the primary data (as described above)." do
     test "individual resource without data" do
-      get(Api, "/posts/#{Ash.UUID.generate()}", status: 404)
+      get(Api, "/posts/#{Ecto.UUID.generate()}", status: 404)
     end
   end
 

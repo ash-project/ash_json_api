@@ -11,9 +11,10 @@ defmodule AshJsonApi.Controllers.Get do
     resource = options[:resource]
     action = options[:action]
     api = options[:api]
+    route = options[:route]
 
     conn
-    |> Request.from(resource, action, api)
+    |> Request.from(resource, action, api, route)
     |> Helpers.fetch_record_from_path()
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->

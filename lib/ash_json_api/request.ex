@@ -20,6 +20,8 @@ defmodule AshJsonApi.Request do
     :url,
     :json_api_prefix,
     :user,
+    :schema,
+    :req_headers,
     errors: [],
     # assigns is used by controllers to store state while piping
     # the request around
@@ -30,9 +32,15 @@ defmodule AshJsonApi.Request do
 
   @type error :: {:error, AshJsonApi.Error.InvalidInclude.t()}
 
-  @spec from(conn :: Plug.Conn.t(), resource :: Ash.Resource.t(), action :: atom, Keyword.t()) ::
+  @spec from(
+          conn :: Plug.Conn.t(),
+          resource :: Ash.Resource.t(),
+          action :: atom,
+          Ash.api(),
+          AshJsonApi.route()
+        ) ::
           t
-  def from(conn, resource, action, api) do
+  def from(conn, resource, action, api, route) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
     %__MODULE__{
@@ -43,11 +51,16 @@ defmodule AshJsonApi.Request do
       url: Plug.Conn.request_url(conn),
       path_params: conn.path_params,
       query_params: conn.query_params,
+      req_headers: conn.req_headers,
       user: Map.get(conn.assigns, :user),
       body: conn.body_params,
-      # TODO: no global config
+      schema: AshJsonApi.JsonSchema.route_schema(route, api, resource),
       json_api_prefix: AshJsonApi.prefix(api)
     }
+    |> validate_params()
+    |> validate_href_schema()
+    |> validate_req_headers()
+    |> validate_body()
     |> parse_includes()
     |> parse_filter()
     |> parse_sort()
@@ -70,6 +83,93 @@ defmodule AshJsonApi.Request do
     |> Enum.reduce(request, fn error, request ->
       %{request | errors: [error | request.errors]}
     end)
+  end
+
+  defp validate_body(%{body: body, schema: %{"schema" => schema}} = request) do
+    json_xema = JsonXema.new(schema)
+
+    json_xema
+    |> JsonXema.validate(body)
+    |> case do
+      :ok ->
+        request
+
+      {:error, error} ->
+        add_error(request, AshJsonApi.Error.InvalidBody.new(json_xema_error: error))
+    end
+  end
+
+  defp validate_body(request) do
+    request
+  end
+
+  defp validate_req_headers(
+         %{req_headers: req_headers, schema: %{"headerSchema" => schema}} = request
+       ) do
+    json_xema = JsonXema.new(schema)
+
+    headers = Enum.group_by(req_headers, &elem(&1, 0), &elem(&1, 1))
+
+    json_xema
+    |> JsonXema.validate(headers)
+    |> case do
+      :ok ->
+        request
+
+      {:error, error} ->
+        add_error(request, AshJsonApi.Error.InvalidHeader.new(json_xema_error: error))
+    end
+    |> validate_accept_header()
+  end
+
+  defp validate_accept_header(%{req_headers: headers} = request) do
+    accepts_json_api? =
+      headers
+      |> Enum.filter(fn {header, _value} -> header == "accept" end)
+      |> Enum.flat_map(fn {_, value} ->
+        String.split(value, ",")
+      end)
+      |> Enum.any?(fn accept ->
+        parsed = Plug.Conn.Utils.media_type(accept)
+
+        match?({:ok, "application", "vnd.api+json", _}, parsed)
+      end)
+
+    if accepts_json_api? do
+      request
+    else
+      add_error(request, AshJsonApi.Error.UnsupportedMediaType.new([]))
+    end
+  end
+
+  defp validate_params(%{query_params: query_params, path_params: path_params} = request) do
+    if Enum.any?(Map.keys(query_params), &Map.has_key?(path_params, &1)) do
+      add_error(request, "conflict path and query params")
+    else
+      request
+    end
+  end
+
+  defp validate_href_schema(%{schema: nil} = request) do
+    add_error(request, "no schema found")
+  end
+
+  defp validate_href_schema(
+         %{
+           schema: %{"hrefSchema" => schema},
+           query_params: query_params,
+           path_params: path_params
+         } = request
+       ) do
+    json_xema = JsonXema.new(schema)
+
+    case JsonXema.validate(json_xema, Map.merge(path_params, query_params)) do
+      :ok ->
+        request
+
+      {:error, error} ->
+        add_error(request, AshJsonApi.Error.InvalidQuery.new(json_xema_error: error))
+    end
   end
 
   defp parse_filter(%{resource: resource, query_params: %{"filter" => filter}} = request)
@@ -172,7 +272,7 @@ defmodule AshJsonApi.Request do
           add_error(request, "unknown attribute: #{key}")
 
         attribute ->
-          %{request | params: Map.put(request.attributes || %{}, attribute.name, value)}
+          %{request | attributes: Map.put(request.attributes || %{}, attribute.name, value)}
       end
     end)
   end

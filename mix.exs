@@ -34,7 +34,7 @@ defmodule AshJsonApi.MixProject do
       {:ash, path: "../ash"},
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
-      {:json_xema, "~> 0.3"}
+      {:json_xema, "~> 0.4.0"}
     ]
   end
 end

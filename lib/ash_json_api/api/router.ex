@@ -16,7 +16,7 @@ defmodule AshJsonApi.Api.Router do
 
         plug(Plug.Parsers,
           parsers: [:json],
-          pass: ["application/json"],
+          pass: ["application/vnd.api+json"],
           json_decoder: Jason
         )
 
@@ -43,7 +43,8 @@ defmodule AshJsonApi.Api.Router do
                 action: Ash.action(resource, action_name, action_type),
                 resource: resource,
                 api: api,
-                prefix: prefix
+                prefix: prefix,
+                route: route_struct
               ]
               |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 

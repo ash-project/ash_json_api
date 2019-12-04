@@ -12,7 +12,7 @@ defmodule AshJsonApi.Error do
             internal_description: nil,
             log_level: :error
 
-  @callback new(Keyword.t()) :: %AshJsonApi.Error{}
+  @callback new(Keyword.t()) :: %AshJsonApi.Error{} | list(%AshJsonApi.Error{})
 
   def new(opts) do
     struct!(__MODULE__, opts)

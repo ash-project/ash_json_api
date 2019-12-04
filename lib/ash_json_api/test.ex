@@ -9,7 +9,8 @@ defmodule AshJsonApi.Test do
     result =
       :get
       |> conn(path)
-      |> put_req_header("content-type", "application/json")
+      |> put_req_header("content-type", "application/vnd.api+json")
+      |> put_req_header("accept", "application/vnd.api+json")
       |> api.router().call(api.router().init([]))
 
     assert result.state == :sent
@@ -49,7 +50,8 @@ defmodule AshJsonApi.Test do
     result =
       :get
       |> conn(path, Jason.encode!(body))
-      |> put_req_header("content-type", "application/json")
+      |> put_req_header("content-type", "application/vnd.api+json")
+      |> put_req_header("accept", "application/vnd.api+json")
       |> api.router().call(api.router().init([]))
 
     assert result.state == :sent

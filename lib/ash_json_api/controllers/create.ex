@@ -1,4 +1,4 @@
-defmodule AshJsonApi.Controllers.Index do
+defmodule AshJsonApi.Controllers.Create do
   alias AshJsonApi.Controllers.{Helpers, Response}
   alias AshJsonApi.Request
 
@@ -15,17 +15,10 @@ defmodule AshJsonApi.Controllers.Index do
 
     conn
     |> Request.from(resource, action, api, route)
-    |> Helpers.fetch_pagination_parameters()
-    |> Helpers.fetch_records()
+    |> Helpers.create_record()
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->
-      Response.render_many(
-        conn,
-        request,
-        request.assigns.result,
-        request.assigns.includes,
-        action.paginate?
-      )
+      Response.render_one(conn, request, 201, request.assigns.result, request.assigns.includes)
     end)
   end
 end
