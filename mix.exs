@@ -1,14 +1,32 @@
 defmodule AshJsonApi.MixProject do
   use Mix.Project
 
+  @description """
+  A rigorous JSON API front end for the `Ash` resource framework
+  """
+
   def project do
     [
       app: :ash_json_api,
       version: "0.1.0",
       elixir: "~> 1.9",
+      description: @description,
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package(),
+      source_url: "https://github.com/ash-project/ash_json_api",
+      homepage_url: "https://github.com/ash-project/ash_json_api"
+    ]
+  end
+
+  defp package do
+    [
+      name: :ash_json_api,
+      licenses: ["MIT"],
+      links: %{
+        GitHub: "https://github.com/ash-project/ash_json_api"
+      }
     ]
   end
 
@@ -31,10 +49,11 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, path: "../ash"},
+      {:ash, "~> 0.1.0"},
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
-      {:json_xema, "~> 0.4.0"}
+      {:json_xema, "~> 0.4.0"},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end
 end
