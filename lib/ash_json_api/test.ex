@@ -73,4 +73,24 @@ defmodule AshJsonApi.Test do
   def assert_data_equals(conn, expected_data) do
     assert %{"data" => ^expected_data} = conn.resp_body
   end
+
+  def assert_attribute_equals(conn, attribute, expected_value) do
+    assert %{"data" => %{"attributes" => %{^attribute => ^expected_value}}} = conn.resp_body
+  end
+
+  def assert_attribute_missing(conn, attribute) do
+    assert %{"data" => %{"attributes" => attributes}} = conn.resp_body
+
+    refute Map.has_key?(attributes, attribute)
+  end
+
+  def assert_has_error(conn, fields) do
+    assert %{"errors" => [_ | _] = errors} = conn.resp_body
+
+    assert Enum.any?(errors, fn error ->
+             Enum.all?(fields, fn {key, val} ->
+               Map.get(error, key) == val
+             end)
+           end)
+  end
 end
