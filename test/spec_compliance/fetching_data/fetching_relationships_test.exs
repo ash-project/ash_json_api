@@ -1,8 +1,70 @@
 defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   use ExUnit.Case
-  use Plug.Test
-  # @router_opts AshJsonApi.Test.Router.init([])
+  import AshJsonApi.Test
   @module_tag :json_api_spec_1_0
+
+  defmodule Author do
+    use Ash.Resource, name: "authors", type: "author"
+    use AshJsonApi.JsonApiResource
+    use Ash.DataLayer.Ets, private?: true
+
+    json_api do
+      routes do
+        get(:default)
+        index(:default)
+      end
+
+      fields [:name]
+    end
+
+    actions do
+      defaults([:read, :create],
+        rules: [allow(:static, result: true)]
+      )
+    end
+
+    attributes do
+      attribute(:name, :string)
+    end
+  end
+
+  defmodule Post do
+    use Ash.Resource, name: "posts", type: "post"
+    use AshJsonApi.JsonApiResource
+    use Ash.DataLayer.Ets, private?: true
+
+    json_api do
+      routes do
+        get(:default)
+        index(:default)
+      end
+
+      fields [:name]
+    end
+
+    actions do
+      defaults([:read, :create],
+        rules: [allow(:static, result: true)]
+      )
+    end
+
+    attributes do
+      attribute(:name, :string)
+    end
+
+    relationships do
+      belongs_to(:author, Author)
+    end
+  end
+
+  defmodule Api do
+    use Ash.Api
+    use AshJsonApi.Api
+
+    api do
+      resources([Post, Author])
+    end
+  end
 
   @tag :spec_must
   describe "A server MUST support fetching relationship data for every relationship URL provided as a self link as part of a relationship’s links object." do
@@ -14,77 +76,41 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   describe "A server MUST respond to a successful request to fetch a relationship with a 200 OK response." do
     test "empty to-one relationship" do
       # Create a post without an author
-      {:ok, post} = Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}})
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "Hamlet"}})
 
-      # Create a test connection
-      conn = conn(:get, "/posts/#{post.id}/relationships/author")
-
-      # Invoke the plug
-      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-      # Assert the response and status
-      assert conn.state == :sent
-      assert conn.status == 200
+      get(Api, "/posts/#{post.id}/relationships/author", status: 200)
     end
 
     test "empty to-many relationship" do
       # Create a post without comments
-      {:ok, post} = Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}})
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "Hamlet"}})
 
-      # Create a test connection
-      conn = conn(:get, "/posts/#{post.id}/relationships/comments")
-
-      # Invoke the plug
-      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-      # Assert the response and status
-      assert conn.state == :sent
-      assert conn.status == 200
+      get(Api, "/posts/#{post.id}/relationships/comments", status: 200)
     end
 
     test "non-empty to-one relationship" do
       # Create a post with an author
-      {:ok, author} =
-        Ash.create(AshJsonApi.Test.Resources.Author, %{attributes: %{name: "William Shakespeare"}})
+      {:ok, author} = Api.create(Author, %{attributes: %{name: "William Shakespeare"}})
 
       {:ok, post} =
-        Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}}, %{
+        Api.create(Post, %{attributes: %{name: "Hamlet"}}, %{
           relationships: %{author: author}
         })
 
-      # Create a test connection
-      conn = conn(:get, "/posts/#{post.id}/relationships/author")
-
-      # Invoke the plug
-      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-      # Assert the response and status
-      assert conn.state == :sent
-      assert conn.status == 200
+      get(Api, "/posts/#{post.id}/relationships/author", status: 200)
     end
 
     test "non-empty to-many relationship" do
       # Create a post with an author
-      {:ok, comment_1} =
-        Ash.create(AshJsonApi.Test.Resources.Comment, %{attributes: %{text: "First Comment"}})
-
-      {:ok, comment_2} =
-        Ash.create(AshJsonApi.Test.Resources.Comment, %{attributes: %{text: "Second Comment"}})
+      {:ok, comment_1} = Api.create(Comment, %{attributes: %{text: "First Comment"}})
+      {:ok, comment_2} = Api.create(Comment, %{attributes: %{text: "Second Comment"}})
 
       {:ok, post} =
-        Ash.create(AshJsonApi.Test.Resources.Post, %{attributes: %{name: "Hamlet"}}, %{
+        Api.create(Post, %{attributes: %{name: "Hamlet"}}, %{
           relationships: %{comments: [comment_1, comment_2]}
         })
 
-      # Create a test connection
-      conn = conn(:get, "/posts/#{post.id}/relationships/comments")
-
-      # Invoke the plug
-      # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-      # Assert the response and status
-      assert conn.state == :sent
-      assert conn.status == 200
+      get(Api, "/posts/#{post.id}/relationships/comments", status: 200)
     end
   end
 
