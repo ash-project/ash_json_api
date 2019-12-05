@@ -9,11 +9,15 @@ defmodule AshJsonApi.Test do
     result =
       :get
       |> conn(path)
-      |> put_req_header("content-type", "application/vnd.api+json")
-      |> put_req_header("accept", "application/vnd.api+json")
+      |> set_content_type_request_header(opts)
+      |> set_accept_request_header(opts)
       |> api.router().call(api.router().init([]))
 
     assert result.state == :sent
+
+    if opts[:resp_headers_include] do
+      assert Enum.member?(result.resp_headers, opts[:resp_headers_include])
+    end
 
     if opts[:status] do
       assert result.status == opts[:status]
@@ -27,6 +31,31 @@ defmodule AshJsonApi.Test do
       %{result | resp_body: Jason.decode!(result.resp_body)}
     else
       result
+    end
+  end
+
+  defp set_content_type_request_header(conn, opts) do
+    # TODO: Content-Type is in capital case on the JSON:API spec, but elixir recommends we use lower case...
+    cond do
+      opts[:exclude_req_content_type_header] ->
+        conn
+      opts[:req_content_type_header] ->
+        conn
+        |> put_req_header("content-type", opts[:req_content_type_header])
+      true ->
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+    end
+  end
+
+  defp set_accept_request_header(conn, opts) do
+    if opts[:req_accept_header] do
+     IO.inspect("Accept - I exist!!!!!!!")
+     conn
+     |> put_req_header("accept", "application/vnd.api+json")
+    else
+      conn
+      |> put_req_header("accept", "application/vnd.api+json")
     end
   end
 
@@ -70,6 +99,7 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  @spec assert_data_equals(atom | %{resp_body: map}, any) :: map
   def assert_data_equals(conn, expected_data) do
     assert %{"data" => ^expected_data} = conn.resp_body
   end
