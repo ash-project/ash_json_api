@@ -34,31 +34,6 @@ defmodule AshJsonApi.Test do
     end
   end
 
-  defp set_content_type_request_header(conn, opts) do
-    # TODO: Content-Type is in capital case on the JSON:API spec, but elixir recommends we use lower case...
-    cond do
-      opts[:exclude_req_content_type_header] ->
-        conn
-      opts[:req_content_type_header] ->
-        conn
-        |> put_req_header("content-type", opts[:req_content_type_header])
-      true ->
-        conn
-        |> put_req_header("content-type", "application/vnd.api+json")
-    end
-  end
-
-  defp set_accept_request_header(conn, opts) do
-    if opts[:req_accept_header] do
-     IO.inspect("Accept - I exist!!!!!!!")
-     conn
-     |> put_req_header("accept", "application/vnd.api+json")
-    else
-      conn
-      |> put_req_header("accept", "application/vnd.api+json")
-    end
-  end
-
   def post(api, path, body, opts \\ []) do
     schema = AshJsonApi.JsonSchema.generate(api)
     full_path = Path.join(AshJsonApi.prefix(api) || "", path)
@@ -122,5 +97,37 @@ defmodule AshJsonApi.Test do
                Map.get(error, key) == val
              end)
            end)
+  end
+
+  defp set_content_type_request_header(conn, opts) do
+    # TODO: Content-Type is in capital case on the JSON:API spec, but elixir recommends we use lower case...
+    cond do
+      opts[:exclude_req_content_type_header] ->
+        conn
+
+      opts[:req_content_type_header] ->
+        conn
+        |> put_req_header("content-type", opts[:req_content_type_header])
+
+      true ->
+        conn
+        |> put_req_header("content-type", "application/vnd.api+json")
+    end
+  end
+
+  defp set_accept_request_header(conn, opts) do
+    # TODO: Accept is in capital case on the JSON:API spec, but elixir recommends we use lower case...
+    cond do
+      opts[:exclude_req_accept_header] ->
+        conn
+
+      opts[:req_accept_header] ->
+        conn
+        |> put_req_header("accept", "application/vnd.api+json")
+
+      true ->
+        conn
+        |> put_req_header("accept", "application/vnd.api+json")
+    end
   end
 end

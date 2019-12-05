@@ -129,168 +129,59 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
   end
 
-  # @tag :spec_must
-  # describe "Servers MUST respond with a 406 Not Acceptable status code if a request’s Accept header contains the JSON:API media type and all instances of that media type are modified with media type parameters." do
-  #   test "request Accept header is JSON:API" do
-  #     # Create a post
-  #     {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+  @tag :spec_must
+  describe "Servers MUST respond with a 406 Not Acceptable status code if a request’s Accept header contains the JSON:API media type and all instances of that media type are modified with media type parameters." do
+    test "request Accept header is JSON:API" do
+      # Create a post
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-  #     # Create a test connection
-  #     conn = conn("get", "/posts/#{post.id}", "")
+      get(Api, "/posts/#{post.id}", req_accept_header: "application/vnd.api+json", status: 200)
+    end
 
-  #     # Set the header
-  #     # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-  #     conn =
-  #       conn
-  #       |> put_req_header("accept", "application/vnd.api+json;")
+    # TODO: test suite blows up with its real name so I renamed it to foo
+    # test "request Accept header is JSON:API with a profile param" do
+    test "foo" do
+      # Create a post
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-  #     # Invoke the plug
-  #     # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      get(Api, "/posts/#{post.id}", req_accept_header: "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\"", status: 200)
+    end
 
-  #     # Assert the response has been senet
-  #     assert conn.state == :sent
+    test "request Accept header is not present" do
+      # Create a post
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-  #     # Assert the response
-  #     assert conn.status == 200
-  #   end
+      get(Api, "/posts/#{post.id}", exclude_req_accept_header: true, status: 200)
+    end
 
-  #   # test "request Accept header is JSON:API with a profile param" do
-  #   # TODO: rename this test - test suite blows up with its real name
-  #   test "foo" do
-  #     # Create a post
-  #     {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+    test "request Accept header is blank" do
+      # Create a post
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-  #     # Create a test connection
-  #     conn = conn("get", "/posts/#{post.id}", "")
+      get(Api, "/posts/#{post.id}", req_accept_header: "", status: 406)
+    end
 
-  #     # Set the header
-  #     # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-  #     conn =
-  #       conn
-  #       |> put_req_header(
-  #         "accept",
-  #         "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\""
-  #       )
+    test "request Accept header is a random value" do
+      # Create a post
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-  #     # Invoke the plug
-  #     # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
+      get(Api, "/posts/#{post.id}", req_accept_header: "foo", status: 406)
+    end
 
-  #     # Assert the response has been senet
-  #     assert conn.state == :sent
+    test "request Accept header is a valid media type" do
+      # Create a post
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-  #     # Assert the response
-  #     assert conn.status == 200
-  #   end
+      get(Api, "/posts/#{post.id}", req_accept_header: "text/html", status: 406)
+    end
 
-  #   test "request Accept header is not present" do
-  #     # Create a post
-  #     {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+    # TODO: test suite blows up with its real name so I renamed it to bar
+    # test "request Accept header is JSON:API with a non-profile param" do
+    test "bar" do
+      # Create a post
+      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-  #     # Create a test connection with no headers
-  #     conn = conn("get", "/posts/#{post.id}", "")
-
-  #     # Invoke the plug
-  #     # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-  #     # Assert the response has been senet
-  #     assert conn.state == :sent
-
-  #     # Assert the response
-  #     assert conn.status == 200
-  #   end
-
-  #   test "request Accept header is blank" do
-  #     # Create a post
-  #     {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
-
-  #     # Create a test connection
-  #     conn = conn("get", "/posts/#{post.id}", "")
-
-  #     # Set the header
-  #     # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-  #     conn =
-  #       conn
-  #       |> put_req_header("accept", "")
-
-  #     # Invoke the plug
-  #     # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-  #     # Assert the response has been senet
-  #     assert conn.state == :sent
-
-  #     # Assert the response
-  #     assert conn.status == 406
-  #   end
-
-  #   test "request Accept header is a random value" do
-  #     # Create a post
-  #     {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
-
-  #     # Create a test connection
-  #     conn = conn("get", "/posts/#{post.id}", "")
-
-  #     # Set the header
-  #     # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-  #     conn =
-  #       conn
-  #       |> put_req_header("accept", "foo")
-
-  #     # Invoke the plug
-  #     # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-  #     # Assert the response has been senet
-  #     assert conn.state == :sent
-
-  #     # Assert the response
-  #     assert conn.status == 406
-  #   end
-
-  #   test "request Accept header is a valid media type" do
-  #     # Create a post
-  #     {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
-
-  #     # Create a test connection
-  #     conn = conn("get", "/posts/#{post.id}", "")
-
-  #     # Set the header
-  #     # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-  #     conn =
-  #       conn
-  #       |> put_req_header("accept", "text/html")
-
-  #     # Invoke the plug
-  #     # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-  #     # Assert the response has been senet
-  #     assert conn.state == :sent
-
-  #     # Assert the response
-  #     assert conn.status == 406
-  #   end
-
-  #   # test "request Accept header is JSON:API with a non-profile param" do
-  #   # TODO: rename this test - test suite blows up with its real name
-  #   test "bar" do
-  #     # Create a post
-  #     {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
-
-  #     # Create a test connection
-  #     conn = conn("get", "/posts/#{post.id}", "")
-
-  #     # Set the header
-  #     # TODO: the key of this header must be lower case for the test to not blow up, but the spec calls for capital case
-  #     conn =
-  #       conn
-  #       |> put_req_header("accept", "application/vnd.api+json; charset=\"utf-8\"")
-
-  #     # Invoke the plug
-  #     # conn = AshJsonApi.Test.Router.call(conn, @router_opts)
-
-  #     # Assert the response has been senet
-  #     assert conn.state == :sent
-
-  #     # Assert the response
-  #     assert conn.status == 406
-  #   end
-  # end
+      get(Api, "/posts/#{post.id}", req_accept_header: "application/vnd.api+json; charset=\"utf-8\"", status: 406)
+    end
+  end
 end
