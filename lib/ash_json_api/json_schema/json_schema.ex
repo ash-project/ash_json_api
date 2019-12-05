@@ -71,6 +71,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp header_schema() do
     # TODO: Figure this one out.
+
     # TODO: Raise different errors (415 vs 406) for incorrect content headers vs accept headers
 
     # For the content type header - I think we need a regex such as /^(application/vnd.api\+json;?)( profile=[^=]*";)?$/
