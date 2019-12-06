@@ -2,7 +2,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   use ExUnit.Case
   use Plug.Test
   # @router_opts AshJsonApi.Test.Router.init([])
-  @module_tag :json_api_spec_1_0
+  @moduletag :json_api_spec_1_0
 
   @tag :spec_may
   describe "An endpoint MAY return resources related to the primary data by default." do

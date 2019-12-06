@@ -1,7 +1,7 @@
 defmodule AshJsonApiTest.FetchingData do
   use ExUnit.Case
   use Plug.Test
-  @module_tag :json_api_spec_1_0
+  @moduletag :json_api_spec_1_0
 
   # describe "Fetching Resources" do
   # A server MUST support fetching resource data for every URL provided as:

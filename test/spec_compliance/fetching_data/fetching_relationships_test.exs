@@ -1,7 +1,7 @@
 defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   use ExUnit.Case
   import AshJsonApi.Test
-  @module_tag :json_api_spec_1_0
+  @moduletag :json_api_spec_1_0
 
   defmodule Author do
     use Ash.Resource, name: "authors", type: "author"
@@ -61,9 +61,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     use Ash.Api
     use AshJsonApi.Api
 
-    api do
-      resources([Post, Author])
-    end
+    resources([Post, Author])
   end
 
   @tag :spec_must

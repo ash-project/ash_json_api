@@ -32,9 +32,7 @@ defmodule Test.Acceptance.GetTest do
     use Ash.Api
     use AshJsonApi.Api
 
-    api do
-      resources([Post])
-    end
+    resources([Post])
   end
 
   describe "not_found" do

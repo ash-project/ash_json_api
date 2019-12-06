@@ -1,7 +1,7 @@
 defmodule AshJsonApi.ContentNegotiationTest do
   use ExUnit.Case
   import AshJsonApi.Test
-  @module_tag :json_api_spec_1_0
+  @moduletag :json_api_spec_1_0
 
   defmodule Author do
     use Ash.Resource, name: "authors", type: "author"
@@ -61,9 +61,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     use Ash.Api
     use AshJsonApi.Api
 
-    api do
-      resources([Post, Author])
-    end
+    resources([Post, Author])
   end
 
   @tag :spec_must
@@ -89,9 +87,10 @@ defmodule AshJsonApi.ContentNegotiationTest do
       {:ok, post} = Api.create(Post, %{attributes: %{name: "Hamlet"}})
 
       # TODO: Content-Type is in capital case on the JSON:API spec, but elixir recommends we use lower case...
-      get(Api, "/posts/#{post.id}", resp_headers_include: {"Content-Type", "application/vnd.api+json"})
+      get(Api, "/posts/#{post.id}",
+        resp_headers_include: {"Content-Type", "application/vnd.api+json"}
+      )
     end
-
   end
 
   @tag :spec_must
@@ -121,28 +120,43 @@ defmodule AshJsonApi.ContentNegotiationTest do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_content_type_header: "application/vnd.api+json", status: 200)
+      get(Api, "/posts/#{post.id}",
+        req_content_type_header: "application/vnd.api+json",
+        status: 200
+      )
     end
 
     test "request Content-Type header is JSON:API modified with a param" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_content_type_header: "application/vnd.api+json; charset=test", status: 415)
+      get(Api, "/posts/#{post.id}",
+        req_content_type_header:
+          "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\"",
+        status: 200
+      )
     end
 
     test "request Content-Type header includes JSON:API and JSON:API modified with a param" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_content_type_header: "application/vnd.api+json, application/vnd.api+json; charset=test", status: 415)
+      get(Api, "/posts/#{post.id}",
+        req_content_type_header:
+          "application/vnd.api+json, application/vnd.api+json; charset=test",
+        status: 415
+      )
     end
 
     test "request Content-Type header includes two instances of JSON:API modified with a param" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_content_type_header: "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test", status: 415)
+      get(Api, "/posts/#{post.id}",
+        req_content_type_header:
+          "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test",
+        status: 415
+      )
     end
 
     test "request Content-Type header is a random value" do
@@ -170,7 +184,10 @@ defmodule AshJsonApi.ContentNegotiationTest do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_content_type_header: "text/html", status: 200)
+      get(Api, "/posts/#{post.id}",
+        req_content_type_header: "application/vnd.api+json; charset=\"utf-8\"",
+        status: 415
+      )
     end
   end
 
@@ -208,21 +225,32 @@ defmodule AshJsonApi.ContentNegotiationTest do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_accept_header: "application/vnd.api+json; charset=test", status: 406)
+      get(Api, "/posts/#{post.id}",
+        req_accept_header:
+          "application/vnd.api+json; profile=\"http://example.com/last-modified http://example.com/timestamps\"",
+        status: 200
+      )
     end
 
     test "request Accept header includes JSON:API and JSON:API modified with a param" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_accept_header: "application/vnd.api+json, application/vnd.api+json; charset=test", status: 200)
+      get(Api, "/posts/#{post.id}",
+        req_accept_header: "application/vnd.api+json, application/vnd.api+json; charset=test",
+        status: 200
+      )
     end
 
     test "request Accept header includes two instances of JSON:API modified with a param" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_accept_header: "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test", status: 406)
+      get(Api, "/posts/#{post.id}",
+        req_accept_header:
+          "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test",
+        status: 406
+      )
     end
 
     test "request Accept header is a random value" do
@@ -250,7 +278,10 @@ defmodule AshJsonApi.ContentNegotiationTest do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
-      get(Api, "/posts/#{post.id}", req_accept_header: "text/html", status: 200)
+      get(Api, "/posts/#{post.id}",
+        req_accept_header: "application/vnd.api+json; charset=\"utf-8\"",
+        status: 406
+      )
     end
   end
 end

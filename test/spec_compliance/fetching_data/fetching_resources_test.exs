@@ -61,9 +61,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     use Ash.Api
     use AshJsonApi.Api
 
-    api do
-      resources([Post, Author])
-    end
+    resources([Post, Author])
   end
 
   # 200 OK
