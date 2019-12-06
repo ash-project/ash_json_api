@@ -17,8 +17,16 @@ defmodule Test.Acceptance.GetTest do
     end
 
     actions do
-      defaults([:read, :create],
-        rules: [allow(:static, result: true)]
+      read(:default,
+        rules: [
+          allow(:static, result: true)
+        ]
+      )
+
+      create(:default,
+        rules: [
+          allow(:static, result: true)
+        ]
       )
     end
 
