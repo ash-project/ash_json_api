@@ -50,7 +50,8 @@ defmodule AshJsonApi.JsonApiResource do
     quote do
       @sanitized_json_api_routes AshJsonApi.sanitize_routes(@relationships, @json_api_routes)
 
-      unless @ash_primary_key == :id do
+      # TODO: probably make this better
+      unless @ash_primary_key == [:id] do
         raise "A json API resource must have a primary key called `:id`"
       end
 
