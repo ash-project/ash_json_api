@@ -53,7 +53,7 @@ defmodule AshJsonApiTest.FetchingData.Sorting do
   end
 
   # TODO: Figure out how to make sure this applies to all types of requests - not just to an index route
-  # Note: This section applies to any endpoint that responds with a resource collection as primary data, regardless of the request type.
+    # Note: This section applies to any endpoint that responds with a resource collection as primary data, regardless of the request type.
 end
 
 
