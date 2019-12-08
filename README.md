@@ -1,5 +1,10 @@
 # AshJsonApi
 
+AshJsonApi allows you to take resources created with Ash and build complete JSON:API compliant endpoints with just a few lines of code.
+
+Here is how it fits into an app and what it does:
+![Architecture Sketch](documentation/architecture_sketch.jpg)
+
 ## TODO
 * Validate no overlapping routes
 * Make it so that `mix phx.routes` can print the routes from a `Plug.Router` so that our routes can be printed too.
