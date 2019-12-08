@@ -87,3 +87,5 @@ defmodule Post do
 * Errors should have about pages
 * Create the ability to dynamically create a resource in a test
 * The JSON schema for test was edited a bit to remove referenes to `uri-reference`, because either our parser was doing them wrong, or we have to do them in a really ugly way that I'd rather just not do. https://github.com/hrzndhrn/json_xema/issues/26
+* Support different member name transformers
+* Support turning off authentication via api config
