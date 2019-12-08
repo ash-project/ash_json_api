@@ -82,7 +82,11 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
   # 200 OK
   @tag :spec_must
-  describe "A server MUST respond to a successful request to fetch an individual resource or resource collection with a 200 OK response." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # A server MUST respond to a successful request to fetch an individual resource or resource collection with a 200 OK response.
+  # --------------------------
+  describe "200 OK response" do
     test "individual resource" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
@@ -96,8 +100,12 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   end
 
   @tag :spec_must
-  describe "A server MUST respond to a successful request to fetch a resource collection with an array of resource objects or an empty array ([]) as the response document’s primary data." do
-    test "resource collection with data" do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # A server MUST respond to a successful request to fetch a resource collection with an array of resource objects or an empty array ([]) as the response document’s primary data.
+  # --------------------------
+  describe "resource collection primary data." do
+    test "data exists" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
@@ -114,7 +122,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       ])
     end
 
-    test "resource collection without data" do
+    test "data does NOT exist" do
       Api
       |> get("/posts", status: 200)
       |> assert_data_equals([])
@@ -122,8 +130,12 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   end
 
   @tag :spec_must
-  describe "A server MUST respond to a successful request to fetch an individual resource with a resource object or null provided as the response document’s primary data." do
-    test "individual resource" do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # A server MUST respond to a successful request to fetch an individual resource with a resource object or null provided as the response document’s primary data.
+  # --------------------------
+  describe "individual resource primary data." do
+    test "data exists" do
       # Create a post
       {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
 
@@ -138,7 +150,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       })
     end
 
-    test "individual resource without data" do
+    test "data does NOT exist" do
       # If the primary resource exists (ie: post) but you are trying to get access to a relationship route (such as its author) this should return a 200 with null since the post exists (even though the author does not), not a 404
       # TODO: Clear up my comment above - this is a bit tricky to explain
 
@@ -155,29 +167,43 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
   end
 
-  # 404 Not Found
   @tag :spec_must
-  describe "A server MUST respond with 404 Not Found when processing a request to fetch a single resource that does not exist, except when the request warrants a 200 OK response with null as the primary data (as described above)." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # A server MUST respond with 404 Not Found when processing a request to fetch a single resource that does not exist, except when the request warrants a 200 OK response with null as the primary data (as described above).
+  # --------------------------
+  describe "404 Not Found" do
     test "individual resource without data" do
       get(Api, "/posts/#{Ecto.UUID.generate()}", status: 404)
     end
   end
 
-  # Other Responses
   @tag :spec_may
-  describe "A server MAY respond with other HTTP status codes." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # A server MAY respond with other HTTP status codes.
+  # --------------------------
+  describe "other responses" do
     # Do we want to implement this?
     # I'm not sure how to test this...
   end
 
   @tag :spec_may
-  describe "A server MAY include error details with error responses." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # A server MAY include error details with error responses.
+  # --------------------------
+  describe "error responses" do
     # Do we want to implement this?
     # Need to come up with error scenarios if so
   end
 
   @tag :spec_must
-  describe "A server MUST prepare responses in accordance with HTTP semantics." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # A server MUST prepare responses in accordance with HTTP semantics.
+  # --------------------------
+  describe "HTTP semantics" do
     # I'm not sure how to test this...
   end
 end

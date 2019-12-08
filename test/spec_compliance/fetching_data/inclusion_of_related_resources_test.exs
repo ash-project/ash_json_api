@@ -5,12 +5,20 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   @moduletag :json_api_spec_1_0
 
   @tag :spec_may
-  describe "An endpoint MAY return resources related to the primary data by default." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # An endpoint MAY return resources related to the primary data by default.
+  # --------------------------
+  describe "default related resources" do
     # Do we want to implement this?
   end
 
   @tag :spec_may
-  describe "An endpoint MAY also support an include request parameter to allow the client to customize which related resources should be returned." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # An endpoint MAY also support an include request parameter to allow the client to customize which related resources should be returned.
+  # --------------------------
+  describe "include request parameter" do
     test "resource endpoint with include param of to-one relationship" do
       # GET /posts/1?include=author
     end
@@ -57,29 +65,42 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     end
   end
 
-  # I put this as "may" because sideloading is an optional feature
-  @tag :spec_may
-  describe "If an endpoint does not support the include parameter, it MUST respond with 400 Bad Request to any requests that include it." do
+  @tag :spec_may # I put this as "may" because sideloading is an optional feature
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # If an endpoint does not support the include parameter, it MUST respond with 400 Bad Request to any requests that include it.
+  # --------------------------
+  describe "400 Bad Request for requests that with include parameter for endpoints without include parameter support" do
     # We will be supporting the "include" parameter, so this statement is not applicable.
     # However, I like the idea of keeping this here for explict documentation purposes.
     # I'm not sure what exactly to do though - do we write a test, or just leave a comment saying "N/A"
   end
 
-  # I put this as "may" because sideloading is an optional feature
-  @tag :spec_may
-  describe "If an endpoint supports the include parameter and a client supplies it, the server MUST NOT include unrequested resource objects in the included section of the compound document." do
+  @tag :spec_may # I put this as "may" because sideloading is an optional feature
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # If an endpoint supports the include parameter and a client supplies it, the server MUST NOT include unrequested resource objects in the included section of the compound document.
+  # --------------------------
+  describe "No unrequested resource objects when using the include parameter" do
     # This is testing a negative, which is hard to do.
     # Perhaps this test is better done as part of a higher level test suite validation that runs every single time a request in the test suite is made (and validates against the JSON:API schema as one step)?
   end
 
-  # I put this as "may" because sideloading is an optional feature
-  @tag :spec_may
-  describe "The value of the include parameter MUST be a comma-separated (U+002C COMMA, “,”) list of relationship paths. A relationship path is a dot-separated (U+002E FULL-STOP, “.”) list of relationship names." do
+  @tag :spec_may # I put this as "may" because sideloading is an optional feature
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # The value of the include parameter MUST be a comma-separated (U+002C COMMA, “,”) list of relationship paths. A relationship path is a dot-separated (U+002E FULL-STOP, “.”) list of relationship names.
+  # --------------------------
+  describe "include parameter value" do
     # Not sure how to test this - seems like a client issue, and other tests should cover this in the error case
   end
 
   @tag :spec_must
-  describe "If a server is unable to identify a relationship path or does not support inclusion of resources from a path, it MUST respond with 400 Bad Request." do
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # If a server is unable to identify a relationship path or does not support inclusion of resources from a path, it MUST respond with 400 Bad Request.
+  # --------------------------
+  describe "400 Bad Request for unidentified relationships." do
     test "incorrect relationship path" do
       # GET /posts/1/relationships/foo
     end
