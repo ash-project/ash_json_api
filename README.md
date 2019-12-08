@@ -11,16 +11,7 @@ The beauty of putting all of that data functionality into a non-web layer (Ash) 
 
 
 ## Installation
-AshJsonApi is only useful once you have installed [Ash](https://github.com/ash-project/ash), so do that first. Then when you are ready, add AshJsonApi to your application’s mix.exs file:
-
-```elixir
-{:ash_json_api, path: "../ash_json_api"}
-```
-And then execute:
-
-```shell
-mix deps.get
-```
+TODO
 
 ## Usage
 Assume you have already built a resource using [Ash](https://github.com/ash-project/ash) such as this Post resource:
@@ -31,25 +22,24 @@ defmodule Post do
   use Ash.DataLayer.Postgres
 
   actions do
-    read(:default,
-      rules: [
-        allow(:static, result: true)
+    read :default,
+      authorization_steps: [
+        allow_if: user_is(:admin)
       ]
-    )
 
-    create(:default,
-      rules: [
-        allow(:static, result: true)
+    create :default,
+      authorization_steps: [
+        allow_if: user_is(:admin)
       ]
-    )
+    
   end
 
   attributes do
-    attribute(:name, :string)
+    attribute :name, :string
   end
 
   relationships do
-    belongs_to(:author, Author)
+    belongs_to :author, Author
   end
 end
 ```
@@ -62,10 +52,13 @@ defmodule Post do
   
   json_api do
     routes do
-      get(:default)
-      index(:default)
+      # Add a `GET /posts/:id` route, that calls into the :read action called :default
+      get :default
+      # Add a `GET /posts` route, that calls into the :read action called :default
+      index :default
     end
 
+    # Expose these attributes in the API
     fields [:name]
   end
 

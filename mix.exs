@@ -8,16 +8,22 @@ defmodule AshJsonApi.MixProject do
   def project do
     [
       app: :ash_json_api,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.9",
       description: @description,
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      docs: docs(),
       package: package(),
       source_url: "https://github.com/ash-project/ash_json_api",
       homepage_url: "https://github.com/ash-project/ash_json_api"
     ]
+  end
+
+  defp docs() do
+    # The main page in the docs
+    [main: "readme", extras: ["README.md"]]
   end
 
   defp package do
