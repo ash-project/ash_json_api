@@ -1,13 +1,28 @@
 # AshJsonApi
 
-AshJsonApi allows you to take resources created with Ash and build complete JSON:API compliant endpoints with just a few lines of code.
+AshJsonApi allows you to take resources created with [Ash](https://github.com/ash-project/ash) and build complete JSON:API compliant endpoints with just a few lines of code.
 
 Here is how it fits into an app and what it does:
 ![Architecture Sketch](documentation/architecture_sketch.jpg)
 
 As you can see, Ash takes care of all of the data related work for a request (CRUD, Sorting, Filtering, Pagination, Side Loading, and Authorization) while AshJsonApi more or less replaces controllers and serializers.
 
-The beauty of putting all of that data functionality into a non-web layer (Ash) is that it can be used in many contexts. A JSON:API is one context - but there are others such as GraphQL or just using an Ash Resource from other code within an Application. The decision to decoupling web from data layers is why AshJsonApi is it's own hex package, as opposed to just a module within Ash.
+The beauty of putting all of that data functionality into a non-web layer (Ash) is that it can be used in many contexts. A JSON:API is one context - but there are others such as GraphQL or just using an Ash Resource from other code within an Application. The decoupling of the web from data layers is why AshJsonApi is it's own hex package, as opposed to just a module within [Ash](https://github.com/ash-project/ash).
+
+
+## Installation
+AshJsonApi is only useful once you have installed [Ash](https://github.com/ash-project/ash), so do that first. Then when you are ready, add AshJsonApi to your application’s mix.exs file:
+
+```elixir
+{:ash_json_api, path: "../ash_json_api"}
+```
+And then execute:
+
+```shell
+mix deps.get
+```
+
+
 
 ## TODO
 * Validate no overlapping routes
