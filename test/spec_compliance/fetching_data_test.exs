@@ -12,7 +12,6 @@ defmodule AshJsonApiTest.FetchingData do
   # What does this mean - that all the URLS contained in a response are valid API urls?
   # end
 
-  # TODO: "Sorting"
   # TODO: "Pagination"
   # TODO: "Filtering"
 end
