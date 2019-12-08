@@ -22,7 +22,55 @@ And then execute:
 mix deps.get
 ```
 
+## Usage
+Assume you have already built a resource using [Ash](https://github.com/ash-project/ash) such as this Post resource:
+```elixir
+defmodule Post do
+  use Ash.Resource, name: "posts", type: "post"
+  use AshJsonApi.JsonApiResource
+  use Ash.DataLayer.Postgres
 
+  actions do
+    read(:default,
+      rules: [
+        allow(:static, result: true)
+      ]
+    )
+
+    create(:default,
+      rules: [
+        allow(:static, result: true)
+      ]
+    )
+  end
+
+  attributes do
+    attribute(:name, :string)
+  end
+
+  relationships do
+    belongs_to(:author, Author)
+  end
+end
+```
+
+As you can see, the resource takes care of interacting with the database, setting up attributes and relationships, as well as specifying actions (CRUD) that can be performed on the resource. What is now needed is to add a configuration for how this resource will interact with JSON:API
+
+```elixir
+defmodule Post do
+  ...
+  
+  json_api do
+    routes do
+      get(:default)
+      index(:default)
+    end
+
+    fields [:name]
+  end
+
+  ...
+```
 
 ## TODO
 * Validate no overlapping routes
