@@ -5,6 +5,10 @@ AshJsonApi allows you to take resources created with Ash and build complete JSON
 Here is how it fits into an app and what it does:
 ![Architecture Sketch](documentation/architecture_sketch.jpg)
 
+As you can see, Ash takes care of all of the data related work for a request (CRUD, Sorting, Filtering, Pagination, Side Loading, and Authorization) while AshJsonApi more or less replaces controllers and serializers.
+
+The beauty of putting all of that data functionality into a non-web layer (Ash) is that it can be used in many contexts. A JSON:API is one context - but there are others such as GraphQL or just using an Ash Resource from other code within an Application. The decision to decoupling web from data layers is why AshJsonApi is it's own hex package, as opposed to just a module within Ash.
+
 ## TODO
 * Validate no overlapping routes
 * Make it so that `mix phx.routes` can print the routes from a `Plug.Router` so that our routes can be printed too.
