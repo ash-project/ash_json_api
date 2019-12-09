@@ -18,17 +18,9 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     actions do
-      read(:default,
-        rules: [
-          allow(:static, result: true)
-        ]
-      )
+      read(:default)
 
-      create(:default,
-        rules: [
-          allow(:static, result: true)
-        ]
-      )
+      create(:default)
     end
 
     attributes do
@@ -51,17 +43,9 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     actions do
-      read(:default,
-        rules: [
-          allow(:static, result: true)
-        ]
-      )
+      read(:default)
 
-      create(:default,
-        rules: [
-          allow(:static, result: true)
-        ]
-      )
+      create(:default)
     end
 
     attributes do
@@ -113,14 +97,13 @@ defmodule AshJsonApi.ContentNegotiationTest do
   # Servers MUST send all JSON:API data in response documents with the header Content-Type: application/vnd.api+json without any media type parameters.
   # --------------------------
   describe "Server sending Content-Type header in response" do
-    # TODO: This test should run as part of ALL responses - not just this one off example below, similar to JSON Schema validations
+    # NOTE: This behavior is asserted as part of ALL responses - see `AshJsonApi.Test.get/3`
     test "individual resource" do
       {:ok, post} = Api.create(Post, %{attributes: %{name: "Hamlet"}})
 
-      # TODO: Content-Type is in capital case on the JSON:API spec, but elixir recommends we use lower case...
-      get(Api, "/posts/#{post.id}",
-        resp_headers_include: {"Content-Type", "application/vnd.api+json"}
-      )
+      Api
+      |> get("/posts/#{post.id}")
+      |> assert_response_header_equals("content-type", "application/vnd.api+json")
     end
   end
 

@@ -12,7 +12,8 @@ defmodule AshJsonApiTest.FetchingData.SparseFieldsets do
     # N/A
   end
 
-  @tag :spec_may # I put this as "may" because sparse fieldsets is an optional feature
+  # I put this as "may" because sparse fieldsets is an optional feature
+  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # The value of the fields parameter MUST be a comma-separated (U+002C COMMA, “,”) list that refers to the name(s) of the fields to be returned.
@@ -22,7 +23,8 @@ defmodule AshJsonApiTest.FetchingData.SparseFieldsets do
     # GET /articles?include=author&fields[articles]=title,body&fields[people]=name
   end
 
-  @tag :spec_may # I put this as "may" because sparse fieldsets is an optional feature
+  # I put this as "may" because sparse fieldsets is an optional feature
+  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # If a client requests a restricted set of fields for a given resource type, an endpoint MUST NOT include additional fields in resource objects of that type in its response.
@@ -34,8 +36,8 @@ defmodule AshJsonApiTest.FetchingData.SparseFieldsets do
   end
 
   # TODO: Figure out what to do about this note about unencoded characters
-    # Note: The above example URI shows unencoded [ and ] characters simply for readability. In practice, these characters must be percent-encoded, per the requirements in RFC 3986.
+  # Note: The above example URI shows unencoded [ and ] characters simply for readability. In practice, these characters must be percent-encoded, per the requirements in RFC 3986.
 
   # TODO: Figure out what to do about this note about sparse fieldsets with non-GET/INDEX requests...
-    # Note: This section applies to any endpoint that responds with resources as primary or included data, regardless of the request type. For instance, a server could support sparse fieldsets along with a POST request to create a resource.
+  # Note: This section applies to any endpoint that responds with resources as primary or included data, regardless of the request type. For instance, a server could support sparse fieldsets along with a POST request to create a resource.
 end

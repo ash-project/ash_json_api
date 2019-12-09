@@ -15,8 +15,8 @@ defmodule AshJsonApi.Test do
 
     assert result.state == :sent
 
-    if opts[:resp_headers_include] do
-      assert Enum.member?(result.resp_headers, opts[:resp_headers_include])
+    unless opts[:skip_resp_header_check] do
+      assert_response_header_equals(result, "content-type", "application/vnd.api+json")
     end
 
     if opts[:status] do
@@ -60,6 +60,10 @@ defmodule AshJsonApi.Test do
 
     assert result.state == :sent
 
+    unless opts[:skip_resp_header_check] do
+      assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+    end
+
     if opts[:status] do
       assert result.status == opts[:status]
     end
@@ -77,6 +81,10 @@ defmodule AshJsonApi.Test do
   @spec assert_data_equals(atom | %{resp_body: map}, any) :: map
   def assert_data_equals(conn, expected_data) do
     assert %{"data" => ^expected_data} = conn.resp_body
+  end
+
+  def assert_response_header_equals(conn, header, value) do
+    assert get_resp_header(conn, header) == [value]
   end
 
   def assert_attribute_equals(conn, attribute, expected_value) do

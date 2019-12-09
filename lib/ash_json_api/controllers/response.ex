@@ -64,7 +64,7 @@ defmodule AshJsonApi.Controllers.Response do
 
   defp send_resp(conn, status, serialized) do
     conn
-    |> Plug.Conn.put_resp_content_type("application/vnd.api+json")
+    |> Plug.Conn.put_resp_content_type("application/vnd.api+json", nil)
     |> Plug.Conn.send_resp(status, serialized)
 
     # TODO: Confirm we don't need this

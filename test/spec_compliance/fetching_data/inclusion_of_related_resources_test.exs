@@ -65,7 +65,8 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     end
   end
 
-  @tag :spec_may # I put this as "may" because sideloading is an optional feature
+  # I put this as "may" because sideloading is an optional feature
+  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # If an endpoint does not support the include parameter, it MUST respond with 400 Bad Request to any requests that include it.
@@ -76,7 +77,8 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     # I'm not sure what exactly to do though - do we write a test, or just leave a comment saying "N/A"
   end
 
-  @tag :spec_may # I put this as "may" because sideloading is an optional feature
+  # I put this as "may" because sideloading is an optional feature
+  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # If an endpoint supports the include parameter and a client supplies it, the server MUST NOT include unrequested resource objects in the included section of the compound document.
@@ -86,7 +88,8 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     # Perhaps this test is better done as part of a higher level test suite validation that runs every single time a request in the test suite is made (and validates against the JSON:API schema as one step)?
   end
 
-  @tag :spec_may # I put this as "may" because sideloading is an optional feature
+  # I put this as "may" because sideloading is an optional feature
+  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # The value of the include parameter MUST be a comma-separated (U+002C COMMA, “,”) list of relationship paths. A relationship path is a dot-separated (U+002E FULL-STOP, “.”) list of relationship names.

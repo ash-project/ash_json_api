@@ -15,5 +15,5 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
   end
 
   # TODO: Figure out filtering strategy
-    # Note: JSON:API is agnostic about the strategies supported by a server. The filter query parameter can be used as the basis for any number of filtering strategies.
+  # Note: JSON:API is agnostic about the strategies supported by a server. The filter query parameter can be used as the basis for any number of filtering strategies.
 end
