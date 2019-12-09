@@ -1,10 +1,11 @@
 defmodule AshJsonApi.Api do
-  defmacro __using__(_opts) do
-    quote location: :keep do
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
       @mix_ins AshJsonApi.Api
       @prefix nil
       @host nil
       @serve_schema false
+      @authorize Keyword.get(opts, :authorize?, true)
       require AshJsonApi.Api
       import AshJsonApi.Api, only: [json_api: 1]
     end
@@ -50,6 +51,10 @@ defmodule AshJsonApi.Api do
 
       def prefix() do
         @prefix
+      end
+
+      def authorize? do
+        @authorize
       end
 
       def host() do

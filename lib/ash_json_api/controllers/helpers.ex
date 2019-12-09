@@ -103,7 +103,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         user: request.user,
         side_load: request.includes_keyword,
         action: request.action,
-        authorize?: true
+        authorize?: api.authorize?
       }
 
       case api.get(resource, id, params) do

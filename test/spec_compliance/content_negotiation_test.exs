@@ -59,7 +59,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
   defmodule Api do
     use Ash.Api
-    use AshJsonApi.Api
+    use AshJsonApi.Api, authorize?: false
 
     resources([Post, Author])
   end
