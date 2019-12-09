@@ -37,7 +37,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         side_load: request.includes_keyword,
         action: request.action,
         page: Map.get(request.assigns, :page, %{}),
-        authorize?: true,
+        authorize?: request.api.authorize?,
         filter: request.filter,
         sort: request.sort
       }
