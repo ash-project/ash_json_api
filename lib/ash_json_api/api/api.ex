@@ -6,6 +6,7 @@ defmodule AshJsonApi.Api do
       @host nil
       @serve_schema false
       @authorize Keyword.get(opts, :authorize?, true)
+
       require AshJsonApi.Api
       import AshJsonApi.Api, only: [json_api: 1]
     end
