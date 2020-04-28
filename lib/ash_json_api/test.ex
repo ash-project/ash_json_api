@@ -17,7 +17,9 @@ defmodule AshJsonApi.Test do
     assert result.state == :sent
 
     unless opts[:skip_resp_header_check] do
-      assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+      if 200 <= result.status and result.status <= 300 do
+        assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+      end
     end
 
     if opts[:status] do
@@ -62,7 +64,9 @@ defmodule AshJsonApi.Test do
     assert result.state == :sent
 
     unless opts[:skip_resp_header_check] do
-      assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+      if 200 <= result.status and result.status <= 300 do
+        assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+      end
     end
 
     if opts[:status] do
