@@ -191,14 +191,36 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp add_next_link(links, _uri, _query, %{offset: offset, limit: limit, total: total})
-       when not is_nil(total) and offset + limit >= total,
+       when not is_nil(total) and not is_nil(offset) and offset + limit >= total,
        do: links
 
-  defp add_next_link(links, uri, query, %{offset: offset, limit: limit}) do
+  defp add_next_link(links, _uri, _query, %{offset: offset, limit: limit, total: total})
+       when not is_nil(total) and is_nil(offset) and limit >= total,
+       do: links
+
+  defp add_next_link(links, uri, query, %{offset: offset, limit: limit})
+       when not is_nil(limit) do
     new_query =
       query
       |> Map.put("page", %{
         limit: limit + offset,
+        offset: offset
+      })
+      |> Plug.Conn.Query.encode()
+
+    link =
+      uri
+      |> Map.put(:query, new_query)
+      |> URI.to_string()
+      |> encode_link()
+
+    Map.put(links, :next, link)
+  end
+
+  defp add_next_link(links, uri, query, %{offset: offset}) do
+    new_query =
+      query
+      |> Map.put("page", %{
         offset: offset
       })
       |> Plug.Conn.Query.encode()

@@ -32,15 +32,20 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def fetch_records(request) do
     chain(request, fn request ->
-      params = %{
-        user: request.user,
+      params = [
         side_load: request.includes_keyword,
         action: request.action,
         page: Map.get(request.assigns, :page, %{}),
-        authorize?: request.api.authorize?,
         filter: request.filter,
         sort: request.sort
-      }
+      ]
+
+      params =
+        if request.api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
 
       case request.api.read(request.resource, params) do
         {:ok, paginator} ->
@@ -64,14 +69,19 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def create_record(request) do
     chain(request, fn %{api: api, resource: resource} ->
-      params = %{
-        user: request.user,
+      params = [
         side_load: request.includes_keyword,
         action: request.action,
-        authorize?: true,
         attributes: request.attributes,
         relationships: request.relationships
-      }
+      ]
+
+      params =
+        if api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
 
       case api.create(resource, params) do
         {:ok, record} ->
@@ -99,12 +109,17 @@ defmodule AshJsonApi.Controllers.Helpers do
     |> chain(fn %{api: api, resource: resource} = request ->
       id = request.assigns.id
 
-      params = %{
-        user: request.user,
+      params = [
         side_load: request.includes_keyword,
-        action: request.action,
-        authorize?: api.authorize?
-      }
+        action: request.action
+      ]
+
+      params =
+        if api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
 
       case api.get(resource, id, params) do
         {:ok, nil} ->

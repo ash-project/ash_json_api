@@ -98,39 +98,41 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   describe "200 OK response." do
     test "empty to-one relationship" do
       # Create a post without an author
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}/relationships/author", status: 200)
     end
 
     test "empty to-many relationship" do
       # Create a post without comments
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}/relationships/comments", status: 200)
     end
 
     test "non-empty to-one relationship" do
       # Create a post with an author
-      {:ok, author} = Api.create(Author, %{attributes: %{name: "foo"}})
+      {:ok, author} = Api.create(Author, attributes: %{name: "foo"})
 
       {:ok, post} =
-        Api.create(Post, %{attributes: %{name: "foo"}}, %{
+        Api.create(Post,
+          attributes: %{name: "foo"},
           relationships: %{author: author}
-        })
+        )
 
       get(Api, "/posts/#{post.id}/relationships/author", status: 200)
     end
 
     test "non-empty to-many relationship" do
       # Create a post with an author
-      {:ok, comment_1} = Api.create(Comment, %{attributes: %{text: "First Comment"}})
-      {:ok, comment_2} = Api.create(Comment, %{attributes: %{text: "Second Comment"}})
+      {:ok, comment_1} = Api.create(Comment, attributes: %{text: "First Comment"})
+      {:ok, comment_2} = Api.create(Comment, attributes: %{text: "Second Comment"})
 
       {:ok, post} =
-        Api.create(Post, %{attributes: %{name: "foo"}}, %{
+        Api.create(Post,
+          attributes: %{name: "foo"},
           relationships: %{comments: [comment_1, comment_2]}
-        })
+        )
 
       get(Api, "/posts/#{post.id}/relationships/comments", status: 200)
     end

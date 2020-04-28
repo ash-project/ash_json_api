@@ -100,7 +100,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
   describe "Server sending Content-Type header in response" do
     # NOTE: This behavior is asserted as part of ALL responses - see `AshJsonApi.Test.get/3`
     test "individual resource" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "Hamlet"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "Hamlet"})
 
       Api
       |> get("/posts/#{post.id}")
@@ -115,25 +115,25 @@ defmodule AshJsonApi.ContentNegotiationTest do
   # --------------------------
   describe "Server sending 415 Unsupported Media Type" do
     test "request Content-Type header is not present" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", exclude_req_content_type_header: true, status: 200)
     end
 
     test "request Content-Type header present but nil" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_content_type_header: nil, status: 200)
     end
 
     test "request Content-Type header present but blank" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_content_type_header: "", status: 200)
     end
 
     test "request Content-Type header is JSON:API" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_content_type_header: "application/vnd.api+json",
@@ -142,7 +142,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Content-Type header is JSON:API modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_content_type_header:
@@ -152,7 +152,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Content-Type header includes JSON:API and JSON:API modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_content_type_header:
@@ -162,7 +162,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Content-Type header includes two instances of JSON:API modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_content_type_header:
@@ -172,25 +172,25 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Content-Type header is a random value" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_content_type_header: "foo", status: 200)
     end
 
     test "request Content-Type header is a */*" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_content_type_header: "*/*", status: 200)
     end
 
     test "request Content-Type header is a */* modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_content_type_header: "*/*;q=0.8", status: 200)
     end
 
     test "request Content-Type header is a valid media type other than JSON:API" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_content_type_header: "application/vnd.api+json; charset=\"utf-8\"",
@@ -206,31 +206,31 @@ defmodule AshJsonApi.ContentNegotiationTest do
   # --------------------------
   describe "Server sending 406 Not Acceptable" do
     test "request Accept header is not present" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", exclude_req_accept_header: true, status: 200)
     end
 
     test "request Accept header present but blank" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_accept_header: "", status: 200)
     end
 
     test "request Accept header present but nil" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_accept_header: nil, status: 200)
     end
 
     test "request Accept header is JSON:API" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_accept_header: "application/vnd.api+json", status: 200)
     end
 
     test "request Accept header is JSON:API modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_accept_header:
@@ -240,7 +240,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Accept header includes JSON:API and JSON:API modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_accept_header: "application/vnd.api+json, application/vnd.api+json; charset=test",
@@ -249,7 +249,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Accept header includes two instances of JSON:API modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_accept_header:
@@ -259,25 +259,25 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Accept header is a random value" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_accept_header: "foo", status: 200)
     end
 
     test "request Accept header is a */*" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_accept_header: "*/*", status: 200)
     end
 
     test "request Accept header is a */* modified with a param" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", req_accept_header: "*/*;q=0.8", status: 200)
     end
 
     test "request Accept header is a valid media type other than JSON:API" do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}",
         req_accept_header: "application/vnd.api+json; charset=\"utf-8\"",

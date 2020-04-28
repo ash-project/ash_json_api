@@ -90,7 +90,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "200 OK response" do
     test "individual resource" do
       # Create a post
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       get(Api, "/posts/#{post.id}", status: 200)
     end
@@ -108,7 +108,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "resource collection primary data." do
     test "data exists" do
       # Create a post
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       Api
       |> get("/posts", status: 200)
@@ -138,7 +138,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "individual resource primary data." do
     test "data exists" do
       # Create a post
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       Api
       |> get("/posts/#{post.id}", status: 200)
@@ -156,7 +156,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       # TODO: Clear up my comment above - this is a bit tricky to explain
 
       # Create a post
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       Api
       |> get("/posts/#{post.id}/author", status: 200)

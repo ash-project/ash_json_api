@@ -61,7 +61,7 @@ defmodule Test.Acceptance.GetTest do
   @tag :attributes
   describe "attributes" do
     setup do
-      {:ok, post} = Api.create(Post, %{attributes: %{name: "foo", hidden: "hidden"}})
+      {:ok, post} = Api.create(Post, attributes: %{name: "foo", hidden: "hidden"})
 
       %{post: post}
     end
