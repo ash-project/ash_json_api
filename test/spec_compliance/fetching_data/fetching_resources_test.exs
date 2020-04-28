@@ -1,6 +1,5 @@
 defmodule AshJsonApiTest.FetchingData.FetchingResources do
   use ExUnit.Case
-  import AshJsonApi.Test
   @moduletag :json_api_spec_1_0
 
   defmodule Author do
@@ -20,13 +19,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     actions do
       read(:default,
         rules: [
-          allow(:static, result: true)
+          authorize_if: always()
         ]
       )
 
       create(:default,
         rules: [
-          allow(:static, result: true)
+          authorize_if: always()
         ]
       )
     end
@@ -53,13 +52,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     actions do
       read(:default,
         rules: [
-          allow(:static, result: true)
+          authorize_if: always()
         ]
       )
 
       create(:default,
         rules: [
-          allow(:static, result: true)
+          authorize_if: always()
         ]
       )
     end
@@ -79,6 +78,8 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
     resources([Post, Author])
   end
+
+  import AshJsonApi.Test
 
   # 200 OK
   @tag :spec_must

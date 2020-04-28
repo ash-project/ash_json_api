@@ -1,6 +1,5 @@
 defmodule Test.Acceptance.GetTest do
   use ExUnit.Case, async: true
-  import AshJsonApi.Test
 
   defmodule Post do
     use Ash.Resource, name: "posts", type: "post"
@@ -19,13 +18,13 @@ defmodule Test.Acceptance.GetTest do
     actions do
       read(:default,
         rules: [
-          allow(:static, result: true)
+          authorize_if: always()
         ]
       )
 
       create(:default,
         rules: [
-          allow(:static, result: true)
+          authorize_if: always()
         ]
       )
     end
@@ -42,6 +41,8 @@ defmodule Test.Acceptance.GetTest do
 
     resources([Post])
   end
+
+  import AshJsonApi.Test
 
   describe "not_found" do
     test "returns a 404 error for a non-existent error" do

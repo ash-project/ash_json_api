@@ -1,6 +1,5 @@
 defmodule AshJsonApi.ContentNegotiationTest do
   use ExUnit.Case
-  import AshJsonApi.Test
   @moduletag :json_api_spec_1_0
 
   defmodule Author do
@@ -63,6 +62,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
     resources([Post, Author])
   end
+
+  import AshJsonApi.Test
 
   @tag :spec_must
   # JSON:API 1.0 Specification

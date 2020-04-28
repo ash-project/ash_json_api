@@ -9,12 +9,14 @@ As you can see, Ash takes care of all of the data related work for a request (CR
 
 The beauty of putting all of that data functionality into a non-web layer (Ash) is that it can be used in many contexts. A JSON:API is one context - but there are others such as GraphQL or just using an Ash Resource from other code within an Application. The decoupling of the web from data layers is why AshJsonApi is it's own hex package, as opposed to just a module within [Ash](https://github.com/ash-project/ash).
 
-
 ## Installation
+
 TODO
 
 ## Usage
+
 Assume you have already built a resource using [Ash](https://github.com/ash-project/ash) such as this Post resource:
+
 ```elixir
 defmodule Post do
   use Ash.Resource, name: "posts", type: "post"
@@ -23,15 +25,14 @@ defmodule Post do
 
   actions do
     read :default,
-      authorization_steps: [
-        allow_if: user_is(:admin)
+      rules: [
+        authorize_if: asert_attribute(:admin, true)
       ]
 
     create :default,
-      authorization_steps: [
-        allow_if: user_is(:admin)
+      rules: [
+        authorize_if: user_attribute(:admin, true)
       ]
-    
   end
 
   attributes do
@@ -49,7 +50,7 @@ As you can see, the resource takes care of interacting with the database, settin
 ```elixir
 defmodule Post do
   ...
-  
+
   json_api do
     routes do
       # Add a `GET /posts/:id` route, that calls into the :read action called :default
@@ -66,19 +67,20 @@ defmodule Post do
 ```
 
 ## TODO
-* Validate no overlapping routes
-* Make it so that `mix phx.routes` can print the routes from a `Plug.Router` so that our routes can be printed too.
-* Validate all fields exist that are in the fields list
-* Validate includes
-* Do the whole request in a transaction *all the time*
-* validate incoming relationship updates have the right type
-* validate that there are only `relationship_routes` for something that is in `relationships`, and that the `relationship` is marked as editable (when we implement marking them as editable or not)
-* All kinds of spec compliance, like response codes and error semantics
-* Should implement a complete validation step, that first checks for a valid request according to json api, then validates against the resource being requested
-* Logging should be routed through ash so it can be configured/customized
-* Set logger metadata when we parse the request
-* Errors should have about pages
-* Create the ability to dynamically create a resource in a test
-* The JSON schema for test was edited a bit to remove referenes to `uri-reference`, because either our parser was doing them wrong, or we have to do them in a really ugly way that I'd rather just not do. https://github.com/hrzndhrn/json_xema/issues/26
-* Support different member name transformers
-* Support turning off authentication via api config
+
+- Validate no overlapping routes
+- Make it so that `mix phx.routes` can print the routes from a `Plug.Router` so that our routes can be printed too.
+- Validate all fields exist that are in the fields list
+- Validate includes
+- Do the whole request in a transaction _all the time_
+- validate incoming relationship updates have the right type
+- validate that there are only `relationship_routes` for something that is in `relationships`, and that the `relationship` is marked as editable (when we implement marking them as editable or not)
+- All kinds of spec compliance, like response codes and error semantics
+- Should implement a complete validation step, that first checks for a valid request according to json api, then validates against the resource being requested
+- Logging should be routed through ash so it can be configured/customized
+- Set logger metadata when we parse the request
+- Errors should have about pages
+- Create the ability to dynamically create a resource in a test
+- The JSON schema for test was edited a bit to remove referenes to `uri-reference`, because either our parser was doing them wrong, or we have to do them in a really ugly way that I'd rather just not do. https://github.com/hrzndhrn/json_xema/issues/26
+- Support different member name transformers
+- Support turning off authentication via api config
