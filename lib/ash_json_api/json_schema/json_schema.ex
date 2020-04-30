@@ -451,6 +451,11 @@ defmodule AshJsonApi.JsonSchema do
         %{
           "type" => "string"
         }
+
+      :boolean ->
+        %{
+          "type" => "boolean"
+        }
     end
   end
 

@@ -37,7 +37,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         action: request.action,
         page: Map.get(request.assigns, :page, %{}),
         filter: request.filter,
-        sort: request.sort
+        sort: request.sort,
+        verbose?: true
       ]
 
       params =
@@ -84,6 +85,42 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       case api.create(resource, params) do
+        {:ok, record} ->
+          Request.assign(request, :result, record)
+
+        {:error, :unauthorized} ->
+          error = Error.Forbidden.new([])
+          Request.add_error(request, error)
+
+        {:error, _error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "something went wrong while creating. Error messaging is incomplete so far."
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  def update_record(request) do
+    chain(request, fn %{api: api, assigns: %{result: result}} ->
+      params = [
+        side_load: request.includes_keyword,
+        action: request.action,
+        attributes: request.attributes,
+        relationships: request.relationships
+      ]
+
+      params =
+        if api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
+
+      case api.update(result, params) do
         {:ok, record} ->
           Request.assign(request, :result, record)
 

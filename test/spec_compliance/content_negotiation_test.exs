@@ -174,7 +174,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     test "request Content-Type header is a random value" do
       {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
-      get(Api, "/posts/#{post.id}", req_content_type_header: "foo", status: 200)
+      get(Api, "/posts/#{post.id}", req_content_type_header: "foo", status: 415)
     end
 
     test "request Content-Type header is a */*" do

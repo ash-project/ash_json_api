@@ -33,6 +33,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     attributes do
       attribute(:name, :string)
     end
+
+    relationships do
+      has_many(:posts, AshJsonApiTest.FetchingData.FetchingRelationships.Post)
+    end
   end
 
   defmodule Post do
@@ -60,6 +64,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
         rules: [
           authorize_if: always()
         ]
+      )
+
+      update(:default,
+        rules: [authorize_if: always()]
       )
     end
 
@@ -125,16 +133,16 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
     test "non-empty to-many relationship" do
       # Create a post with an author
-      {:ok, comment_1} = Api.create(Comment, attributes: %{text: "First Comment"})
-      {:ok, comment_2} = Api.create(Comment, attributes: %{text: "Second Comment"})
+      {:ok, post_1} = Api.create(Post, attributes: %{name: "First Post"})
+      {:ok, post_2} = Api.create(Post, attributes: %{name: "Second Post"})
 
-      {:ok, post} =
-        Api.create(Post,
+      {:ok, author} =
+        Api.create(Author,
           attributes: %{name: "foo"},
-          relationships: %{comments: [comment_1, comment_2]}
+          relationships: %{posts: [post_1, post_2]}
         )
 
-      get(Api, "/posts/#{post.id}/relationships/comments", status: 200)
+      get(Api, "/authors/#{author.id}/relationships/posts", status: 200)
     end
   end
 
