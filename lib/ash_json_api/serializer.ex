@@ -138,7 +138,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_includes(payload, request, includes) do
     includes = Enum.map(includes, &serialize_one_record(request, &1))
-    Map.put(payload, :includes, includes)
+    Map.put(payload, :included, includes)
   end
 
   defp many_links(%{url: url} = request, paginator, paginate?) do
