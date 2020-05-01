@@ -522,6 +522,9 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
+            "type" => %{
+              "type" => "string"
+            },
             "attributes" => %{
               "type" => "object",
               "additionalProperties" => false,
@@ -545,6 +548,10 @@ defmodule AshJsonApi.JsonSchema do
       "required" => ["data"],
       "additionalProperties" => false,
       "properties" => %{
+        "id" => resource_field_type(resource, Ash.attribute(resource, :id)),
+        "type" => %{
+          "type" => "string"
+        },
         "data" => %{
           "type" => "object",
           "additionalProperties" => false,
