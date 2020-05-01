@@ -478,7 +478,7 @@ defmodule AshJsonApi.JsonSchema do
     %{}
   end
 
-  defp route_in_schema(%{type: type}, _api, resource) when type in [:create] do
+  defp route_in_schema(%{type: type}, _api, resource) when type in [:post] do
     %{
       "type" => "object",
       "required" => ["data"],

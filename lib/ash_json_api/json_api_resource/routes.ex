@@ -54,7 +54,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
     end
   end
 
-  defmacro create(action, opts \\ []) do
+  defmacro post(action, opts \\ []) do
     quote bind_quoted: [action: action, opts: opts] do
       route = opts[:route] || "/"
 
@@ -66,16 +66,16 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :post,
-                         controller: AshJsonApi.Controllers.Create,
+                         controller: AshJsonApi.Controllers.Post,
                          action: action || :default,
-                         type: :create,
+                         type: :post,
                          action_type: :create,
                          primary?: opts[:primary?] || false
                        )
     end
   end
 
-  defmacro update(action, opts \\ []) do
+  defmacro patch(action, opts \\ []) do
     quote bind_quoted: [action: action, opts: opts] do
       route = opts[:route] || "/:id"
 
@@ -89,7 +89,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          method: :patch,
                          controller: AshJsonApi.Controllers.Update,
                          action: action || :default,
-                         tyep: :update,
+                         type: :patch,
                          action_type: :update,
                          primary?: opts[:primary?] || false
                        )

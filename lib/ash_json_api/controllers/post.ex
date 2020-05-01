@@ -1,4 +1,4 @@
-defmodule AshJsonApi.Controllers.Create do
+defmodule AshJsonApi.Controllers.Post do
   alias AshJsonApi.Controllers.{Helpers, Response}
   alias AshJsonApi.Request
 
