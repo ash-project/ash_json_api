@@ -39,9 +39,11 @@ defmodule AshJsonApi.Api.Router do
                 AshJsonApi.Api.Router.routes(resource) do
             prefix =
               case builder_opts()[:prefix] do
-                prefix <> builter_opts()[:prefix]
-              else
-                prefix
+                nil ->
+                  prefix
+
+                extra_prefix ->
+                  prefix <> builter_opts()[:prefix]
               end
 
             opts =
