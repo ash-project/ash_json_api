@@ -225,9 +225,18 @@ defmodule AshJsonApi.JsonSchema do
     %{
       "description" => "An attributes object for a #{Ash.type(resource)}",
       "type" => "object",
+      "required" => required_attributes(resource),
       "properties" => resource_attributes(resource),
       "additionalProperties" => false
     }
+  end
+
+  defp required_attributes(resource) do
+    resource
+    |> AshJsonApi.fields()
+    |> Enum.map(&Ash.attribute(resource, &1))
+    |> Enum.reject(& &1.allow_nil?)
+    |> Enum.map(&to_string(&1.name))
   end
 
   defp resource_attributes(resource) do
@@ -503,6 +512,33 @@ defmodule AshJsonApi.JsonSchema do
             "attributes" => %{
               "type" => "object",
               "additionalProperties" => false,
+              "required" => required_write_attributes(resource),
+              "properties" => write_attributes(resource)
+            },
+            "relationships" => %{
+              "type" => "object",
+              "additionalProperties" => false,
+              "properties" => write_relationships(resource)
+            }
+          }
+        }
+      }
+    }
+  end
+
+  defp route_in_schema(%{type: type}, _api, resource) when type in [:patch] do
+    %{
+      "type" => "object",
+      "required" => ["data"],
+      "additionalProperties" => false,
+      "properties" => %{
+        "data" => %{
+          "type" => "object",
+          "additionalProperties" => false,
+          "properties" => %{
+            "attributes" => %{
+              "type" => "object",
+              "additionalProperties" => false,
               "properties" => write_attributes(resource)
             },
             "relationships" => %{
@@ -518,6 +554,16 @@ defmodule AshJsonApi.JsonSchema do
 
   defp route_in_schema(%{type: type}, _, _) do
     raise "#{type} not supported yet!"
+  end
+
+  defp required_write_attributes(resource) do
+    resource
+    |> AshJsonApi.fields()
+    |> Enum.map(&Ash.attribute(resource, &1))
+    |> Enum.reject(& &1.allow_nil?)
+    |> Enum.reject(& &1.default)
+    |> Enum.reject(& &1.generated?)
+    |> Enum.map(&to_string(&1.name))
   end
 
   defp write_attributes(resource) do
