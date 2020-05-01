@@ -360,6 +360,13 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  defp resource_field_type(_resource, %{type: :utc_datetime}) do
+    %{
+      "type" => "string",
+      "format" => "date-time"
+    }
+  end
+
   defp resource_field_type(_, %{type: type}) do
     raise "unimplemented type #{type}"
   end
@@ -482,6 +489,12 @@ defmodule AshJsonApi.JsonSchema do
         %{
           "type" => "integer"
         }
+
+      :utc_datetime ->
+        %{
+          "type" => "string",
+          "format" => "date-time"
+        }
     end
   end
 
@@ -560,6 +573,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> AshJsonApi.fields()
     |> Enum.map(&Ash.attribute(resource, &1))
+    |> Enum.filter(& &1.writable?)
     |> Enum.reject(& &1.allow_nil?)
     |> Enum.reject(& &1.default)
     |> Enum.reject(& &1.generated?)
@@ -569,14 +583,10 @@ defmodule AshJsonApi.JsonSchema do
   defp write_attributes(resource) do
     resource
     |> AshJsonApi.fields()
-    |> Enum.reduce(%{}, fn field, acc ->
-      attr = Ash.attribute(resource, field)
-
-      if attr do
-        Map.put(acc, to_string(field), resource_field_type(resource, attr))
-      else
-        acc
-      end
+    |> Enum.map(&Ash.attribute(resource, &1))
+    |> Enum.filter(& &1.writable?)
+    |> Enum.reduce(%{}, fn attribute, acc ->
+      Map.put(acc, to_string(attribute.name), resource_field_type(resource, attribute))
     end)
   end
 
