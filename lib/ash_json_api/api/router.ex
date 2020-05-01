@@ -43,7 +43,7 @@ defmodule AshJsonApi.Api.Router do
                   prefix
 
                 extra_prefix ->
-                  prefix <> builter_opts()[:prefix]
+                  prefix <> builder_opts()[:prefix]
               end
 
             opts =
