@@ -37,15 +37,6 @@ defmodule AshJsonApi.Api.Router do
                 relationship: relationship_name
               } = route_struct <-
                 AshJsonApi.Api.Router.routes(resource) do
-            prefix =
-              case builder_opts()[:prefix] do
-                nil ->
-                  prefix
-
-                extra_prefix ->
-                  prefix <> builder_opts()[:prefix]
-              end
-
             opts =
               [
                 relationship: Ash.relationship(resource, relationship_name),
