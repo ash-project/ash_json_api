@@ -339,6 +339,18 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  defp resource_field_type(_resource, %{type: :boolean}) do
+    %{
+      "type" => "boolean"
+    }
+  end
+
+  defp resource_field_type(_resource, %{type: :integer}) do
+    %{
+      "type" => "integer"
+    }
+  end
+
   defp resource_field_type(_, %{type: type}) do
     raise "unimplemented type #{type}"
   end
