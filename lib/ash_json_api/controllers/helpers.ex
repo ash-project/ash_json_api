@@ -140,6 +140,39 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
+  def destroy_record(request) do
+    chain(request, fn %{api: api, assigns: %{result: result}} ->
+      params = [
+        action: request.action
+      ]
+
+      params =
+        if api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
+
+      case api.destroy(result, params) do
+        :ok ->
+          Request.assign(request, :result, nil)
+
+        {:error, :unauthorized} ->
+          error = Error.Forbidden.new([])
+          Request.add_error(request, error)
+
+        {:error, _error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "something went wrong while creating. Error messaging is incomplete so far."
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
   def fetch_record_from_path(request) do
     request
     |> fetch_id_path_param()

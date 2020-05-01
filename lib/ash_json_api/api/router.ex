@@ -22,6 +22,8 @@ defmodule AshJsonApi.Api.Router do
 
         plug(:dispatch)
 
+        extra_prefix = opts[:prefix]
+
         # TODO: This compile time dependency here may very well cause the entire application
         # to recompile for all resources. These things may need to be retrieved from the module
         # attributes or pushed to runtime if possible.
@@ -43,7 +45,7 @@ defmodule AshJsonApi.Api.Router do
                 action: Ash.action(resource, action_name, action_type),
                 resource: resource,
                 api: api,
-                prefix: prefix,
+                prefix: prefix <> extra_prefix,
                 route: route_struct
               ]
               |> Enum.reject(fn {_k, v} -> is_nil(v) end)
