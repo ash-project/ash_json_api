@@ -1,4 +1,4 @@
-defmodule AshJsonApi.Controllers.Destroy do
+defmodule AshJsonApi.Controllers.Delete do
   alias AshJsonApi.Controllers.{Helpers, Response}
   alias AshJsonApi.Request
 

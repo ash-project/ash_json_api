@@ -111,7 +111,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          type: :delete,
                          controller: AshJsonApi.Controllers.Delete,
                          action: action || :default,
-                         action_type: :destroy,
+                         action_type: :delete,
                          primary?: opts[:primary?] || false
                        )
     end
