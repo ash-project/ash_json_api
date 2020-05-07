@@ -146,7 +146,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          method: :get,
                          controller: AshJsonApi.Controllers.GetRelated,
                          primary?: opts[:primary?] || true,
-                         action: action || :default,
+                         action: opts[:action] || :default,
                          relationship: relationship
                        )
     end
