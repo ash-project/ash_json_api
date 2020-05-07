@@ -22,6 +22,7 @@ defmodule AshJsonApi.Request do
     :user,
     :schema,
     :req_headers,
+    :relationship,
     errors: [],
     # assigns is used by controllers to store state while piping
     # the request around
@@ -55,6 +56,7 @@ defmodule AshJsonApi.Request do
       user: Map.get(conn.assigns, :user),
       body: conn.body_params,
       schema: AshJsonApi.JsonSchema.route_schema(route, api, resource),
+      relationship: route.relationship,
       json_api_prefix: AshJsonApi.prefix(api)
     }
     |> validate_params()

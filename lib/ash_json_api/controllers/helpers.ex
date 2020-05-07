@@ -223,6 +223,46 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
+  def fetch_related(request) do
+    request
+    |> chain(fn %{
+                  api: api,
+                  assigns: %{result: record},
+                  relationship: relationship
+                } = request ->
+      params = [
+        action: request.action,
+        attributes: request.attributes,
+        relationships: request.relationships
+      ]
+
+      params =
+        if api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
+
+      case api.side_load(
+             record,
+             [{relationship, request.includes_keyword}],
+             params
+           ) do
+        {:ok, record} ->
+          Request.assign(request, :result, Map.get(record, relationship))
+
+        {:error, :unauthorized} ->
+          error = Error.Forbidden.new([])
+          Request.add_error(request, error)
+
+        {:error, _db_error} ->
+          error = Error.FrameworkError.new(internal_description: "failed to load related")
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
   def fetch_id_path_param(request) do
     chain(request, fn request ->
       case request.path_params do

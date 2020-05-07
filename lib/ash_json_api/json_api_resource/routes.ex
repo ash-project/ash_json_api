@@ -117,19 +117,40 @@ defmodule AshJsonApi.JsonApiResource.Routes do
     end
   end
 
-  # TODO: Related resource route ought to use a get action on the destination resource
-  # but with some kind of hook and/or w/ a "special" filter applied.
-  # TODO: clean up error messaging around id path param
+  defmacro relationship_routes(relationship, opts \\ []) do
+    quote bind_quoted: [relationship: relationship, opts: opts] do
+      # /:id/<relationship>
+      related(relationship, opts)
+      # relationship(relationship, opts)
+      # post_to_relationship(relationship, opts)
+      # delete_from_relationship(relationship, opts)
+      # patch_relationship(relationship, opts)
+    end
+  end
 
-  # defmacro relationship_routes(relationship, opts \\ []) do
-  #   quote bind_quoted: [relationship: relationship, opts: opts] do
-  #     related(relationship, opts)
-  #     relationship(relationship, opts)
-  #     post_to_relationship(relationship, opts)
-  #     delete_from_relationship(relationship, opts)
-  #     patch_relationship(relationship, opts)
-  #   end
-  # end
+  defmacro related(relationship, opts \\ []) do
+    quote bind_quoted: [relationship: relationship, opts: opts] do
+      route = opts[:route] || ":id/#{relationship}"
+
+      unless Enum.find(Path.split(route), fn part -> part == ":id" end) do
+        raise "Route for get action *must* contain an `:id` path parameter"
+      end
+
+      @json_api_routes AshJsonApi.JsonApiResource.Route.new(
+                         route:
+                           AshJsonApi.JsonApiResource.Routes.prefix(
+                             route,
+                             @name,
+                             Keyword.get(opts, :prefix?, true)
+                           ),
+                         method: :get,
+                         controller: AshJsonApi.Controllers.GetRelated,
+                         primary?: opts[:primary?] || true,
+                         action: action || :default,
+                         relationship: relationship
+                       )
+    end
+  end
 
   # defmacro post_to_relationship(relationship, opts \\ []) do
   #   quote bind_quoted: [relationship: relationship, opts: opts] do
@@ -200,30 +221,6 @@ defmodule AshJsonApi.JsonApiResource.Routes do
   #                        primary?: opts[:primary?] || true,
   #                        action: :delete_from_relationship,
   #                        prune: {:require_relationship_cardinality, :many},
-  #                        relationship: relationship
-  #                      )
-  #   end
-  # end
-
-  # defmacro related(relationship, opts \\ []) do
-  #   quote bind_quoted: [relationship: relationship, opts: opts] do
-  #     route = opts[:route] || ":id/#{relationship}"
-
-  #     unless Enum.find(Path.split(route), fn part -> part == ":id" end) do
-  #       raise "Route for get action *must* contain an `:id` path parameter"
-  #     end
-
-  #     @json_api_routes AshJsonApi.JsonApiResource.Route.new(
-  #                        route:
-  #                          AshJsonApi.JsonApiResource.Routes.prefix(
-  #                            route,
-  #                            @name,
-  #                            Keyword.get(opts, :prefix?, true)
-  #                          ),
-  #                        method: :get,
-  #                        controller: AshJsonApi.Controllers.GetRelated,
-  #                        primary?: opts[:primary?] || true,
-  #                        action: :get_related,
   #                        relationship: relationship
   #                      )
   #   end
