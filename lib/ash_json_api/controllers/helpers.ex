@@ -179,16 +179,22 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  def fetch_record_from_path(request) do
+  def fetch_record_from_path(request, through_resource \\ nil) do
     request
     |> fetch_id_path_param()
-    |> chain(fn %{api: api, resource: resource} = request ->
+    |> chain(fn %{api: api, resource: request_resource} = request ->
+      resource = through_resource || request_resource
       id = request.assigns.id
 
-      params = [
-        side_load: request.includes_keyword,
-        action: request.action
-      ]
+      params =
+        if through_resource do
+          []
+        else
+          [
+            side_load: request.includes_keyword,
+            action: request.action
+          ]
+        end
 
       params =
         if api.authorize? do
