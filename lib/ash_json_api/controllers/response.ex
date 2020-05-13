@@ -45,6 +45,7 @@ defmodule AshJsonApi.Controllers.Response do
   def render_many(
         conn,
         request,
+        status,
         paginator,
         includes,
         paginate? \\ true,
@@ -59,7 +60,31 @@ defmodule AshJsonApi.Controllers.Response do
         top_level_meta
       )
 
-    send_resp(conn, 200, serialized)
+    send_resp(conn, status, serialized)
+  end
+
+  def render_one_relationship(conn, request, status, relationship) do
+    serialized =
+      AshJsonApi.Serializer.serialize_to_one_relationship(
+        request,
+        request.assigns.record_from_path,
+        relationship,
+        request.assigns.result
+      )
+
+    send_resp(conn, status, serialized)
+  end
+
+  def render_many_relationship(conn, status, request, relationship) do
+    serialized =
+      AshJsonApi.Serializer.serialize_to_many_relationship(
+        request,
+        request.assigns.record_from_path,
+        relationship,
+        request.assigns.result
+      )
+
+    send_resp(conn, status, serialized)
   end
 
   defp send_resp(conn, status, serialized) do

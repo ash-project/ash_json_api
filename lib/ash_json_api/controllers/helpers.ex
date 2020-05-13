@@ -32,35 +32,40 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def fetch_records(request) do
     chain(request, fn request ->
-      params = [
-        side_load: request.includes_keyword,
-        action: request.action,
-        page: Map.get(request.assigns, :page, %{}),
-        filter: request.filter,
-        sort: request.sort,
-        verbose?: true
-      ]
-
       params =
         if request.api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+          [action: request.action, authorization: [user: request.user]]
         else
-          params
+          [action: request.action]
         end
 
-      case request.api.read(request.resource, params) do
-        {:ok, paginator} ->
-          Request.assign(request, :result, paginator)
+      page_params = Map.get(request.assigns, :page, %{})
 
-        {:error, :unauthorized} ->
+      with query <- request.api.query(request.resource),
+           query <- Ash.Query.side_load(query, request.includes_keyword),
+           query <- Ash.Query.limit(query, page_params[:limit]),
+           query <- Ash.Query.offset(query, page_params[:offset]),
+           query <- Ash.Query.filter(query, request.filter),
+           query <- Ash.Query.sort(query, request.sort),
+           {:ok, results} <- request.api.read(query, params) do
+        page = %AshJsonApi.Paginator{
+          results: results,
+          limit: page_params[:limit],
+          offset: page_params[:offset]
+        }
+
+        Request.assign(request, :result, page)
+      else
+        {:error, %{class: :forbidden}} ->
           error = Error.Forbidden.new([])
           Request.add_error(request, error)
 
-        {:error, db_error} ->
+        {:error, error} ->
+          # TODO: map ash errors to json api errors
           error =
             Error.FrameworkError.new(
               internal_description:
-                "Failed to read resource #{inspect(request.resource)} | #{inspect(db_error)}"
+                "Failed to read resource #{inspect(request.resource)} | #{inspect(error)}"
             )
 
           Request.add_error(request, error)
@@ -209,7 +214,9 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error)
 
         {:ok, record} ->
-          Request.assign(request, :result, record)
+          request
+          |> Request.assign(:result, record)
+          |> Request.assign(:record_from_path, record)
 
         {:error, :unauthorized} ->
           error = Error.Forbidden.new([])
@@ -229,18 +236,42 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  def fetch_related(request) do
+  def fetch_related(request, paginate? \\ true) do
     request
     |> chain(fn %{
                   api: api,
-                  assigns: %{result: record},
+                  assigns: %{result: %source_resource{} = record},
                   relationship: relationship
                 } = request ->
+      relationship = Ash.relationship(source_resource, relationship)
+
       params = [
-        action: request.action,
-        attributes: request.attributes,
-        relationships: request.relationships
+        action: request.action
       ]
+
+      destination_query =
+        relationship.destination
+        |> api.query()
+        |> Ash.Query.filter(request.filter)
+        |> Ash.Query.sort(request.sort)
+
+      pagination_params = Map.get(request.assigns, :page, %{})
+
+      destination_query =
+        if paginate? do
+          destination_query
+          # TODO: This is a fallback sort for predictable pagination, we should get smarter about it
+          |> Ash.Query.sort(Ash.primary_key(request.resource))
+          |> Ash.Query.limit(pagination_params[:limit])
+          |> Ash.Query.offset(pagination_params[:offset])
+        else
+          destination_query
+        end
+
+      origin_query =
+        source_resource
+        |> api.query()
+        |> Ash.Query.side_load([{relationship.name, destination_query}])
 
       params =
         if api.authorize? do
@@ -251,18 +282,32 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       case api.side_load(
              record,
-             [{relationship, request.includes_keyword}],
+             origin_query,
              params
            ) do
         {:ok, record} ->
-          Request.assign(request, :result, Map.get(record, relationship))
+          paginated_result =
+            if paginate? do
+              %AshJsonApi.Paginator{
+                limit: pagination_params[:limit],
+                offset: pagination_params[:offset],
+                results: List.wrap(Map.get(record, relationship))
+              }
+            else
+              List.wrap(Map.get(record, relationship))
+            end
+
+          Request.assign(request, :result, paginated_result)
 
         {:error, :unauthorized} ->
           error = Error.Forbidden.new([])
           Request.add_error(request, error)
 
-        {:error, _db_error} ->
-          error = Error.FrameworkError.new(internal_description: "failed to load related")
+        {:error, db_error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description: "failed to load related #{inspect(db_error)}"
+            )
 
           Request.add_error(request, error)
       end

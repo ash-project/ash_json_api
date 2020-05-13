@@ -237,11 +237,18 @@ defmodule AshJsonApi.Serializer do
   defp add_prev_link(links, _uri, _query, %{offset: 0}), do: links
 
   defp add_prev_link(links, uri, query, paginator) do
+    offset =
+      if paginator.limit do
+        max(paginator.limit - (paginator.offset || 0), 0)
+      else
+        0
+      end
+
     new_query =
       query
       |> Map.put("page", %{
         limit: paginator.limit,
-        offset: max(paginator.limit - paginator.offset, 0)
+        offset: offset
       })
       |> Plug.Conn.Query.encode()
 

@@ -1,4 +1,4 @@
-defmodule AshJsonApi.Controllers.GetRelated do
+defmodule AshJsonApi.Controllers.GetRelationship do
   alias AshJsonApi.Controllers.{Helpers, Response}
   alias AshJsonApi.Request
 
@@ -18,27 +18,13 @@ defmodule AshJsonApi.Controllers.GetRelated do
     |> Request.from(resource, action, api, route)
     |> Helpers.fetch_record_from_path(options[:resource])
     |> Helpers.fetch_related()
-    |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->
-      case relationship.cardinality do
-        :one ->
-          Response.render_one(
-            conn,
-            request,
-            200,
-            request.assigns.result,
-            request.assigns.includes
-          )
+      case relationship do
+        %{cardinality: :one} ->
+          Response.render_one_relationship(conn, request, 200, relationship)
 
-        :many ->
-          Response.render_many(
-            conn,
-            request,
-            200,
-            request.assigns.result,
-            request.assigns.includes,
-            false
-          )
+        %{cardinality: :many} ->
+          Response.render_many_relationship(conn, request, 200, relationship)
       end
     end)
   end

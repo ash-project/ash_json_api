@@ -3,6 +3,7 @@
 AshJsonApi allows you to take resources created with [Ash](https://github.com/ash-project/ash) and build complete JSON:API compliant endpoints with just a few lines of code.
 
 This is what AshJsonApi does:
+
 1. Route Creation: AshJsonApi defines routes and actions in your app based on resource configurations
 2. Deserialization: When an incoming HTTP request hits a AshJsonApi defined route/action, AshJsonApi will parse it from /api/users?filter[admin]=true into an Ash Action Ash.read(:user, filter: [admin: true])
 3. Query Execution: AshJsonApi then executes the parsed Ash Action (this is the integration point between AshJsonApi and Ash Core, where Ash Actions are defined)
@@ -92,3 +93,4 @@ defmodule Post do
 - The JSON schema for test was edited a bit to remove referenes to `uri-reference`, because either our parser was doing them wrong, or we have to do them in a really ugly way that I'd rather just not do. https://github.com/hrzndhrn/json_xema/issues/26
 - Support different member name transformers
 - Support turning off authentication via api config
+- set up pagination maximums and defaults by resource

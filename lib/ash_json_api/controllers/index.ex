@@ -22,9 +22,9 @@ defmodule AshJsonApi.Controllers.Index do
       Response.render_many(
         conn,
         request,
+        200,
         request.assigns.result,
-        request.assigns.includes,
-        action.paginate?
+        request.assigns.includes
       )
     end)
   end
