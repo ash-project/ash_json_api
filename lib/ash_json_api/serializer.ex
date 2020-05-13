@@ -203,7 +203,7 @@ defmodule AshJsonApi.Serializer do
     new_query =
       query
       |> Map.put("page", %{
-        limit: limit + offset,
+        limit: limit + (offset || 0),
         offset: offset
       })
       |> Plug.Conn.Query.encode()
