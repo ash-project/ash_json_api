@@ -75,7 +75,7 @@ defmodule AshJsonApi.Controllers.Response do
     send_resp(conn, status, serialized)
   end
 
-  def render_many_relationship(conn, status, request, relationship) do
+  def render_many_relationship(conn, request, status, relationship) do
     serialized =
       AshJsonApi.Serializer.serialize_to_many_relationship(
         request,

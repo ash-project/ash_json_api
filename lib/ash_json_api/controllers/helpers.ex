@@ -41,21 +41,25 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       page_params = Map.get(request.assigns, :page, %{})
 
-      with query <- request.api.query(request.resource),
-           query <- Ash.Query.side_load(query, request.includes_keyword),
-           query <- Ash.Query.limit(query, page_params[:limit]),
-           query <- Ash.Query.offset(query, page_params[:offset]),
-           query <- Ash.Query.filter(query, request.filter),
-           query <- Ash.Query.sort(query, request.sort),
-           {:ok, results} <- request.api.read(query, params) do
-        page = %AshJsonApi.Paginator{
-          results: results,
-          limit: page_params[:limit],
-          offset: page_params[:offset]
-        }
+      query =
+        request.resource
+        |> request.api.query()
+        |> Ash.Query.side_load(request.includes_keyword)
+        |> Ash.Query.limit(page_params[:limit])
+        |> Ash.Query.offset(page_params[:offset])
+        |> Ash.Query.filter(request.filter)
+        |> Ash.Query.sort(request.sort)
 
-        Request.assign(request, :result, page)
-      else
+      case request.api.read(query, params) do
+        {:ok, results} ->
+          page = %AshJsonApi.Paginator{
+            results: results,
+            limit: page_params[:limit],
+            offset: page_params[:offset]
+          }
+
+          Request.assign(request, :result, page)
+
         {:error, %{class: :forbidden}} ->
           error = Error.Forbidden.new([])
           Request.add_error(request, error)
@@ -73,20 +77,23 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
+  defp side_load_query(request) do
+    request.resource
+    |> request.api.query()
+    |> Ash.Query.side_load(request.includes_keyword)
+  end
+
   def create_record(request) do
     chain(request, fn %{api: api, resource: resource} ->
-      params = [
-        side_load: request.includes_keyword,
-        action: request.action,
-        attributes: request.attributes,
-        relationships: request.relationships
-      ]
-
       params =
-        if api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+        if request.api.authorize? do
+          [
+            action: request.action,
+            authorization: [user: request.user],
+            side_load: side_load_query(request)
+          ]
         else
-          params
+          [action: request.action, side_load: side_load_query(request)]
         end
 
       case api.create(resource, params) do
@@ -113,18 +120,15 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def update_record(request) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
-      params = [
-        side_load: request.includes_keyword,
-        action: request.action,
-        attributes: request.attributes,
-        relationships: request.relationships
-      ]
-
       params =
-        if api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+        if request.api.authorize? do
+          [
+            action: request.action,
+            authorization: [user: request.user],
+            side_load: side_load_query(request)
+          ]
         else
-          params
+          [action: request.action, side_load: side_load_query(request)]
         end
 
       case api.update(result, params) do
@@ -149,17 +153,121 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  def destroy_record(request) do
+  def add_to_relationship(request, relationship_name) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
       params = [
-        action: request.action
+        relationships: %{
+          relationship_name => %{
+            add: request.resource_identifiers
+          }
+        }
       ]
 
       params =
-        if api.authorize? do
+        if request.api.authorize? do
           Keyword.put(params, :authorization, user: request.user)
         else
           params
+        end
+
+      case api.update(result, Keyword.put(params, :verbose?, true)) do
+        {:ok, updated} ->
+          Request.assign(request, :result, Map.get(updated, relationship_name))
+
+        {:error, error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "something went wrong while adding to relationship. Error messaging is incomplete so far: #{
+                  inspect(error)
+                }"
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  def replace_relationship(request, relationship_name) do
+    chain(request, fn %{api: api, assigns: %{result: result}} ->
+      params = [
+        relationships: %{
+          relationship_name => %{
+            replace: request.resource_identifiers
+          }
+        }
+      ]
+
+      params =
+        if request.api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
+
+      case api.update(result, Keyword.put(params, :verbose?, true)) do
+        {:ok, updated} ->
+          Request.assign(request, :result, Map.get(updated, relationship_name))
+
+        {:error, error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "something went wrong while adding to relationship. Error messaging is incomplete so far: #{
+                  inspect(error)
+                }"
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  def delete_from_relationship(request, relationship_name) do
+    chain(request, fn %{api: api, assigns: %{result: result}} ->
+      params = [
+        relationships: %{
+          relationship_name => %{
+            remove: request.resource_identifiers
+          }
+        }
+      ]
+
+      params =
+        if request.api.authorize? do
+          Keyword.put(params, :authorization, user: request.user)
+        else
+          params
+        end
+
+      case api.update(result, Keyword.put(params, :verbose?, true)) do
+        {:ok, updated} ->
+          Request.assign(request, :result, Map.get(updated, relationship_name))
+
+        {:error, error} ->
+          error =
+            Error.FrameworkError.new(
+              internal_description:
+                "something went wrong while adding to relationship. Error messaging is incomplete so far: #{
+                  inspect(error)
+                }"
+            )
+
+          Request.add_error(request, error)
+      end
+    end)
+  end
+
+  def destroy_record(request) do
+    chain(request, fn %{api: api, assigns: %{result: result}} ->
+      params =
+        if request.api.authorize? do
+          [
+            action: request.action,
+            authorization: [user: request.user]
+          ]
+        else
+          [action: request.action]
         end
 
       case api.destroy(result, params) do

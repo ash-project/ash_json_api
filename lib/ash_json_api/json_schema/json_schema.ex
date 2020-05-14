@@ -121,7 +121,7 @@ defmodule AshJsonApi.JsonSchema do
       "required" => ["type", "id"],
       "properties" => %{
         "type" => %{
-          "type" => "string"
+          "additionalProperties" => false
         },
         "id" => %{
           "type" => "string"
@@ -333,7 +333,7 @@ defmodule AshJsonApi.JsonSchema do
         "type" => "object",
         "required" => ["type", "id"],
         "properties" => %{
-          "type" => %{"enum" => Ash.type(destination)},
+          "type" => %{"const" => Ash.type(destination)},
           "id" => %{"type" => "string"}
           # TODO: support meta here.
         }
@@ -364,6 +364,13 @@ defmodule AshJsonApi.JsonSchema do
     %{
       "type" => "string",
       "format" => "date-time"
+    }
+  end
+
+  defp resource_field_type(_resource, %{type: :uuid}) do
+    %{
+      "type" => "string",
+      "format" => "uuid"
     }
   end
 
@@ -523,7 +530,7 @@ defmodule AshJsonApi.JsonSchema do
           "additionalProperties" => false,
           "properties" => %{
             "type" => %{
-              "type" => "string"
+              "const" => Ash.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -552,9 +559,10 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
+            # TODO: We should use the primary key here, not rely on it being called id!
             "id" => resource_field_type(resource, Ash.attribute(resource, :id)),
             "type" => %{
-              "type" => "string"
+              "const" => Ash.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -572,8 +580,30 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp route_in_schema(%{type: type}, _, _) do
-    raise "#{type} not supported yet!"
+  defp route_in_schema(%{type: type}, _api, resource)
+       when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
+    %{
+      "type" => "object",
+      "required" => ["data"],
+      "additionalProperties" => false,
+      "properties" => %{
+        "data" => %{
+          "type" => "array",
+          "items" => %{
+            "type" => "object",
+            "required" => ["id", "type"],
+            "properties" => %{
+              # TODO: We should use the primary key here, not rely on it being called id!
+              "id" => resource_field_type(resource, Ash.attribute(resource, :id)),
+              "type" => %{
+                "const" => Ash.type(resource)
+              },
+              "additionalProperties" => false
+            }
+          }
+        }
+      }
+    }
   end
 
   defp required_write_attributes(resource) do
