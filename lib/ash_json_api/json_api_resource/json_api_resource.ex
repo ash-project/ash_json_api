@@ -8,7 +8,7 @@ defmodule AshJsonApi.JsonApiResource do
       Module.register_attribute(__MODULE__, :json_api_join_fields, accumulate: true)
 
       @json_api_includes []
-      @mix_ins AshJsonApi.JsonApiResource
+      @extensions AshJsonApi.JsonApiResource
       require AshJsonApi.JsonApiResource
     end
   end

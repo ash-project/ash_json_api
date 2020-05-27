@@ -90,10 +90,17 @@ defmodule AshJsonApi.Controllers.Helpers do
           [
             action: request.action,
             authorization: [user: request.user],
-            side_load: side_load_query(request)
+            side_load: side_load_query(request),
+            attributes: request.attributes,
+            relationships: request.relationships
           ]
         else
-          [action: request.action, side_load: side_load_query(request)]
+          [
+            action: request.action,
+            side_load: side_load_query(request),
+            attributes: request.attributes,
+            relationships: request.relationships
+          ]
         end
 
       case api.create(resource, params) do
@@ -125,10 +132,17 @@ defmodule AshJsonApi.Controllers.Helpers do
           [
             action: request.action,
             authorization: [user: request.user],
-            side_load: side_load_query(request)
+            side_load: side_load_query(request),
+            attributes: request.attributes,
+            relationships: request.relationships
           ]
         else
-          [action: request.action, side_load: side_load_query(request)]
+          [
+            action: request.action,
+            side_load: side_load_query(request),
+            attributes: request.attributes,
+            relationships: request.relationships
+          ]
         end
 
       case api.update(result, params) do
@@ -170,7 +184,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           params
         end
 
-      case api.update(result, Keyword.put(params, :verbose?, true)) do
+      case api.update(result, params) do
         {:ok, updated} ->
           Request.assign(request, :result, Map.get(updated, relationship_name))
 
@@ -205,7 +219,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           params
         end
 
-      case api.update(result, Keyword.put(params, :verbose?, true)) do
+      case api.update(result, params) do
         {:ok, updated} ->
           Request.assign(request, :result, Map.get(updated, relationship_name))
 
@@ -240,7 +254,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           params
         end
 
-      case api.update(result, Keyword.put(params, :verbose?, true)) do
+      case api.update(result, params) do
         {:ok, updated} ->
           Request.assign(request, :result, Map.get(updated, relationship_name))
 

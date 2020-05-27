@@ -1,7 +1,7 @@
 defmodule AshJsonApi.Api do
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
-      @mix_ins AshJsonApi.Api
+      @extensions AshJsonApi.Api
       @prefix nil
       @host nil
       @serve_schema false

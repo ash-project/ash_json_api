@@ -11,8 +11,8 @@ defmodule AshJsonApi.Controllers.PostToRelationship do
     action = options[:action]
     api = options[:api]
     route = options[:route]
-    resource = options[:resource]
     relationship = Ash.relationship(options[:resource], route.relationship)
+    resource = relationship.destination
 
     conn
     |> Request.from(resource, action, api, route)

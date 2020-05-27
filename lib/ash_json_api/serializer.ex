@@ -134,7 +134,7 @@ defmodule AshJsonApi.Serializer do
   defp add_top_level_meta(payload, meta) when is_map(meta), do: Map.put(payload, :meta, meta)
   defp add_top_level_meta(payload, _), do: payload
 
-  defp add_includes(payload, _request, []), do: payload
+  defp add_includes(payload, %{includes_keyword: []}, _), do: payload
 
   defp add_includes(payload, request, includes) do
     includes = Enum.map(includes, &serialize_one_record(request, &1))

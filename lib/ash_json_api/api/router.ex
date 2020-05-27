@@ -26,7 +26,7 @@ defmodule AshJsonApi.Api.Router do
         # to recompile for all resources. These things may need to be retrieved from the module
         # attributes or pushed to runtime if possible.
         resources
-        |> Enum.filter(&(AshJsonApi.JsonApiResource in &1.mix_ins()))
+        |> Enum.filter(&(AshJsonApi.JsonApiResource in &1.extensions()))
         |> Enum.map(fn resource ->
           for %{
                 route: route,

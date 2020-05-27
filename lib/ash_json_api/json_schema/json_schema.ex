@@ -3,7 +3,7 @@ defmodule AshJsonApi.JsonSchema do
     resources =
       api
       |> Ash.resources()
-      |> Enum.filter(&(AshJsonApi.JsonApiResource in &1.mix_ins()))
+      |> Enum.filter(&(AshJsonApi.JsonApiResource in &1.extensions()))
 
     route_schemas =
       Enum.flat_map(resources, fn resource ->
@@ -610,6 +610,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> AshJsonApi.fields()
     |> Enum.map(&Ash.attribute(resource, &1))
+    |> Enum.reject(&is_nil/1)
     |> Enum.filter(& &1.writable?)
     |> Enum.reject(& &1.allow_nil?)
     |> Enum.reject(& &1.default)
@@ -621,6 +622,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> AshJsonApi.fields()
     |> Enum.map(&Ash.attribute(resource, &1))
+    |> Enum.reject(&is_nil/1)
     |> Enum.filter(& &1.writable?)
     |> Enum.reduce(%{}, fn attribute, acc ->
       Map.put(acc, to_string(attribute.name), resource_field_type(resource, attribute))
