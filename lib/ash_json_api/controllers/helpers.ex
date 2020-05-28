@@ -413,10 +413,10 @@ defmodule AshJsonApi.Controllers.Helpers do
               %AshJsonApi.Paginator{
                 limit: pagination_params[:limit],
                 offset: pagination_params[:offset],
-                results: List.wrap(Map.get(record, relationship))
+                results: List.wrap(Map.get(record, relationship.name))
               }
             else
-              List.wrap(Map.get(record, relationship))
+              List.wrap(Map.get(record, relationship.name))
             end
 
           Request.assign(request, :result, paginated_result)
