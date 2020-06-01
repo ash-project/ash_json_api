@@ -5,10 +5,12 @@ defmodule AshJsonApi.MixProject do
   A rigorous JSON API front end for the `Ash` resource framework
   """
 
+  @version "0.1.1"
+
   def project do
     [
       app: :ash_json_api,
-      version: "0.1.1",
+      version: @version,
       elixir: "~> 1.9",
       description: @description,
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -60,6 +62,7 @@ defmodule AshJsonApi.MixProject do
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
+      {:git_ops, "~> 2.0.0", only: :dev},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end
