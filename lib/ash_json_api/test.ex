@@ -86,8 +86,8 @@ defmodule AshJsonApi.Test do
   end
 
   defmacro assert_data_equals(conn, expected_data) do
-    quote do
-      assert %{"data" => ^unquote(expected_data)} = unquote(conn).resp_body
+    quote bind_quoted: [conn: conn, expected_data: expected_data] do
+      assert %{"data" => ^expected_data} = conn.resp_body
     end
   end
 
@@ -96,17 +96,16 @@ defmodule AshJsonApi.Test do
   end
 
   defmacro assert_attribute_equals(conn, attribute, expected_value) do
-    quote do
-      assert %{"data" => %{"attributes" => %{^unquote(attribute) => ^unquote(expected_value)}}} =
-               unquote(conn).resp_body
+    quote bind_quoted: [attribute: attribute, expected_value: expected_value, conn: conn] do
+      assert %{"data" => %{"attributes" => %{^attribute => ^expected_value}}} = conn.resp_body
     end
   end
 
   defmacro assert_attribute_missing(conn, attribute) do
-    quote do
-      assert %{"data" => %{"attributes" => attributes}} = unquote(conn).resp_body
+    quote bind_quoted: [conn: conn, attribute: attribute] do
+      assert %{"data" => %{"attributes" => attributes}} = conn.resp_body
 
-      refute Map.has_key?(attributes, unquote(attribute))
+      refute Map.has_key?(attributes, attribute)
     end
   end
 
