@@ -20,6 +20,9 @@ defmodule AshJsonApi.MixProject do
         coveralls: :test,
         "coveralls.github": :test
       ],
+      dialyzer: [
+        plt_add_apps: [:ex_unit]
+      ],
       deps: deps(),
       docs: docs(),
       aliases: aliases(),
@@ -29,7 +32,7 @@ defmodule AshJsonApi.MixProject do
     ]
   end
 
-  defp docs() do
+  defp docs do
     # The main page in the docs
     [main: "readme", extras: ["README.md"]]
   end
@@ -63,7 +66,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, "~> 0.1.2"},
+      {:ash, "~> 0.1.8"},
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},

@@ -31,14 +31,14 @@ defmodule AshJsonApi.Request do
 
   @type t() :: %__MODULE__{}
 
-  @type error :: {:error, AshJsonApi.Error.InvalidInclude.t()}
+  @type error :: {:error, AshJsonApi.Error.InvalidIncludes.t()}
 
   @spec from(
           conn :: Plug.Conn.t(),
-          resource :: Ash.Resource.t(),
+          resource :: Ash.resource(),
           action :: atom,
           Ash.api(),
-          AshJsonApi.route()
+          AshJsonApi.JsonApiResource.Route.t()
         ) ::
           t
   def from(conn, resource, action, api, route) do

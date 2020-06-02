@@ -4,6 +4,8 @@ defmodule AshJsonApi.Error.InvalidIncludes do
   is invalid.
   """
 
+  @type t :: AshJsonApi.Error.t()
+
   @title "Invalid Includes"
 
   @status_code 400

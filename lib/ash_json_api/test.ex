@@ -1,5 +1,7 @@
 defmodule AshJsonApi.Test do
   use Plug.Test
+
+  require ExUnit.Assertions
   import ExUnit.Assertions
 
   # This probably won't work for users of ashjsonapi
@@ -83,33 +85,41 @@ defmodule AshJsonApi.Test do
     end
   end
 
-  @spec assert_data_equals(atom | %{resp_body: map}, any) :: map
-  def assert_data_equals(conn, expected_data) do
-    assert %{"data" => ^expected_data} = conn.resp_body
+  defmacro assert_data_equals(conn, expected_data) do
+    quote do
+      assert %{"data" => ^unquote(expected_data)} = unquote(conn).resp_body
+    end
   end
 
   def assert_response_header_equals(conn, header, value) do
     assert get_resp_header(conn, header) == [value]
   end
 
-  def assert_attribute_equals(conn, attribute, expected_value) do
-    assert %{"data" => %{"attributes" => %{^attribute => ^expected_value}}} = conn.resp_body
+  defmacro assert_attribute_equals(conn, attribute, expected_value) do
+    quote do
+      assert %{"data" => %{"attributes" => %{^unquote(attribute) => ^unquote(expected_value)}}} =
+               unquote(conn).resp_body
+    end
   end
 
-  def assert_attribute_missing(conn, attribute) do
-    assert %{"data" => %{"attributes" => attributes}} = conn.resp_body
+  defmacro assert_attribute_missing(conn, attribute) do
+    quote do
+      assert %{"data" => %{"attributes" => attributes}} = unquote(conn).resp_body
 
-    refute Map.has_key?(attributes, attribute)
+      refute Map.has_key?(attributes, unquote(attribute))
+    end
   end
 
-  def assert_has_error(conn, fields) do
-    assert %{"errors" => [_ | _] = errors} = conn.resp_body
+  defmacro assert_has_error(conn, fields) do
+    quote do
+      assert %{"errors" => [_ | _] = errors} = unquote(conn).resp_body
 
-    assert Enum.any?(errors, fn error ->
-             Enum.all?(fields, fn {key, val} ->
-               Map.get(error, key) == val
+      assert Enum.any?(errors, fn error ->
+               Enum.all?(unquote(fields), fn {key, val} ->
+                 Map.get(error, key) == val
+               end)
              end)
-           end)
+    end
   end
 
   defp set_content_type_request_header(conn, opts) do

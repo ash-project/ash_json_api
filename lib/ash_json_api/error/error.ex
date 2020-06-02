@@ -14,6 +14,8 @@ defmodule AshJsonApi.Error do
 
   @callback new(Keyword.t()) :: %AshJsonApi.Error{} | list(%AshJsonApi.Error{})
 
+  @type t :: %__MODULE__{}
+
   def new(opts) do
     struct!(__MODULE__, opts)
   end
