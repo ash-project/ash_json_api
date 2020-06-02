@@ -1,6 +1,7 @@
 defmodule AshJsonApi.Controllers.Response do
   require Logger
 
+  # sobelow_skip ["XSS.SendResp"]
   def render_errors(conn, request, opts \\ []) do
     errors =
       request.errors
@@ -36,12 +37,14 @@ defmodule AshJsonApi.Controllers.Response do
     send_resp(conn, status, serialized)
   end
 
+  # sobelow_skip ["XSS.SendResp"]
   def render_one(conn, request, status, record, includes) do
     serialized = AshJsonApi.Serializer.serialize_one(request, record, includes)
 
     send_resp(conn, status, serialized)
   end
 
+  # sobelow_skip ["XSS.SendResp"]
   def render_many(
         conn,
         request,
@@ -63,6 +66,7 @@ defmodule AshJsonApi.Controllers.Response do
     send_resp(conn, status, serialized)
   end
 
+  # sobelow_skip ["XSS.SendResp"]
   def render_one_relationship(conn, request, status, relationship) do
     serialized =
       AshJsonApi.Serializer.serialize_to_one_relationship(
@@ -75,6 +79,7 @@ defmodule AshJsonApi.Controllers.Response do
     send_resp(conn, status, serialized)
   end
 
+  # sobelow_skip ["XSS.SendResp"]
   def render_many_relationship(conn, request, status, relationship) do
     serialized =
       AshJsonApi.Serializer.serialize_to_many_relationship(

@@ -15,8 +15,14 @@ defmodule AshJsonApi.MixProject do
       description: @description,
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.github": :test
+      ],
       deps: deps(),
       docs: docs(),
+      aliases: aliases(),
       package: package(),
       source_url: "https://github.com/ash-project/ash_json_api",
       homepage_url: "https://github.com/ash-project/ash_json_api"
@@ -62,7 +68,19 @@ defmodule AshJsonApi.MixProject do
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
       {:git_ops, "~> 2.0.0", only: :dev},
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
+      {:ex_check, "~> 0.11.0", only: :dev},
+      {:credo, ">= 0.0.0", only: :dev, runtime: false},
+      {:dialyxir, ">= 0.0.0", only: :dev, runtime: false},
+      {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.13.0", only: [:dev, :test]}
+    ]
+  end
+
+  defp aliases do
+    [
+      sobelow: "sobelow --skip",
+      credo: "credo --strict"
     ]
   end
 end

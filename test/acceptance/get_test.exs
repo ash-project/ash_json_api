@@ -1,5 +1,6 @@
 defmodule Test.Acceptance.GetTest do
   use ExUnit.Case, async: true
+  @moduletag :skip
 
   defmodule Post do
     use Ash.Resource, name: "posts", type: "post"
@@ -16,20 +17,13 @@ defmodule Test.Acceptance.GetTest do
     end
 
     actions do
-      read(:default,
-        rules: [
-          authorize_if: always()
-        ]
-      )
+      read(:default)
 
-      create(:default,
-        rules: [
-          authorize_if: always()
-        ]
-      )
+      create(:default)
     end
 
     attributes do
+      attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
       attribute(:hidden, :string)
     end

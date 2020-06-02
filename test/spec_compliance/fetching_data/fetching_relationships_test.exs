@@ -1,6 +1,7 @@
 defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   use ExUnit.Case
   @moduletag :json_api_spec_1_0
+  @moduletag :skip
 
   defmodule Author do
     use Ash.Resource, name: "authors", type: "author"
@@ -17,20 +18,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     end
 
     actions do
-      read(:default,
-        rules: [
-          authorize_if: always()
-        ]
-      )
+      read(:default)
 
-      create(:default,
-        rules: [
-          authorize_if: always()
-        ]
-      )
+      create(:default)
     end
 
     attributes do
+      attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
     end
 
@@ -54,24 +48,15 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     end
 
     actions do
-      read(:default,
-        rules: [
-          authorize_if: always()
-        ]
-      )
+      read(:default)
 
-      create(:default,
-        rules: [
-          authorize_if: always()
-        ]
-      )
+      create(:default)
 
-      update(:default,
-        rules: [authorize_if: always()]
-      )
+      update(:default)
     end
 
     attributes do
+      attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
     end
 

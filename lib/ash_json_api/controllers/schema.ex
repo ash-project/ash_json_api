@@ -4,6 +4,7 @@ defmodule AshJsonApi.Controllers.Schema do
     options
   end
 
+  # sobelow_skip ["XSS.SendResp"]
   def call(conn, opts) do
     # TODO: render this as a JSON parsable error
     api = opts[:api]

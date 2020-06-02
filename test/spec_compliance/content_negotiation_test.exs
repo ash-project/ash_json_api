@@ -1,6 +1,7 @@
 defmodule AshJsonApi.ContentNegotiationTest do
   use ExUnit.Case
   @moduletag :json_api_spec_1_0
+  @moduletag :skip
 
   defmodule Author do
     use Ash.Resource, name: "authors", type: "author"
@@ -23,6 +24,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     attributes do
+      attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
     end
   end
@@ -48,6 +50,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     attributes do
+      attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
     end
 
