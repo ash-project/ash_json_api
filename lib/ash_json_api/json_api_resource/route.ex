@@ -15,7 +15,6 @@ defmodule AshJsonApi.JsonApiResource.Route do
   @type t :: %__MODULE__{}
 
   def new(opts) do
-    # TODO: Right now we just skip straight to the action in general.
     %__MODULE__{
       route: opts[:route],
       type: opts[:type],

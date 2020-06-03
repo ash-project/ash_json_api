@@ -43,7 +43,6 @@ defmodule AshJsonApi do
   end
 
   @doc false
-  # TODO: Ensure that resource routes are created in an order that causes them not to conflict
   def sanitize_routes(_relationships, all_routes) do
     all_routes
     |> Enum.group_by(fn route ->

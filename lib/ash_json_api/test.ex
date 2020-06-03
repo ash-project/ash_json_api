@@ -123,7 +123,6 @@ defmodule AshJsonApi.Test do
   end
 
   defp set_content_type_request_header(conn, opts) do
-    # TODO: Content-Type is in capital case on the JSON:API spec, but elixir recommends we use lower case...
     cond do
       opts[:exclude_req_content_type_header] ->
         conn
@@ -139,7 +138,6 @@ defmodule AshJsonApi.Test do
   end
 
   defp set_accept_request_header(conn, opts) do
-    # TODO: Accept is in capital case on the JSON:API spec, but elixir recommends we use lower case...
     cond do
       opts[:exclude_req_accept_header] ->
         conn

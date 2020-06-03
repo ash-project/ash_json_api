@@ -65,15 +65,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination do
   describe "page query param" do
   end
 
-  # TODO: Figure out what our pagination strategy is from this note:
+  # Figure out what our pagination strategy is from this note:
   # Note: JSON:API is agnostic about the pagination strategy used by a server.
   # Effective pagination strategies include (but are not limited to): page-based, offset-based, and cursor-based.
   # The page query parameter can be used as a basis for any of these strategies.
   # For example, a page-based strategy might use query parameters such as page[number] and page[size], an offset-based strategy might use page[offset] and page[limit], while a cursor-based strategy might use page[cursor].
 
-  # TODO: Figure out what to do about this note about unencoded characters
+  # Figure out what to do about this note about unencoded characters
   # Note: The example query parameters above use unencoded [ and ] characters simply for readability. In practice, these characters must be percent-encoded, per the requirements in RFC 3986.
 
-  # TODO: Figure out what to do about this note about pagination with INDEX requests...
+  # Figure out what to do about this note about pagination with INDEX requests...
   # Note: This section applies to any endpoint that responds with a resource collection as primary data, regardless of the request type.
 end

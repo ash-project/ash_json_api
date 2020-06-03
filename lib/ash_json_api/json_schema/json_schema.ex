@@ -71,10 +71,6 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp header_schema do
-    # TODO: Figure this one out.
-
-    # TODO: Raise different errors (415 vs 406) for incorrect content headers vs accept headers
-
     # For the content type header - I think we need a regex such as /^(application/vnd.api\+json;?)( profile=[^=]*";)?$/
     # This will ensure that it starts with "application/vnd.api+json" and only includes a profile param
     # I'm sure there will be a ton of edge cases so we may need to make a utility function for this and add unit tests
@@ -292,11 +288,9 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp resource_relationship_link_data(_resource, _rel) do
-    # TODO: link to relationships when those routes are available
     nil
   end
 
-  # TODO: When links are set up again, add those
   defp resource_relationship_field_data(_resource, %{
          cardinality: :one,
          destination: destination
@@ -315,7 +309,6 @@ defmodule AshJsonApi.JsonSchema do
           "properties" => %{
             "type" => %{"const" => Ash.type(destination)},
             "id" => %{"type" => "string"}
-            # TODO: support meta here.
           }
         }
       ]
@@ -336,7 +329,6 @@ defmodule AshJsonApi.JsonSchema do
         "properties" => %{
           "type" => %{"const" => Ash.type(destination)},
           "id" => %{"type" => "string"}
-          # TODO: support meta here.
         }
       },
       "uniqueItems" => true
@@ -458,7 +450,6 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp include_format(_resource) do
-    # TODO: include format
     "pending"
   end
 
@@ -480,8 +471,6 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp attribute_filter_schema(attr) do
-    # TODO make this better/incorporate validation!
-    # Ideally, delegate this to some kind of `Ash.Type`
     case attr.type do
       :string ->
         %{
@@ -507,10 +496,6 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp relationship_filter_schema(_rel) do
-    # TODO: For `to_many` relationships we should support passing a list of ids
-    # or a comma separated list of ids
-    # TODO: figure out the whole "id" type thing
-
     %{
       "type" => "string"
     }
@@ -560,7 +545,6 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
-            # TODO: We should use the primary key here, not rely on it being called id!
             "id" => resource_field_type(resource, Ash.attribute(resource, :id)),
             "type" => %{
               "const" => Ash.type(resource)
@@ -594,7 +578,6 @@ defmodule AshJsonApi.JsonSchema do
             "type" => "object",
             "required" => ["id", "type"],
             "properties" => %{
-              # TODO: We should use the primary key here, not rely on it being called id!
               "id" => resource_field_type(resource, Ash.attribute(resource, :id)),
               "type" => %{
                 "const" => Ash.type(resource)

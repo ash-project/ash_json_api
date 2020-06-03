@@ -141,19 +141,12 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
 
     test "data does NOT exist" do
-      # If the primary resource exists (ie: post) but you are trying to get access to a relationship route (such as its author) this should return a 200 with null since the post exists (even though the author does not), not a 404
-      # TODO: Clear up my comment above - this is a bit tricky to explain
-
       # Create a post
       {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
 
       Api
       |> get("/posts/#{post.id}/author", status: 200)
       |> assert_data_equals(nil)
-
-      # Assert the data attribute of the response body
-      # TODO: pass this test - it's failing I think becasue related resource routes are not working (or not configured correctly)
-      # TODO: errors are printing to the terminal screen when this test runs - noise we could do without for passing tests
     end
   end
 

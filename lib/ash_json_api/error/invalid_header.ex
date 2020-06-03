@@ -9,13 +9,15 @@ defmodule AshJsonApi.Error.InvalidHeader do
 
   use AshJsonApi.Error
 
+  alias AshJsonApi.Error.SchemaErrors
+
   def new(opts) do
     json_xema_error = opts[:json_xema_error]
 
     opts_without_error = Keyword.delete(opts, :json_xema_error)
 
     json_xema_error
-    |> AshJsonApi.Error.SchemaErrors.all_errors()
+    |> SchemaErrors.all_errors()
     |> Enum.map(fn %{path: path, message: message} ->
       opts_without_error
       |> Keyword.put(:detail, message)

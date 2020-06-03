@@ -1,9 +1,6 @@
 defmodule AshJsonApi.Includes.Parser do
   @moduledoc false
 
-  # TODO: This module will have to get *WAY* hairier to support the `filter[included][foo.bar]`
-  # but for now that complexity is not necessary
-
   defstruct [:allowed, :disallowed]
 
   def parse_and_validate_includes(resource, %{"include" => include_string}) do

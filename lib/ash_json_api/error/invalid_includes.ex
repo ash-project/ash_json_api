@@ -22,7 +22,6 @@ defmodule AshJsonApi.Error.InvalidIncludes do
 
   defp add_detail(opts) do
     if opts[:includes] do
-      # TODO: These should be stringified back to the right format, not inspected
       Keyword.put_new(opts, :detail, "Invalid includes: #{inspect(opts[:includes])}")
     else
       opts

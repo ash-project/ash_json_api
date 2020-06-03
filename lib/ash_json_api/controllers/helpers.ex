@@ -4,12 +4,10 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   `chain/2` lets us pipe cleanly, only doing stateful things if no errors
   have been generated yet.
-
-  TODO: Ash will need to have its own concept of errors, and this
-  will need to convert those errors into API level errors.
   """
   alias AshJsonApi.Controllers.Response
   alias AshJsonApi.{Error, Request}
+  alias AshJsonApi.Includes.Includer
 
   def render_or_render_errors(request, conn, function) do
     chain(request, function,
@@ -21,8 +19,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def fetch_includes(request) do
     chain(request, fn request ->
-      {new_result, includes} =
-        AshJsonApi.Includes.Includer.get_includes(request.assigns.result, request)
+      {new_result, includes} = Includer.get_includes(request.assigns.result, request)
 
       request
       |> Request.assign(:result, new_result)
@@ -65,7 +62,6 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error)
 
         {:error, error} ->
-          # TODO: map ash errors to json api errors
           error =
             Error.FrameworkError.new(
               internal_description:
@@ -383,7 +379,6 @@ defmodule AshJsonApi.Controllers.Helpers do
       destination_query =
         if paginate? do
           destination_query
-          # TODO: This is a fallback sort for predictable pagination, we should get smarter about it
           |> Ash.Query.sort(Ash.primary_key(request.resource))
           |> Ash.Query.limit(pagination_params[:limit])
           |> Ash.Query.offset(pagination_params[:offset])

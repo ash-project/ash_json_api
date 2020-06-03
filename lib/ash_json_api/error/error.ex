@@ -17,12 +17,14 @@ defmodule AshJsonApi.Error do
 
   @type t :: %__MODULE__{}
 
+  alias AshJsonApi.Error.FrameworkError
+
   def new(opts) do
     struct!(__MODULE__, opts)
   end
 
   def format_log(error) when is_bitstring(error) do
-    format_log(AshJsonApi.Error.FrameworkError.new([]))
+    format_log(FrameworkError.new([]))
   end
 
   def format_log(error) do

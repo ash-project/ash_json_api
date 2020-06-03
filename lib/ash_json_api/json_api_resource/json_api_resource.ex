@@ -37,7 +37,6 @@ defmodule AshJsonApi.JsonApiResource do
 
   defmacro fields(fields) do
     quote bind_quoted: [fields: fields] do
-      # TODO: Validate presence of fields
       fields
       |> List.wrap()
       |> Enum.map(fn field ->
@@ -51,7 +50,6 @@ defmodule AshJsonApi.JsonApiResource do
     quote do
       @sanitized_json_api_routes AshJsonApi.sanitize_routes(@relationships, @json_api_routes)
 
-      # TODO: probably make this better
       unless @ash_primary_key == [:id] do
         raise "A json API resource must have a primary key called `:id`"
       end

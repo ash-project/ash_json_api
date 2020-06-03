@@ -54,9 +54,9 @@ defmodule AshJsonApiTest.FetchingData.Sorting do
   # If sorting is supported by the server and requested by the client via query parameter sort, the server MUST return elements of the top-level data array of the response ordered according to the criteria specified.
   # --------------------------
   describe "return order of elements" do
-    # TODO: This seems redundant
+    # This seems redundant
   end
 
-  # TODO: Figure out how to make sure this applies to all types of requests - not just to an index route
+  # Figure out how to make sure this applies to all types of requests - not just to an index route
   # Note: This section applies to any endpoint that responds with a resource collection as primary data, regardless of the request type.
 end

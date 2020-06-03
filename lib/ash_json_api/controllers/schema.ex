@@ -1,13 +1,11 @@
 defmodule AshJsonApi.Controllers.Schema do
   @moduledoc false
   def init(options) do
-    # initialize options
     options
   end
 
   # sobelow_skip ["XSS.SendResp"]
   def call(conn, opts) do
-    # TODO: render this as a JSON parsable error
     api = opts[:api]
 
     schema =

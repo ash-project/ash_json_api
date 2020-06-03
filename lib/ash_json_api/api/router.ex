@@ -22,9 +22,6 @@ defmodule AshJsonApi.Api.Router do
 
         plug(:dispatch)
 
-        # TODO: This compile time dependency here may very well cause the entire application
-        # to recompile for all resources. These things may need to be retrieved from the module
-        # attributes or pushed to runtime if possible.
         resources
         |> Enum.filter(&(AshJsonApi.JsonApiResource in &1.extensions()))
         |> Enum.each(fn resource ->
@@ -65,7 +62,6 @@ defmodule AshJsonApi.Api.Router do
     end
   end
 
-  # TODO: This is pretty naive
   def routes(resource) do
     resource
     |> AshJsonApi.routes()

@@ -198,7 +198,6 @@ defmodule AshJsonApi.JsonApiResource.Routes do
     end
   end
 
-  # TODO: validate that the relationship is a many to many?
   defmacro post_to_relationship(relationship, opts \\ []) do
     quote bind_quoted: [relationship: relationship, opts: opts] do
       route = opts[:route] || ":id/relationships/#{relationship}"
@@ -224,7 +223,6 @@ defmodule AshJsonApi.JsonApiResource.Routes do
     end
   end
 
-  # TODO: validate that the relationship is a many to many?
   defmacro patch_relationship(relationship, opts \\ []) do
     quote bind_quoted: [relationship: relationship, opts: opts] do
       route = opts[:route] || ":id/relationships/#{relationship}"
@@ -250,7 +248,6 @@ defmodule AshJsonApi.JsonApiResource.Routes do
     end
   end
 
-  # TODO: validate that the relationship is a many to many?
   defmacro delete_from_relationship(relationship, opts \\ []) do
     quote bind_quoted: [relationship: relationship, opts: opts] do
       route = opts[:route] || ":id/relationships/#{relationship}"

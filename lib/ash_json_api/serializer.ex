@@ -1,5 +1,8 @@
 defmodule AshJsonApi.Serializer do
   @moduledoc false
+
+  alias Plug.Conn
+
   def serialize_to_many_relationship(request, source_record, relationship, records) do
     links =
       %{self: at_host(request, request.url)}
@@ -144,7 +147,7 @@ defmodule AshJsonApi.Serializer do
 
   defp many_links(%{url: url} = request, paginator, paginate?) do
     uri = URI.parse(request.url)
-    query = Plug.Conn.Query.decode(uri.query || "")
+    query = Conn.Query.decode(uri.query || "")
 
     if paginate? do
       %{
@@ -168,7 +171,7 @@ defmodule AshJsonApi.Serializer do
         limit: paginator.limit,
         offset: 0
       })
-      |> Plug.Conn.Query.encode()
+      |> Conn.Query.encode()
 
     uri
     |> Map.put(:query, new_query)
@@ -183,7 +186,7 @@ defmodule AshJsonApi.Serializer do
         limit: paginator.limit,
         offset: paginator.offset
       })
-      |> Plug.Conn.Query.encode()
+      |> Conn.Query.encode()
 
     uri
     |> Map.put(:query, new_query)
@@ -207,7 +210,7 @@ defmodule AshJsonApi.Serializer do
         limit: limit + (offset || 0),
         offset: offset
       })
-      |> Plug.Conn.Query.encode()
+      |> Conn.Query.encode()
 
     link =
       uri
@@ -224,7 +227,7 @@ defmodule AshJsonApi.Serializer do
       |> Map.put("page", %{
         offset: offset
       })
-      |> Plug.Conn.Query.encode()
+      |> Conn.Query.encode()
 
     link =
       uri
@@ -251,7 +254,7 @@ defmodule AshJsonApi.Serializer do
         limit: paginator.limit,
         offset: offset
       })
-      |> Plug.Conn.Query.encode()
+      |> Conn.Query.encode()
 
     link =
       uri
@@ -273,7 +276,7 @@ defmodule AshJsonApi.Serializer do
         limit: limit,
         offset: total - limit
       })
-      |> Plug.Conn.Query.encode()
+      |> Conn.Query.encode()
 
     link =
       uri

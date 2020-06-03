@@ -1,4 +1,5 @@
 # AshJsonApi
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 AshJsonApi allows you to take resources created with [Ash](https://github.com/ash-project/ash) and build complete JSON:API compliant endpoints with just a few lines of code.
@@ -18,10 +19,6 @@ Here is how it fits into an app and what it does:
 As you can see, Ash takes care of all of the data related work for a request (CRUD, Sorting, Filtering, Pagination, Side Loading, and Authorization) while AshJsonApi more or less replaces controllers and serializers.
 
 The beauty of putting all of that data functionality into a non-web layer (Ash) is that it can be used in many contexts. A JSON:API is one context - but there are others such as GraphQL or just using an Ash Resource from other code within an Application. The decoupling of the web from data layers is why AshJsonApi is it's own hex package, as opposed to just a module within [Ash](https://github.com/ash-project/ash).
-
-## Installation
-
-TODO
 
 ## Usage
 
@@ -76,12 +73,12 @@ defmodule Post do
   ...
 ```
 
-## TODO
-
-- Validate no overlapping routes
+- Validate no overlapping routes (and that route order never causes mishaps, the current implementation just sorts by the number of colons, which may be enough?)
 - Make it so that `mix phx.routes` can print the routes from a `Plug.Router` so that our routes can be printed too.
 - Validate all fields exist that are in the fields list
 - Validate includes
+- Support many to many relationships additional fields on resource identifiers. Some code exists to parse them out of the request,
+  but we need code to encode those fields and code to accept/deal with them in ash core.
 - Do the whole request in a transaction _all the time_
 - validate incoming relationship updates have the right type
 - validate that there are only `relationship_routes` for something that is in `relationships`, and that the `relationship` is marked as editable (when we implement marking them as editable or not)
@@ -95,3 +92,18 @@ defmodule Post do
 - Support different member name transformers
 - Support turning off authentication via api config
 - set up pagination maximums and defaults by resource
+- validate our spec compliant handling of content-type and accept request headers. Phoenix recommends lower case, but spec requires uppercase
+- wire up error handling with ash errors
+- right now we apply a sort for pagination. We should make sure that when resources are paginated, they have a consistent sort, probably via whatever we do for pagination in core ash
+- the 404 controller needs to render a real error
+- Invalid includes errors should be rendered in the same format they were provided(or at least in json api format)
+- Support filtering included records via `filter[included]`
+- Support nested boolean filters
+- Consider validating the `fields` dsl option (even though that may be moved to actions soon)
+- Support composite primary keys, and configuring the `id` field in general
+- the relationship route builders should take into account the kind of relationship. It is scaffolding routes that don't make sense for many to many relationships. Routing in general should improve, especially around relationships
+- Figure out the json schema for content-type/accept
+- Support for links in the serializer was dropped at some point, we need to add it back
+- validate includes in the json schema
+- add basic type validations to json schema, perhaps delegating to an optional callback on ash type to give a json schema format for a value
+- relationship filters supported/formatted properly in the json schema

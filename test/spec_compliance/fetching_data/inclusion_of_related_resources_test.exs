@@ -43,7 +43,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     end
 
     test "resource endpoint with include param of overlapping resources" do
-      # TODO: rename this because I don't know if I fully captured the concept
+      # rename this because I don't know if I fully captured the concept
       # I specifically want to test behavior around the author for the primary resource vs the nested authors
       # GET /articles/1?include=author,comments.author HTTP/1.1
     end
@@ -63,7 +63,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     test "relationship endpoints with include param" do
       # GET /articles/1/relationships/comments?include=comments.author HTTP/1.1
       # In this case, the primary data would be a collection of resource identifier objects that represent linkage to comments for an article, while the full comments and comment authors would be returned as included data.
-      # TODO: Do we need to run all the above tests on a to-one and to-many relationship endpoint?
+      # Do we need to run all the above tests on a to-one and to-many relationship endpoint?
     end
   end
 
@@ -115,6 +115,6 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     end
   end
 
-  # TODO: figure out if this note in the spec needs to be addressed, or if it will be covered from other statements
+  # figure out if this note in the spec needs to be addressed, or if it will be covered from other statements
   # Note: This section applies to any endpoint that responds with primary data, regardless of the request type. For instance, a server could support the inclusion of related resources along with a POST request to create a resource or relationship.
 end

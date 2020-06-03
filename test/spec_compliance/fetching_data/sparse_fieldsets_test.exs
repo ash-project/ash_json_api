@@ -37,9 +37,9 @@ defmodule AshJsonApiTest.FetchingData.SparseFieldsets do
     # GET /articles?include=author&fields[articles]=title,body&fields[people]=name
   end
 
-  # TODO: Figure out what to do about this note about unencoded characters
+  # Figure out what to do about this note about unencoded characters
   # Note: The above example URI shows unencoded [ and ] characters simply for readability. In practice, these characters must be percent-encoded, per the requirements in RFC 3986.
 
-  # TODO: Figure out what to do about this note about sparse fieldsets with non-GET/INDEX requests...
+  # Figure out what to do about this note about sparse fieldsets with non-GET/INDEX requests...
   # Note: This section applies to any endpoint that responds with resources as primary or included data, regardless of the request type. For instance, a server could support sparse fieldsets along with a POST request to create a resource.
 end

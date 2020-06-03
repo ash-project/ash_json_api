@@ -2,7 +2,9 @@ defmodule AshJsonApi.Request do
   @moduledoc false
   require Logger
 
+  alias AshJsonApi.Error.{InvalidBody, InvalidHeader, InvalidQuery, UnsupportedMediaType}
   alias AshJsonApi.Includes
+  alias Plug.Conn
 
   defstruct [
     :api,
@@ -50,7 +52,7 @@ defmodule AshJsonApi.Request do
       resource: resource,
       action: action,
       includes: includes.allowed,
-      url: Plug.Conn.request_url(conn),
+      url: Conn.request_url(conn),
       path_params: conn.path_params,
       query_params: conn.query_params,
       req_headers: conn.req_headers,
@@ -98,7 +100,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, AshJsonApi.Error.InvalidBody.new(json_xema_error: error))
+        add_error(request, InvalidBody.new(json_xema_error: error))
     end
   end
 
@@ -120,7 +122,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, AshJsonApi.Error.InvalidHeader.new(json_xema_error: error))
+        add_error(request, InvalidHeader.new(json_xema_error: error))
     end
     |> validate_accept_header()
   end
@@ -133,7 +135,7 @@ defmodule AshJsonApi.Request do
         String.split(value, ",")
       end)
       |> Enum.any?(fn accept ->
-        parsed = Plug.Conn.Utils.media_type(accept)
+        parsed = Conn.Utils.media_type(accept)
 
         match?({:ok, "application", "vnd.api+json", _}, parsed)
       end)
@@ -141,7 +143,7 @@ defmodule AshJsonApi.Request do
     if accepts_json_api? do
       request
     else
-      add_error(request, AshJsonApi.Error.UnsupportedMediaType.new([]))
+      add_error(request, UnsupportedMediaType.new([]))
     end
   end
 
@@ -171,7 +173,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, AshJsonApi.Error.InvalidQuery.new(json_xema_error: error))
+        add_error(request, InvalidQuery.new(json_xema_error: error))
     end
   end
 
@@ -306,8 +308,6 @@ defmodule AshJsonApi.Request do
 
   defp parse_relationships(request), do: %{request | relationships: %{}}
 
-  # TODO: To do this properly, this needs to be told what relationship is being requested.
-  # TODO: there is validation that needs to be done here.
   defp parse_resource_identifiers(%{body: %{"data" => data}} = request)
        when is_list(data) do
     identifiers =
@@ -340,7 +340,6 @@ defmodule AshJsonApi.Request do
     |> Stream.map(&relationship_change_value(relationship, &1))
     |> Enum.reduce({:ok, []}, fn
       {:ok, change}, {:ok, changes} ->
-        # TODO: This reverses changes which could be problematic
         {:ok, [change | changes]}
 
       {:error, change}, _ ->
@@ -349,6 +348,13 @@ defmodule AshJsonApi.Request do
       _, {:error, change} ->
         {:error, change}
     end)
+    |> case do
+      {:ok, changes} ->
+        {:ok, Enum.reverse(changes)}
+
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   defp relationship_change_value(%{name: name}, value) when is_list(value) do

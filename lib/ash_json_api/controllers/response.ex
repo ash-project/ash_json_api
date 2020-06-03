@@ -2,6 +2,8 @@ defmodule AshJsonApi.Controllers.Response do
   @moduledoc false
   require Logger
 
+  alias AshJsonApi.Error.FrameworkError
+
   # sobelow_skip ["XSS.SendResp"]
   def render_errors(conn, request, opts \\ []) do
     errors =
@@ -9,7 +11,7 @@ defmodule AshJsonApi.Controllers.Response do
       |> List.flatten()
       |> Enum.map(fn error ->
         if is_bitstring(error) do
-          AshJsonApi.Error.FrameworkError.new(internal_description: error)
+          FrameworkError.new(internal_description: error)
         else
           error
         end
