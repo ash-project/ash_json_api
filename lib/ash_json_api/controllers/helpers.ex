@@ -410,15 +410,10 @@ defmodule AshJsonApi.Controllers.Helpers do
            ) do
         {:ok, record} ->
           paginated_result =
-            if paginate? do
-              %AshJsonApi.Paginator{
-                limit: pagination_params[:limit],
-                offset: pagination_params[:offset],
-                results: List.wrap(Map.get(record, relationship.name))
-              }
-            else
-              List.wrap(Map.get(record, relationship.name))
-            end
+            record
+            |> Map.get(relationship.name)
+            |> List.wrap()
+            |> maybe_paginate(pagination_params, paginate?)
 
           Request.assign(request, :result, paginated_result)
 
@@ -435,6 +430,17 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error)
       end
     end)
+  end
+
+  defp maybe_paginate(records, pagination_params, paginate?) do
+    if paginate? do
+      %AshJsonApi.Paginator{
+        limit: pagination_params[:limit],
+        offset: pagination_params[:offset],
+        results: records
+      }
+    else
+    end
   end
 
   def fetch_id_path_param(request) do

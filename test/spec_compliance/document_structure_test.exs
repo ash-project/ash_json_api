@@ -4,6 +4,8 @@ defmodule AshJsonApiTest.DocumentStructure do
   """
   use ExUnit.Case
 
+  # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
+
   # I'd like to use this as part of a "helper" or "shared example" such that for every single test that has a response from the server - it checks against this, along with our other "manual" tests
 
   # The official JSON:API schema is as restrictive as possible, but is allowed to be extended (which Ash does).

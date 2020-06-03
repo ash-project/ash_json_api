@@ -69,7 +69,7 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp header_schema() do
+  defp header_schema do
     # TODO: Figure this one out.
 
     # TODO: Raise different errors (415 vs 406) for incorrect content headers vs accept headers
@@ -149,7 +149,7 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp base_definitions() do
+  defp base_definitions do
     %{
       "links" => %{
         "type" => "object",

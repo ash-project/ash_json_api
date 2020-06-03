@@ -3,6 +3,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
   @moduletag :json_api_spec_1_0
   @moduletag :skip
 
+  # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
+
   defmodule Author do
     use Ash.Resource, name: "authors", type: "author"
     use AshJsonApi.JsonApiResource

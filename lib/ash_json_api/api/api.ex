@@ -46,11 +46,11 @@ defmodule AshJsonApi.Api do
         prefix: @prefix,
         serve_schema: @serve_schema
 
-      def router() do
+      def router do
         Module.concat(__MODULE__, Router)
       end
 
-      def prefix() do
+      def prefix do
         @prefix
       end
 
@@ -58,11 +58,11 @@ defmodule AshJsonApi.Api do
         @authorize
       end
 
-      def host() do
+      def host do
         @host
       end
 
-      def serve_schema() do
+      def serve_schema do
         @serve_schema
       end
     end

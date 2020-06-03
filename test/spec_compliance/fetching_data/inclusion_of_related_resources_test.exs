@@ -4,6 +4,8 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   # @router_opts AshJsonApi.Test.Router.init([])
   @moduletag :json_api_spec_1_0
 
+  # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
+
   @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------

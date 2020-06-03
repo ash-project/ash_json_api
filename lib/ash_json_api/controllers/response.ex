@@ -15,26 +15,30 @@ defmodule AshJsonApi.Controllers.Response do
       end)
 
     unless opts[:log?] == false do
-      Enum.each(errors, fn error ->
-        if is_bitstring(error) do
-          Logger.error(
-            AshJsonApi.Error.format_log(error),
-            opts[:logger_metadata] || []
-          )
-        else
-          Logger.log(
-            error.log_level,
-            fn -> AshJsonApi.Error.format_log(error) end,
-            opts[:logger_metadata] || []
-          )
-        end
-      end)
+      log_errors(errors, opts)
     end
 
     status = opts[:status_code] || error_status_code(errors)
     serialized = AshJsonApi.Serializer.serialize_errors(request, errors)
 
     send_resp(conn, status, serialized)
+  end
+
+  defp log_errors(errors, opts) do
+    Enum.each(errors, fn error ->
+      if is_bitstring(error) do
+        Logger.error(
+          AshJsonApi.Error.format_log(error),
+          opts[:logger_metadata] || []
+        )
+      else
+        Logger.log(
+          error.log_level,
+          fn -> AshJsonApi.Error.format_log(error) end,
+          opts[:logger_metadata] || []
+        )
+      end
+    end)
   end
 
   # sobelow_skip ["XSS.SendResp"]

@@ -41,6 +41,7 @@ defmodule AshJsonApi do
 
   @doc false
   # TODO: Remember why you wrote this and make sure it does what you thought it did then
+  # TODO: Ensure that resource routes are created in an order that causes them not to conflict
   def sanitize_routes(_relationships, all_routes) do
     all_routes
     |> Enum.group_by(fn route ->
@@ -55,47 +56,5 @@ defmodule AshJsonApi do
           raise "Duplicate routes defined for #{method}: #{route}"
       end
     end)
-
-    # |> Enum.reject(&pruned?(relationships, &1))
-    # |> Enum.reject(&is_nil(&1.relationship))
-    # |> Enum.group_by(&Map.take(&1, [:action, :relationship]))
-    # |> Enum.flat_map(fn {info, routes} ->
-    #   case routes do
-    #     [route] ->
-    #       [%{route | primary?: true}]
-
-    #     routes ->
-    #       case Enum.count(routes, & &1.primary?) do
-    #         0 ->
-    #           # TODO: Format these prettier
-    #           raise "Must declare a primary route for #{format_action(info)}, as there are more than one."
-
-    #         1 ->
-    #           routes
-
-    #         _ ->
-    #           raise "Duplicate primary routes declared for #{format_action(info)}, but there can only be one primary route."
-    #       end
-    #   end
-    # end)
-
-    # defp pruned?(_relationships, %{prune: nil}), do: false
-
-    # defp pruned?(relationships, %{
-    #        prune: {:require_relationship_cardinality, :many},
-    #        relationship: relationship_name
-    #      }) do
-    #   relationship =
-    #     Enum.find(relationships, fn relationship ->
-    #       relationship.name == relationship_name
-    #     end)
-
-    #   match?(%{cardinality: cardinality} when cardinality != :many, relationship)
-    # end
-
-    # defp format_action(%{action: action, relationship: nil}), do: "`#{action}`"
-
-    # defp format_action(%{action: action, relationship: relationship}),
-    #   do: "`#{action}`: `#{relationship}`"
   end
 end

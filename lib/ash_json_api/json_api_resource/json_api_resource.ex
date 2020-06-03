@@ -55,19 +55,19 @@ defmodule AshJsonApi.JsonApiResource do
         raise "A json API resource must have a primary key called `:id`"
       end
 
-      def json_api_join_fields() do
+      def json_api_join_fields do
         @json_api_join_fields
       end
 
-      def json_api_routes() do
+      def json_api_routes do
         @sanitized_json_api_routes
       end
 
-      def json_api_fields() do
+      def json_api_fields do
         @json_api_fields
       end
 
-      def json_api_includes() do
+      def json_api_includes do
         @json_api_includes
       end
     end

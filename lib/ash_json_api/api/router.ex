@@ -27,7 +27,7 @@ defmodule AshJsonApi.Api.Router do
         # attributes or pushed to runtime if possible.
         resources
         |> Enum.filter(&(AshJsonApi.JsonApiResource in &1.extensions()))
-        |> Enum.map(fn resource ->
+        |> Enum.each(fn resource ->
           for %{
                 route: route,
                 action: action_name,

@@ -429,21 +429,22 @@ defmodule AshJsonApi.Serializer do
     |> URI.parse()
     |> Map.put(:query, nil)
     |> Map.put(:path, "/" <> Path.join(request.json_api_prefix, route))
-    |> Map.update!(:path, fn path ->
-      path
-      |> Path.split()
-      |> Enum.map(fn path_element ->
-        if String.starts_with?(path_element, ":") do
-          "replacing #{path_element}"
-          Map.get(request.path_params, String.slice(path_element, 1..-1)) || ""
-        else
-          path_element
-        end
-      end)
-      |> Path.join()
-    end)
+    |> Map.update!(:path, &replace_path_params(&1, request))
     |> URI.to_string()
     |> encode_link()
+  end
+
+  defp replace_path_params(path, request) do
+    path
+    |> Path.split()
+    |> Enum.map(fn path_element ->
+      if String.starts_with?(path_element, ":") do
+        Map.get(request.path_params, String.slice(path_element, 1..-1)) || ""
+      else
+        path_element
+      end
+    end)
+    |> Path.join()
   end
 
   defp serialize_attributes(%resource{} = record) do
