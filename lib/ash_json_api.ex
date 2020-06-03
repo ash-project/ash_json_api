@@ -1,4 +1,7 @@
 defmodule AshJsonApi do
+  @moduledoc """
+  Tools for introspecting ash json api resources/apis.
+  """
   def route(resource, criteria \\ %{}) do
     resource
     |> routes()
@@ -40,7 +43,6 @@ defmodule AshJsonApi do
   end
 
   @doc false
-  # TODO: Remember why you wrote this and make sure it does what you thought it did then
   # TODO: Ensure that resource routes are created in an order that causes them not to conflict
   def sanitize_routes(_relationships, all_routes) do
     all_routes

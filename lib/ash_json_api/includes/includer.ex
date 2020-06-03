@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Includes.Includer do
+  @moduledoc false
   alias AshJsonApi.Request
 
   @spec get_includes(record_or_records :: struct | list(struct) | nil, Request.t()) ::

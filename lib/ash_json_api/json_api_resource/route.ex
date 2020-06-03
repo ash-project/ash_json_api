@@ -1,7 +1,7 @@
 defmodule AshJsonApi.JsonApiResource.Route do
+  @moduledoc false
   defstruct [
     :route,
-    :prune,
     :action,
     :action_type,
     :method,
@@ -18,7 +18,6 @@ defmodule AshJsonApi.JsonApiResource.Route do
     # TODO: Right now we just skip straight to the action in general.
     %__MODULE__{
       route: opts[:route],
-      prune: opts[:prune],
       type: opts[:type],
       action: opts[:action],
       action_type: opts[:action_type],

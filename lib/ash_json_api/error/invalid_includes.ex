@@ -1,8 +1,9 @@
 defmodule AshJsonApi.Error.InvalidIncludes do
-  @detail """
+  @moduledoc """
   Returned when the includes string provided in the query parameter `include`
   is invalid.
   """
+  @detail @moduledoc
 
   @type t :: AshJsonApi.Error.t()
 

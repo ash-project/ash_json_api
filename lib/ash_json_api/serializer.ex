@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Serializer do
+  @moduledoc false
   def serialize_to_many_relationship(request, source_record, relationship, records) do
     links =
       %{self: at_host(request, request.url)}

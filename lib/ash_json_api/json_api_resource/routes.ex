@@ -1,4 +1,5 @@
 defmodule AshJsonApi.JsonApiResource.Routes do
+  @moduledoc "DSL builders for configuring the routes of a json api resource"
   defmacro routes(do: body) do
     quote do
       import AshJsonApi.JsonApiResource.Routes

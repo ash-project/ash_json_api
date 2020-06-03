@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Request do
+  @moduledoc false
   require Logger
 
   alias AshJsonApi.Includes

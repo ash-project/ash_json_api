@@ -1,7 +1,8 @@
 defmodule AshJsonApi.Error.NotFound do
-  @detail """
+  @moduledoc """
   Returned when a record was explicitly requested, but could not be found.
   """
+  @detail @moduledoc
   @title "Entity Not Found"
   @status_code 404
 

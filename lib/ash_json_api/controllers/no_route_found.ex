@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Controllers.NoRouteFound do
+  @moduledoc false
   def init(options) do
     # initialize options
     options

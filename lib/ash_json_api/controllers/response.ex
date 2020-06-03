@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Controllers.Response do
+  @moduledoc false
   require Logger
 
   # sobelow_skip ["XSS.SendResp"]

@@ -1,5 +1,7 @@
 defmodule AshJsonApi.Includes.Parser do
-  # This module will have to get *WAY* hairier to support the `filter[included][foo.bar]`
+  @moduledoc false
+
+  # TODO: This module will have to get *WAY* hairier to support the `filter[included][foo.bar]`
   # but for now that complexity is not necessary
 
   defstruct [:allowed, :disallowed]

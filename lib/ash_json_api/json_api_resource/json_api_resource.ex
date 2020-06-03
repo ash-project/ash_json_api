@@ -1,4 +1,5 @@
 defmodule AshJsonApi.JsonApiResource do
+  @moduledoc "The entrypoint for adding JSON:API behavior to a resource"
   defmacro __using__(_) do
     quote do
       import AshJsonApi.JsonApiResource, only: [json_api: 1]

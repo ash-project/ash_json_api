@@ -1,7 +1,9 @@
 defmodule AshJsonApi.Error.InvalidHeader do
-  @detail """
+  @moduledoc """
   Returned when a header provided is invalid
   """
+
+  @detail @moduledoc
   @title "Invalid Header"
   @status_code 400
 

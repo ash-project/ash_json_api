@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Test do
+  @moduledoc false
   use Plug.Test
 
   require ExUnit.Assertions

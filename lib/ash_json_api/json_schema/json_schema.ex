@@ -1,4 +1,5 @@
 defmodule AshJsonApi.JsonSchema do
+  @moduledoc false
   def generate(api) do
     resources =
       api

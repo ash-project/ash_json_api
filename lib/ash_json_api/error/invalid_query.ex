@@ -1,7 +1,8 @@
 defmodule AshJsonApi.Error.InvalidQuery do
-  @detail """
+  @moduledoc """
   Returned when the query provided is invalid
   """
+  @detail @moduledoc
   @title "Invalid Query"
   @status_code 400
 

@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Error.SchemaErrors do
+  @moduledoc false
   def all_errors(%{reason: reason}, format \\ :parameter) do
     reason
     |> JsonXema.ValidationError.travers_errors([], fn error, path, acc ->

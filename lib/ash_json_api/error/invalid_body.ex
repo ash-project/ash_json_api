@@ -1,7 +1,8 @@
 defmodule AshJsonApi.Error.InvalidBody do
-  @detail """
+  @moduledoc """
   Returned when the request body provided is invalid
   """
+  @detail @moduledoc
   @title "Invalid Body"
   @status_code 400
 

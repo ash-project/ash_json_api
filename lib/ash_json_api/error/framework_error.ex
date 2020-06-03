@@ -1,7 +1,8 @@
 defmodule AshJsonApi.Error.FrameworkError do
-  @detail """
+  @moduledoc """
   Returned when an unexpected error in the framework has occured.
   """
+  @detail @moduledoc
   @title "Framework Error"
   @status_code 500
 

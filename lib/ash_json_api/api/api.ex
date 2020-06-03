@@ -1,4 +1,6 @@
 defmodule AshJsonApi.Api do
+  @moduledoc "The entrypoint for adding JSON:API behavior to an Ash API"
+
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
       @extensions AshJsonApi.Api
