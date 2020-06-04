@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Api.Router do
+  @moduledoc false
   defmacro __using__(opts) do
     quote bind_quoted: [
             api: opts[:api],

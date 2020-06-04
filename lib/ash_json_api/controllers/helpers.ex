@@ -2,6 +2,10 @@ defmodule AshJsonApi.Controllers.Helpers do
   @moduledoc """
   Tools for control flow around a request, and common controller utilities.
 
+  While we haven't focused on supporting it yet, this will eventually be a set of tools
+  that can be used to build custom controller actions, without having to write everything
+  yourself.
+
   `chain/2` lets us pipe cleanly, only doing stateful things if no errors
   have been generated yet.
   """
