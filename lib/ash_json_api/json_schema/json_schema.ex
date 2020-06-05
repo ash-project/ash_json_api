@@ -22,7 +22,7 @@ defmodule AshJsonApi.JsonSchema do
 
     definitions =
       Enum.reduce(resources, base_definitions(), fn resource, acc ->
-        Map.put(acc, Ash.type(resource), resource_object_schema(resource))
+        Map.put(acc, AshJsonApi.type(resource), resource_object_schema(resource))
       end)
 
     %{
@@ -113,7 +113,7 @@ defmodule AshJsonApi.JsonSchema do
   # This is for our representation of a resource *in the response*
   def resource_object_schema(resource) do
     %{
-      "description" => "A \"Resource object\" representing a #{Ash.type(resource)}",
+      "description" => "A \"Resource object\" representing a #{AshJsonApi.type(resource)}",
       "type" => "object",
       "required" => ["type", "id"],
       "properties" => %{
@@ -220,7 +220,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp attributes(resource) do
     %{
-      "description" => "An attributes object for a #{Ash.type(resource)}",
+      "description" => "An attributes object for a #{AshJsonApi.type(resource)}",
       "type" => "object",
       "required" => required_attributes(resource),
       "properties" => resource_attributes(resource),
@@ -252,7 +252,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp relationships(resource) do
     %{
-      "description" => "A relationships object for a #{Ash.type(resource)}",
+      "description" => "A relationships object for a #{AshJsonApi.type(resource)}",
       "type" => "object",
       "properties" => resource_relationships(resource),
       "additionalProperties" => false
@@ -296,18 +296,18 @@ defmodule AshJsonApi.JsonSchema do
          destination: destination
        }) do
     %{
-      "description" => "References to the related #{Ash.type(destination)}",
+      "description" => "References to the related #{AshJsonApi.type(destination)}",
       anyOf: [
         %{
           "type" => "null"
         },
         %{
-          "description" => "Resource identifiers of the related #{Ash.type(destination)}",
+          "description" => "Resource identifiers of the related #{AshJsonApi.type(destination)}",
           "type" => "object",
           "required" => ["type", "id"],
           "additionalProperties" => false,
           "properties" => %{
-            "type" => %{"const" => Ash.type(destination)},
+            "type" => %{"const" => AshJsonApi.type(destination)},
             "id" => %{"type" => "string"}
           }
         }
@@ -320,14 +320,14 @@ defmodule AshJsonApi.JsonSchema do
          destination: destination
        }) do
     %{
-      "description" => "An array of references to the related #{Ash.type(destination)}",
+      "description" => "An array of references to the related #{AshJsonApi.type(destination)}",
       "type" => "array",
       "items" => %{
-        "description" => "Resource identifiers of the related #{Ash.type(destination)}",
+        "description" => "Resource identifiers of the related #{AshJsonApi.type(destination)}",
         "type" => "object",
         "required" => ["type", "id"],
         "properties" => %{
-          "type" => %{"const" => Ash.type(destination)},
+          "type" => %{"const" => AshJsonApi.type(destination)},
           "id" => %{"type" => "string"}
         }
       },
@@ -516,7 +516,7 @@ defmodule AshJsonApi.JsonSchema do
           "additionalProperties" => false,
           "properties" => %{
             "type" => %{
-              "const" => Ash.type(resource)
+              "const" => AshJsonApi.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -547,7 +547,7 @@ defmodule AshJsonApi.JsonSchema do
           "properties" => %{
             "id" => resource_field_type(resource, Ash.attribute(resource, :id)),
             "type" => %{
-              "const" => Ash.type(resource)
+              "const" => AshJsonApi.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -580,7 +580,7 @@ defmodule AshJsonApi.JsonSchema do
             "properties" => %{
               "id" => resource_field_type(resource, Ash.attribute(resource, :id)),
               "type" => %{
-                "const" => Ash.type(resource)
+                "const" => AshJsonApi.type(resource)
               },
               "additionalProperties" => false
             }
@@ -649,10 +649,10 @@ defmodule AshJsonApi.JsonSchema do
             %{
               "data" => %{
                 "description" =>
-                  "An array of resource objects representing a #{Ash.type(resource)}",
+                  "An array of resource objects representing a #{AshJsonApi.type(resource)}",
                 "type" => "array",
                 "items" => %{
-                  "$ref" => "#/definitions/#{Ash.type(resource)}"
+                  "$ref" => "#/definitions/#{AshJsonApi.type(resource)}"
                 },
                 "uniqueItems" => true
               }
@@ -668,7 +668,7 @@ defmodule AshJsonApi.JsonSchema do
           "oneOf" => [
             %{
               "data" => %{
-                "$ref" => "#/definitions/#{Ash.type(resource)}"
+                "$ref" => "#/definitions/#{AshJsonApi.type(resource)}"
               }
             },
             %{

@@ -35,9 +35,9 @@ defmodule AshJsonApi.Controllers.Helpers do
     chain(request, fn request ->
       params =
         if request.api.authorize? do
-          [action: request.action, authorization: [user: request.user]]
+          [actor: request.actor]
         else
-          [action: request.action]
+          []
         end
 
       page_params = Map.get(request.assigns, :page, %{})
@@ -89,7 +89,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         if request.api.authorize? do
           [
             action: request.action,
-            authorization: [user: request.user],
+            actor: request.actor,
             side_load: side_load_query(request),
             attributes: request.attributes,
             relationships: request.relationships
@@ -131,7 +131,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         if request.api.authorize? do
           [
             action: request.action,
-            authorization: [user: request.user],
+            actor: request.actor,
             side_load: side_load_query(request),
             attributes: request.attributes,
             relationships: request.relationships
@@ -179,7 +179,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       params =
         if request.api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+          Keyword.put(params, :authorization, actor: request.actor)
         else
           params
         end
@@ -214,7 +214,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       params =
         if request.api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+          Keyword.put(params, :authorization, actor: request.actor)
         else
           params
         end
@@ -249,7 +249,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       params =
         if request.api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+          Keyword.put(params, :authorization, actor: request.actor)
         else
           params
         end
@@ -278,7 +278,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         if request.api.authorize? do
           [
             action: request.action,
-            authorization: [user: request.user]
+            actor: request.actor
           ]
         else
           [action: request.action]
@@ -325,7 +325,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       params =
         if api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+          Keyword.put(params, :authorization, actor: request.actor)
         else
           params
         end
@@ -397,7 +397,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       params =
         if api.authorize? do
-          Keyword.put(params, :authorization, user: request.user)
+          Keyword.put(params, :authorization, actor: request.actor)
         else
           params
         end

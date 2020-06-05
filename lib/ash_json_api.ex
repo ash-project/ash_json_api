@@ -10,6 +10,10 @@ defmodule AshJsonApi do
     end)
   end
 
+  def type(resource) do
+    resource.json_api_type()
+  end
+
   def join_fields(resource, association) do
     join_fields(resource)[association]
   end

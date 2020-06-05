@@ -1,8 +1,9 @@
 defmodule AshJsonApi.JsonApiResource.Routes do
   @moduledoc "DSL builders for configuring the routes of a json api resource"
-  defmacro routes(do: body) do
+  defmacro routes(path, do: body) do
     quote do
       import AshJsonApi.JsonApiResource.Routes
+      @json_api_path unquote(path)
       unquote(body)
       import AshJsonApi.JsonApiResource.Routes, only: []
     end
@@ -20,7 +21,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :get,
@@ -41,7 +42,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :get,
@@ -63,7 +64,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :post,
@@ -84,7 +85,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :patch,
@@ -105,7 +106,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :delete,
@@ -162,7 +163,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :get,
@@ -186,7 +187,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :get,
@@ -210,7 +211,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :post,
@@ -235,7 +236,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :patch,
@@ -260,7 +261,7 @@ defmodule AshJsonApi.JsonApiResource.Routes do
                          route:
                            AshJsonApi.JsonApiResource.Routes.prefix(
                              route,
-                             @name,
+                             @json_api_path,
                              Keyword.get(opts, :prefix?, true)
                            ),
                          method: :delete,
@@ -273,8 +274,14 @@ defmodule AshJsonApi.JsonApiResource.Routes do
     end
   end
 
-  def prefix(route, name, true) do
-    full_route = "/" <> name <> "/" <> String.trim_leading(route, "/")
+  def prefix(route, path, true) do
+    path =
+      case path do
+        "/" <> _rest_path -> path
+        path -> "/" <> path
+      end
+
+    full_route = "/" <> path <> "/" <> String.trim_leading(route, "/")
 
     String.trim_trailing(full_route, "/")
   end

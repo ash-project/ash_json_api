@@ -22,7 +22,7 @@ defmodule AshJsonApi.Error.NotFound do
 
     case {id, resource} do
       {{:ok, id}, {:ok, resource}} ->
-        "No record of #{Ash.type(resource)} with id: #{id}"
+        "No record of #{AshJsonApi.type(resource)} with id: #{id}"
 
       {{:ok, id}, _} ->
         "No record with id: #{id}"
