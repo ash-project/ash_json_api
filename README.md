@@ -62,7 +62,7 @@ defmodule Post do
   ...
 
   json_api do
-    routes do
+    routes "/posts" do
       # Add a `GET /posts/:id` route, that calls into the :read action called :default
       get :default
       # Add a `GET /posts` route, that calls into the :read action called :default

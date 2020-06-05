@@ -3,7 +3,7 @@ defmodule AshJsonApi.JsonApiResource do
 
   @callback json_api_type() :: String.t()
   @callback json_api_join_fields() :: Keyword.t()
-  @callback json_api_routes() :: [AshJsonApi.AshJsonApiResource.Route.t()]
+  @callback json_api_routes() :: [AshJsonApi.JsonApiResource.Route.t()]
   @callback json_api_fields() :: [atom]
   @callback json_api_includes() :: Keyword.t()
 
@@ -68,6 +68,10 @@ defmodule AshJsonApi.JsonApiResource do
 
       unless @ash_primary_key == [:id] do
         raise "A json API resource must have a primary key called `:id`"
+      end
+
+      unless @json_api_type do
+        raise "A json API resource must have a type, e.g `type \"post\"`"
       end
 
       def json_api_type do

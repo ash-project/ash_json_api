@@ -6,12 +6,14 @@ defmodule AshJsonApi.ContentNegotiationTest do
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
 
   defmodule Author do
-    use Ash.Resource, name: "authors", type: "author"
+    use Ash.Resource
     use AshJsonApi.JsonApiResource
     use Ash.DataLayer.Ets, private?: true
 
     json_api do
-      routes do
+      type("author")
+
+      routes "/authors" do
         get(:default)
         index(:default)
       end
@@ -32,12 +34,14 @@ defmodule AshJsonApi.ContentNegotiationTest do
   end
 
   defmodule Post do
-    use Ash.Resource, name: "posts", type: "post"
+    use Ash.Resource
     use AshJsonApi.JsonApiResource
     use Ash.DataLayer.Ets, private?: true
 
     json_api do
-      routes do
+      type("post")
+
+      routes "/posts" do
         get(:default)
         index(:default)
       end

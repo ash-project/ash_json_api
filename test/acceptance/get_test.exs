@@ -3,12 +3,14 @@ defmodule Test.Acceptance.GetTest do
   @moduletag :skip
 
   defmodule Post do
-    use Ash.Resource, name: "posts", type: "post"
+    use Ash.Resource
     use AshJsonApi.JsonApiResource
     use Ash.DataLayer.Ets, private?: true
 
     json_api do
-      routes do
+      type("post")
+
+      routes "/posts" do
         get(:default)
         index(:default)
       end

@@ -6,12 +6,14 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
 
   defmodule Author do
-    use Ash.Resource, name: "authors", type: "author"
+    use Ash.Resource
     use AshJsonApi.JsonApiResource
     use Ash.DataLayer.Ets, private?: true
 
     json_api do
-      routes do
+      type("author")
+
+      routes "/authors" do
         get(:default)
         index(:default)
       end
@@ -31,17 +33,21 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     end
 
     relationships do
-      has_many(:posts, AshJsonApiTest.FetchingData.FetchingRelationships.Post)
+      has_many(:posts, AshJsonApiTest.FetchingData.FetchingRelationships.Post,
+        destination_field: :author_id
+      )
     end
   end
 
   defmodule Post do
-    use Ash.Resource, name: "posts", type: "post"
+    use Ash.Resource
     use AshJsonApi.JsonApiResource
     use Ash.DataLayer.Ets, private?: true
 
     json_api do
-      routes do
+      type("post")
+
+      routes "/posts" do
         get(:default)
         index(:default)
       end
