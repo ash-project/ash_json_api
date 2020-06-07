@@ -76,15 +76,6 @@ defmodule Post do
   ...
 ```
 
-- Validate no overlapping routes (and that route order never causes mishaps, the current implementation just sorts by the number of colons, which may be enough?)
-- Make it so that `mix phx.routes` can print the routes from a `Plug.Router` so that our routes can be printed too.
-- Validate all fields exist that are in the fields list
-- Validate includes
-- Support many to many relationships additional fields on resource identifiers. Some code exists to parse them out of the request,
-  but we need code to encode those fields and code to accept/deal with them in ash core.
-- Do the whole request in a transaction _all the time_
-- validate incoming relationship updates have the right type
-- validate that there are only `relationship_routes` for something that is in `relationships`, and that the `relationship` is marked as editable (when we implement marking them as editable or not)
 - All kinds of spec compliance, like response codes and error semantics
 - Should implement a complete validation step, that first checks for a valid request according to json api, then validates against the resource being requested
 - Logging should be routed through ash so it can be configured/customized
