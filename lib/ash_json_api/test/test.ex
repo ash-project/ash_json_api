@@ -6,8 +6,9 @@ defmodule AshJsonApi.Test do
   import ExUnit.Assertions
 
   # This probably won't work for users of ashjsonapi
-  @external_resource "test/support/response_schema"
-  @schema "test/support/response_schema" |> File.read!() |> Jason.decode!() |> JsonXema.new()
+  @schema_file "lib/ash_json_api/test/response_schema"
+  @external_resource @schema_file
+  @schema @schema_file |> File.read!() |> Jason.decode!() |> JsonXema.new()
 
   def get(api, path, opts \\ []) do
     result =
