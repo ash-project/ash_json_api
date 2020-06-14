@@ -116,22 +116,7 @@ defmodule AshJsonApi.Serializer do
     |> add_relationship_meta(record, source_record, relationship)
   end
 
-  defp add_relationship_meta(payload, %{__join_row__: join_row}, %source_resource{}, %{name: name}) do
-    case AshJsonApi.join_fields(source_resource, name) do
-      [_ | _] = fields ->
-        meta =
-          Enum.reduce(fields, %{}, fn field, acc ->
-            Map.put(acc, field, Map.get(join_row, field))
-          end)
-
-        Map.put(payload, :meta, meta)
-
-      _ ->
-        payload
-    end
-  end
-
-  defp add_relationship_meta(payload, _, _, _) do
+  defp add_relationship_meta(payload, _row, _source, _relationship) do
     payload
   end
 

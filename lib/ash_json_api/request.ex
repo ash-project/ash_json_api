@@ -41,7 +41,7 @@ defmodule AshJsonApi.Request do
           resource :: Ash.resource(),
           action :: atom,
           Ash.api(),
-          AshJsonApi.JsonApiResource.Route.t()
+          AshJsonApi.Resource.Route.t()
         ) ::
           t
   def from(conn, resource, action, api, route) do

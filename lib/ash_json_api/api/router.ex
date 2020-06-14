@@ -1,15 +1,16 @@
 defmodule AshJsonApi.Api.Router do
   @moduledoc false
-  defmacro __using__(opts) do
-    quote bind_quoted: [
-            api: opts[:api],
-            prefix: opts[:prefix],
-            resources: opts[:resources],
-            serve_schema: opts[:serve_schema]
-          ],
-          location: :keep do
-      defmodule Router do
-        # And get that into phoenix
+  def define_router(api, resources, prefix, serve_schema?) do
+    module_name = Module.concat(api, Router)
+
+    Module.create(
+      module_name,
+      quote bind_quoted: [
+              api: api,
+              prefix: prefix,
+              resources: resources,
+              serve_schema?: serve_schema?
+            ] do
         use Plug.Router
         require Ash
 
@@ -24,7 +25,12 @@ defmodule AshJsonApi.Api.Router do
         plug(:dispatch)
 
         resources
-        |> Enum.filter(&(AshJsonApi.JsonApiResource in &1.extensions()))
+        |> Enum.map(fn resource ->
+          Code.ensure_loaded(resource)
+
+          resource
+        end)
+        |> Enum.filter(&(AshJsonApi.Resource in Ash.extensions(&1)))
         |> Enum.each(fn resource ->
           for %{
                 route: route,
@@ -50,7 +56,7 @@ defmodule AshJsonApi.Api.Router do
           end
         end)
 
-        if serve_schema do
+        if serve_schema? do
           match("/schema",
             via: :get,
             to: AshJsonApi.Controllers.Schema,
@@ -59,10 +65,14 @@ defmodule AshJsonApi.Api.Router do
         end
 
         match(_, to: AshJsonApi.Controllers.NoRouteFound)
-      end
-    end
+      end,
+      Macro.Env.location(__ENV__)
+    )
+
+    module_name
   end
 
+  @doc false
   def routes(resource) do
     resource
     |> AshJsonApi.routes()
