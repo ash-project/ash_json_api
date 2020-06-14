@@ -34,7 +34,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def fetch_records(request) do
     chain(request, fn request ->
       params =
-        if request.api.authorize? do
+        if AshJsonApi.authorize?(request.api) do
           [actor: request.actor]
         else
           []
@@ -86,7 +86,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def create_record(request) do
     chain(request, fn %{api: api, resource: resource} ->
       params =
-        if request.api.authorize? do
+        if AshJsonApi.authorize?(request.api) do
           [
             action: request.action,
             actor: request.actor,
@@ -128,7 +128,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def update_record(request) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
       params =
-        if request.api.authorize? do
+        if AshJsonApi.authorize?(request.api) do
           [
             action: request.action,
             actor: request.actor,
@@ -178,8 +178,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       ]
 
       params =
-        if request.api.authorize? do
-          Keyword.put(params, :authorization, actor: request.actor)
+        if AshJsonApi.authorize?(request.api) do
+          Keyword.put(params, :actor, request.actor)
         else
           params
         end
@@ -213,8 +213,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       ]
 
       params =
-        if request.api.authorize? do
-          Keyword.put(params, :authorization, actor: request.actor)
+        if AshJsonApi.authorize?(request.api) do
+          Keyword.put(params, :actor, request.actor)
         else
           params
         end
@@ -248,8 +248,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       ]
 
       params =
-        if request.api.authorize? do
-          Keyword.put(params, :authorization, actor: request.actor)
+        if AshJsonApi.authorize?(request.api) do
+          Keyword.put(params, :actor, request.actor)
         else
           params
         end
@@ -275,7 +275,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def destroy_record(request) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
       params =
-        if request.api.authorize? do
+        if AshJsonApi.authorize?(request.api) do
           [
             action: request.action,
             actor: request.actor
@@ -324,8 +324,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       params =
-        if api.authorize? do
-          Keyword.put(params, :authorization, actor: request.actor)
+        if AshJsonApi.authorize?(api) do
+          Keyword.put(params, :actor, request.actor)
         else
           params
         end
@@ -396,8 +396,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         |> Ash.Query.side_load([{relationship.name, destination_query}])
 
       params =
-        if api.authorize? do
-          Keyword.put(params, :authorization, actor: request.actor)
+        if AshJsonApi.authorize?(api) do
+          Keyword.put(params, :actor, request.actor)
         else
           params
         end

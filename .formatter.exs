@@ -3,7 +3,6 @@ locals_without_parens = [
   get: 2,
   index: 1,
   index: 2,
-  join_fields: 2,
   post: 1,
   patch: 2,
   post: 1,

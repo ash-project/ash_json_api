@@ -6,14 +6,19 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
 
   defmodule Author do
-    use Ash.Resource
-    use AshJsonApi.JsonApiResource
-    use Ash.DataLayer.Ets, private?: true
+    use Ash.Resource,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
 
     json_api do
       type("author")
 
-      routes "/authors" do
+      routes do
+        base("/authors")
         get(:default)
         index(:default)
       end
@@ -34,14 +39,21 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   end
 
   defmodule Post do
-    use Ash.Resource
-    use AshJsonApi.JsonApiResource
-    use Ash.DataLayer.Ets, private?: true
+    use Ash.Resource,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
 
     json_api do
       type("post")
 
-      routes "/posts" do
+      routes do
+        base("/posts")
         get(:default)
         index(:default)
       end
@@ -66,10 +78,15 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   end
 
   defmodule Api do
-    use Ash.Api
-    use AshJsonApi.Api
+    use Ash.Api,
+      extensions: [
+        AshJsonApi.Api
+      ]
 
-    resources([Post, Author])
+    resources do
+      resource(Post)
+      resource(Api)
+    end
   end
 
   import AshJsonApi.Test

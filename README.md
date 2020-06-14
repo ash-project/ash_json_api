@@ -29,20 +29,13 @@ Assume you have already built a resource using [Ash](https://github.com/ash-proj
 
 ```elixir
 defmodule Post do
-  use Ash.Resource, name: "posts", type: "post"
-  use AshJsonApi.JsonApiResource
-  use Ash.DataLayer.Postgres
+  use Ash.Resource,
+    data_layer: Ash.DataLayer.Postgres
 
   actions do
-    read :default,
-      rules: [
-        authorize_if: asert_attribute(:admin, true)
-      ]
+    read :default
 
-    create :default,
-      rules: [
-        authorize_if: user_attribute(:admin, true)
-      ]
+    create :default
   end
 
   attributes do
@@ -59,10 +52,15 @@ As you can see, the resource takes care of interacting with the database, settin
 
 ```elixir
 defmodule Post do
+  use Ash.Resource,
+    data_layer: AshPostgres,
+    extensions: [AshJsonApi.Resource]
+
   ...
 
   json_api do
-    routes "/posts" do
+    routes do
+      base "/posts"
       # Add a `GET /posts/:id` route, that calls into the :read action called :default
       get :default
       # Add a `GET /posts` route, that calls into the :read action called :default

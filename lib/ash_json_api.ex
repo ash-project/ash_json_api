@@ -2,6 +2,8 @@ defmodule AshJsonApi do
   @moduledoc """
   Tools for introspecting ash json api resources/apis.
   """
+  alias Ash.Dsl.Extension
+
   def route(resource, criteria \\ %{}) do
     resource
     |> routes()
@@ -11,55 +13,38 @@ defmodule AshJsonApi do
   end
 
   def type(resource) do
-    resource.json_api_type()
-  end
-
-  def join_fields(resource, association) do
-    join_fields(resource)[association]
-  end
-
-  def join_fields(resource) do
-    resource.json_api_join_fields()
+    Extension.get_opt(resource, [:json_api], :type)
   end
 
   def routes(resource) do
-    resource.json_api_routes()
+    Extension.get_entities(resource, [:json_api, :routes])
   end
 
   def fields(resource) do
-    resource.json_api_fields()
+    Extension.get_opt(resource, [:json_api], :fields)
   end
 
   def includes(resource) do
-    resource.json_api_includes()
-  end
-
-  def host(api) do
-    api.host()
+    Extension.get_opt(resource, [:json_api], :includes)
   end
 
   def prefix(api) do
-    api.prefix()
+    Extension.get_opt(api, [:json_api], :prefix)
   end
 
-  def serve_schema(api) do
-    api.serve_schema()
+  def serve_schema?(api) do
+    Extension.get_opt(api, [:json_api], :serve_schema?)
   end
 
-  @doc false
-  def sanitize_routes(_relationships, all_routes) do
-    all_routes
-    |> Enum.group_by(fn route ->
-      {route.method, route.route}
-    end)
-    |> Enum.flat_map(fn {{method, route}, group} ->
-      case group do
-        [route] ->
-          [route]
+  def authorize?(api) do
+    Extension.get_opt(api, [:json_api], :authorize?)
+  end
 
-        _ ->
-          raise "Duplicate routes defined for #{method}: #{route}"
-      end
-    end)
+  def router(api) do
+    :persistent_term.get({api, :ash_json_api, :router}, nil)
+  end
+
+  def base_route(resource) do
+    Extension.get_opt(resource, [:json_api, :routes], :base)
   end
 end
