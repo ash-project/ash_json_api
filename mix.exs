@@ -66,7 +66,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, "~> 0.4.0"},
+      {:ash, "~> 0.5.1"},
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
@@ -83,7 +83,8 @@ defmodule AshJsonApi.MixProject do
   defp aliases do
     [
       sobelow: "sobelow --skip",
-      credo: "credo --strict"
+      credo: "credo --strict",
+      "ash.formatter": "ash.formatter --extensions AshJsonApi.Resource,AshJsonApi.Api"
     ]
   end
 end
