@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.2.3](https://github.com/ash-project/ash_json_api/compare/0.2.2...v0.2.3) (2020-06-16)
+
+
+
+
+### Bug Fixes:
+
+* router calls in tests
+
 ## [v0.2.2](https://github.com/ash-project/ash_json_api/compare/0.2.1...v0.2.2) (2020-06-16)
 
 
