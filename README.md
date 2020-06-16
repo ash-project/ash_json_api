@@ -73,3 +73,18 @@ defmodule Post do
 
   ...
 ```
+
+Then, update your API with the API extension and configuration:
+
+```elixir
+  defmodule MyApp.Api do
+    use Ash.Api, extensions: [AshJsonApi.Api]
+
+    json_api do
+      ...
+    end
+
+  end
+```
+
+See the hex documentation for more.

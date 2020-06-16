@@ -16,6 +16,7 @@ defmodule AshJsonApi.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
+      docs: docs(),
       preferred_cli_env: [
         coveralls: :test,
         "coveralls.github": :test
@@ -32,11 +33,6 @@ defmodule AshJsonApi.MixProject do
     ]
   end
 
-  defp docs do
-    # The main page in the docs
-    [main: "readme", extras: ["README.md"]]
-  end
-
   defp package do
     [
       name: :ash_json_api,
@@ -44,6 +40,22 @@ defmodule AshJsonApi.MixProject do
       links: %{
         GitHub: "https://github.com/ash-project/ash_json_api"
       }
+    ]
+  end
+
+  defp docs do
+    [
+      main: "AshJsonApi",
+      source_ref: "v#{@version}",
+      logo: "logos/small-logo.png",
+      groups_for_modules: [
+        entrypoint: [AshJsonApi],
+        "resource dsl transformers": ~r/AshJsonApi.Resource.Transformers/,
+        "resource dsl": ~r/AshJsonApi.Resource/,
+        "api dsl transformers": ~r/AshJsonApi.Api.Transformers/,
+        "api dsl": ~r/AshJsonApi.Api/,
+        errors: ~r/AshJsonApi.Error/
+      ]
     ]
   end
 

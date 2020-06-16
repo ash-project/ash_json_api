@@ -129,7 +129,7 @@ defmodule AshJsonApi.Resource do
     schema:
       @route_schema
       |> Ash.OptionsHelpers.make_optional!(:route)
-      |> Ash.OptionsHelpers.append_doc!(:route, " Defaults to /:id/<relationship_name>")
+      |> Ash.OptionsHelpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
       |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
         type: :atom,
@@ -155,7 +155,7 @@ defmodule AshJsonApi.Resource do
       |> Ash.OptionsHelpers.make_optional!(:route)
       |> Ash.OptionsHelpers.append_doc!(
         :route,
-        " Defaults to /:id/relationships/<relationship_name>"
+        " Defaults to /:id/relationships/[relationship_name]"
       )
       |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
@@ -182,7 +182,7 @@ defmodule AshJsonApi.Resource do
       |> Ash.OptionsHelpers.make_optional!(:route)
       |> Ash.OptionsHelpers.append_doc!(
         :route,
-        " Defaults to /:id/relationships/<relationship_name>"
+        " Defaults to /:id/relationships/[relationship_name]"
       )
       |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
@@ -209,7 +209,7 @@ defmodule AshJsonApi.Resource do
       |> Ash.OptionsHelpers.make_optional!(:route)
       |> Ash.OptionsHelpers.append_doc!(
         :route,
-        " Defaults to /:id/relationships/<relationship_name>"
+        " Defaults to /:id/relationships/[relationship_name]"
       )
       |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
@@ -236,7 +236,7 @@ defmodule AshJsonApi.Resource do
       |> Ash.OptionsHelpers.make_optional!(:route)
       |> Ash.OptionsHelpers.append_doc!(
         :route,
-        " Defaults to /:id/relationships/<relationship_name>"
+        " Defaults to /:id/relationships/[relationship_name]"
       )
       |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
