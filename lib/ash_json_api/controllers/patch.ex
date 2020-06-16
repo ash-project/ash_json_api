@@ -1,4 +1,4 @@
-defmodule AshJsonApi.Controllers.Update do
+defmodule AshJsonApi.Controllers.Patch do
   @moduledoc false
   alias AshJsonApi.Controllers.{Helpers, Response}
   alias AshJsonApi.Request

@@ -40,8 +40,14 @@ defmodule AshJsonApi do
     Extension.get_opt(api, [:json_api], :authorize?)
   end
 
-  def router(api) do
-    :persistent_term.get({api, :ash_json_api, :router}, nil)
+  def router!(api) do
+    case Code.ensure_compiled(api) do
+      {:module, _module} ->
+        :persistent_term.get({api, :ash_json_api, :router}, nil)
+
+      error ->
+        raise "#{inspect(api)} was not compiled: #{inspect(error)}"
+    end
   end
 
   def base_route(resource) do
