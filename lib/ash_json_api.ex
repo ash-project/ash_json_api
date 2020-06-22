@@ -90,7 +90,9 @@ defmodule AshJsonApi do
   end
 
   def fields(resource) do
-    Extension.get_opt(resource, [:json_api], :fields)
+    resource
+    |> Extension.get_opt([:json_api], :fields)
+    |> List.wrap()
   end
 
   def includes(resource) do
