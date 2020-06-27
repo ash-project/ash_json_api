@@ -5,6 +5,7 @@ defmodule AshJsonApi.Api.Transformers.CreateRouter do
   alias Ash.Dsl.Transformer
   alias AshJsonApi.Api.Router
 
+  @impl true
   def transform(api, dsl) do
     module_name =
       Router.define_router(
@@ -18,4 +19,7 @@ defmodule AshJsonApi.Api.Transformers.CreateRouter do
 
     {:ok, dsl}
   end
+
+  @impl true
+  def compile_time_only?, do: true
 end

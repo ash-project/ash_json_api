@@ -82,7 +82,7 @@ defmodule AshJsonApi do
   end
 
   def type(resource) do
-    Extension.get_opt(resource, [:json_api], :type)
+    Extension.get_opt(resource, [:json_api], :type, nil, false)
   end
 
   def routes(resource) do
@@ -91,24 +91,24 @@ defmodule AshJsonApi do
 
   def fields(resource) do
     resource
-    |> Extension.get_opt([:json_api], :fields)
+    |> Extension.get_opt([:json_api], :fields, [], false)
     |> List.wrap()
   end
 
   def includes(resource) do
-    Extension.get_opt(resource, [:json_api], :includes)
+    Extension.get_opt(resource, [:json_api], :includes, [], false)
   end
 
   def prefix(api) do
-    Extension.get_opt(api, [:json_api], :prefix)
+    Extension.get_opt(api, [:json_api], :prefix, nil, true)
   end
 
   def serve_schema?(api) do
-    Extension.get_opt(api, [:json_api], :serve_schema?)
+    Extension.get_opt(api, [:json_api], :serve_schema?, false, true)
   end
 
   def authorize?(api) do
-    Extension.get_opt(api, [:json_api], :authorize?)
+    Extension.get_opt(api, [:json_api], :authorize?, true, true)
   end
 
   def router!(api) do
@@ -122,6 +122,6 @@ defmodule AshJsonApi do
   end
 
   def base_route(resource) do
-    Extension.get_opt(resource, [:json_api, :routes], :base)
+    Extension.get_opt(resource, [:json_api, :routes], :base, nil, false)
   end
 end
