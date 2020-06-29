@@ -78,7 +78,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, "~> 0.8.0"},
+      {:ash, "~> 0.9.0"},
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
