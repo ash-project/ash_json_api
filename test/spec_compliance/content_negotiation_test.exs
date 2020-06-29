@@ -53,7 +53,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       type("post")
 
       routes do
-        base("/authors")
+        base("/posts")
 
         get(:default)
         index(:default)

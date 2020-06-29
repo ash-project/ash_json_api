@@ -92,6 +92,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     resources do
       resource(Post)
       resource(Api)
+      resource(Author)
     end
   end
 
