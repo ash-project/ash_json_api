@@ -47,7 +47,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       query =
         request.resource
-        |> request.api.query()
+        |> Ash.Query.new(request.api)
         |> Ash.Query.side_load(request.includes_keyword)
         |> Ash.Query.limit(page_params[:limit])
         |> Ash.Query.offset(page_params[:offset])
@@ -82,7 +82,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   defp side_load_query(request) do
     request.resource
-    |> request.api.query()
+    |> Ash.Query.new(request.api)
     |> Ash.Query.side_load(request.includes_keyword)
   end
 
@@ -376,7 +376,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       destination_query =
         relationship.destination
-        |> api.query()
+        |> Ash.Query.new(request.api)
         |> Ash.Query.filter(request.filter)
         |> Ash.Query.sort(request.sort)
         |> Ash.Query.side_load(request.includes_keyword)
@@ -395,7 +395,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       origin_query =
         source_resource
-        |> api.query()
+        |> Ash.Query.new(request.api)
         |> Ash.Query.side_load([{relationship.name, destination_query}])
 
       params =

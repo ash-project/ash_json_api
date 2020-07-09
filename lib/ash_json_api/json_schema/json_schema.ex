@@ -318,32 +318,32 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp resource_field_type(_resource, %{type: :string}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.String}) do
     %{
       "type" => "string"
     }
   end
 
-  defp resource_field_type(_resource, %{type: :boolean}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.Boolean}) do
     %{
       "type" => "boolean"
     }
   end
 
-  defp resource_field_type(_resource, %{type: :integer}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.Integer}) do
     %{
       "type" => "integer"
     }
   end
 
-  defp resource_field_type(_resource, %{type: :utc_datetime}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.UtcDatetime}) do
     %{
       "type" => "string",
       "format" => "date-time"
     }
   end
 
-  defp resource_field_type(_resource, %{type: :uuid}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.UUID}) do
     %{
       "type" => "string",
       "format" => "uuid"
@@ -455,28 +455,28 @@ defmodule AshJsonApi.JsonSchema do
 
   defp attribute_filter_schema(attr) do
     case attr.type do
-      :uuid ->
+      Ash.Type.UUID ->
         %{
           "type" => "string",
           "format" => "uuid"
         }
 
-      :string ->
+      Ash.Type.String ->
         %{
           "type" => "string"
         }
 
-      :boolean ->
+      Ash.Type.Boolean ->
         %{
           "type" => "boolean"
         }
 
-      :integer ->
+      Ash.Type.Integer ->
         %{
           "type" => "integer"
         }
 
-      :utc_datetime ->
+      Ash.Type.UtcDateTime ->
         %{
           "type" => "string",
           "format" => "date-time"
