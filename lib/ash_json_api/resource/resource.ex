@@ -193,6 +193,7 @@ defmodule AshJsonApi.Resource do
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :post,
+      type: :post_to_relationship,
       controller: AshJsonApi.Controllers.PostToRelationship
     ]
   }
@@ -220,6 +221,7 @@ defmodule AshJsonApi.Resource do
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :patch,
+      type: :patch_relationship,
       controller: AshJsonApi.Controllers.PatchRelationship
     ]
   }
@@ -247,6 +249,7 @@ defmodule AshJsonApi.Resource do
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :delete,
+      type: :delete_from_relationship,
       controller: AshJsonApi.Controllers.DeleteFromRelationship
     ]
   }

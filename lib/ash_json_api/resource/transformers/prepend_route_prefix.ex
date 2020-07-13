@@ -6,8 +6,8 @@ defmodule AshJsonApi.Resource.Transformers.PrependRoutePrefix do
 
   @extension AshJsonApi.Resource
 
-  def transform(resource, dsl) do
-    prefix = AshJsonApi.base_route(resource)
+  def transform(_resource, dsl) do
+    prefix = Transformer.get_option(dsl, [:json_api, :routes], :base, @extension)
 
     dsl
     |> Transformer.get_entities([:json_api, :routes], @extension)

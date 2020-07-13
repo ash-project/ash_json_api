@@ -111,14 +111,20 @@ defmodule AshJsonApi do
     Extension.get_opt(api, [:json_api], :authorize?, true, true)
   end
 
-  def router!(api) do
-    case Code.ensure_compiled(api) do
-      {:module, _module} ->
-        :persistent_term.get({api, :ash_json_api, :router}, nil)
+  defmacro forward(path, api, opts \\ []) do
+    quote bind_quoted: [path: path, api: api, opts: opts] do
+      case Code.ensure_compiled(api) do
+        {:module, module} ->
+          forward("/", :persistent_term.get({api, :ash_json_api, :router}, nil), opts)
 
-      error ->
-        raise "#{inspect(api)} was not compiled: #{inspect(error)}"
+        error ->
+          raise "#{inspect(api)} was not compiled: #{inspect(error)}"
+      end
     end
+  end
+
+  def router(api) do
+    :persistent_term.get({api, :ash_json_api, :router}, nil)
   end
 
   def base_route(resource) do
