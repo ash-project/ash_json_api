@@ -81,7 +81,7 @@ defmodule AshJsonApi.Error do
   end
 
   def to_json_api_error(_resource, error, _type) do
-    AshJsonApi.Error.FrameworkError.new(
+    FrameworkError.new(
       internal_description:
         "something went wrong. Error messaging is incomplete so far: #{inspect(error)}"
     )
@@ -106,7 +106,6 @@ defmodule AshJsonApi.Error do
 
   defp class_to_status(:forbidden), do: 403
   defp class_to_status(:invalid), do: 400
-  defp class_to_status(_), do: 500
 
   def new(opts) do
     struct!(__MODULE__, opts)
