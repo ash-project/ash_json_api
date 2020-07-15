@@ -17,7 +17,7 @@ defmodule AshJsonApi.Controllers.Response do
         end
       end)
 
-    unless opts[:log?] == false do
+    if opts[:log?] do
       log_errors(errors, opts)
     end
 

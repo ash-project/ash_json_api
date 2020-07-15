@@ -183,10 +183,10 @@ defmodule AshJsonApi.Request do
     # Also, this logic gunna get cray
     Enum.reduce(filter, request, fn {key, value}, request ->
       cond do
-        attr = Ash.attribute(resource, key) ->
+        attr = Ash.Resource.attribute(resource, key) ->
           %{request | filter: Map.put(request.filter || %{}, attr.name, value)}
 
-        rel = Ash.relationship(resource, key) ->
+        rel = Ash.Resource.relationship(resource, key) ->
           %{request | filter: Map.put(request.filter || %{}, rel.name, value)}
 
         true ->
@@ -207,7 +207,8 @@ defmodule AshJsonApi.Request do
     |> String.split(",")
     |> Enum.reduce(request, fn field, request ->
       with {order, field_name} <- trim_sort_order(field),
-           {:attr, attr} when not is_nil(attr) <- {:attr, Ash.attribute(resource, field_name)} do
+           {:attr, attr} when not is_nil(attr) <-
+             {:attr, Ash.Resource.attribute(resource, field_name)} do
         %{request | sort: request.sort || [] ++ [{order, attr.name}]}
       else
         _ ->
@@ -272,7 +273,7 @@ defmodule AshJsonApi.Request do
        )
        when is_map(attributes) do
     Enum.reduce(attributes, request, fn {key, value}, request ->
-      case Ash.attribute(resource, key) do
+      case Ash.Resource.attribute(resource, key) do
         nil ->
           add_error(request, "unknown attribute: #{key}")
 
@@ -293,7 +294,8 @@ defmodule AshJsonApi.Request do
        when is_map(relationships) do
     Enum.reduce(relationships, request, fn {name, value}, request ->
       with %{"data" => data} when is_map(data) or is_list(data) <- value,
-           relationship when not is_nil(relationship) <- Ash.relationship(resource, name),
+           relationship when not is_nil(relationship) <-
+             Ash.Resource.relationship(resource, name),
            {:ok, change_value} <- relationship_change_value(relationship, data) do
         %{
           request

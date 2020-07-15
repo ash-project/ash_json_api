@@ -117,8 +117,11 @@ defmodule AshJsonApi do
         {:module, module} ->
           forward("/", :persistent_term.get({api, :ash_json_api, :router}, nil), opts)
 
-        error ->
-          raise "#{inspect(api)} was not compiled: #{inspect(error)}"
+        _error ->
+          # We used to raise here, but this failing almost always implies
+          # a compilation error in the api, which will be more informative
+          # if we just let that be raised
+          :ok
       end
     end
   end

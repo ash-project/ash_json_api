@@ -43,8 +43,8 @@ defmodule AshJsonApi.Api.Router do
                 AshJsonApi.Api.Router.routes(resource) do
             opts =
               [
-                relationship: Ash.relationship(resource, relationship_name),
-                action: Ash.action(resource, action_name, action_type),
+                relationship: Ash.Resource.relationship(resource, relationship_name),
+                action: Ash.Resource.action(resource, action_name, action_type),
                 resource: resource,
                 api: api,
                 prefix: prefix,

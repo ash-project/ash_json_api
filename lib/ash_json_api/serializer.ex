@@ -315,7 +315,7 @@ defmodule AshJsonApi.Serializer do
     fields = AshJsonApi.fields(resource)
 
     resource
-    |> Ash.relationships()
+    |> Ash.Resource.relationships()
     |> Stream.filter(&(&1.name in fields))
     |> Enum.into(%{}, fn relationship ->
       value =
@@ -440,7 +440,7 @@ defmodule AshJsonApi.Serializer do
     fields = AshJsonApi.fields(resource)
 
     resource
-    |> Ash.attributes()
+    |> Ash.Resource.attributes()
     |> Stream.filter(&(&1.name in fields))
     |> Stream.reject(&(&1.name == :id))
     |> Enum.into(%{}, fn attribute ->

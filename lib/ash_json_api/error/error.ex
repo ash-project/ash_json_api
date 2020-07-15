@@ -17,7 +17,96 @@ defmodule AshJsonApi.Error do
 
   @type t :: %__MODULE__{}
 
+  alias Ash.Error.{Forbidden, Framework, Invalid, Unknown}
+
   alias AshJsonApi.Error.FrameworkError
+
+  def to_json_api_error(resource, errors, type) when is_list(errors) do
+    Enum.map(errors, &to_json_api_error(resource, &1, type))
+  end
+
+  def to_json_api_error(resource, %mod{errors: errors}, type)
+      when mod in [Forbidden, Framework, Invalid, Unknown] do
+    Enum.flat_map(errors, &to_json_api_error(resource, &1, type))
+  end
+
+  def to_json_api_error(resource, %{class: :invalid} = error, type)
+      when type in [:create, :update] do
+    case error do
+      %{fields: fields} = error ->
+        Enum.map(fields, fn field ->
+          %__MODULE__{
+            id: Ash.Error.id(error),
+            status: class_to_status(error.class),
+            code: Ash.Error.code(error),
+            title: Ash.Error.code(error),
+            detail: Ash.Error.message(error),
+            source_pointer: source_pointer(resource, field, type)
+          }
+        end)
+
+      %{field: field} = error ->
+        [
+          %__MODULE__{
+            id: Ash.Error.id(error),
+            status: class_to_status(error.class),
+            code: Ash.Error.code(error),
+            title: Ash.Error.code(error),
+            detail: error.message,
+            source_pointer: source_pointer(resource, field, type)
+          }
+        ]
+
+      error ->
+        [
+          %__MODULE__{
+            id: Ash.Error.id(error),
+            status: class_to_status(error.class),
+            code: Ash.Error.code(error),
+            title: Ash.Error.code(error),
+            detail: error.message
+          }
+        ]
+    end
+  end
+
+  def to_json_api_error(_resource, %{class: :forbidden} = error, _type) do
+    %__MODULE__{
+      id: Ash.Error.id(error),
+      status: class_to_status(error.class),
+      code: Ash.Error.code(error),
+      title: Ash.Error.code(error),
+      detail: Ash.Error.message(error)
+    }
+  end
+
+  def to_json_api_error(_resource, error, _type) do
+    AshJsonApi.Error.FrameworkError.new(
+      internal_description:
+        "something went wrong. Error messaging is incomplete so far: #{inspect(error)}"
+    )
+  end
+
+  defp source_pointer(resource, field, type) when type in [:create, :update] do
+    cond do
+      Ash.Resource.attribute(resource, field) ->
+        "/data/attributes/#{field}"
+
+      Ash.Resource.relationship(resource, field) ->
+        "/data/relationships/#{field}"
+
+      true ->
+        :undefined
+    end
+  end
+
+  defp source_pointer(_resource, _field, _type) do
+    :undefined
+  end
+
+  defp class_to_status(:forbidden), do: 403
+  defp class_to_status(:invalid), do: 400
+  defp class_to_status(_), do: 500
 
   def new(opts) do
     struct!(__MODULE__, opts)

@@ -102,8 +102,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       resource
-      |> Ash.Changeset.create(request.attributes)
-      |> replace_changeset_relationships(request.relationships)
+      |> Ash.Changeset.new(request.attributes || %{})
+      |> replace_changeset_relationships(request.relationships || %{})
       |> api.create(params)
       |> case do
         {:ok, record} ->
@@ -114,13 +114,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error)
 
         {:error, error} ->
-          error =
-            Error.FrameworkError.new(
-              internal_description:
-                "something went wrong while creating. Error messaging is incomplete so far: #{
-                  inspect(error)
-                }"
-            )
+          error = AshJsonApi.Error.to_json_api_error(request.resource, error, :create)
 
           Request.add_error(request, error)
       end
@@ -144,8 +138,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       result
-      |> Ash.Changeset.update(request.attributes)
-      |> replace_changeset_relationships(request.relationships)
+      |> Ash.Changeset.new(request.attributes || %{})
+      |> replace_changeset_relationships(request.relationships || %{})
       |> api.update(params)
       |> case do
         {:ok, record} ->
@@ -156,13 +150,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error)
 
         {:error, error} ->
-          error =
-            Error.FrameworkError.new(
-              internal_description:
-                "something went wrong while updating. Error messaging is incomplete so far: #{
-                  inspect(error)
-                }"
-            )
+          error = AshJsonApi.Error.to_json_api_error(request.resource, error, :update)
 
           Request.add_error(request, error)
       end
@@ -179,7 +167,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       result
-      |> Ash.Changeset.update()
+      |> Ash.Changeset.new()
       |> Ash.Changeset.append_to_relationship(relationship_name, request.resource_identifiers)
       |> api.update(params)
       |> case do
@@ -188,12 +176,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         {:error, error} ->
           error =
-            Error.FrameworkError.new(
-              internal_description:
-                "something went wrong while adding to relationship. Error messaging is incomplete so far: #{
-                  inspect(error)
-                }"
-            )
+            AshJsonApi.Error.to_json_api_error(request.resource, error, :add_to_relationship)
 
           Request.add_error(request, error)
       end
@@ -210,7 +193,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       result
-      |> Ash.Changeset.update()
+      |> Ash.Changeset.new()
       |> Ash.Changeset.replace_relationship(relationship_name, request.resource_identifiers)
       |> api.update(params)
       |> case do
@@ -219,12 +202,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         {:error, error} ->
           error =
-            Error.FrameworkError.new(
-              internal_description:
-                "something went wrong while adding to relationship. Error messaging is incomplete so far: #{
-                  inspect(error)
-                }"
-            )
+            AshJsonApi.Error.to_json_api_error(request.resource, error, :replace_relationship)
 
           Request.add_error(request, error)
       end
@@ -249,7 +227,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       result
-      |> Ash.Changeset.update()
+      |> Ash.Changeset.new()
       |> Ash.Changeset.remove_from_relationship(relationship_name, request.resource_identifiers)
       |> api.update(params)
       |> case do
@@ -258,12 +236,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         {:error, error} ->
           error =
-            Error.FrameworkError.new(
-              internal_description:
-                "something went wrong while adding to relationship. Error messaging is incomplete so far: #{
-                  inspect(error)
-                }"
-            )
+            AshJsonApi.Error.to_json_api_error(request.resource, error, :delete_from_relationship)
 
           Request.add_error(request, error)
       end
@@ -291,13 +264,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error)
 
         {:error, error} ->
-          error =
-            Error.FrameworkError.new(
-              internal_description:
-                "something went wrong while deleting. Error messaging is incomplete so far: #{
-                  inspect(error)
-                }"
-            )
+          error = AshJsonApi.Error.to_json_api_error(request.resource, error, :destroy)
 
           Request.add_error(request, error)
       end
@@ -363,7 +330,7 @@ defmodule AshJsonApi.Controllers.Helpers do
                   assigns: %{result: %source_resource{} = record},
                   relationship: relationship
                 } = request ->
-      relationship = Ash.relationship(source_resource, relationship)
+      relationship = Ash.Resource.relationship(source_resource, relationship)
 
       params = [
         action: request.action
@@ -381,7 +348,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       destination_query =
         if paginate? do
           destination_query
-          |> Ash.Query.sort(Ash.primary_key(request.resource))
+          |> Ash.Query.sort(Ash.Resource.primary_key(request.resource))
           |> Ash.Query.limit(pagination_params[:limit])
           |> Ash.Query.offset(pagination_params[:offset])
         else

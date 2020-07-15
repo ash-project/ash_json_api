@@ -12,7 +12,7 @@ defmodule AshJsonApi.Controllers.GetRelationship do
     action = options[:action]
     api = options[:api]
     route = options[:route]
-    relationship = Ash.relationship(options[:resource], route.relationship)
+    relationship = Ash.Resource.relationship(options[:resource], route.relationship)
     resource = relationship.destination
 
     conn
