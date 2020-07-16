@@ -26,6 +26,7 @@ defmodule AshJsonApi.Request do
     :schema,
     :req_headers,
     :relationship,
+    :route,
     errors: [],
     # assigns is used by controllers to store state while piping
     # the request around
@@ -60,6 +61,7 @@ defmodule AshJsonApi.Request do
       body: conn.body_params,
       schema: AshJsonApi.JsonSchema.route_schema(route, api, resource),
       relationship: route.relationship,
+      route: route,
       json_api_prefix: AshJsonApi.prefix(api)
     }
     |> validate_params()
@@ -82,11 +84,16 @@ defmodule AshJsonApi.Request do
     %{request | assigns: Map.update(request.assigns, key, default, function)}
   end
 
-  def add_error(request, error_or_errors) do
+  def add_error(request, error_or_errors, operation, resource \\ nil) do
+    resource = resource || request.resource
+
     error_or_errors
     |> List.wrap()
     |> Enum.reduce(request, fn error, request ->
-      %{request | errors: [error | request.errors]}
+      new_errors =
+        AshJsonApi.Error.to_json_api_errors(resource, error, operation) ++ request.errors
+
+      %{request | errors: new_errors}
     end)
   end
 
@@ -100,7 +107,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, InvalidBody.new(json_xema_error: error))
+        add_error(request, InvalidBody.new(json_xema_error: error), request.route.type)
     end
   end
 
@@ -122,7 +129,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, InvalidHeader.new(json_xema_error: error))
+        add_error(request, InvalidHeader.new(json_xema_error: error), request.route.type)
     end
     |> validate_accept_header()
   end
@@ -143,20 +150,20 @@ defmodule AshJsonApi.Request do
     if accepts_json_api? do
       request
     else
-      add_error(request, UnsupportedMediaType.new([]))
+      add_error(request, UnsupportedMediaType.new([]), request.route.type)
     end
   end
 
   defp validate_params(%{query_params: query_params, path_params: path_params} = request) do
     if Enum.any?(Map.keys(query_params), &Map.has_key?(path_params, &1)) do
-      add_error(request, "conflict path and query params")
+      add_error(request, "conflict path and query params", request.route.type)
     else
       request
     end
   end
 
   defp validate_href_schema(%{schema: nil} = request) do
-    add_error(request, "no schema found")
+    add_error(request, "no schema found", request.route.type)
   end
 
   defp validate_href_schema(
@@ -173,7 +180,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, InvalidQuery.new(json_xema_error: error))
+        add_error(request, InvalidQuery.new(json_xema_error: error), request.route.type)
     end
   end
 
@@ -190,13 +197,13 @@ defmodule AshJsonApi.Request do
           %{request | filter: Map.put(request.filter || %{}, rel.name, value)}
 
         true ->
-          add_error(request, "invalid sort: #{key}")
+          add_error(request, "invalid sort: #{key}", request.route.type)
       end
     end)
   end
 
   defp parse_filter(%{query_params: %{"filter" => _}} = request) do
-    add_error(request, "invalid filter")
+    add_error(request, "invalid filter", request.route.type)
   end
 
   defp parse_filter(request), do: %{request | filter: %{}}
@@ -212,13 +219,13 @@ defmodule AshJsonApi.Request do
         %{request | sort: request.sort || [] ++ [{order, attr.name}]}
       else
         _ ->
-          add_error(request, "invalid sort #{field}")
+          add_error(request, "invalid sort #{field}", request.route.type)
       end
     end)
   end
 
   defp parse_sort(%{query_params: %{"sort" => _sort_string}} = request) do
-    add_error(request, "invalid sort string")
+    add_error(request, "invalid sort string", request.route.type)
   end
 
   defp parse_sort(request), do: %{request | sort: []}
@@ -239,7 +246,7 @@ defmodule AshJsonApi.Request do
         %{request | includes: includes, includes_keyword: includes_to_keyword(allowed)}
 
       %{allowed: _allowed, disallowed: _disallowed} ->
-        add_error(request, "invalid includes")
+        add_error(request, "invalid includes", request.route.type)
     end
   end
 
@@ -275,7 +282,7 @@ defmodule AshJsonApi.Request do
     Enum.reduce(attributes, request, fn {key, value}, request ->
       case Ash.Resource.attribute(resource, key) do
         nil ->
-          add_error(request, "unknown attribute: #{key}")
+          add_error(request, "unknown attribute: #{key}", request.route.type)
 
         attribute ->
           %{request | attributes: Map.put(request.attributes || %{}, attribute.name, value)}
@@ -303,7 +310,7 @@ defmodule AshJsonApi.Request do
         }
       else
         _ ->
-          add_error(request, "invalid relationship: #{name}")
+          add_error(request, "invalid relationship: #{name}", request.route.type)
       end
     end)
   end
@@ -315,7 +322,7 @@ defmodule AshJsonApi.Request do
     identifiers =
       for %{"id" => id, "type" => _type} = identifier <- data do
         case Map.fetch(identifier, "meta") do
-          {:ok, meta} -> Map.put(meta, :id, id)
+          {:ok, meta} -> {%{id: id}, meta}
           _ -> %{id: id}
         end
       end

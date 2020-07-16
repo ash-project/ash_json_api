@@ -63,18 +63,8 @@ defmodule AshJsonApi.Controllers.Helpers do
 
           Request.assign(request, :result, page)
 
-        {:error, %{class: :forbidden}} ->
-          error = Error.Forbidden.new([])
-          Request.add_error(request, error)
-
         {:error, error} ->
-          error =
-            Error.FrameworkError.new(
-              internal_description:
-                "Failed to read resource #{inspect(request.resource)} | #{inspect(error)}"
-            )
-
-          Request.add_error(request, error)
+          Request.add_error(request, error, :read)
       end
     end)
   end
@@ -109,14 +99,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         {:ok, record} ->
           Request.assign(request, :result, record)
 
-        {:error, :unauthorized} ->
-          error = Error.Forbidden.new([])
-          Request.add_error(request, error)
-
         {:error, error} ->
-          error = AshJsonApi.Error.to_json_api_error(request.resource, error, :create)
-
-          Request.add_error(request, error)
+          Request.add_error(request, error, :create)
       end
     end)
   end
@@ -145,14 +129,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         {:ok, record} ->
           Request.assign(request, :result, record)
 
-        {:error, :unauthorized} ->
-          error = Error.Forbidden.new([])
-          Request.add_error(request, error)
-
         {:error, error} ->
-          error = AshJsonApi.Error.to_json_api_error(request.resource, error, :update)
-
-          Request.add_error(request, error)
+          Request.add_error(request, error, :update)
       end
     end)
   end
@@ -172,13 +150,12 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> api.update(params)
       |> case do
         {:ok, updated} ->
-          Request.assign(request, :result, Map.get(updated, relationship_name))
+          request
+          |> Request.assign(:record_from_path, updated)
+          |> Request.assign(:result, Map.get(updated, relationship_name))
 
         {:error, error} ->
-          error =
-            AshJsonApi.Error.to_json_api_error(request.resource, error, :add_to_relationship)
-
-          Request.add_error(request, error)
+          Request.add_error(request, error, :add_to_relationship)
       end
     end)
   end
@@ -198,13 +175,12 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> api.update(params)
       |> case do
         {:ok, updated} ->
-          Request.assign(request, :result, Map.get(updated, relationship_name))
+          request
+          |> Request.assign(:record_from_path, updated)
+          |> Request.assign(:result, Map.get(updated, relationship_name))
 
         {:error, error} ->
-          error =
-            AshJsonApi.Error.to_json_api_error(request.resource, error, :replace_relationship)
-
-          Request.add_error(request, error)
+          Request.add_error(request, error, :replace_relationship)
       end
     end)
   end
@@ -232,13 +208,12 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> api.update(params)
       |> case do
         {:ok, updated} ->
-          Request.assign(request, :result, Map.get(updated, relationship_name))
+          request
+          |> Request.assign(:record_from_path, updated)
+          |> Request.assign(:result, Map.get(updated, relationship_name))
 
         {:error, error} ->
-          error =
-            AshJsonApi.Error.to_json_api_error(request.resource, error, :delete_from_relationship)
-
-          Request.add_error(request, error)
+          Request.add_error(request, error, :delete_from_relationship)
       end
     end)
   end
@@ -259,14 +234,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         :ok ->
           Request.assign(request, :result, nil)
 
-        {:error, :unauthorized} ->
-          error = Error.Forbidden.new([])
-          Request.add_error(request, error)
-
         {:error, error} ->
-          error = AshJsonApi.Error.to_json_api_error(request.resource, error, :destroy)
-
-          Request.add_error(request, error)
+          Request.add_error(request, error, :destroy)
       end
     end)
   end
@@ -298,27 +267,15 @@ defmodule AshJsonApi.Controllers.Helpers do
       case api.get(resource, id, params) do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
-          Request.add_error(request, error)
+          Request.add_error(request, error, :fetch_from_path)
 
         {:ok, record} ->
           request
           |> Request.assign(:result, record)
           |> Request.assign(:record_from_path, record)
 
-        {:error, :unauthorized} ->
-          error = Error.Forbidden.new([])
-          Request.add_error(request, error)
-
-        {:error, db_error} ->
-          error =
-            Error.FrameworkError.new(
-              internal_description:
-                "failed to retrieve record by id for resource: #{inspect(resource)}, id: #{
-                  inspect(id)
-                } | #{inspect(db_error)}"
-            )
-
-          Request.add_error(request, error)
+        {:error, error} ->
+          Request.add_error(request, error, :fetch_from_path)
       end
     end)
   end
@@ -379,19 +336,12 @@ defmodule AshJsonApi.Controllers.Helpers do
             |> List.wrap()
             |> maybe_paginate(pagination_params, paginate?)
 
-          Request.assign(request, :result, paginated_result)
+          request
+          |> Request.assign(:record_from_path, record)
+          |> Request.assign(:result, paginated_result)
 
-        {:error, :unauthorized} ->
-          error = Error.Forbidden.new([])
-          Request.add_error(request, error)
-
-        {:error, db_error} ->
-          error =
-            Error.FrameworkError.new(
-              internal_description: "failed to load related #{inspect(db_error)}"
-            )
-
-          Request.add_error(request, error)
+        {:error, error} ->
+          Request.add_error(request, error, :fetch_related)
       end
     end)
   end
@@ -404,6 +354,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         results: records
       }
     else
+      records
     end
   end
 
@@ -420,12 +371,11 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.assign(request, :id, id)
 
         _ ->
-          error =
-            Error.FrameworkError.new(
-              internal_description: "id path parameter not present in get route: #{request.url}"
-            )
-
-          Request.add_error(request, error)
+          Request.add_error(
+            request,
+            "id path parameter not present in get route: #{request.url}",
+            :id_path_param
+          )
       end
     end)
   end
@@ -445,7 +395,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       Request.update_assign(request, :page, %{limit: integer}, &Map.put(&1, :limit, integer))
     else
       {:integer, {_integer, _remaining}} ->
-        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[limit]"))
+        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[limit]"), :read)
 
       _ ->
         request
@@ -459,7 +409,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       Request.update_assign(request, :page, %{offset: integer}, &Map.put(&1, :offset, integer))
     else
       {:integer, {_integer, _remaining}} ->
-        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[offset]"))
+        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[offset]"), :read)
 
       _ ->
         request

@@ -318,40 +318,46 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.String}) do
+  defp resource_field_type(_resource, type, raise? \\ false)
+
+  defp resource_field_type(_resource, %{type: Ash.Type.String}, _) do
     %{
       "type" => "string"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.Boolean}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.Boolean}, _) do
     %{
       "type" => "boolean"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.Integer}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.Integer}, _) do
     %{
       "type" => "integer"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.UtcDatetime}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.UtcDatetime}, _) do
     %{
       "type" => "string",
       "format" => "date-time"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.UUID}) do
+  defp resource_field_type(_resource, %{type: Ash.Type.UUID}, _) do
     %{
       "type" => "string",
       "format" => "uuid"
     }
   end
 
-  defp resource_field_type(_, %{type: type}) do
+  defp resource_field_type(_, %{type: type}, true) do
     raise "unimplemented type #{type}"
+  end
+
+  defp resource_field_type(resource, %{type: type}, false) do
+    resource_field_type(resource, %{type: Ash.Type.storage_type(type)}, true)
   end
 
   defp href_schema(route, api, resource, properties) do
@@ -360,12 +366,19 @@ defmodule AshJsonApi.JsonSchema do
         {prop, %{"type" => "string"}}
       end)
 
-    {query_param_properties, query_param_string} = query_param_properties(route, api, resource)
+    case query_param_properties(route, api, resource) do
+      nil ->
+        {%{
+           "required" => properties,
+           "properties" => base_properties
+         }, ""}
 
-    {%{
-       "required" => properties,
-       "properties" => Map.merge(query_param_properties, base_properties)
-     }, query_param_string}
+      {query_param_properties, query_param_string} ->
+        {%{
+           "required" => properties,
+           "properties" => Map.merge(query_param_properties, base_properties)
+         }, query_param_string}
+    end
   end
 
   defp query_param_properties(%{type: :index}, api, resource) do
@@ -389,6 +402,11 @@ defmodule AshJsonApi.JsonSchema do
     }
 
     {props, "{?filter,sort,page,include}"}
+  end
+
+  defp query_param_properties(%{type: type}, _, _)
+       when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
+    nil
   end
 
   defp query_param_properties(_route, _api, resource) do
@@ -554,8 +572,14 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp route_in_schema(%{type: type}, _api, resource)
+  defp route_in_schema(%{type: type, relationship: relationship}, _api, resource)
        when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
+    resource
+    |> Ash.Resource.relationship(relationship)
+    |> relationship_resource_identifiers()
+  end
+
+  defp relationship_resource_identifiers(relationship) do
     %{
       "type" => "object",
       "required" => ["data"],
@@ -566,17 +590,40 @@ defmodule AshJsonApi.JsonSchema do
           "items" => %{
             "type" => "object",
             "required" => ["id", "type"],
+            "additionalProperties" => false,
             "properties" => %{
-              "id" => resource_field_type(resource, Ash.Resource.attribute(resource, :id)),
+              "id" =>
+                resource_field_type(
+                  relationship.destination,
+                  Ash.Resource.attribute(relationship.destination, :id)
+                ),
               "type" => %{
-                "const" => AshJsonApi.type(resource)
+                "const" => AshJsonApi.type(relationship.destination)
               },
-              "additionalProperties" => false
+              "meta" => %{
+                "type" => "object",
+                "properties" => join_attribute_properties(relationship),
+                "additionalProperties" => false
+              }
             }
           }
         }
       }
     }
+  end
+
+  defp join_attribute_properties(relationship) do
+    relationship.through
+    |> Ash.Resource.attributes()
+    |> Enum.filter(&(&1.name in relationship.join_attributes))
+    |> Enum.filter(& &1.writable?)
+    |> Enum.reduce(%{}, fn attribute, acc ->
+      Map.put(
+        acc,
+        to_string(attribute.name),
+        resource_field_type(relationship.through, attribute)
+      )
+    end)
   end
 
   defp required_write_attributes(resource) do
@@ -651,6 +698,21 @@ defmodule AshJsonApi.JsonSchema do
             }
           ]
         }
+
+      :delete ->
+        %{
+          "oneOf" => [
+            nil,
+            %{
+              "$ref" => "#/definitions/errors"
+            }
+          ]
+        }
+
+      type when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] ->
+        resource
+        |> Ash.Resource.relationship(route.relationship)
+        |> relationship_resource_identifiers()
 
       _ ->
         %{

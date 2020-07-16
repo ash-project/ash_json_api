@@ -76,10 +76,41 @@ defmodule AshJsonApi.Api.Router do
   def routes(resource) do
     resource
     |> AshJsonApi.routes()
-    |> Enum.sort_by(fn route ->
-      route.route
-      |> String.graphemes()
-      |> Enum.count(&(&1 == ":"))
+    |> Enum.sort(fn left, right ->
+      left_path = Path.split(left.route)
+      right_path = Path.split(right.route)
+
+      left_path
+      |> Enum.zip(right_path)
+      |> sorts_first?()
+      |> case do
+        :undecided ->
+          Enum.count(left_path) > Enum.count(right_path)
+
+        result ->
+          result
+      end
+    end)
+  end
+
+  defp sorts_first?(zipped) do
+    Enum.reduce_while(zipped, :undecided, fn {left_part, right_part}, :undecided ->
+      left_param? = String.starts_with?(left_part, ":")
+      right_param? = String.starts_with?(right_part, ":")
+
+      cond do
+        left_part == right_part ->
+          {:cont, :undecided}
+
+        left_param? and not right_param? ->
+          {:halt, false}
+
+        not left_param? and right_param? ->
+          {:halt, true}
+
+        true ->
+          {:cont, :undecided}
+      end
     end)
   end
 end

@@ -21,16 +21,24 @@ defmodule AshJsonApi.Error do
 
   alias AshJsonApi.Error.FrameworkError
 
-  def to_json_api_error(resource, errors, type) when is_list(errors) do
-    Enum.map(errors, &to_json_api_error(resource, &1, type))
+  def to_json_api_errors(resource, errors, type) when is_list(errors) do
+    Enum.flat_map(errors, &to_json_api_errors(resource, &1, type))
   end
 
-  def to_json_api_error(resource, %mod{errors: errors}, type)
-      when mod in [Forbidden, Framework, Invalid, Unknown] do
-    Enum.flat_map(errors, &to_json_api_error(resource, &1, type))
+  def to_json_api_errors(resource, %Unknown{error: error, errors: errors}, type) do
+    to_json_api_errors(resource, List.flatten(List.wrap(error)) ++ errors, type)
   end
 
-  def to_json_api_error(resource, %{class: :invalid} = error, type)
+  def to_json_api_errors(resource, %mod{errors: errors}, type)
+      when mod in [Forbidden, Framework, Invalid] do
+    Enum.flat_map(errors, &to_json_api_errors(resource, &1, type))
+  end
+
+  def to_json_api_errors(_resource, %__MODULE__{} = error, _type) do
+    [error]
+  end
+
+  def to_json_api_errors(resource, %{class: :invalid} = error, type)
       when type in [:create, :update] do
     case error do
       %{fields: fields} = error ->
@@ -70,21 +78,25 @@ defmodule AshJsonApi.Error do
     end
   end
 
-  def to_json_api_error(_resource, %{class: :forbidden} = error, _type) do
-    %__MODULE__{
-      id: Ash.Error.id(error),
-      status: class_to_status(error.class),
-      code: Ash.Error.code(error),
-      title: Ash.Error.code(error),
-      detail: Ash.Error.message(error)
-    }
+  def to_json_api_errors(_resource, %{class: :forbidden} = error, _type) do
+    [
+      %__MODULE__{
+        id: Ash.Error.id(error),
+        status: class_to_status(error.class),
+        code: "forbidden",
+        title: "Forbidden",
+        detail: "forbidden"
+      }
+    ]
   end
 
-  def to_json_api_error(_resource, error, _type) do
-    FrameworkError.new(
-      internal_description:
-        "something went wrong. Error messaging is incomplete so far: #{inspect(error)}"
-    )
+  def to_json_api_errors(_resource, error, _type) do
+    [
+      FrameworkError.new(
+        internal_description:
+          "something went wrong. Error messaging is incomplete so far: #{inspect(error)}"
+      )
+    ]
   end
 
   defp source_pointer(resource, field, type) when type in [:create, :update] do
@@ -163,7 +175,8 @@ defmodule AshJsonApi.Error do
           detail: @detail,
           title: @title,
           code: @code,
-          status_code: @status_code
+          status_code: @status_code,
+          id: Ecto.UUID.generate()
         ]
         |> Keyword.merge(opts)
         |> Keyword.update!(:detail, &String.trim/1)

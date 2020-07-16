@@ -2,27 +2,14 @@ defmodule AshJsonApi.Controllers.Response do
   @moduledoc false
   require Logger
 
-  alias AshJsonApi.Error.FrameworkError
-
   # sobelow_skip ["XSS.SendResp"]
   def render_errors(conn, request, opts \\ []) do
-    errors =
-      request.errors
-      |> List.flatten()
-      |> Enum.map(fn error ->
-        if is_bitstring(error) do
-          FrameworkError.new(internal_description: error)
-        else
-          error
-        end
-      end)
+    # if opts[:log?] do
+    log_errors(request.errors, opts)
+    # end
 
-    if opts[:log?] do
-      log_errors(errors, opts)
-    end
-
-    status = opts[:status_code] || error_status_code(errors)
-    serialized = AshJsonApi.Serializer.serialize_errors(request, errors)
+    status = opts[:status_code] || error_status_code(request.errors)
+    serialized = AshJsonApi.Serializer.serialize_errors(request, request.errors)
 
     send_resp(conn, status, serialized)
   end
@@ -107,6 +94,7 @@ defmodule AshJsonApi.Controllers.Response do
 
   defp error_status_code(errors) do
     errors
+    |> Stream.filter(&is_map/1)
     |> Stream.map(&Map.get(&1, :status_code))
     |> Enum.reject(&(&1 == :undefined))
     |> Enum.max(fn -> 500 end)
