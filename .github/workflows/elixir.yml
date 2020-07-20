@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         otp: ["23"]
-        elixir: ["1.10.0"]
+        elixir: ["1.10.3"]
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       ASH_CI: true
