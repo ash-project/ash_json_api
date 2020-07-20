@@ -1,8 +1,6 @@
 defmodule AshJsonApi.Api.Router do
   @moduledoc false
-  def define_router(api, resources, prefix, serve_schema?) do
-    module_name = Module.concat(api, Router)
-
+  def define_router(module_name, api, resources, prefix, serve_schema?) do
     Module.create(
       module_name,
       quote bind_quoted: [
@@ -25,11 +23,6 @@ defmodule AshJsonApi.Api.Router do
         plug(:dispatch)
 
         resources
-        |> Enum.map(fn resource ->
-          Code.ensure_loaded(resource)
-
-          resource
-        end)
         |> Enum.filter(&(AshJsonApi.Resource in Ash.extensions(&1)))
         |> Enum.each(fn resource ->
           for %{
@@ -75,7 +68,7 @@ defmodule AshJsonApi.Api.Router do
   @doc false
   def routes(resource) do
     resource
-    |> AshJsonApi.routes()
+    |> AshJsonApi.Resource.routes()
     |> Enum.sort(fn left, right ->
       left_path = Path.split(left.route)
       right_path = Path.split(right.route)

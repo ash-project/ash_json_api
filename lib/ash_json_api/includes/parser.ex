@@ -25,7 +25,7 @@ defmodule AshJsonApi.Includes.Parser do
 
   defp allowed_preloads(resource) do
     resource
-    |> AshJsonApi.includes()
+    |> AshJsonApi.Resource.includes()
     |> to_nested_map()
   end
 

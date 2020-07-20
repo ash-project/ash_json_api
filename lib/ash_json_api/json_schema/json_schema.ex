@@ -9,7 +9,7 @@ defmodule AshJsonApi.JsonSchema do
     route_schemas =
       Enum.flat_map(resources, fn resource ->
         resource
-        |> AshJsonApi.routes()
+        |> AshJsonApi.Resource.routes()
         |> Enum.map(&route_schema(&1, api, resource))
       end)
 
@@ -17,7 +17,7 @@ defmodule AshJsonApi.JsonSchema do
 
     definitions =
       Enum.reduce(resources, base_definitions(), fn resource, acc ->
-        Map.put(acc, AshJsonApi.type(resource), resource_object_schema(resource))
+        Map.put(acc, AshJsonApi.Resource.type(resource), resource_object_schema(resource))
       end)
 
     %{
@@ -108,7 +108,8 @@ defmodule AshJsonApi.JsonSchema do
   # This is for our representation of a resource *in the response*
   def resource_object_schema(resource) do
     %{
-      "description" => "A \"Resource object\" representing a #{AshJsonApi.type(resource)}",
+      "description" =>
+        "A \"Resource object\" representing a #{AshJsonApi.Resource.type(resource)}",
       "type" => "object",
       "required" => ["type", "id"],
       "properties" => %{
@@ -202,7 +203,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp attributes(resource) do
     %{
-      "description" => "An attributes object for a #{AshJsonApi.type(resource)}",
+      "description" => "An attributes object for a #{AshJsonApi.Resource.type(resource)}",
       "type" => "object",
       "required" => required_attributes(resource),
       "properties" => resource_attributes(resource),
@@ -212,7 +213,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_attributes(resource) do
     resource
-    |> AshJsonApi.fields()
+    |> AshJsonApi.Resource.fields()
     |> Enum.map(&Ash.Resource.attribute(resource, &1))
     |> Enum.reject(&is_nil/1)
     |> Enum.reject(& &1.allow_nil?)
@@ -221,7 +222,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp resource_attributes(resource) do
     resource
-    |> AshJsonApi.fields()
+    |> AshJsonApi.Resource.fields()
     |> Enum.reduce(%{}, fn field, acc ->
       attr = Ash.Resource.attribute(resource, field)
 
@@ -235,7 +236,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp relationships(resource) do
     %{
-      "description" => "A relationships object for a #{AshJsonApi.type(resource)}",
+      "description" => "A relationships object for a #{AshJsonApi.Resource.type(resource)}",
       "type" => "object",
       "properties" => resource_relationships(resource),
       "additionalProperties" => false
@@ -244,7 +245,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp resource_relationships(resource) do
     resource
-    |> AshJsonApi.fields()
+    |> AshJsonApi.Resource.fields()
     |> Enum.reduce(%{}, fn field, acc ->
       rel = Ash.Resource.relationship(resource, field)
 
@@ -279,18 +280,19 @@ defmodule AshJsonApi.JsonSchema do
          destination: destination
        }) do
     %{
-      "description" => "References to the related #{AshJsonApi.type(destination)}",
+      "description" => "References to the related #{AshJsonApi.Resource.type(destination)}",
       anyOf: [
         %{
           "type" => "null"
         },
         %{
-          "description" => "Resource identifiers of the related #{AshJsonApi.type(destination)}",
+          "description" =>
+            "Resource identifiers of the related #{AshJsonApi.Resource.type(destination)}",
           "type" => "object",
           "required" => ["type", "id"],
           "additionalProperties" => false,
           "properties" => %{
-            "type" => %{"const" => AshJsonApi.type(destination)},
+            "type" => %{"const" => AshJsonApi.Resource.type(destination)},
             "id" => %{"type" => "string"}
           }
         }
@@ -303,14 +305,16 @@ defmodule AshJsonApi.JsonSchema do
          destination: destination
        }) do
     %{
-      "description" => "An array of references to the related #{AshJsonApi.type(destination)}",
+      "description" =>
+        "An array of references to the related #{AshJsonApi.Resource.type(destination)}",
       "type" => "array",
       "items" => %{
-        "description" => "Resource identifiers of the related #{AshJsonApi.type(destination)}",
+        "description" =>
+          "Resource identifiers of the related #{AshJsonApi.Resource.type(destination)}",
         "type" => "object",
         "required" => ["type", "id"],
         "properties" => %{
-          "type" => %{"const" => AshJsonApi.type(destination)},
+          "type" => %{"const" => AshJsonApi.Resource.type(destination)},
           "id" => %{"type" => "string"}
         }
       },
@@ -423,7 +427,7 @@ defmodule AshJsonApi.JsonSchema do
   defp sort_format(resource) do
     sorts =
       resource
-      |> AshJsonApi.fields()
+      |> AshJsonApi.Resource.fields()
       |> Enum.flat_map(fn field ->
         case Ash.Resource.attribute(resource, field) do
           nil ->
@@ -456,7 +460,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp filter_props(resource) do
     resource
-    |> AshJsonApi.fields()
+    |> AshJsonApi.Resource.fields()
     |> Enum.reduce(%{}, fn field, acc ->
       cond do
         attr = Ash.Resource.attribute(resource, field) ->
@@ -523,7 +527,7 @@ defmodule AshJsonApi.JsonSchema do
           "additionalProperties" => false,
           "properties" => %{
             "type" => %{
-              "const" => AshJsonApi.type(resource)
+              "const" => AshJsonApi.Resource.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -554,7 +558,7 @@ defmodule AshJsonApi.JsonSchema do
           "properties" => %{
             "id" => resource_field_type(resource, Ash.Resource.attribute(resource, :id)),
             "type" => %{
-              "const" => AshJsonApi.type(resource)
+              "const" => AshJsonApi.Resource.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -598,7 +602,7 @@ defmodule AshJsonApi.JsonSchema do
                   Ash.Resource.attribute(relationship.destination, :id)
                 ),
               "type" => %{
-                "const" => AshJsonApi.type(relationship.destination)
+                "const" => AshJsonApi.Resource.type(relationship.destination)
               },
               "meta" => %{
                 "type" => "object",
@@ -628,7 +632,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_write_attributes(resource) do
     resource
-    |> AshJsonApi.fields()
+    |> AshJsonApi.Resource.fields()
     |> Enum.map(&Ash.Resource.attribute(resource, &1))
     |> Enum.reject(&is_nil/1)
     |> Enum.filter(& &1.writable?)
@@ -640,7 +644,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp write_attributes(resource) do
     resource
-    |> AshJsonApi.fields()
+    |> AshJsonApi.Resource.fields()
     |> Enum.map(&Ash.Resource.attribute(resource, &1))
     |> Enum.reject(&is_nil/1)
     |> Enum.filter(& &1.writable?)
@@ -651,7 +655,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp write_relationships(resource) do
     resource
-    |> AshJsonApi.fields()
+    |> AshJsonApi.Resource.fields()
     |> Enum.reduce(%{}, fn field, acc ->
       rel = Ash.Resource.relationship(resource, field)
 
@@ -685,10 +689,12 @@ defmodule AshJsonApi.JsonSchema do
             %{
               "data" => %{
                 "description" =>
-                  "An array of resource objects representing a #{AshJsonApi.type(resource)}",
+                  "An array of resource objects representing a #{
+                    AshJsonApi.Resource.type(resource)
+                  }",
                 "type" => "array",
                 "items" => %{
-                  "$ref" => "#/definitions/#{AshJsonApi.type(resource)}"
+                  "$ref" => "#/definitions/#{AshJsonApi.Resource.type(resource)}"
                 },
                 "uniqueItems" => true
               }
@@ -719,7 +725,7 @@ defmodule AshJsonApi.JsonSchema do
           "oneOf" => [
             %{
               "data" => %{
-                "$ref" => "#/definitions/#{AshJsonApi.type(resource)}"
+                "$ref" => "#/definitions/#{AshJsonApi.Resource.type(resource)}"
               }
             },
             %{

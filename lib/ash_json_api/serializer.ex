@@ -111,7 +111,7 @@ defmodule AshJsonApi.Serializer do
   defp serialize_relationship_data(record, source_record, relationship) do
     %{
       id: record.id,
-      type: AshJsonApi.type(relationship.destination)
+      type: AshJsonApi.Resource.type(relationship.destination)
     }
     |> add_relationship_meta(record, source_record, relationship)
   end
@@ -300,7 +300,7 @@ defmodule AshJsonApi.Serializer do
   defp serialize_one_record(request, %resource{} = record) do
     %{
       id: record.id,
-      type: AshJsonApi.type(resource),
+      type: AshJsonApi.Resource.type(resource),
       attributes: serialize_attributes(record),
       relationships: serialize_relationships(request, record),
       links: %{} |> add_one_record_self_link(request, record)
@@ -310,7 +310,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_one_record_self_link(links, request, %resource{id: id}) do
     resource
-    |> AshJsonApi.route(%{action: :get, primary?: true})
+    |> AshJsonApi.Resource.route(%{action: :get, primary?: true})
     |> case do
       nil ->
         links
@@ -331,7 +331,7 @@ defmodule AshJsonApi.Serializer do
   defp add_meta(json_record, _), do: json_record
 
   defp serialize_relationships(request, %resource{} = record) do
-    fields = AshJsonApi.fields(resource)
+    fields = AshJsonApi.Resource.fields(resource)
 
     resource
     |> Ash.Resource.relationships()
@@ -356,7 +356,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_relationship_link(links, request, %resource{id: id}, relationship) do
     resource
-    |> AshJsonApi.route(%{
+    |> AshJsonApi.Resource.route(%{
       relationship: relationship.name,
       primary?: true,
       action: :get_relationship
@@ -377,7 +377,11 @@ defmodule AshJsonApi.Serializer do
 
   defp add_related_link(links, request, %resource{id: id}, relationship) do
     resource
-    |> AshJsonApi.route(%{relationship: relationship.name, primary?: true, action: :get_related})
+    |> AshJsonApi.Resource.route(%{
+      relationship: relationship.name,
+      primary?: true,
+      action: :get_related
+    })
     |> case do
       nil ->
         links
@@ -395,7 +399,7 @@ defmodule AshJsonApi.Serializer do
   defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
     case record do
       %{__linkage__: %{^name => [%{id: id}]}} ->
-        Map.put(payload, :data, %{id: id, type: AshJsonApi.type(destination)})
+        Map.put(payload, :data, %{id: id, type: AshJsonApi.Resource.type(destination)})
 
       # There could be another case here if a bug in the system gave us a list
       # of more than one shouldn't happen though
@@ -412,7 +416,7 @@ defmodule AshJsonApi.Serializer do
        ) do
     case record do
       %{__linkage__: %{^name => linkage}} ->
-        type = AshJsonApi.type(destination)
+        type = AshJsonApi.Resource.type(destination)
 
         Map.put(
           payload,
@@ -456,7 +460,7 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp serialize_attributes(%resource{} = record) do
-    fields = AshJsonApi.fields(resource)
+    fields = AshJsonApi.Resource.fields(resource)
 
     resource
     |> Ash.Resource.attributes()

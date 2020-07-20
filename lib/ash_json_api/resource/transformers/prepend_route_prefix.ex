@@ -4,13 +4,11 @@ defmodule AshJsonApi.Resource.Transformers.PrependRoutePrefix do
 
   alias Ash.Dsl.Transformer
 
-  @extension AshJsonApi.Resource
+  def transform(resource, dsl) do
+    prefix = AshJsonApi.Resource.base_route(resource)
 
-  def transform(_resource, dsl) do
-    prefix = Transformer.get_option(dsl, [:json_api, :routes], :base, @extension)
-
-    dsl
-    |> Transformer.get_entities([:json_api, :routes], @extension)
+    resource
+    |> AshJsonApi.Resource.routes()
     |> Enum.reduce({:ok, dsl}, fn route, {:ok, dsl} ->
       new_route =
         "/" <>
@@ -22,7 +20,6 @@ defmodule AshJsonApi.Resource.Transformers.PrependRoutePrefix do
         Transformer.replace_entity(
           dsl,
           [:json_api, :routes],
-          @extension,
           %{route | route: new_route},
           fn replacing_route ->
             replacing_route.method == route.method && replacing_route.route == route.route

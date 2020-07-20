@@ -311,6 +311,36 @@ defmodule AshJsonApi.Resource do
 
   use Ash.Dsl.Extension, sections: [@json_api], transformers: @transformers
 
+  def type(resource) do
+    Extension.get_opt(resource, [:json_api], :type, nil, false)
+  end
+
+  def fields(resource) do
+    resource
+    |> Extension.get_opt([:json_api], :fields, [], false)
+    |> List.wrap()
+  end
+
+  def includes(resource) do
+    Extension.get_opt(resource, [:json_api], :includes, [], false)
+  end
+
+  def base_route(resource) do
+    Extension.get_opt(resource, [:json_api, :routes], :base, nil, false)
+  end
+
+  def routes(resource) do
+    Extension.get_entities(resource, [:json_api, :routes])
+  end
+
+  def route(resource, criteria \\ %{}) do
+    resource
+    |> routes()
+    |> Enum.find(fn route ->
+      Map.take(route, Map.keys(criteria)) == criteria
+    end)
+  end
+
   @doc false
   def set_related_route(%{route: nil, relationship: relationship} = route) do
     {:ok, %{route | route: ":id/#{relationship}"}}
