@@ -82,7 +82,7 @@ defmodule AshJsonApi.MixProject do
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
-      {:git_ops, "~> 2.0.0", only: :dev},
+      {:git_ops, "~> 2.0.1", only: :dev},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:ex_check, "~> 0.11.0", only: :dev},
       {:credo, ">= 0.0.0", only: :dev, runtime: false},
