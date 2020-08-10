@@ -15,7 +15,7 @@ defmodule AshJsonApi.Error.InvalidIncludes do
 
   def new(opts) do
     opts
-    |> Keyword.put_new(:parameter, "include")
+    |> Keyword.put_new(:source_parameter, "include")
     |> add_detail()
     |> super()
   end

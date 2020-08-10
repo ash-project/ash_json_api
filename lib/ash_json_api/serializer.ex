@@ -301,7 +301,7 @@ defmodule AshJsonApi.Serializer do
     %{
       id: record.id,
       type: AshJsonApi.Resource.type(resource),
-      attributes: serialize_attributes(record),
+      attributes: serialize_attributes(request, record),
       relationships: serialize_relationships(request, record),
       links: %{} |> add_one_record_self_link(request, record)
     }
@@ -459,16 +459,25 @@ defmodule AshJsonApi.Serializer do
     |> Path.join()
   end
 
-  defp serialize_attributes(%resource{} = record) do
+  defp serialize_attributes(request, %resource{} = record) do
+    fields = Map.get(request.fields || %{}, resource) || default_fields(resource)
+
+    Enum.reduce(fields, %{}, fn field, acc ->
+      if field == :id do
+        acc
+      else
+        Map.put(acc, field, Map.get(record, field))
+      end
+    end)
+  end
+
+  defp default_fields(resource) do
     fields = AshJsonApi.Resource.fields(resource)
 
     resource
     |> Ash.Resource.attributes()
-    |> Stream.filter(&(&1.name in fields))
-    |> Stream.reject(&(&1.name == :id))
-    |> Enum.into(%{}, fn attribute ->
-      {attribute.name, Map.get(record, attribute.name)}
-    end)
+    |> Enum.map(& &1.name)
+    |> Enum.filter(&(&1 in fields))
   end
 
   defp encode_link(value) do

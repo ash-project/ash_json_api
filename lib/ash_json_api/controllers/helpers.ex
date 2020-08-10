@@ -47,12 +47,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       request.resource
       |> Ash.Query.new(request.api)
-      |> Ash.Query.side_load(request.includes_keyword)
+      |> Ash.Query.load(request.includes_keyword)
       |> Ash.Query.limit(page_params[:limit])
       |> Ash.Query.offset(page_params[:offset])
       |> Ash.Query.filter(request.filter)
       |> Ash.Query.sort(request.sort)
-      |> request.api.read(params)
+      |> Ash.Query.load(fields(request, request.resource))
+      |> request.api.read(Keyword.put(params, :verbose?, true))
       |> case do
         {:ok, results} ->
           page = %AshJsonApi.Paginator{
@@ -72,7 +73,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   defp side_load_query(request) do
     request.resource
     |> Ash.Query.new(request.api)
-    |> Ash.Query.side_load(request.includes_keyword)
+    |> Ash.Query.load(request.includes_keyword)
   end
 
   def create_record(request) do
@@ -95,6 +96,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
       |> api.create(params)
+      |> api.load(fields(request, request.resource))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -125,6 +127,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
       |> api.update(params)
+      |> api.load(fields(request, request.resource))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -148,6 +151,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new()
       |> Ash.Changeset.append_to_relationship(relationship_name, request.resource_identifiers)
       |> api.update(params)
+      |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
           request
@@ -173,6 +177,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new()
       |> Ash.Changeset.replace_relationship(relationship_name, request.resource_identifiers)
       |> api.update(params)
+      |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
           request
@@ -206,6 +211,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new()
       |> Ash.Changeset.remove_from_relationship(relationship_name, request.resource_identifiers)
       |> api.update(params)
+      |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
           request
@@ -264,7 +270,10 @@ defmodule AshJsonApi.Controllers.Helpers do
           params
         end
 
-      case api.get(resource, id, params) do
+      resource
+      |> api.get(id, params)
+      |> api.load(fields(request, request.resource))
+      |> case do
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error, :fetch_from_path)
@@ -293,12 +302,15 @@ defmodule AshJsonApi.Controllers.Helpers do
         action: request.action
       ]
 
+      sort = request.sort || default_sort(request.resource)
+
       destination_query =
         relationship.destination
         |> Ash.Query.new(request.api)
         |> Ash.Query.filter(request.filter)
-        |> Ash.Query.sort(request.sort)
+        |> Ash.Query.sort(sort)
         |> Ash.Query.side_load(request.includes_keyword)
+        |> Ash.Query.load(fields(request, request.resource))
 
       pagination_params = Map.get(request.assigns, :page, %{})
 
@@ -315,7 +327,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       origin_query =
         source_resource
         |> Ash.Query.new(request.api)
-        |> Ash.Query.side_load([{relationship.name, destination_query}])
+        |> Ash.Query.load([{relationship.name, destination_query}])
 
       params =
         if AshJsonApi.authorize?(api) do
@@ -324,7 +336,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           params
         end
 
-      case api.side_load(
+      case api.load(
              record,
              origin_query,
              params
@@ -344,6 +356,22 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error, :fetch_related)
       end
     end)
+  end
+
+  defp fields(request, resource) do
+    Map.get(request.fields, resource) || []
+  end
+
+  defp default_sort(resource) do
+    created_at =
+      Ash.Resource.attribute(resource, :created_at) ||
+        Ash.Resource.attribute(resource, :inserted_at)
+
+    if created_at do
+      [{created_at.name, :asc}]
+    else
+      Ash.Resource.primary_key(resource)
+    end
   end
 
   defp maybe_paginate(records, pagination_params, paginate?) do

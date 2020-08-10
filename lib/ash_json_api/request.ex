@@ -2,7 +2,15 @@ defmodule AshJsonApi.Request do
   @moduledoc false
   require Logger
 
-  alias AshJsonApi.Error.{InvalidBody, InvalidHeader, InvalidQuery, UnsupportedMediaType}
+  alias AshJsonApi.Error.{
+    InvalidBody,
+    InvalidField,
+    InvalidHeader,
+    InvalidQuery,
+    InvalidType,
+    UnsupportedMediaType
+  }
+
   alias AshJsonApi.Includes
   alias Plug.Conn
 
@@ -15,7 +23,6 @@ defmodule AshJsonApi.Request do
     :includes,
     :includes_keyword,
     :attributes,
-    :sort,
     :filter,
     :relationships,
     :resource_identifiers,
@@ -27,6 +34,9 @@ defmodule AshJsonApi.Request do
     :req_headers,
     :relationship,
     :route,
+    filter_included: %{},
+    sort: [],
+    fields: %{},
     errors: [],
     # assigns is used by controllers to store state while piping
     # the request around
@@ -68,6 +78,8 @@ defmodule AshJsonApi.Request do
     |> validate_href_schema()
     |> validate_req_headers()
     |> validate_body()
+    |> parse_fields()
+    |> parse_filter_included()
     |> parse_includes()
     |> parse_filter()
     |> parse_sort()
@@ -184,22 +196,87 @@ defmodule AshJsonApi.Request do
     end
   end
 
-  defp parse_filter(%{resource: resource, query_params: %{"filter" => filter}} = request)
-       when is_map(filter) do
-    # The validation here is not enough probably
-    # Also, this logic gunna get cray
-    Enum.reduce(filter, request, fn {key, value}, request ->
-      cond do
-        attr = Ash.Resource.attribute(resource, key) ->
-          %{request | filter: Map.put(request.filter || %{}, attr.name, value)}
+  defp parse_filter_included(
+         %{resource: resource, query_params: %{"filter_included" => filter_included}} = request
+       )
+       when is_map(filter_included) do
+    Enum.reduce(filter_included, request, fn {relationship_path, filter_statement}, request ->
+      path = String.split(relationship_path)
 
-        rel = Ash.Resource.relationship(resource, key) ->
-          %{request | filter: Map.put(request.filter || %{}, rel.name, value)}
+      case Ash.Resource.related(resource, path) do
+        nil ->
+          add_error(request, "Invalid filter included", request.route.type)
 
-        true ->
-          add_error(request, "invalid sort: #{key}", request.route.type)
+        _ ->
+          path = Enum.map(path, &String.to_existing_atom/1)
+          %{request | filter_included: Map.put(request.filter_included, path, filter_statement)}
       end
     end)
+  end
+
+  defp parse_filter_included(request), do: request
+
+  defp parse_fields(%{resource: resource, query_params: %{"fields" => fields}} = request)
+       when is_binary(fields) do
+    add_fields(request, resource, fields, false)
+  end
+
+  defp parse_fields(%{query_params: %{"fields" => fields}} = request) when is_map(fields) do
+    Enum.reduce(fields, request, fn {type, fields}, request ->
+      request.api
+      |> Ash.Api.resources()
+      |> Enum.find(&(AshJsonApi.Resource.type(&1) == type))
+      |> case do
+        nil ->
+          add_error(request, InvalidType.new(type: type), request.route.type)
+
+        resource ->
+          add_fields(request, resource, fields, true)
+      end
+    end)
+  end
+
+  defp parse_fields(request), do: request
+
+  defp add_fields(request, resource, fields, parameter?) do
+    type = AshJsonApi.Resource.type(resource)
+
+    fields
+    |> String.split(",")
+    |> Enum.reduce(request, fn key, request ->
+      cond do
+        !Enum.find(AshJsonApi.Resource.fields(resource), &(to_string(&1) == key)) ->
+          add_error(
+            request,
+            InvalidField.new(type: type, parameter?: parameter?),
+            request.route.type
+          )
+
+        attr = Ash.Resource.attribute(resource, key) ->
+          fields = Map.update(request.fields, resource, [attr.name], &[attr.name | &1])
+          %{request | fields: fields}
+
+        rel = Ash.Resource.relationship(resource, key) ->
+          fields = Map.update(request.fields, resource, [rel.name], &[rel.name | &1])
+          %{request | fields: fields}
+
+        agg = Ash.Resource.aggregate(resource, key) ->
+          fields = Map.update(request.fields, resource, [agg.name], &[agg.name | &1])
+          %{request | fields: fields}
+
+        true ->
+          add_error(
+            request,
+            InvalidField.new(type: type, parameter?: parameter?),
+            request.route.type
+          )
+      end
+    end)
+  end
+
+  defp parse_filter(%{query_params: %{"filter" => filter}} = request)
+       when is_map(filter) do
+    %{request | filter: filter}
   end
 
   defp parse_filter(%{query_params: %{"filter" => _}} = request) do
@@ -212,13 +289,18 @@ defmodule AshJsonApi.Request do
        when is_bitstring(sort_string) do
     sort_string
     |> String.split(",")
+    |> Enum.reverse()
     |> Enum.reduce(request, fn field, request ->
-      with {order, field_name} <- trim_sort_order(field),
-           {:attr, attr} when not is_nil(attr) <-
-             {:attr, Ash.Resource.attribute(resource, field_name)} do
-        %{request | sort: request.sort || [] ++ [{order, attr.name}]}
-      else
-        _ ->
+      {order, field_name} = trim_sort_order(field)
+
+      cond do
+        attr = Ash.Resource.attribute(resource, field_name) ->
+          %{request | sort: [{order, attr.name} | request.sort]}
+
+        agg = Ash.Resource.aggregate(resource, field_name) ->
+          %{request | sort: [{order, agg.name} | request.sort]}
+
+        true ->
           add_error(request, "invalid sort #{field}", request.route.type)
       end
     end)
@@ -243,16 +325,47 @@ defmodule AshJsonApi.Request do
 
     case includes do
       %{allowed: allowed, disallowed: []} ->
-        %{request | includes: includes, includes_keyword: includes_to_keyword(allowed)}
+        %{request | includes: includes, includes_keyword: includes_to_keyword(request, allowed)}
 
       %{allowed: _allowed, disallowed: _disallowed} ->
         add_error(request, "invalid includes", request.route.type)
     end
   end
 
-  defp includes_to_keyword(includes) do
-    Enum.reduce(includes, [], fn path, acc ->
+  defp includes_to_keyword(request, includes) do
+    includes
+    |> Enum.reduce([], fn path, acc ->
       put_path(acc, path)
+    end)
+    |> set_include_queries(request.fields, request.filter_included, request.resource)
+  end
+
+  defp set_include_queries(includes, fields, filters, resource, path \\ []) do
+    Enum.map(includes, fn {key, nested} ->
+      related = Ash.Resource.related(resource, key)
+      nested = set_include_queries(nested, fields, filters, related, path ++ [key])
+
+      load =
+        fields
+        |> Map.get(related)
+        |> Kernel.||([])
+        |> Kernel.++(nested)
+
+      new_query =
+        related
+        |> Ash.Query.new()
+        |> Ash.Query.load(load)
+
+      filtered_query =
+        case Map.fetch(filters, path ++ [key]) do
+          {:ok, filter} ->
+            Ash.Query.filter(new_query, filter)
+
+          :error ->
+            new_query
+        end
+
+      {key, filtered_query}
     end)
   end
 

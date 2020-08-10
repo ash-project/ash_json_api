@@ -29,6 +29,9 @@ defmodule AshJsonApi.Includes.Includer do
 
   defp get_includes_list(related, []), do: {related, []}
 
+  defp get_includes_list(preloaded, %Ash.Query{side_load: side_load}),
+    do: get_includes_list(preloaded, side_load)
+
   defp get_includes_list(preloaded, include_keyword) do
     include_keyword
     |> Enum.reduce({preloaded, []}, fn {relationship, further},
