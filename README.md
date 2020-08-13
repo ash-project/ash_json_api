@@ -10,7 +10,7 @@ AshJsonApi allows you to take resources created with [Ash](https://github.com/as
 This is what AshJsonApi does:
 
 1. Route Creation: AshJsonApi defines routes and actions in your app based on resource configurations
-2. Deserialization: When an incoming HTTP request hits a AshJsonApi defined route/action, AshJsonApi will parse it from /api/users?filter[admin]=true into an Ash Action Ash.read(:user, filter: [admin: true])
+2. Deserialization: When an incoming HTTP request hits a AshJsonApi defined route/action, AshJsonApi will parse it from `/api/users?filter[admin]=true` into a call to ash
 3. Query Execution: AshJsonApi then executes the parsed Ash Action (this is the integration point between AshJsonApi and Ash Core, where Ash Actions are defined)
 4. Serialization: AshJsonApi then serializes the result of the Ash Action into JSON API objects.
 5. Response: AshJsonApi then sends this JSON back to the client
