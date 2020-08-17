@@ -1,5 +1,7 @@
 defmodule AshJsonApi.JsonSchema do
   @moduledoc false
+  alias Ash.Query.Aggregate
+
   def generate(api) do
     resources =
       api
@@ -477,7 +479,7 @@ defmodule AshJsonApi.JsonSchema do
           Map.put(acc, to_string(field), relationship_filter_schema(rel))
 
         agg = Ash.Resource.aggregate(resource, field) ->
-          {:ok, type} = Ash.Query.Aggregate.kind_to_type(agg.kind)
+          {:ok, type} = Aggregate.kind_to_type(agg.kind)
           Map.put(acc, to_string(field), attribute_filter_schema(type))
 
         true ->
