@@ -55,6 +55,8 @@ jobs:
           status: |
             Alpha version "${{ steps.tagName.outputs.tag }}" of AshJsonApi released!
 
+            #myelixirstatus
+
             See the changelog for more info:
             https://github.com/ash-project/ash_json_api/blob/master/CHANGELOG.md
           consumer-key: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
