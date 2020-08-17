@@ -356,6 +356,13 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  defp resource_field_type(resource, %{type: {:array, type}}, _) do
+    %{
+      "type" => "array",
+      "items" => resource_field_type(resource, type)
+    }
+  end
+
   defp resource_field_type(_, %{type: type}, true) do
     raise "unimplemented type #{type}"
   end
@@ -464,10 +471,14 @@ defmodule AshJsonApi.JsonSchema do
     |> Enum.reduce(%{}, fn field, acc ->
       cond do
         attr = Ash.Resource.attribute(resource, field) ->
-          Map.put(acc, to_string(field), attribute_filter_schema(attr))
+          Map.put(acc, to_string(field), attribute_filter_schema(attr.type))
 
         rel = Ash.Resource.relationship(resource, field) ->
           Map.put(acc, to_string(field), relationship_filter_schema(rel))
+
+        agg = Ash.Resource.aggregate(resource, field) ->
+          {:ok, type} = Ash.Query.Aggregate.kind_to_type(agg.kind)
+          Map.put(acc, to_string(field), attribute_filter_schema(type))
 
         true ->
           raise "Invalid field: #{inspect(field)}"
@@ -475,8 +486,8 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp attribute_filter_schema(attr) do
-    case attr.type do
+  defp attribute_filter_schema(type) do
+    case type do
       Ash.Type.UUID ->
         %{
           "type" => "string",
@@ -502,6 +513,11 @@ defmodule AshJsonApi.JsonSchema do
         %{
           "type" => "string",
           "format" => "date-time"
+        }
+
+      {:array, _type} ->
+        %{
+          "type" => "any"
         }
     end
   end
