@@ -304,7 +304,8 @@ defmodule AshJsonApi.Resource do
 
   @transformers [
     AshJsonApi.Resource.Transformers.PrependRoutePrefix,
-    AshJsonApi.Resource.Transformers.ValidateNoOverlappingRoutes
+    AshJsonApi.Resource.Transformers.ValidateNoOverlappingRoutes,
+    AshJsonApi.Resource.Transformers.RequireIdPkey
   ]
 
   require Ash.Dsl.Extension
