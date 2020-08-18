@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.18.0](https://github.com/ash-project/ash_json_api/compare/v0.17.0...v0.18.0) (2020-08-18)
+
+
+
+
+### Features:
+
+* update to latest ash
+
+### Bug Fixes:
+
+* array type support in json_schema
+
+* modernize side_load calls
+
 ## [v0.17.0](https://github.com/ash-project/ash_json_api/compare/v0.16.0...v0.17.0) (2020-08-17)
 
 
