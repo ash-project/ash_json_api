@@ -361,7 +361,7 @@ defmodule AshJsonApi.JsonSchema do
   defp resource_field_type(resource, %{type: {:array, type}}, _) do
     %{
       "type" => "array",
-      "items" => resource_field_type(resource, type)
+      "items" => resource_field_type(resource, %{type: type})
     }
   end
 
