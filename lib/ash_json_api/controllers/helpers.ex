@@ -70,25 +70,17 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  defp side_load_query(request) do
-    request.resource
-    |> Ash.Query.new(request.api)
-    |> Ash.Query.load(request.includes_keyword)
-  end
-
   def create_record(request) do
     chain(request, fn %{api: api, resource: resource} ->
       params =
         if AshJsonApi.authorize?(request.api) do
           [
             action: request.action,
-            actor: request.actor,
-            side_load: side_load_query(request)
+            actor: request.actor
           ]
         else
           [
-            action: request.action,
-            side_load: side_load_query(request)
+            action: request.action
           ]
         end
 
@@ -96,7 +88,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
       |> api.create(params)
-      |> api.load(fields(request, request.resource))
+      |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -113,13 +105,11 @@ defmodule AshJsonApi.Controllers.Helpers do
         if AshJsonApi.authorize?(request.api) do
           [
             action: request.action,
-            actor: request.actor,
-            side_load: side_load_query(request)
+            actor: request.actor
           ]
         else
           [
-            action: request.action,
-            side_load: side_load_query(request)
+            action: request.action
           ]
         end
 
@@ -127,7 +117,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
       |> api.update(params)
-      |> api.load(fields(request, request.resource))
+      |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -258,7 +248,6 @@ defmodule AshJsonApi.Controllers.Helpers do
           []
         else
           [
-            side_load: request.includes_keyword,
             action: request.action
           ]
         end
@@ -270,18 +259,15 @@ defmodule AshJsonApi.Controllers.Helpers do
           params
         end
 
-      resource
-      |> api.get(id, params)
-      |> api.load(fields(request, request.resource))
-      |> case do
+      with {:ok, record} when not is_nil(record) <- api.get(resource, id, params),
+           {:ok, record} <- api.load(fields(request, request.resource)) do
+        request
+        |> Request.assign(:result, record)
+        |> Request.assign(:record_from_path, record)
+      else
         {:ok, nil} ->
           error = Error.NotFound.new(id: id, resource: resource)
           Request.add_error(request, error, :fetch_from_path)
-
-        {:ok, record} ->
-          request
-          |> Request.assign(:result, record)
-          |> Request.assign(:record_from_path, record)
 
         {:error, error} ->
           Request.add_error(request, error, :fetch_from_path)
