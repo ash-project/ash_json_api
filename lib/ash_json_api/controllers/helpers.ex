@@ -295,7 +295,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         |> Ash.Query.new(request.api)
         |> Ash.Query.filter(request.filter)
         |> Ash.Query.sort(sort)
-        |> Ash.Query.side_load(request.includes_keyword)
+        |> Ash.Query.load(request.includes_keyword)
         |> Ash.Query.load(fields(request, request.resource))
 
       pagination_params = Map.get(request.assigns, :page, %{})
