@@ -237,14 +237,24 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def fetch_record_from_path(request, through_resource \\ nil) do
-    request
-    |> fetch_id_path_param()
-    |> chain(fn %{api: api, resource: request_resource} = request ->
+    chain(request, fn %{api: api, resource: request_resource} = request ->
       resource = through_resource || request_resource
-      id = request.assigns.id
+
+      filter =
+        Enum.reduce(request.path_params, %{}, fn {key, value}, acc ->
+          case Ash.Resource.attribute(resource, key) do
+            nil ->
+              acc
+
+            attribute ->
+              Map.put(acc, attribute.name, value)
+          end
+        end)
+
+      query = Ash.Query.filter(resource, filter)
 
       params =
-        if through_resource do
+        if through_resource || request.action.type != :read do
           []
         else
           [
@@ -259,14 +269,21 @@ defmodule AshJsonApi.Controllers.Helpers do
           params
         end
 
-      with {:ok, record} when not is_nil(record) <- api.get(resource, id, params),
-           {:ok, record} <- api.load(record, fields(request, request.resource)) do
+      fields_to_load =
+        if through_resource do
+          []
+        else
+          fields(request, request.resource)
+        end
+
+      with {:ok, [record]} when not is_nil(record) <- api.read(query, params),
+           {:ok, record} <- api.load(record, fields_to_load) do
         request
         |> Request.assign(:result, record)
         |> Request.assign(:record_from_path, record)
       else
-        {:ok, nil} ->
-          error = Error.NotFound.new(id: id, resource: resource)
+        {:ok, _} ->
+          error = Error.NotFound.new(filter: filter, resource: resource)
           Request.add_error(request, error, :fetch_from_path)
 
         {:error, error} ->

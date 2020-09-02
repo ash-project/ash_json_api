@@ -89,7 +89,7 @@ defmodule AshJsonApi do
     quote bind_quoted: [path: path, api: api, opts: opts] do
       case Code.ensure_compiled(api) do
         {:module, module} ->
-          forward("/", :persistent_term.get({api, :ash_json_api, :router}, nil), opts)
+          forward(path, :persistent_term.get({api, :ash_json_api, :router}, nil), opts)
 
         _error ->
           # We used to raise here, but this failing almost always implies
