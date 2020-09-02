@@ -236,20 +236,23 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
+  defp path_filter(path_params, resource) do
+    Enum.reduce(path_params, %{}, fn {key, value}, acc ->
+      case Ash.Resource.attribute(resource, key) do
+        nil ->
+          acc
+
+        attribute ->
+          Map.put(acc, attribute.name, value)
+      end
+    end)
+  end
+
   def fetch_record_from_path(request, through_resource \\ nil) do
     chain(request, fn %{api: api, resource: request_resource} = request ->
       resource = through_resource || request_resource
 
-      filter =
-        Enum.reduce(request.path_params, %{}, fn {key, value}, acc ->
-          case Ash.Resource.attribute(resource, key) do
-            nil ->
-              acc
-
-            attribute ->
-              Map.put(acc, attribute.name, value)
-          end
-        end)
+      filter = path_filter(request.path_params, resource)
 
       query = Ash.Query.filter(resource, filter)
 
