@@ -29,8 +29,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/:id")
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]}),
+      |> Ash.OptionsHelpers.set_default!(:route, "/:id"),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :get,
@@ -88,8 +87,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/:id")
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]}),
+      |> Ash.OptionsHelpers.set_default!(:route, "/:id"),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :patch,
@@ -108,8 +106,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/:id")
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]}),
+      |> Ash.OptionsHelpers.set_default!(:route, "/:id"),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :delete,
@@ -130,7 +127,6 @@ defmodule AshJsonApi.Resource do
       @route_schema
       |> Ash.OptionsHelpers.make_optional!(:route)
       |> Ash.OptionsHelpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -157,7 +153,6 @@ defmodule AshJsonApi.Resource do
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -184,7 +179,6 @@ defmodule AshJsonApi.Resource do
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -212,7 +206,6 @@ defmodule AshJsonApi.Resource do
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -240,7 +233,6 @@ defmodule AshJsonApi.Resource do
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
-      |> Ash.OptionsHelpers.set_type!(:route, {:custom, __MODULE__, :route_with_id, [:get]})
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -362,15 +354,6 @@ defmodule AshJsonApi.Resource do
       {:ok, fields}
     else
       {:error, "Invalid fields"}
-    end
-  end
-
-  @doc false
-  def route_with_id(route, action_type) do
-    if ":id" in Path.split(route) do
-      {:ok, route}
-    else
-      {:error, "Route for #{action_type} action *must* contain an `:id` path parameter"}
     end
   end
 end
