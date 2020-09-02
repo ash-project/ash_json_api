@@ -5,6 +5,27 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.19.0](https://github.com/ash-project/ash_json_api/compare/v0.18.0...v0.19.0) (2020-09-02)
+
+
+
+
+### Features:
+
+* ash v1.11 (#32)
+
+### Bug Fixes:
+
+* load properly on nested routes (#36)
+
+* support routes w/o route params
+
+* actually forward to the configured path
+
+* only render links at appropriate times
+
+* error while fetching record from path
+
 ## [v0.18.0](https://github.com/ash-project/ash_json_api/compare/v0.17.0...v0.18.0) (2020-08-18)
 
 
