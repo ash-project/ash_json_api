@@ -91,7 +91,6 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
     resources do
       resource(Post)
-      resource(Api)
       resource(Author)
     end
   end
@@ -115,7 +114,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
   describe "200 OK response." do
     test "empty to-one relationship" do
       # Create a post without an author
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.new(%{name: "foo"})
+        |> Api.create!()
 
       get(Api, "/posts/#{post.id}/relationships/author", status: 200)
     end

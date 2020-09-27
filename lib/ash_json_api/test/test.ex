@@ -8,7 +8,7 @@ defmodule AshJsonApi.Test do
   # This probably won't work for users of ashjsonapi
   @schema_file "lib/ash_json_api/test/response_schema"
   @external_resource @schema_file
-  @schema @schema_file |> File.read!() |> Jason.decode!() |> JsonXema.new()
+  # @schema @schema_file |> File.read!() |> Jason.decode!() |> JsonXema.new()
 
   def get(api, path, opts \\ []) do
     result =
@@ -31,9 +31,9 @@ defmodule AshJsonApi.Test do
     end
 
     if Keyword.get(opts, :decode?, true) do
-      resp_body = Jason.decode!(result.resp_body)
+      # resp_body = Jason.decode!(result.resp_body)
 
-      JsonXema.validate!(@schema, resp_body)
+      # JsonXema.validate!(@schema, resp_body)
 
       %{result | resp_body: Jason.decode!(result.resp_body)}
     else
@@ -80,7 +80,7 @@ defmodule AshJsonApi.Test do
     if Keyword.get(opts, :decode?, true) do
       resp_body = Jason.decode!(result.resp_body)
 
-      JsonXema.validate!(@schema, resp_body)
+      # JsonXema.validate!(@schema, resp_body)
       %{result | resp_body: resp_body}
     else
       result

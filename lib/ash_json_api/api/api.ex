@@ -20,6 +20,11 @@ defmodule AshJsonApi.Api do
         type: :boolean,
         doc: "Whether or not to perform authorization for this API",
         default: true
+      ],
+      log_errors?: [
+        type: :boolean,
+        doc: "Whether or not to log any errors produced",
+        default: true
       ]
     ]
   }

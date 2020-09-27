@@ -85,7 +85,6 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
     resources do
       resource(Post)
-      resource(Api)
       resource(Author)
     end
   end

@@ -1,6 +1,5 @@
 defmodule Test.Acceptance.GetTest do
   use ExUnit.Case, async: true
-  @moduletag :skip
 
   defmodule Post do
     use Ash.Resource,
@@ -18,6 +17,7 @@ defmodule Test.Acceptance.GetTest do
 
       routes do
         base("/posts")
+
         get(:default)
         index(:default)
       end
@@ -32,7 +32,7 @@ defmodule Test.Acceptance.GetTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      attribute(:id, :uuid, primary_key?: true, default: &Ecto.UUID.generate/0)
       attribute(:name, :string)
       attribute(:hidden, :string)
     end
@@ -43,6 +43,10 @@ defmodule Test.Acceptance.GetTest do
       extensions: [
         AshJsonApi.Api
       ]
+
+    json_api do
+      log_errors?(false)
+    end
 
     resources do
       resource(Post)
@@ -59,7 +63,7 @@ defmodule Test.Acceptance.GetTest do
       |> get("/posts/#{id}", status: 404)
       |> assert_has_error(%{
         "code" => "NotFound",
-        "detail" => "No record of post with id: #{id}",
+        "detail" => "No post record found with `id: #{id}`",
         "title" => "Entity Not Found"
       })
     end
@@ -68,7 +72,10 @@ defmodule Test.Acceptance.GetTest do
   @tag :attributes
   describe "attributes" do
     setup do
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo", hidden: "hidden"})
+      post =
+        Post
+        |> Ash.Changeset.new(%{name: "foo", hidden: "hidden"})
+        |> Api.create!()
 
       %{post: post}
     end
