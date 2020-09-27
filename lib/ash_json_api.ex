@@ -85,6 +85,10 @@ defmodule AshJsonApi do
     Extension.get_opt(api, [:json_api], :authorize?, true, true)
   end
 
+  def log_errors?(api) do
+    Extension.get_opt(api, [:json_api], :log_errors?, true, true)
+  end
+
   defmacro forward(path, api, opts \\ []) do
     quote bind_quoted: [path: path, api: api, opts: opts] do
       case Code.ensure_compiled(api) do

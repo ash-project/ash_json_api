@@ -4,9 +4,9 @@ defmodule AshJsonApi.Controllers.Response do
 
   # sobelow_skip ["XSS.SendResp"]
   def render_errors(conn, request, opts \\ []) do
-    # if opts[:log?] do
-    log_errors(request.errors, opts)
-    # end
+    if AshJsonApi.log_errors?(request.api) do
+      log_errors(request.errors, opts)
+    end
 
     status = opts[:status_code] || error_status_code(request.errors)
     serialized = AshJsonApi.Serializer.serialize_errors(request, request.errors)

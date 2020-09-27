@@ -17,21 +17,23 @@ defmodule AshJsonApi.Error.NotFound do
   end
 
   defp detail(opts) do
-    filter = Keyword.fetch(opts, :filter)
-    resource = Keyword.fetch(opts, :resource)
+    filter = Keyword.get(opts, :filter)
+    resource = Keyword.get(opts, :resource)
 
-    case {filter, resource} do
-      {{:ok, id}, {:ok, resource}} ->
-        "No record of #{AshJsonApi.Resource.type(resource)} with id: #{inspect(id)}"
+    if is_map(filter) || Keyword.keyword?(filter) do
+      filter =
+        Enum.map_join(filter, ", ", fn {key, value} ->
+          try do
+            "#{key}: #{to_string(value)}"
+          rescue
+            _ ->
+              "#{key}: #{inspect(value)}"
+          end
+        end)
 
-      {{:ok, id}, _} ->
-        "No record with id: #{inspect(id)}"
-
-      {_, {:ok, resource}} ->
-        "No #{resource} record with id: #{inspect(filter)}"
-
-      _ ->
-        "No record found."
+      "No #{AshJsonApi.Resource.type(resource)} record found with `#{filter}`"
+    else
+      "No #{AshJsonApi.Resource.type(resource)} record found with `#{inspect(filter)}`"
     end
   end
 end

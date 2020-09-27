@@ -53,7 +53,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.filter(request.filter)
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
-      |> request.api.read(Keyword.put(params, :verbose?, true))
+      |> request.api.read(params)
       |> case do
         {:ok, results} ->
           page = %AshJsonApi.Paginator{
