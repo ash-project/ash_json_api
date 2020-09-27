@@ -13,6 +13,7 @@ locals_without_parens = [
   includes: 1,
   index: 1,
   index: 2,
+  log_errors?: 1,
   paginate?: 1,
   patch: 1,
   patch: 2,
