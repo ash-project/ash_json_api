@@ -36,9 +36,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.PostTest.Post,
-        destination_field: :author_id
-      )
+      has_many(:posts, Test.Acceptance.PostTest.Post, destination_field: :author_id)
     end
   end
 
@@ -70,7 +68,7 @@ defmodule Test.Acceptance.PostTest do
       read(:default)
 
       create :default do
-        accept [:id, :name, :hidden]
+        accept([:id, :name, :hidden])
       end
     end
 
@@ -78,9 +76,13 @@ defmodule Test.Acceptance.PostTest do
       attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
       attribute(:hidden, :string)
-      attribute :email, :string, allow_nil?: true, constraints: [
-        match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
-      ]
+
+      attribute(:email, :string,
+        allow_nil?: true,
+        constraints: [
+          match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
+        ]
+      )
     end
 
     relationships do
@@ -106,7 +108,6 @@ defmodule Test.Acceptance.PostTest do
 
   describe "invalid_post" do
     test "create without all attributes in accept list" do
-
       post =
         Post
         |> Ash.Changeset.new(%{name: "Invalid Post", hidden: "hidden"})
@@ -114,7 +115,6 @@ defmodule Test.Acceptance.PostTest do
 
       assert is_nil(post.id) == true
       assert is_nil(post.author) == false
-
     end
   end
 
@@ -133,13 +133,11 @@ defmodule Test.Acceptance.PostTest do
       assert is_nil(post.email)
 
       assert is_nil(post.author) == false
-
     end
   end
 
   describe "post_email_id_exception" do
     test "create with all attributes in accept list with email" do
-
       assert_raise Ash.Error.Invalid, fn ->
         _ =
           Post
@@ -151,13 +149,11 @@ defmodule Test.Acceptance.PostTest do
           })
           |> Api.create!()
       end
-
     end
   end
 
   describe "post_email_id_exception_relationship" do
     test "create with all attributes in accept list with email along with relationship" do
-
       assert_raise Ash.Error.Invalid, fn ->
         _ =
           Post
@@ -169,8 +165,6 @@ defmodule Test.Acceptance.PostTest do
           })
           |> Api.create!()
       end
-
     end
   end
-
 end

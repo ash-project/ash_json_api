@@ -36,9 +36,7 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.PatchTest.Post,
-        destination_field: :author_id
-      )
+      has_many(:posts, Test.Acceptance.PatchTest.Post, destination_field: :author_id)
     end
   end
 
@@ -68,14 +66,14 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     actions do
-      read :default
+      read(:default)
 
       create :default do
-        accept [:id, :name, :hidden]
+        accept([:id, :name, :hidden])
       end
 
       update :default do
-        accept [:email]
+        accept([:email])
       end
     end
 
@@ -83,9 +81,13 @@ defmodule Test.Acceptance.PatchTest do
       attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
       attribute(:hidden, :string)
-      attribute :email, :string, allow_nil?: true, constraints: [
-        match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
-      ]
+
+      attribute(:email, :string,
+        allow_nil?: true,
+        constraints: [
+          match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
+        ]
+      )
     end
 
     relationships do
@@ -126,13 +128,11 @@ defmodule Test.Acceptance.PatchTest do
       assert is_nil(post.author) == false
 
       # this is still incomplete.
-
     end
   end
 
   describe "patch_email_id_exception_relationship" do
     test "Update attributes in accept list with email along with relationship" do
-
       assert_raise Ash.Error.Invalid, fn ->
         _ =
           Post
@@ -144,8 +144,6 @@ defmodule Test.Acceptance.PatchTest do
           })
           |> Api.create!()
       end
-
     end
   end
-
 end
