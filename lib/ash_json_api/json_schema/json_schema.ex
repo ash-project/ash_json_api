@@ -661,7 +661,7 @@ defmodule AshJsonApi.JsonSchema do
     |> Enum.map(&to_string(&1.name))
   end
 
-  defp write_attributes(resource, accept \\ []) do
+  defp write_attributes(resource, accept) do
     resource
     |> AshJsonApi.Resource.fields()
     |> Enum.map(&Ash.Resource.attribute(resource, &1))
@@ -673,9 +673,10 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp write_relationships(resource, _accept \\ []) do
+  defp write_relationships(resource, accept) do
     resource
     |> AshJsonApi.Resource.fields()
+    |> Enum.filter(& (is_nil(accept) || &1.name in accept))
     |> Enum.reduce(%{}, fn field, acc ->
       rel = Ash.Resource.relationship(resource, field)
 
