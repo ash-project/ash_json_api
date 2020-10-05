@@ -176,10 +176,8 @@ defmodule Test.Acceptance.PatchTest do
 
     test "patch working properly", %{post: post} do
       Api
-      |> IO.inspect()
       |> patch("/posts/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
-
-      # |> assert_attribute_equals("name", post.name)
+      |> assert_attribute_equals("email", "dummy@test.com")
     end
 
     @tag :fields
