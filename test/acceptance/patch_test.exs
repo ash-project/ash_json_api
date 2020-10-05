@@ -17,8 +17,8 @@ defmodule Test.Acceptance.PatchTest do
 
       routes do
         base("/authors")
-        get(:default)
-        index(:default)
+        get :default
+        index :default
       end
 
       fields [:name]
@@ -26,7 +26,6 @@ defmodule Test.Acceptance.PatchTest do
 
     actions do
       read(:default)
-
       create(:default)
     end
 
@@ -62,7 +61,7 @@ defmodule Test.Acceptance.PatchTest do
         patch :default
       end
 
-      fields [:name]
+      fields [:id, :name, :email]
     end
 
     actions do
@@ -73,7 +72,7 @@ defmodule Test.Acceptance.PatchTest do
       end
 
       update :default do
-        accept([:email])
+        accept([:id, :email])
       end
     end
 
@@ -127,7 +126,67 @@ defmodule Test.Acceptance.PatchTest do
 
       assert is_nil(post.author) == false
 
-      # this is still incomplete.
+      # test "string attributes are rendered properly", %{post: post} do
+      # Api
+      # |> get("/posts/#{post.id}", status: 200)
+      # |> assert_attribute_equals("name", post.name)
+
+      # Api.patch("/posts/#{id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
+      # |> assert_attribute_missing("hidden")
+
+      # this feels wrong.
+
+      # updated_post =
+      #   Post
+      #   |> Ash.Changeset.new(%{
+      #     # name: "Valid Post",
+      #     # hidden: "hidden",
+      #     id: id,
+      #     email: "dummy@test.com"
+      #   })
+
+      # {:ok, post} = Api.update(updated_post)
+      # assert is_nil(post.email) == false
+
+      # assert post.id == id
+      # assert post.name == "Valid Post"
+    end
+  end
+
+  import AshJsonApi.Test
+
+  @tag :attributes
+  describe "attributes" do
+    setup do
+      id = Ecto.UUID.generate()
+
+      post =
+        Post
+        |> Ash.Changeset.new(%{name: "Valid Post", hidden: "hidden", id: id})
+        |> Api.create!()
+
+      %{post: post}
+    end
+
+    test "string attributes are rendered properly", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}", status: 200)
+      |> assert_attribute_equals("name", post.name)
+    end
+
+    test "patch working properly", %{post: post} do
+      Api
+      |> IO.inspect()
+      |> patch("/posts/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
+
+      # |> assert_attribute_equals("name", post.name)
+    end
+
+    @tag :fields
+    test "attributes not declared in `fields` are not rendered in the payload", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}", status: 200)
+      |> assert_attribute_missing("hidden")
     end
   end
 

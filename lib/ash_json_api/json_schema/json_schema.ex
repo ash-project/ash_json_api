@@ -534,7 +534,10 @@ defmodule AshJsonApi.JsonSchema do
     %{}
   end
 
-  defp route_in_schema(%{type: type, accept: accept}, _api, resource) when type in [:post] do
+  defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
+       when type in [:post] do
+    accept = Ash.Resource.action(resource, action, action_type).accept
+
     %{
       "type" => "object",
       "required" => ["data"],
@@ -564,7 +567,10 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp route_in_schema(%{type: type, accept: accept}, _api, resource) when type in [:patch] do
+  defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
+       when type in [:patch] do
+    accept = Ash.Resource.action(resource, action, action_type).accept
+
     %{
       "type" => "object",
       "required" => ["data"],
@@ -594,8 +600,14 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp route_in_schema(%{type: type, relationship: relationship}, _api, resource)
+  defp route_in_schema(
+         %{type: type, relationship: relationship, action: action, action_type: action_type},
+         _api,
+         resource
+       )
        when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
+    accept = Ash.Resource.action(resource, action, action_type).accept
+
     resource
     |> Ash.Resource.relationship(relationship)
     |> relationship_resource_identifiers()
@@ -676,7 +688,7 @@ defmodule AshJsonApi.JsonSchema do
   defp write_relationships(resource, accept) do
     resource
     |> AshJsonApi.Resource.fields()
-    |> Enum.filter(&(is_nil(accept) || &1.name in accept))
+    |> Enum.filter(&(is_nil(accept) || &1 in accept))
     |> Enum.reduce(%{}, fn field, acc ->
       rel = Ash.Resource.relationship(resource, field)
 
