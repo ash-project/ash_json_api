@@ -42,24 +42,38 @@ defmodule AshJsonApi.Test do
   end
 
   def post(api, path, body, opts \\ []) do
-    schema = AshJsonApi.JsonSchema.generate(api)
-    full_path = Path.join(AshJsonApi.prefix(api) || "", path)
+    result =
+      :post
+      |> conn(path, Jason.encode!(body))
+      |> put_req_header("content-type", "application/vnd.api+json")
+      |> put_req_header("accept", "application/vnd.api+json")
+      |> AshJsonApi.router(api).call(AshJsonApi.router(api).init([]))
 
-    endpoint_schema =
-      Enum.find(schema, fn element ->
-        match?(%{"method" => "POST", "href" => ^full_path}, element)
-      end)
+    assert result.state == :sent
 
-    unless endpoint_schema do
-      raise "Invalid endpoint, no schema found for POST #{path}"
+    unless opts[:skip_resp_header_check] do
+      if 200 <= result.status and result.status <= 300 do
+        assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+      end
     end
 
-    endpoint_schema
-    |> JsonXema.new()
-    |> JsonXema.validate!(body)
+    if opts[:status] do
+      assert result.status == opts[:status]
+    end
 
+    if Keyword.get(opts, :decode?, true) do
+      resp_body = Jason.decode!(result.resp_body)
+
+      # JsonXema.validate!(@schema, resp_body)
+      %{result | resp_body: resp_body}
+    else
+      result
+    end
+  end
+
+  def patch(api, path, body, opts \\ []) do
     result =
-      :get
+      :patch
       |> conn(path, Jason.encode!(body))
       |> put_req_header("content-type", "application/vnd.api+json")
       |> put_req_header("accept", "application/vnd.api+json")
