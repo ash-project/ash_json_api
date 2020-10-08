@@ -111,20 +111,6 @@ defmodule Test.Acceptance.PostTest do
   @tag :attributes
   describe "invalid_post" do
     test "create without all attributes in accept list" do
-      # dummy response.
-      # %{
-      #   "errors" => [
-      #     %{
-      #       "code" => "InvalidBody",
-      #       "detail" => "Expected only defined properties, got key [\"data\", \"attributes\", \"email\"].",
-      #       "id" => "98f356c4-4864-4382-adcb-629beb8b01f1",
-      #       "source" => %{"pointer" => "data/attributes/email"},
-      #       "title" => "Invalid Body"
-      #     }
-      #   ],
-      #   "jsonapi" => %{"version" => "1.0"}
-      # }
-
       id = Ecto.UUID.generate()
 
       response =
