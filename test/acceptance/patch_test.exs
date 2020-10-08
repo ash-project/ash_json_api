@@ -61,7 +61,7 @@ defmodule Test.Acceptance.PatchTest do
         patch :default
       end
 
-      fields [:id, :name, :email]
+      fields [:id, :name, :email, :author]
     end
 
     actions do
@@ -72,7 +72,7 @@ defmodule Test.Acceptance.PatchTest do
       end
 
       update :default do
-        accept([:id, :email])
+        accept([:id, :email, :author])
       end
     end
 
@@ -125,31 +125,6 @@ defmodule Test.Acceptance.PatchTest do
       assert is_nil(post.email)
 
       assert is_nil(post.author) == false
-
-      # test "string attributes are rendered properly", %{post: post} do
-      # Api
-      # |> get("/posts/#{post.id}", status: 200)
-      # |> assert_attribute_equals("name", post.name)
-
-      # Api.patch("/posts/#{id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
-      # |> assert_attribute_missing("hidden")
-
-      # this feels wrong.
-
-      # updated_post =
-      #   Post
-      #   |> Ash.Changeset.new(%{
-      #     # name: "Valid Post",
-      #     # hidden: "hidden",
-      #     id: id,
-      #     email: "dummy@test.com"
-      #   })
-
-      # {:ok, post} = Api.update(updated_post)
-      # assert is_nil(post.email) == false
-
-      # assert post.id == id
-      # assert post.name == "Valid Post"
     end
   end
 
@@ -189,18 +164,110 @@ defmodule Test.Acceptance.PatchTest do
   end
 
   describe "patch_email_id_exception_relationship" do
-    test "Update attributes in accept list with email along with relationship" do
-      assert_raise Ash.Error.Invalid, fn ->
-        _ =
-          Post
-          |> Ash.Changeset.new(%{
-            name: "Invalid Post 3",
-            hidden: "hidden",
-            id: Ecto.UUID.generate(),
-            email: "DUMMY@TEST.COM"
-          })
-          |> Api.create!()
-      end
+    setup do
+      id = Ecto.UUID.generate()
+
+      author =
+        Author
+        |> Ash.Changeset.new(%{id: Ecto.UUID.generate(), name: "John"})
+        |> Api.create!()
+
+      post =
+        Post
+        |> Ash.Changeset.new(%{name: "Valid Post", hidden: "hidden", id: id})
+        |> Api.create!()
+
+      %{post: post, author: author}
+    end
+
+    test "Update attributes in accept list with email along with relationship", %{
+      post: post,
+      author: author
+    } do
+      response =
+        Api
+        |> patch("/posts/#{post.id}", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              email: "dummy@test.com"
+            },
+            relationships: %{
+              author: %{
+                data: %{type: "author", id: author.id}
+              }
+            }
+          }
+        })
+
+      assert %{"data" => %{"attributes" => %{"email" => email}}} = response.resp_body
+      assert email == "dummy@test.com"
+    end
+
+    test "Update attributes in accept list without email along with relationship", %{
+      post: post,
+      author: author
+    } do
+      response =
+        Api
+        |> patch("/posts/#{post.id}", %{
+          data: %{
+            type: "post",
+            attributes: %{},
+            relationships: %{
+              author: %{
+                data: %{type: "author", id: author.id}
+              }
+            }
+          }
+        })
+
+      assert %{"data" => %{"attributes" => %{"email" => email}}} = response.resp_body
+      assert is_nil(email) == true
+    end
+
+    test "Update attributes in accept list without author_id and email_id along with relationship",
+         %{post: post} do
+      response =
+        Api
+        |> patch("/posts/#{post.id}", %{
+          data: %{
+            type: "post",
+            attributes: %{},
+            relationships: %{}
+          }
+        })
+
+      assert %{"data" => %{"attributes" => %{"email" => email}}} = response.resp_body
+      assert is_nil(email) == true
+    end
+
+    test "Update attributes in accept list with email and hidden along with relationship", %{
+      post: post,
+      author: author
+    } do
+      response =
+        Api
+        |> patch("/posts/#{post.id}", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              email: "dummy@test.com",
+              hidden: "show"
+            },
+            relationships: %{
+              author: %{
+                data: %{type: "author", id: author.id}
+              }
+            }
+          }
+        })
+
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "InvalidBody"
+
+      assert error["detail"] ==
+               "Expected only defined properties, got key [\"data\", \"attributes\", \"hidden\"]."
     end
   end
 end

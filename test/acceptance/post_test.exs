@@ -61,14 +61,14 @@ defmodule Test.Acceptance.PostTest do
         post(:default)
       end
 
-      fields [:id, :name, :hidden, :email]
+      fields [:id, :name, :hidden, :email, :author]
     end
 
     actions do
       read(:default)
 
       create :default do
-        accept([:id, :name, :hidden])
+        accept([:id, :name, :hidden, :author])
       end
     end
 
@@ -183,12 +183,27 @@ defmodule Test.Acceptance.PostTest do
         })
 
       # response is a Plug.
-      assert %{"errors" => _} = response.resp_body
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "InvalidBody"
+
+      assert error["detail"] ==
+               "Expected only defined properties, got key [\"data\", \"attributes\", \"email\"]."
     end
   end
 
   describe "post_email_id_relationship" do
-    test "create with all attributes in accept list without email along with relationship" do
+    setup do
+      author =
+        Author
+        |> Ash.Changeset.new(%{id: Ecto.UUID.generate(), name: "John"})
+        |> Api.create!()
+
+      %{author: author}
+    end
+
+    test "create with all attributes in accept list without email along with relationship", %{
+      author: author
+    } do
       id = Ecto.UUID.generate()
 
       response =
@@ -200,23 +215,22 @@ defmodule Test.Acceptance.PostTest do
               id: id,
               name: "Post 2",
               hidden: "hidden"
-              # email: "dummy@test.com"
             },
-            relationships:
-              %{
-                # author: %{
-                #   data: %{}
-                # }
+            relationships: %{
+              author: %{
+                data: %{id: author.id, type: "author"}
               }
+            }
           }
         })
 
       # response is a Plug.
-      IO.inspect(response.resp_body)
       assert %{"data" => %{"attributes" => %{"hidden" => "hidden"}}} = response.resp_body
     end
 
-    test "create with all attributes in accept list with email along with relationship" do
+    test "create with all attributes in accept list with email along with relationship", %{
+      author: author
+    } do
       id = Ecto.UUID.generate()
 
       response =
@@ -230,48 +244,20 @@ defmodule Test.Acceptance.PostTest do
               hidden: "hidden",
               email: "dummy@test.com"
             },
-            relationships:
-              %{
-                # author: %{
-                #   data: %{}
-                # }
+            relationships: %{
+              author: %{
+                data: %{id: author.id, type: "author"}
               }
+            }
           }
         })
 
       # response is a Plug.
-      IO.inspect(response.resp_body)
-      assert %{"errors" => _} = response.resp_body
-    end
-  end
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "InvalidBody"
 
-  describe "post_email_id_exception_relationship" do
-    test "create with all attributes in accept list with email along with relationship" do
-      id = Ecto.UUID.generate()
-
-      response =
-        Api
-        |> post("/posts", %{
-          data: %{
-            type: "post",
-            attributes: %{
-              id: id,
-              name: "Invalid Post 3",
-              hidden: "hidden"
-              # email: "dummy@test.com"
-            },
-            relationships:
-              %{
-                # author: %{
-                #   data: %{}
-                # }
-              }
-          }
-        })
-
-      # response is a Plug.
-      IO.inspect(response.resp_body)
-      assert %{"errors" => _} = response.resp_body
+      assert error["detail"] ==
+               "Expected only defined properties, got key [\"data\", \"attributes\", \"email\"]."
     end
   end
 end
