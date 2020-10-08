@@ -601,13 +601,11 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp route_in_schema(
-         %{type: type, relationship: relationship, action: action, action_type: action_type},
+         %{type: type, relationship: relationship},
          _api,
          resource
        )
        when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
-    accept = Ash.Resource.action(resource, action, action_type).accept
-
     resource
     |> Ash.Resource.relationship(relationship)
     |> relationship_resource_identifiers()

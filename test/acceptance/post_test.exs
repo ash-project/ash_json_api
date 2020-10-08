@@ -21,7 +21,7 @@ defmodule Test.Acceptance.PostTest do
         index(:default)
       end
 
-      fields [:name]
+      fields [:id, :name]
     end
 
     actions do
@@ -61,7 +61,7 @@ defmodule Test.Acceptance.PostTest do
         post(:default)
       end
 
-      fields [:name]
+      fields [:id, :name, :hidden, :email]
     end
 
     actions do
@@ -106,65 +106,172 @@ defmodule Test.Acceptance.PostTest do
     end
   end
 
+  import AshJsonApi.Test
+
+  @tag :attributes
   describe "invalid_post" do
     test "create without all attributes in accept list" do
-      post =
-        Post
-        |> Ash.Changeset.new(%{name: "Invalid Post", hidden: "hidden"})
-        |> Api.create!()
+      # dummy response.
+      # %{
+      #   "errors" => [
+      #     %{
+      #       "code" => "InvalidBody",
+      #       "detail" => "Expected only defined properties, got key [\"data\", \"attributes\", \"email\"].",
+      #       "id" => "98f356c4-4864-4382-adcb-629beb8b01f1",
+      #       "source" => %{"pointer" => "data/attributes/email"},
+      #       "title" => "Invalid Body"
+      #     }
+      #   ],
+      #   "jsonapi" => %{"version" => "1.0"}
+      # }
 
-      assert is_nil(post.id) == true
-      assert is_nil(post.author) == false
+      id = Ecto.UUID.generate()
+
+      response =
+        Api
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Invalid Post 1"
+            }
+          }
+        })
+
+      # response is a Plug.
+      assert %{"data" => %{"attributes" => %{"hidden" => nil}}} = response.resp_body
     end
   end
 
+  @tag :attributes
   describe "post" do
     test "create with all attributes in accept list" do
       id = Ecto.UUID.generate()
 
-      post =
-        Post
-        |> Ash.Changeset.new(%{name: "Valid Post", hidden: "hidden", id: id})
-        |> Api.create!()
-
-      assert post.name == "Valid Post"
-      assert post.id == id
-      assert post.hidden == "hidden"
-      assert is_nil(post.email)
-
-      assert is_nil(post.author) == false
+      Api
+      |> post("/posts", %{
+        data: %{
+          type: "post",
+          attributes: %{
+            id: id,
+            name: "Post 1",
+            hidden: "hidden"
+          }
+        }
+      })
+      |> assert_attribute_equals("email", nil)
     end
   end
 
   describe "post_email_id_exception" do
     test "create with all attributes in accept list with email" do
-      assert_raise Ash.Error.Invalid, fn ->
-        _ =
-          Post
-          |> Ash.Changeset.new(%{
-            name: "Invalid Post 2",
-            hidden: "hidden",
-            id: Ecto.UUID.generate(),
-            email: "DUMMY@TEST.COM"
-          })
-          |> Api.create!()
-      end
+      id = Ecto.UUID.generate()
+
+      response =
+        Api
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Invalid Post 2",
+              hidden: "hidden",
+              email: "dummy@test.com"
+            }
+          }
+        })
+
+      # response is a Plug.
+      assert %{"errors" => _} = response.resp_body
+    end
+  end
+
+  describe "post_email_id_relationship" do
+    test "create with all attributes in accept list without email along with relationship" do
+      id = Ecto.UUID.generate()
+
+      response =
+        Api
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Post 2",
+              hidden: "hidden"
+              # email: "dummy@test.com"
+            },
+            relationships:
+              %{
+                # author: %{
+                #   data: %{}
+                # }
+              }
+          }
+        })
+
+      # response is a Plug.
+      IO.inspect(response.resp_body)
+      assert %{"data" => %{"attributes" => %{"hidden" => "hidden"}}} = response.resp_body
+    end
+
+    test "create with all attributes in accept list with email along with relationship" do
+      id = Ecto.UUID.generate()
+
+      response =
+        Api
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Invalid Post 3",
+              hidden: "hidden",
+              email: "dummy@test.com"
+            },
+            relationships:
+              %{
+                # author: %{
+                #   data: %{}
+                # }
+              }
+          }
+        })
+
+      # response is a Plug.
+      IO.inspect(response.resp_body)
+      assert %{"errors" => _} = response.resp_body
     end
   end
 
   describe "post_email_id_exception_relationship" do
     test "create with all attributes in accept list with email along with relationship" do
-      assert_raise Ash.Error.Invalid, fn ->
-        _ =
-          Post
-          |> Ash.Changeset.new(%{
-            name: "Invalid Post 3",
-            hidden: "hidden",
-            id: Ecto.UUID.generate(),
-            email: "DUMMY@TEST.COM"
-          })
-          |> Api.create!()
-      end
+      id = Ecto.UUID.generate()
+
+      response =
+        Api
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Invalid Post 3",
+              hidden: "hidden"
+              # email: "dummy@test.com"
+            },
+            relationships:
+              %{
+                # author: %{
+                #   data: %{}
+                # }
+              }
+          }
+        })
+
+      # response is a Plug.
+      IO.inspect(response.resp_body)
+      assert %{"errors" => _} = response.resp_body
     end
   end
 end
