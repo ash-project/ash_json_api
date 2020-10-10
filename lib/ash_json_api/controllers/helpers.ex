@@ -16,6 +16,8 @@ defmodule AshJsonApi.Controllers.Helpers do
   alias AshJsonApi.{Error, Request}
   alias AshJsonApi.Includes.Includer
 
+  require Ash.Query
+
   def render_or_render_errors(request, conn, function) do
     chain(request, function,
       fallback: fn request ->
@@ -50,7 +52,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.load(request.includes_keyword)
       |> Ash.Query.limit(page_params[:limit])
       |> Ash.Query.offset(page_params[:offset])
-      |> Ash.Query.filter(request.filter)
+      |> Ash.Query.filter(^request.filter)
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
       |> request.api.read(params)
@@ -254,7 +256,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       filter = path_filter(request.path_params, resource)
 
-      query = Ash.Query.filter(resource, filter)
+      query = Ash.Query.filter(resource, ^filter)
 
       params =
         if through_resource || request.action.type != :read do
@@ -313,7 +315,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       destination_query =
         relationship.destination
         |> Ash.Query.new(request.api)
-        |> Ash.Query.filter(request.filter)
+        |> Ash.Query.filter(^request.filter)
         |> Ash.Query.sort(sort)
         |> Ash.Query.load(request.includes_keyword)
         |> Ash.Query.load(fields(request, request.resource))
