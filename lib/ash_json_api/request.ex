@@ -14,6 +14,8 @@ defmodule AshJsonApi.Request do
   alias AshJsonApi.Includes
   alias Plug.Conn
 
+  require Ash.Query
+
   defstruct [
     :api,
     :action,
@@ -359,7 +361,7 @@ defmodule AshJsonApi.Request do
       filtered_query =
         case Map.fetch(filters, path ++ [key]) do
           {:ok, filter} ->
-            Ash.Query.filter(new_query, filter)
+            Ash.Query.filter(new_query, ^filter)
 
           :error ->
             new_query
