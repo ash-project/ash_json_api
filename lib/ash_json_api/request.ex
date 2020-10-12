@@ -297,10 +297,10 @@ defmodule AshJsonApi.Request do
 
       cond do
         attr = Ash.Resource.attribute(resource, field_name) ->
-          %{request | sort: [{order, attr.name} | request.sort]}
+          %{request | sort: [{attr.name, order} | request.sort]}
 
         agg = Ash.Resource.aggregate(resource, field_name) ->
-          %{request | sort: [{order, agg.name} | request.sort]}
+          %{request | sort: [{agg.name, order} | request.sort]}
 
         true ->
           add_error(request, "invalid sort #{field}", request.route.type)

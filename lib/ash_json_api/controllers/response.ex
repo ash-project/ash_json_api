@@ -45,7 +45,6 @@ defmodule AshJsonApi.Controllers.Response do
         status,
         paginator,
         includes,
-        paginate? \\ true,
         top_level_meta \\ nil
       ) do
     serialized =
@@ -53,7 +52,6 @@ defmodule AshJsonApi.Controllers.Response do
         request,
         paginator,
         includes,
-        paginate?,
         top_level_meta
       )
 

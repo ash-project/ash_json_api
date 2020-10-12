@@ -27,11 +27,20 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
-  def serialize_many(request, paginator, includes, paginate? \\ true, meta \\ nil) do
-    data = Enum.map(paginator.results, &serialize_one_record(request, &1))
+  def serialize_many(request, paginator, includes, meta \\ nil) do
+    data =
+      case paginator do
+        %{results: results} ->
+          results
+
+        other when is_list(other) ->
+          other
+      end
+
+    data = Enum.map(data, &serialize_one_record(request, &1))
     json_api = %{version: "1.0"}
 
-    links = many_links(request, paginator, paginate?)
+    links = many_links(request, paginator)
 
     %{data: data, jsonapi: json_api, links: links}
     |> add_includes(request, includes)
@@ -149,26 +158,28 @@ defmodule AshJsonApi.Serializer do
     Map.put(payload, :included, includes)
   end
 
-  defp many_links(%{url: url} = request, paginator, paginate?) do
+  defp many_links(request, %{results: _} = paginator) do
     uri = URI.parse(request.url)
     query = Conn.Query.decode(uri.query || "")
 
-    if paginate? do
-      %{
-        first: first_link(uri, query, paginator),
-        self: many_self_link(uri, query, paginator)
-      }
-      |> add_last_link(uri, query, paginator)
-      |> add_prev_link(uri, query, paginator)
-      |> add_next_link(uri, query, paginator)
-    else
-      %{
-        self: url
-      }
-    end
+    %{
+      first: first_link(uri, query, paginator),
+      self: many_self_link(uri, query, paginator)
+    }
+    |> add_last_link(uri, query, paginator)
+    |> add_prev_link(uri, query, paginator)
+    |> add_next_link(uri, query, paginator)
   end
 
+  defp many_links(%{url: url}, _), do: %{self: url}
+
   defp first_link(uri, query, paginator) do
+    paginator =
+      case paginator do
+        %{after: _} -> %{paginator | after: nil, before: nil}
+        %{offset: _} -> %{paginator | offset: nil}
+      end
+
     new_query =
       query
       |> put_page_params(paginator)
@@ -184,6 +195,7 @@ defmodule AshJsonApi.Serializer do
     new_query =
       query
       |> put_page_params(paginator)
+      |> put_count_param(paginator)
       |> Conn.Query.encode()
 
     uri
@@ -191,6 +203,12 @@ defmodule AshJsonApi.Serializer do
     |> URI.to_string()
     |> encode_link()
   end
+
+  defp put_count_param(query, %{count: count}) when is_integer(count) do
+    Map.update(query, "page", %{count: count}, &Map.put(&1, :count, count))
+  end
+
+  defp put_count_param(query, _), do: query
 
   defp put_page_params(query, %{limit: nil, offset: offset}) when offset in [0, nil] do
     query
@@ -215,6 +233,28 @@ defmodule AshJsonApi.Serializer do
     })
   end
 
+  defp put_page_params(query, %{after: after_keyset, limit: nil}) when is_binary(after_keyset) do
+    Map.put(query, "page", %{after: after_keyset})
+  end
+
+  defp put_page_params(query, %{after: after_keyset, limit: limit})
+       when is_binary(after_keyset) do
+    Map.put(query, "page", %{after: after_keyset, limit: limit})
+  end
+
+  defp put_page_params(query, %{before: before_keyset, limit: nil})
+       when is_binary(before_keyset) do
+    Map.put(query, "page", %{before: before_keyset})
+  end
+
+  defp put_page_params(query, %{before: before_keyset, limit: limit})
+       when is_binary(before_keyset) do
+    Map.put(query, "page", %{before: before_keyset, limit: limit})
+  end
+
+  defp put_page_params(query, %{limit: limit}) when is_integer(limit),
+    do: Map.put(query, "page", %{limit: limit})
+
   defp put_page_params(query, _), do: query
 
   defp add_next_link(links, _uri, _query, %{offset: offset, limit: limit, total: total})
@@ -225,7 +265,7 @@ defmodule AshJsonApi.Serializer do
        when not is_nil(total) and is_nil(offset) and limit >= total,
        do: links
 
-  defp add_next_link(links, uri, query, paginator) do
+  defp add_next_link(links, uri, query, %{offset: _} = paginator) do
     if Enum.count(paginator.results) < paginator.limit do
       links
     else
@@ -244,12 +284,50 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
+  defp add_next_link(links, _uri, _query, %{results: [], after: _}) do
+    links
+  end
+
+  defp add_next_link(links, uri, query, %{results: results, after: _} = paginator) do
+    new_query =
+      query
+      |> put_page_params(%{paginator | after: List.last(results).metadata.keyset})
+      |> Conn.Query.encode()
+
+    link =
+      uri
+      |> put_query(new_query)
+      |> URI.to_string()
+      |> encode_link()
+
+    Map.put(links, :next, link)
+  end
+
   defp next_page(%{limit: nil} = paginator), do: paginator
 
   defp next_page(%{limit: limit, offset: offset} = paginator),
-    do: %{paginator | limit: limit + (offset || 0)}
+    do: %{paginator | offset: limit + (offset || 0)}
 
   defp add_prev_link(links, _uri, _query, %{offset: offset}) when offset in [0, nil], do: links
+
+  defp add_prev_link(links, _uri, _query, %{results: [], after: _}) do
+    links
+  end
+
+  defp add_prev_link(links, uri, query, %{results: results, after: _} = paginator) do
+    new_query =
+      query
+      |> put_page_params(%{paginator | after: List.first(results).metadata.keyset})
+      |> Conn.Query.encode()
+
+    link =
+      uri
+      |> put_query(new_query)
+      |> URI.to_string()
+      |> encode_link()
+
+    Map.put(links, :next, link)
+  end
 
   defp add_prev_link(links, uri, query, paginator) do
     new_query =
@@ -269,19 +347,19 @@ defmodule AshJsonApi.Serializer do
   defp prev_page(paginator) do
     offset =
       if paginator.limit do
-        max(paginator.limit - (paginator.offset || 0), 0)
+        max(paginator.offset - (paginator.limit || 0), 0)
       else
         0
       end
 
-    %{paginator | offset: offset}
+    %{paginator | offset: offset} |> IO.inspect()
   end
 
-  defp add_last_link(links, _uri, _query, %{total: nil}) do
+  defp add_last_link(links, _uri, _query, %{count: nil}) do
     links
   end
 
-  defp add_last_link(links, uri, query, %{total: total, limit: limit}) do
+  defp add_last_link(links, uri, query, %{count: total, limit: limit}) do
     new_query =
       query
       |> Map.put("page", %{
@@ -298,6 +376,8 @@ defmodule AshJsonApi.Serializer do
 
     Map.put(links, "last", link)
   end
+
+  defp add_last_link(links, _, _, _), do: links
 
   defp one_links(request) do
     %{
@@ -333,10 +413,19 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp add_meta(json_record, %{__json_api_meta__: meta}) when is_map(meta),
-    do: Map.put(json_record, :meta, meta)
+  defp add_meta(json_record, record) do
+    meta =
+      %{}
+      |> add_keyset(record)
 
-  defp add_meta(json_record, _), do: json_record
+    Map.put(json_record, :meta, meta)
+  end
+
+  defp add_keyset(meta, %{metadata: %{keyset: keyset}}) do
+    Map.put(meta, :keyset, keyset)
+  end
+
+  defp add_keyset(meta, _), do: meta
 
   defp serialize_relationships(request, %resource{} = record) do
     fields = AshJsonApi.Resource.fields(resource)
