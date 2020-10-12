@@ -352,7 +352,7 @@ defmodule AshJsonApi.Serializer do
         0
       end
 
-    %{paginator | offset: offset} |> IO.inspect()
+    %{paginator | offset: offset}
   end
 
   defp add_last_link(links, _uri, _query, %{count: nil}) do

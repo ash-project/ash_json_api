@@ -345,13 +345,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           paginated_result =
             record
             |> Map.get(relationship.name)
-            |> case do
-              %{results: _} = paginator ->
-                paginator
-
-              other ->
-                List.wrap(other)
-            end
+            |> paginator_or_list()
 
           request
           |> Request.assign(:record_from_path, record)
@@ -361,6 +355,16 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error, :fetch_related)
       end
     end)
+  end
+
+  defp paginator_or_list(result) do
+    case result do
+      %{results: _} = paginator ->
+        paginator
+
+      other ->
+        List.wrap(other)
+    end
   end
 
   defp fields(request, resource) do
