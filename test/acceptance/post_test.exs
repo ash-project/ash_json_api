@@ -73,8 +73,8 @@ defmodule Test.Acceptance.PostTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
-      attribute(:name, :string)
+      attribute(:id, :uuid, primary_key?: true, allow_nil?: false)
+      attribute(:name, :string, allow_nil?: false)
       attribute(:hidden, :string)
 
       attribute(:email, :string,
@@ -86,7 +86,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.PostTest.Author)
+      belongs_to(:author, Test.Acceptance.PostTest.Author, required?: false)
     end
   end
 
