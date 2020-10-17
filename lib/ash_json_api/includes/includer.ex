@@ -16,7 +16,7 @@ defmodule AshJsonApi.Includes.Includer do
     get_includes_list(records, includes_keyword)
   end
 
-  def get_includes(%AshJsonApi.Paginator{results: results} = paginator, request) do
+  def get_includes(%{results: results} = paginator, request) do
     {records, includes} = get_includes(results, request)
     {%{paginator | results: records}, includes}
   end

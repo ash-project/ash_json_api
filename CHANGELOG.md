@@ -5,6 +5,32 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.21.0](https://github.com/ash-project/ash_json_api/compare/v0.20.0...v0.21.0) (2020-10-12)
+
+
+
+
+### Features:
+
+* support latest ash pagination features
+
+## [v0.20.0](https://github.com/ash-project/ash_json_api/compare/v0.19.0...v0.20.0) (2020-10-10)
+
+
+
+
+### Features:
+
+* support the `accept` configuration on actions
+
+* move to latest ash
+
+### Bug Fixes:
+
+* support the latest ash version
+
+* don't be so strict about ash dependency
+
 ## [v0.19.0](https://github.com/ash-project/ash_json_api/compare/v0.18.0...v0.19.0) (2020-09-02)
 
 

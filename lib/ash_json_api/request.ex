@@ -14,6 +14,8 @@ defmodule AshJsonApi.Request do
   alias AshJsonApi.Includes
   alias Plug.Conn
 
+  require Ash.Query
+
   defstruct [
     :api,
     :action,
@@ -295,10 +297,10 @@ defmodule AshJsonApi.Request do
 
       cond do
         attr = Ash.Resource.attribute(resource, field_name) ->
-          %{request | sort: [{order, attr.name} | request.sort]}
+          %{request | sort: [{attr.name, order} | request.sort]}
 
         agg = Ash.Resource.aggregate(resource, field_name) ->
-          %{request | sort: [{order, agg.name} | request.sort]}
+          %{request | sort: [{agg.name, order} | request.sort]}
 
         true ->
           add_error(request, "invalid sort #{field}", request.route.type)
@@ -359,7 +361,7 @@ defmodule AshJsonApi.Request do
       filtered_query =
         case Map.fetch(filters, path ++ [key]) do
           {:ok, filter} ->
-            Ash.Query.filter(new_query, filter)
+            Ash.Query.filter(new_query, ^filter)
 
           :error ->
             new_query

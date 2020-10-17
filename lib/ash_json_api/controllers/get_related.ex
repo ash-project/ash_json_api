@@ -15,12 +15,10 @@ defmodule AshJsonApi.Controllers.GetRelated do
     relationship = Ash.Resource.relationship(options[:resource], route.relationship)
     resource = relationship.destination
 
-    paginate? = relationship.cardinality == :many
-
     conn
     |> Request.from(resource, action, api, route)
     |> Helpers.fetch_record_from_path(options[:resource])
-    |> Helpers.fetch_related(paginate?)
+    |> Helpers.fetch_related()
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->
       case relationship.cardinality do

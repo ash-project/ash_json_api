@@ -16,6 +16,8 @@ defmodule AshJsonApi.Controllers.Helpers do
   alias AshJsonApi.{Error, Request}
   alias AshJsonApi.Includes.Includer
 
+  require Ash.Query
+
   def render_or_render_errors(request, conn, function) do
     chain(request, function,
       fallback: fn request ->
@@ -43,26 +45,25 @@ defmodule AshJsonApi.Controllers.Helpers do
           []
         end
 
-      page_params = Map.get(request.assigns, :page, %{})
+      page_params = Map.get(request.assigns, :page)
+
+      params =
+        if page_params do
+          Keyword.put(params, :page, page_params)
+        else
+          params
+        end
 
       request.resource
       |> Ash.Query.new(request.api)
       |> Ash.Query.load(request.includes_keyword)
-      |> Ash.Query.limit(page_params[:limit])
-      |> Ash.Query.offset(page_params[:offset])
-      |> Ash.Query.filter(request.filter)
+      |> Ash.Query.filter(^request.filter)
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
       |> request.api.read(params)
       |> case do
-        {:ok, results} ->
-          page = %AshJsonApi.Paginator{
-            results: results,
-            limit: page_params[:limit],
-            offset: page_params[:offset]
-          }
-
-          Request.assign(request, :result, page)
+        {:ok, result} ->
+          Request.assign(request, :result, result)
 
         {:error, error} ->
           Request.add_error(request, error, :read)
@@ -254,14 +255,15 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       filter = path_filter(request.path_params, resource)
 
-      query = Ash.Query.filter(resource, filter)
+      query = Ash.Query.filter(resource, ^filter)
 
       params =
         if through_resource || request.action.type != :read do
-          []
+          [page: false]
         else
           [
-            action: request.action
+            action: request.action,
+            page: false
           ]
         end
 
@@ -295,7 +297,7 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  def fetch_related(request, paginate? \\ true) do
+  def fetch_related(request) do
     request
     |> chain(fn %{
                   api: api,
@@ -304,31 +306,23 @@ defmodule AshJsonApi.Controllers.Helpers do
                 } = request ->
       relationship = Ash.Resource.relationship(source_resource, relationship)
 
-      params = [
-        action: request.action
-      ]
-
       sort = request.sort || default_sort(request.resource)
+
+      load_params =
+        if Map.get(request.assigns, :page) do
+          [page: request.assigns.page]
+        else
+          []
+        end
 
       destination_query =
         relationship.destination
         |> Ash.Query.new(request.api)
-        |> Ash.Query.filter(request.filter)
+        |> Ash.Query.filter(^request.filter)
         |> Ash.Query.sort(sort)
         |> Ash.Query.load(request.includes_keyword)
         |> Ash.Query.load(fields(request, request.resource))
-
-      pagination_params = Map.get(request.assigns, :page, %{})
-
-      destination_query =
-        if paginate? do
-          destination_query
-          |> Ash.Query.sort(Ash.Resource.primary_key(request.resource))
-          |> Ash.Query.limit(pagination_params[:limit])
-          |> Ash.Query.offset(pagination_params[:offset])
-        else
-          destination_query
-        end
+        |> Ash.Query.put_context(:override_api_params, load_params)
 
       origin_query =
         source_resource
@@ -337,9 +331,9 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       params =
         if AshJsonApi.authorize?(api) do
-          Keyword.put(params, :actor, request.actor)
+          [actor: request.actor]
         else
-          params
+          []
         end
 
       case api.load(
@@ -351,8 +345,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           paginated_result =
             record
             |> Map.get(relationship.name)
-            |> List.wrap()
-            |> maybe_paginate(pagination_params, paginate?)
+            |> paginator_or_list()
 
           request
           |> Request.assign(:record_from_path, record)
@@ -362,6 +355,16 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error, :fetch_related)
       end
     end)
+  end
+
+  defp paginator_or_list(result) do
+    case result do
+      %{results: _} = paginator ->
+        paginator
+
+      other ->
+        List.wrap(other)
+    end
   end
 
   defp fields(request, resource) do
@@ -377,18 +380,6 @@ defmodule AshJsonApi.Controllers.Helpers do
       [{created_at.name, :asc}]
     else
       Ash.Resource.primary_key(resource)
-    end
-  end
-
-  defp maybe_paginate(records, pagination_params, paginate?) do
-    if paginate? do
-      %AshJsonApi.Paginator{
-        limit: pagination_params[:limit],
-        offset: pagination_params[:offset],
-        results: records
-      }
-    else
-      records
     end
   end
 
@@ -418,37 +409,57 @@ defmodule AshJsonApi.Controllers.Helpers do
   # do anytime. Returning multiple errors is a nice feature of JSON API
   def fetch_pagination_parameters(request) do
     request
-    |> add_limit()
-    |> add_offset()
+    |> add_pagination_parameter(:limit, :integer)
+    |> add_pagination_parameter(:offset, :integer)
+    |> add_pagination_parameter(:after, :string)
+    |> add_pagination_parameter(:before, :string)
+    |> add_pagination_parameter(:count, :boolean)
   end
 
-  defp add_limit(request) do
+  defp add_pagination_parameter(request, parameter, type) do
     with %{"page" => page} <- request.query_params,
-         %{"limit" => limit} <- page,
-         {:integer, {integer, ""}} <- {:integer, Integer.parse(limit)} do
-      Request.update_assign(request, :page, %{limit: integer}, &Map.put(&1, :limit, integer))
-    else
-      {:integer, {_integer, _remaining}} ->
-        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[limit]"), :read)
+         {:ok, value} <- Map.fetch(page, to_string(parameter)) do
+      case cast_pagination_parameter(value, type) do
+        {:ok, value} ->
+          Request.update_assign(
+            request,
+            :page,
+            [{parameter, value}],
+            &Keyword.put(&1, parameter, value)
+          )
 
+        :error ->
+          Request.add_error(
+            request,
+            Error.InvalidPagination.new(source_parameter: "page[#{parameter}]"),
+            :read
+          )
+      end
+    else
       _ ->
         request
     end
   end
 
-  defp add_offset(request) do
-    with %{"page" => page} <- request.query_params,
-         %{"offset" => offset} <- page,
-         {:integer, {integer, ""}} <- {:integer, Integer.parse(offset)} do
-      Request.update_assign(request, :page, %{offset: integer}, &Map.put(&1, :offset, integer))
-    else
-      {:integer, {_integer, _remaining}} ->
-        Request.add_error(request, Error.InvalidPagination.new(parameter: "page[offset]"), :read)
+  defp cast_pagination_parameter(value, :integer) do
+    case Integer.parse(value) do
+      {integer, ""} ->
+        {:ok, integer}
 
       _ ->
-        request
+        :error
     end
   end
+
+  defp cast_pagination_parameter("true", :boolean), do: {:ok, true}
+  defp cast_pagination_parameter("false", :boolean), do: {:ok, false}
+  defp cast_pagination_parameter(_, :boolean), do: :error
+
+  defp cast_pagination_parameter(value, :string) when is_binary(value) do
+    {:ok, value}
+  end
+
+  defp cast_pagination_parameter(_, _), do: :error
 
   def chain(request, func, opts \\ []) do
     case request.errors do
