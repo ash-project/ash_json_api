@@ -690,7 +690,7 @@ defmodule AshJsonApi.JsonSchema do
     |> Enum.filter(&(is_nil(accept) || &1 in accept))
     |> Enum.filter(fn field ->
       rel = Ash.Resource.relationship(resource, field)
-      !is_nil(rel) && rel.required?
+      !is_nil(rel) && Map.get(rel, :required?)
     end)
     |> Enum.map(&to_string(&1))
   end
