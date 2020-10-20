@@ -387,7 +387,7 @@ defmodule AshJsonApi.Serializer do
 
   defp serialize_one_record(request, %resource{} = record) do
     %{
-      id: record.id,
+      id: AshJsonApi.Resource.encode_primary_key(record),
       type: AshJsonApi.Resource.type(resource),
       attributes: serialize_attributes(request, record),
       relationships: serialize_relationships(request, record),
@@ -396,7 +396,7 @@ defmodule AshJsonApi.Serializer do
     |> add_meta(record)
   end
 
-  defp add_one_record_self_link(links, request, %resource{id: id}) do
+  defp add_one_record_self_link(links, request, %resource{}=record) do
     resource
     |> AshJsonApi.Resource.route(%{action: :get, primary?: true})
     |> case do
@@ -406,7 +406,7 @@ defmodule AshJsonApi.Serializer do
       %{route: route} ->
         link =
           request
-          |> with_path_params(%{"id" => id})
+          |> with_path_params(%{"id" => AshJsonApi.Resource.encode_primary_key(record)})
           |> at_host(route)
 
         Map.put(links, "self", link)
@@ -451,7 +451,7 @@ defmodule AshJsonApi.Serializer do
     |> add_related_link(request, record, relationship)
   end
 
-  defp add_relationship_link(links, request, %resource{id: id}, relationship) do
+  defp add_relationship_link(links, request, %resource{}=record, relationship) do
     resource
     |> AshJsonApi.Resource.route(%{
       relationship: relationship.name,
@@ -465,14 +465,14 @@ defmodule AshJsonApi.Serializer do
       %{route: route} ->
         link =
           request
-          |> with_path_params(%{"id" => id})
+          |> with_path_params(%{"id" => AshJsonApi.Resource.encode_primary_key(record)})
           |> at_host(route)
 
         Map.put(links, "relationship", link)
     end
   end
 
-  defp add_related_link(links, request, %resource{id: id}, relationship) do
+  defp add_related_link(links, request, %resource{}=record, relationship) do
     resource
     |> AshJsonApi.Resource.route(%{
       relationship: relationship.name,
@@ -486,7 +486,7 @@ defmodule AshJsonApi.Serializer do
       %{route: route} ->
         link =
           request
-          |> with_path_params(%{"id" => id})
+          |> with_path_params(%{"id" => AshJsonApi.Resource.encode_primary_key(record)})
           |> at_host(route)
 
         Map.put(links, "related", link)
