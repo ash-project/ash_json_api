@@ -19,12 +19,19 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
         end
 
       keys ->
-        attributes = Transformer.get_entities(dsl, [:attributes])
-
-        case Enum.all?(keys, fn key -> Enum.any?(attributes, fn att -> att.name == key end) end) do
+        dsl
+        |> Transformer.get_entities([:attributes])
+        |> contains_all(keys)
+        |> case do
           true -> {:ok, dsl}
           false -> raise "AshJsonApi primary keys must be from the resource's attributes"
         end
     end
+  end
+
+  defp contains_all(attributes, keys) do
+    Enum.all?(keys, fn key ->
+      Enum.any?(attributes, &(&1.name == key))
+    end)
   end
 end
