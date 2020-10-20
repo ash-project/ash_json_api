@@ -140,8 +140,6 @@ defmodule Test.Acceptance.ResourceTest do
 
   import AshJsonApi.Test
 
-  # Only contains test for happy paths
-
   @tag :section
   describe "json response id created from primary key fields" do
     test "returns correct response id" do
@@ -204,6 +202,100 @@ defmodule Test.Acceptance.ResourceTest do
 
       # response is a Plug.
       assert response.resp_body["data"]["id"] == id
+    end
+  end
+
+  @tag :transformer
+  describe "module has composite key but does not define json primary key" do
+    test "raises requires json primary key error" do
+      assert_raise Ash.Error.Dsl.DslError,
+                   ~r/AshJsonApi requires primary key when a resource has a composite key/,
+                   fn ->
+                     defmodule BadResource do
+                       use Ash.Resource,
+                         data_layer: Ash.DataLayer.Ets,
+                         extensions: [
+                           AshJsonApi.Resource
+                         ]
+
+                       ets do
+                         private?(true)
+                       end
+
+                       json_api do
+                         type("author")
+
+                         routes do
+                           base("/authors")
+                           post(:default)
+                         end
+
+                         fields [:first_name, :last_name]
+                       end
+
+                       actions do
+                         read(:default)
+
+                         create :default do
+                           accept([:first_name, :last_name])
+                         end
+                       end
+
+                       attributes do
+                         attribute(:first_name, :string, primary_key?: true)
+                         attribute(:last_name, :string, primary_key?: true)
+                       end
+                     end
+                   end
+    end
+  end
+
+  @tag :transformer
+  describe "json primary contains keys which are not the resource's attribute" do
+    test "raises invalid primary keys error" do
+      assert_raise Ash.Error.Dsl.DslError,
+                   ~r/AshJsonApi primary key must be from the resource's attributes/,
+                   fn ->
+                     defmodule BadResource do
+                       use Ash.Resource,
+                         data_layer: Ash.DataLayer.Ets,
+                         extensions: [
+                           AshJsonApi.Resource
+                         ]
+
+                       ets do
+                         private?(true)
+                       end
+
+                       json_api do
+                         type("author")
+
+                         primary_key do
+                           keys([:these, :fields, :do, :not, :exist])
+                         end
+
+                         routes do
+                           base("/authors")
+                           post(:default)
+                         end
+
+                         fields [:first_name, :last_name]
+                       end
+
+                       actions do
+                         read(:default)
+
+                         create :default do
+                           accept([:first_name, :last_name])
+                         end
+                       end
+
+                       attributes do
+                         attribute(:first_name, :string, primary_key?: true)
+                         attribute(:last_name, :string, primary_key?: true)
+                       end
+                     end
+                   end
     end
   end
 end

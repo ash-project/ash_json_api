@@ -6,16 +6,18 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
   use Ash.Dsl.Transformer
   alias Ash.Dsl.Transformer
 
-  def transform(_resource, dsl) do
+  def transform(resource, dsl) do
     case Transformer.get_option(dsl, [:json_api, :primary_key], :keys) do
       nil ->
-        dsl
-        |> Transformer.get_entities([:attributes])
-        |> Enum.filter(& &1.primary_key?)
-        |> Enum.map(& &1.name)
-        |> case do
-          [_only_one_primary_key] -> {:ok, dsl}
-          _ -> raise "AshJsonApi requires primary key when a resource has a composite key"
+        case Ash.Resource.primary_key(resource) do
+          [_only_one_primary_key] ->
+            {:ok, dsl}
+
+          _ ->
+            raise Ash.Error.Dsl.DslError,
+              module: __MODULE__,
+              path: [:json_api, :primary_key],
+              message: "AshJsonApi requires primary key when a resource has a composite key"
         end
 
       keys ->
@@ -23,8 +25,14 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
         |> Transformer.get_entities([:attributes])
         |> contains_all(keys)
         |> case do
-          true -> {:ok, dsl}
-          false -> raise "AshJsonApi primary keys must be from the resource's attributes"
+          true ->
+            {:ok, dsl}
+
+          false ->
+            raise Ash.Error.Dsl.DslError,
+              module: __MODULE__,
+              path: [:json_api, :primary_key],
+              message: "AshJsonApi primary key must be from the resource's attributes"
         end
     end
   end
@@ -34,4 +42,7 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
       Enum.any?(attributes, &(&1.name == key))
     end)
   end
+
+  def after?(Ash.Resource.Transformers.CachePrimaryKey = _), do: true
+  def after?(_), do: false
 end
