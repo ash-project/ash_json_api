@@ -283,7 +283,7 @@ defmodule AshJsonApi.Resource do
         type: :string,
         default: "-",
         required: false,
-        doc: "The delimeter to concatenate the primary key values. Default to be '-'",
+        doc: "The delimeter to concatenate the primary key values. Default to be '-'"
       ]
     ]
   }
@@ -346,8 +346,10 @@ defmodule AshJsonApi.Resource do
         # Expect resource to have only 1 primary key if :primary_key section is not used
         [key] = Ash.Resource.primary_key(resource)
         Map.get(record, key)
+
       keys ->
         delimeter = primary_key_delimeter(resource)
+
         [_ | concatenated_keys] =
           keys
           |> Enum.reverse()

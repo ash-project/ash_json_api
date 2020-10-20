@@ -17,8 +17,10 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
           [_only_one_primary_key] -> {:ok, dsl}
           _ -> raise "AshJsonApi requires primary key when a resource has a composite key"
         end
+
       keys ->
         attributes = Transformer.get_entities(dsl, [:attributes])
+
         case Enum.all?(keys, fn key -> Enum.any?(attributes, fn att -> att.name == key end) end) do
           true -> {:ok, dsl}
           false -> raise "AshJsonApi primary keys must be from the resource's attributes"

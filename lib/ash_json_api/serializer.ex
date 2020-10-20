@@ -396,7 +396,7 @@ defmodule AshJsonApi.Serializer do
     |> add_meta(record)
   end
 
-  defp add_one_record_self_link(links, request, %resource{}=record) do
+  defp add_one_record_self_link(links, request, %resource{} = record) do
     resource
     |> AshJsonApi.Resource.route(%{action: :get, primary?: true})
     |> case do
@@ -451,7 +451,7 @@ defmodule AshJsonApi.Serializer do
     |> add_related_link(request, record, relationship)
   end
 
-  defp add_relationship_link(links, request, %resource{}=record, relationship) do
+  defp add_relationship_link(links, request, %resource{} = record, relationship) do
     resource
     |> AshJsonApi.Resource.route(%{
       relationship: relationship.name,
@@ -472,7 +472,7 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp add_related_link(links, request, %resource{}=record, relationship) do
+  defp add_related_link(links, request, %resource{} = record, relationship) do
     resource
     |> AshJsonApi.Resource.route(%{
       relationship: relationship.name,

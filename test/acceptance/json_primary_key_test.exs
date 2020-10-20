@@ -16,7 +16,7 @@ defmodule Test.Acceptance.ResourceTest do
       type("author")
 
       primary_key do
-        keys [:first_name, :age, :last_name, :utc_now]
+        keys([:first_name, :age, :last_name, :utc_now])
       end
 
       routes do
@@ -58,8 +58,8 @@ defmodule Test.Acceptance.ResourceTest do
       type("book")
 
       primary_key do
-        keys [:author_name, :name]
-        delimeter ","
+        keys([:author_name, :name])
+        delimeter(",")
       end
 
       routes do
@@ -82,7 +82,7 @@ defmodule Test.Acceptance.ResourceTest do
       attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
       attribute(:author_name, :string)
-      end
+    end
   end
 
   defmodule Movie do
@@ -175,7 +175,7 @@ defmodule Test.Acceptance.ResourceTest do
             attributes: %{
               id: Ecto.UUID.generate(),
               name: "The Lord of the Rings",
-              author_name: "J. R. R. Tolkien",
+              author_name: "J. R. R. Tolkien"
             }
           }
         })
@@ -189,6 +189,7 @@ defmodule Test.Acceptance.ResourceTest do
   describe "json primary_key is not defined" do
     test "returns default id" do
       id = Ecto.UUID.generate()
+
       response =
         Api
         |> post("/movies", %{
@@ -196,7 +197,7 @@ defmodule Test.Acceptance.ResourceTest do
             type: "movie",
             attributes: %{
               id: id,
-              name: "The Lord of the Rings",
+              name: "The Lord of the Rings"
             }
           }
         })
