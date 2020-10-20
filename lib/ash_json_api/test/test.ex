@@ -8,6 +8,7 @@ defmodule AshJsonApi.Test do
   # This probably won't work for users of ashjsonapi
   @schema_file "lib/ash_json_api/test/response_schema"
   @external_resource @schema_file
+
   # @schema @schema_file |> File.read!() |> Jason.decode!() |> JsonXema.new()
 
   def get(api, path, opts \\ []) do

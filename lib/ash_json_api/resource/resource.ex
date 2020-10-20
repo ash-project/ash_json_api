@@ -270,9 +270,27 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
+  @primary_key %Ash.Dsl.Section{
+    name: :primary_key,
+    describe: "Encode the id of the JSON API response from selected attributes of a resource",
+    schema: [
+      keys: [
+        type: {:custom, Ash.OptionsHelpers, :list_of_atoms, []},
+        doc: "the list of attributes to encode JSON API primary key",
+        required: true
+      ],
+      delimeter: [
+        type: :string,
+        default: "-",
+        required: false,
+        doc: "The delimeter to concatenate the primary key values. Default to be '-'"
+      ]
+    ]
+  }
+
   @json_api %Ash.Dsl.Section{
     name: :json_api,
-    sections: [@routes],
+    sections: [@routes, @primary_key],
     describe: "Configure the resource's behavior in the JSON:API",
     schema: [
       type: [
@@ -297,7 +315,7 @@ defmodule AshJsonApi.Resource do
   @transformers [
     AshJsonApi.Resource.Transformers.PrependRoutePrefix,
     AshJsonApi.Resource.Transformers.ValidateNoOverlappingRoutes,
-    AshJsonApi.Resource.Transformers.RequireIdPkey
+    AshJsonApi.Resource.Transformers.RequirePrimaryKey
   ]
 
   require Ash.Dsl.Extension
@@ -320,6 +338,33 @@ defmodule AshJsonApi.Resource do
 
   def base_route(resource) do
     Extension.get_opt(resource, [:json_api, :routes], :base, nil, false)
+  end
+
+  def encode_primary_key(%resource{} = record) do
+    case primary_key_fields(resource) do
+      [] ->
+        # Expect resource to have only 1 primary key if :primary_key section is not used
+        [key] = Ash.Resource.primary_key(resource)
+        Map.get(record, key)
+
+      keys ->
+        delimeter = primary_key_delimeter(resource)
+
+        [_ | concatenated_keys] =
+          keys
+          |> Enum.reverse()
+          |> Enum.reduce([], fn key, acc -> [delimeter, to_string(Map.get(record, key)), acc] end)
+
+        IO.iodata_to_binary(concatenated_keys)
+    end
+  end
+
+  def primary_key_fields(resource) do
+    Extension.get_opt(resource, [:json_api, :primary_key], :keys, [], false)
+  end
+
+  def primary_key_delimeter(resource) do
+    Extension.get_opt(resource, [:json_api, :primary_key], :delimeter, [], false)
   end
 
   def routes(resource) do
