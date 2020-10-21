@@ -2,7 +2,6 @@ defmodule AshJsonApi.Error do
   @moduledoc false
   defstruct id: :undefined,
             about: :undefined,
-            status: :undefined,
             code: :undefined,
             title: :undefined,
             detail: :undefined,
@@ -45,7 +44,7 @@ defmodule AshJsonApi.Error do
         Enum.map(fields, fn field ->
           %__MODULE__{
             id: Ash.Error.id(error),
-            status: class_to_status(error.class),
+            status_code: class_to_status(error.class),
             code: Ash.Error.code(error),
             title: Ash.Error.code(error),
             detail: Ash.Error.message(error),
@@ -57,10 +56,10 @@ defmodule AshJsonApi.Error do
         [
           %__MODULE__{
             id: Ash.Error.id(error),
-            status: class_to_status(error.class),
+            status_code: class_to_status(error.class),
             code: Ash.Error.code(error),
             title: Ash.Error.code(error),
-            detail: error.message,
+            detail: Ash.Error.message(error),
             source_pointer: source_pointer(resource, field, type)
           }
         ]
@@ -69,10 +68,10 @@ defmodule AshJsonApi.Error do
         [
           %__MODULE__{
             id: Ash.Error.id(error),
-            status: class_to_status(error.class),
+            status_code: class_to_status(error.class),
             code: Ash.Error.code(error),
             title: Ash.Error.code(error),
-            detail: error.message
+            detail: Ash.Error.message(error)
           }
         ]
     end
@@ -82,7 +81,7 @@ defmodule AshJsonApi.Error do
     [
       %__MODULE__{
         id: Ash.Error.id(error),
-        status: class_to_status(error.class),
+        status_code: class_to_status(error.class),
         code: "forbidden",
         title: "Forbidden",
         detail: "forbidden"

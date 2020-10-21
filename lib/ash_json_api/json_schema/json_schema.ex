@@ -283,7 +283,7 @@ defmodule AshJsonApi.JsonSchema do
        }) do
     %{
       "description" => "References to the related #{AshJsonApi.Resource.type(destination)}",
-      anyOf: [
+      "anyOf" => [
         %{
           "type" => "null"
         },
@@ -558,6 +558,7 @@ defmodule AshJsonApi.JsonSchema do
             },
             "relationships" => %{
               "type" => "object",
+              "required" => required_relationship_attributes(resource, accept),
               "additionalProperties" => false,
               "properties" => write_relationships(resource, accept)
             }
@@ -681,6 +682,17 @@ defmodule AshJsonApi.JsonSchema do
     |> Enum.reduce(%{}, fn attribute, acc ->
       Map.put(acc, to_string(attribute.name), resource_field_type(resource, attribute))
     end)
+  end
+
+  defp required_relationship_attributes(resource, accept) do
+    resource
+    |> AshJsonApi.Resource.fields()
+    |> Enum.filter(&(is_nil(accept) || &1 in accept))
+    |> Enum.filter(fn field ->
+      rel = Ash.Resource.relationship(resource, field)
+      !is_nil(rel) && Map.get(rel, :required?)
+    end)
+    |> Enum.map(&to_string(&1))
   end
 
   defp write_relationships(resource, accept) do
