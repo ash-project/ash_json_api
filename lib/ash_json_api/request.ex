@@ -498,6 +498,7 @@ defmodule AshJsonApi.Request do
   end
 
   defp relationship_change_value(%{cardinality: :one}, nil), do: {:ok, nil}
+  defp relationship_change_value(_, value) when value == %{}, do: {:ok, nil}
 
   defp relationship_change_value(%{name: name}, _) do
     {:error, "invalid change for relationship #{name}"}

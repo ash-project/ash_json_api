@@ -86,7 +86,7 @@ defmodule AshJsonApi.Serializer do
   defp serialize_one_error(error, request) do
     %{}
     |> add_if_defined(:id, error.id)
-    |> add_if_defined(:status, error.status)
+    |> add_if_defined(:status, error.status_code)
     |> add_if_defined(:code, error.code)
     |> add_if_defined(:title, error.title)
     |> add_if_defined(:detail, error.detail)

@@ -283,7 +283,7 @@ defmodule AshJsonApi.JsonSchema do
        }) do
     %{
       "description" => "References to the related #{AshJsonApi.Resource.type(destination)}",
-      anyOf: [
+      "anyOf" => [
         %{
           "type" => "null"
         },

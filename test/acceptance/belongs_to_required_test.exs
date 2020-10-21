@@ -110,7 +110,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
 
   @tag :attributes
   describe "invalid_post" do
-    test "create without all author_id in relationship" do
+    test "create without an author_id in relationship" do
       id = Ecto.UUID.generate()
 
       response =
@@ -131,18 +131,15 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         })
 
       # response is a Plug.
-      assert response.status == 500
-      assert %{"errors" => [_]} = response.resp_body
+      assert response.status == 400
+      assert %{"errors" => [%{"code" => "required"}]} = response.resp_body
     end
 
     test "create with invalid author id in relationship" do
       id = Ecto.UUID.generate()
       author_id = Ecto.UUID.generate()
 
-      # in case of invalid author_id following error occurs.
-      # ** (Plug.Conn.WrapperError) ** (CaseClauseError) no case clause matching: %{current: [], replace: []}
-      # should API respond with a valid error message here?
-      assert_raise Plug.Conn.WrapperError, fn ->
+      response =
         Api
         |> post("/posts", %{
           data: %{
@@ -158,7 +155,10 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
             }
           }
         })
-      end
+
+      # response is a Plug.
+      assert response.status == 400
+      assert %{"errors" => [%{"code" => "not_found"}]} = response.resp_body
     end
   end
 
