@@ -135,6 +135,27 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
       assert %{"errors" => [%{"code" => "required"}]} = response.resp_body
     end
 
+    test "create without an author in relationship" do
+      id = Ecto.UUID.generate()
+
+      response =
+        Api
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Invalid Post 1"
+            },
+            relationships: %{}
+          }
+        })
+
+      # response is a Plug.
+      assert response.status == 400
+      assert %{"errors" => [%{"code" => "InvalidBody"}]} = response.resp_body
+    end
+
     test "create with invalid author id in relationship" do
       id = Ecto.UUID.generate()
       author_id = Ecto.UUID.generate()
