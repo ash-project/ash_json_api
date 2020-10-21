@@ -45,7 +45,7 @@ defmodule AshJsonApi.MixProject do
 
   defp docs do
     [
-      main: "AshJsonApi",
+      main: "readme",
       source_ref: "v#{@version}",
       logo: "logos/small-logo.png",
       groups_for_modules: [

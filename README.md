@@ -85,3 +85,5 @@ Then, update your API with the API extension and configuration:
 ```
 
 See the hex documentation for more.
+
+See `AshJsonApi.Api` and `AshJsonApi.Resource` for the DSL documentation.
