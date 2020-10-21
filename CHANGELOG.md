@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.22.0](https://github.com/ash-project/ash_json_api/compare/v0.21.0...v0.22.0) (2020-10-21)
+
+
+
+
+### Features:
+
+* support `required` in belongs_to relationship (#41)
+
+* Support custom primary keys (#42)
+
 ## [v0.21.0](https://github.com/ash-project/ash_json_api/compare/v0.20.0...v0.21.0) (2020-10-12)
 
 
