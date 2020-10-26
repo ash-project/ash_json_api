@@ -428,7 +428,7 @@ defmodule AshJsonApi.Serializer do
   defp add_keyset(meta, _), do: meta
 
   defp serialize_relationships(request, %resource{} = record) do
-    fields = AshJsonApi.Resource.fields(resource)
+    fields = default_attributes(resource)
 
     resource
     |> Ash.Resource.relationships()
@@ -565,7 +565,7 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp serialize_attributes(request, %resource{} = record) do
-    fields = Map.get(request.fields || %{}, resource) || default_fields(resource)
+    fields = Map.get(request.fields || %{}, resource) || default_attributes(resource)
 
     Enum.reduce(fields, %{}, fn field, acc ->
       if field == :id do
@@ -576,13 +576,10 @@ defmodule AshJsonApi.Serializer do
     end)
   end
 
-  defp default_fields(resource) do
-    fields = AshJsonApi.Resource.fields(resource)
-
+  defp default_attributes(resource) do
     resource
     |> Ash.Resource.attributes()
     |> Enum.map(& &1.name)
-    |> Enum.filter(&(&1 in fields))
   end
 
   defp encode_link(value) do

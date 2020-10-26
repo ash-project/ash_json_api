@@ -20,8 +20,6 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         get(:default)
         index(:default)
       end
-
-      fields [:id, :name]
     end
 
     actions do
@@ -60,8 +58,6 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         index(:default)
         post(:default)
       end
-
-      fields [:id, :name, :hidden, :email, :author]
     end
 
     actions do

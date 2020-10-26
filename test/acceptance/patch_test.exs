@@ -20,8 +20,6 @@ defmodule Test.Acceptance.PatchTest do
         get :default
         index :default
       end
-
-      fields [:name]
     end
 
     actions do
@@ -60,8 +58,6 @@ defmodule Test.Acceptance.PatchTest do
         post :default
         patch :default
       end
-
-      fields [:id, :name, :email, :author]
     end
 
     actions do
@@ -153,13 +149,6 @@ defmodule Test.Acceptance.PatchTest do
       Api
       |> patch("/posts/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
       |> assert_attribute_equals("email", "dummy@test.com")
-    end
-
-    @tag :fields
-    test "attributes not declared in `fields` are not rendered in the payload", %{post: post} do
-      Api
-      |> get("/posts/#{post.id}", status: 200)
-      |> assert_attribute_missing("hidden")
     end
   end
 

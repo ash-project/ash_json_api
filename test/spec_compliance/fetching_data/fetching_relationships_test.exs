@@ -22,8 +22,6 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
         get(:default)
         index(:default)
       end
-
-      fields [:name]
     end
 
     actions do
@@ -61,8 +59,6 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
         get(:default)
         index(:default)
       end
-
-      fields [:name]
     end
 
     actions do

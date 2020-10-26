@@ -64,8 +64,6 @@ defmodule Post do
       index :default
     end
 
-    # Expose these attributes in the API
-    fields [:name]
   end
 
   ...

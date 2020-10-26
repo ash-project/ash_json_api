@@ -23,8 +23,6 @@ defmodule Test.Acceptance.ResourceTest do
         base("/authors")
         post(:default)
       end
-
-      fields [:first_name, :last_name, :age, :utc_now]
     end
 
     actions do
@@ -66,8 +64,6 @@ defmodule Test.Acceptance.ResourceTest do
         base("/books")
         post(:default)
       end
-
-      fields [:id, :name, :author_name]
     end
 
     actions do
@@ -103,8 +99,6 @@ defmodule Test.Acceptance.ResourceTest do
         base("/movies")
         post(:default)
       end
-
-      fields [:id, :name]
     end
 
     actions do
@@ -229,8 +223,6 @@ defmodule Test.Acceptance.ResourceTest do
                            base("/authors")
                            post(:default)
                          end
-
-                         fields [:first_name, :last_name]
                        end
 
                        actions do
@@ -278,8 +270,6 @@ defmodule Test.Acceptance.ResourceTest do
                            base("/authors")
                            post(:default)
                          end
-
-                         fields [:first_name, :last_name]
                        end
 
                        actions do
