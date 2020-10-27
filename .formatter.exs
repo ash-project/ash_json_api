@@ -8,7 +8,6 @@ locals_without_parens = [
   delete_from_relationship: 2,
   delete_from_relationship: 3,
   delimeter: 1,
-  fields: 1,
   get: 1,
   get: 2,
   includes: 1,
