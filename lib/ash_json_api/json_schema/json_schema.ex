@@ -215,24 +215,16 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_attributes(resource) do
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.map(&Ash.Resource.attribute(resource, &1))
-    |> Enum.reject(&is_nil/1)
+    |> Ash.Resource.attributes()
     |> Enum.reject(& &1.allow_nil?)
     |> Enum.map(&to_string(&1.name))
   end
 
   defp resource_attributes(resource) do
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.reduce(%{}, fn field, acc ->
-      attr = Ash.Resource.attribute(resource, field)
-
-      if attr do
-        Map.put(acc, to_string(field), resource_field_type(resource, attr))
-      else
-        acc
-      end
+    |> Ash.Resource.attributes()
+    |> Enum.reduce(%{}, fn attr, acc ->
+      Map.put(acc, to_string(attr.name), resource_field_type(resource, attr))
     end)
   end
 
@@ -247,29 +239,23 @@ defmodule AshJsonApi.JsonSchema do
 
   defp resource_relationships(resource) do
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.reduce(%{}, fn field, acc ->
-      rel = Ash.Resource.relationship(resource, field)
+    |> Ash.Resource.relationships()
+    |> Enum.reduce(%{}, fn rel, acc ->
+      data = resource_relationship_field_data(resource, rel)
+      links = resource_relationship_link_data(resource, rel)
 
-      if rel do
-        data = resource_relationship_field_data(resource, rel)
-        links = resource_relationship_link_data(resource, rel)
+      object =
+        if links do
+          %{"data" => data, "links" => links}
+        else
+          %{"data" => data}
+        end
 
-        object =
-          if links do
-            %{"data" => data, "links" => links}
-          else
-            %{"data" => data}
-          end
-
-        Map.put(
-          acc,
-          to_string(field),
-          object
-        )
-      else
-        acc
-      end
+      Map.put(
+        acc,
+        to_string(rel.name),
+        object
+      )
     end)
   end
 
@@ -436,16 +422,8 @@ defmodule AshJsonApi.JsonSchema do
   defp sort_format(resource) do
     sorts =
       resource
-      |> AshJsonApi.Resource.fields()
-      |> Enum.flat_map(fn field ->
-        case Ash.Resource.attribute(resource, field) do
-          nil ->
-            []
-
-          _attr ->
-            [field, "-#{field}"]
-        end
-      end)
+      |> Ash.Resource.attributes()
+      |> Enum.flat_map(fn attr -> [attr.name, "-#{attr.name}"] end)
 
     "(#{Enum.join(sorts, "|")}),*"
   end
@@ -468,23 +446,25 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp filter_props(resource) do
+    acc =
+      resource
+      |> Ash.Resource.attributes()
+      |> Enum.reduce(%{}, fn attr, acc ->
+        Map.put(acc, to_string(attr.name), attribute_filter_schema(attr.type))
+      end)
+
+    acc =
+      resource
+      |> Ash.Resource.relationships()
+      |> Enum.reduce(acc, fn rel, acc ->
+        Map.put(acc, to_string(rel.name), relationship_filter_schema(rel))
+      end)
+
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.reduce(%{}, fn field, acc ->
-      cond do
-        attr = Ash.Resource.attribute(resource, field) ->
-          Map.put(acc, to_string(field), attribute_filter_schema(attr.type))
-
-        rel = Ash.Resource.relationship(resource, field) ->
-          Map.put(acc, to_string(field), relationship_filter_schema(rel))
-
-        agg = Ash.Resource.aggregate(resource, field) ->
-          {:ok, type} = Aggregate.kind_to_type(agg.kind)
-          Map.put(acc, to_string(field), attribute_filter_schema(type))
-
-        true ->
-          raise "Invalid field: #{inspect(field)}"
-      end
+    |> Ash.Resource.aggregates()
+    |> Enum.reduce(acc, fn agg, acc ->
+      {:ok, type} = Aggregate.kind_to_type(agg.kind)
+      Map.put(acc, to_string(agg.name), attribute_filter_schema(type))
     end)
   end
 
@@ -661,9 +641,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_write_attributes(resource, accept) do
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.map(&Ash.Resource.attribute(resource, &1))
-    |> Enum.reject(&is_nil/1)
+    |> Ash.Resource.attributes()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.filter(& &1.writable?)
     |> Enum.reject(& &1.allow_nil?)
@@ -674,9 +652,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp write_attributes(resource, accept) do
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.map(&Ash.Resource.attribute(resource, &1))
-    |> Enum.reject(&is_nil/1)
+    |> Ash.Resource.attributes()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.filter(& &1.writable?)
     |> Enum.reduce(%{}, fn attribute, acc ->
@@ -686,41 +662,32 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_relationship_attributes(resource, accept) do
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.filter(&(is_nil(accept) || &1 in accept))
-    |> Enum.filter(fn field ->
-      rel = Ash.Resource.relationship(resource, field)
-      !is_nil(rel) && Map.get(rel, :required?)
-    end)
-    |> Enum.map(&to_string(&1))
+    |> Ash.Resource.relationships()
+    |> Enum.filter(&(is_nil(accept) || &1.name in accept))
+    |> Enum.filter(&Map.get(&1, :required?))
+    |> Enum.map(&to_string(&1.name))
   end
 
   defp write_relationships(resource, accept) do
     resource
-    |> AshJsonApi.Resource.fields()
-    |> Enum.filter(&(is_nil(accept) || &1 in accept))
-    |> Enum.reduce(%{}, fn field, acc ->
-      rel = Ash.Resource.relationship(resource, field)
+    |> Ash.Resource.relationships()
+    |> Enum.filter(&(is_nil(accept) || &1.name in accept))
+    |> Enum.reduce(%{}, fn rel, acc ->
+      data = resource_relationship_field_data(resource, rel)
+      links = resource_relationship_link_data(resource, rel)
 
-      if rel do
-        data = resource_relationship_field_data(resource, rel)
-        links = resource_relationship_link_data(resource, rel)
+      object =
+        if links do
+          %{"data" => data, "links" => links}
+        else
+          %{"data" => data}
+        end
 
-        object =
-          if links do
-            %{"data" => data, "links" => links}
-          else
-            %{"data" => data}
-          end
-
-        Map.put(
-          acc,
-          to_string(field),
-          object
-        )
-      else
-        acc
-      end
+      Map.put(
+        acc,
+        to_string(rel.name),
+        object
+      )
     end)
   end
 

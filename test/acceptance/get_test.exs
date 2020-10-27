@@ -21,8 +21,6 @@ defmodule Test.Acceptance.GetTest do
         get(:default)
         index(:default)
       end
-
-      fields [:name]
     end
 
     actions do
@@ -84,13 +82,6 @@ defmodule Test.Acceptance.GetTest do
       Api
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_equals("name", post.name)
-    end
-
-    @tag :fields
-    test "attributes not declared in `fields` are not rendered in the payload", %{post: post} do
-      Api
-      |> get("/posts/#{post.id}", status: 200)
-      |> assert_attribute_missing("hidden")
     end
   end
 end

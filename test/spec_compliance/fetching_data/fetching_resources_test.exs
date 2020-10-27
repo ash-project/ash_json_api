@@ -22,8 +22,6 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
         get(:default)
         index(:default)
       end
-
-      fields [:name]
     end
 
     actions do
@@ -57,8 +55,6 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
         get(:default)
         index(:default)
       end
-
-      fields [:name]
     end
 
     actions do

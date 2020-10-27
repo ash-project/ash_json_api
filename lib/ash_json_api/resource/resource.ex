@@ -298,12 +298,6 @@ defmodule AshJsonApi.Resource do
         doc: "The resource identifier type of this resource in JSON:API",
         required: true
       ],
-      fields: [
-        type: {:custom, AshJsonApi.Resource, :validate_fields, []},
-        doc:
-          "The field names and relationship names that should be part of the JSON:API resource",
-        default: []
-      ],
       includes: [
         type: :any,
         default: [],
@@ -324,12 +318,6 @@ defmodule AshJsonApi.Resource do
 
   def type(resource) do
     Extension.get_opt(resource, [:json_api], :type, nil, false)
-  end
-
-  def fields(resource) do
-    resource
-    |> Extension.get_opt([:json_api], :fields, [], false)
-    |> List.wrap()
   end
 
   def includes(resource) do

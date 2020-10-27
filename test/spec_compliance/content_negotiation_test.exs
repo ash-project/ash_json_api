@@ -22,8 +22,6 @@ defmodule AshJsonApi.ContentNegotiationTest do
         get(:default)
         index(:default)
       end
-
-      fields [:name]
     end
 
     actions do
@@ -58,8 +56,6 @@ defmodule AshJsonApi.ContentNegotiationTest do
         get(:default)
         index(:default)
       end
-
-      fields [:name]
     end
 
     actions do

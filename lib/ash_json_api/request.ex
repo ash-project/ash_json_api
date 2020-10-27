@@ -243,11 +243,15 @@ defmodule AshJsonApi.Request do
   defp add_fields(request, resource, fields, parameter?) do
     type = AshJsonApi.Resource.type(resource)
 
+    attributes =
+      resource
+      |> Ash.Resource.attributes()
+
     fields
     |> String.split(",")
     |> Enum.reduce(request, fn key, request ->
       cond do
-        !Enum.find(AshJsonApi.Resource.fields(resource), &(to_string(&1) == key)) ->
+        !Enum.find(attributes, &(to_string(&1.name) == key)) ->
           add_error(
             request,
             InvalidField.new(type: type, parameter?: parameter?),
