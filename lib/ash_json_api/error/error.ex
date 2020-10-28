@@ -1,5 +1,5 @@
 defmodule AshJsonApi.Error do
-  @moduledoc false
+  @moduledoc "Represents an AshJsonApi Error"
   defstruct id: :undefined,
             about: :undefined,
             code: :undefined,
