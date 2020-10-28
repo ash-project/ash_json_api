@@ -60,6 +60,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.filter(^request.filter)
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
+      |> Ash.Query.set_tenant(request.tenant)
       |> request.api.read(params)
       |> case do
         {:ok, result} ->
@@ -88,6 +89,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       resource
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
+      |> Ash.Changeset.set_tenant(request.tenant)
       |> api.create(params)
       |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
@@ -117,6 +119,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       result
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
+      |> Ash.Changeset.set_tenant(request.tenant)
       |> api.update(params)
       |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
@@ -141,6 +144,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       result
       |> Ash.Changeset.new()
       |> Ash.Changeset.append_to_relationship(relationship_name, request.resource_identifiers)
+      |> Ash.Changeset.set_tenant(request.tenant)
       |> api.update(params)
       |> api.load(fields(request, request.resource))
       |> case do
@@ -167,6 +171,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       result
       |> Ash.Changeset.new()
       |> Ash.Changeset.replace_relationship(relationship_name, request.resource_identifiers)
+      |> Ash.Changeset.set_tenant(request.tenant)
       |> api.update(params)
       |> api.load(fields(request, request.resource))
       |> case do
@@ -201,6 +206,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       result
       |> Ash.Changeset.new()
       |> Ash.Changeset.remove_from_relationship(relationship_name, request.resource_identifiers)
+      |> Ash.Changeset.set_tenant(request.tenant)
       |> api.update(params)
       |> api.load(fields(request, request.resource))
       |> case do
@@ -227,7 +233,11 @@ defmodule AshJsonApi.Controllers.Helpers do
           [action: request.action]
         end
 
-      case api.destroy(result, params) do
+      result
+      |> Ash.Changeset.new()
+      |> Ash.Changeset.set_tenant(request.tenant)
+      |> api.destroy(params)
+      |> case do
         :ok ->
           Request.assign(request, :result, nil)
 
@@ -255,7 +265,10 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       filter = path_filter(request.path_params, resource)
 
-      query = Ash.Query.filter(resource, ^filter)
+      query =
+        resource
+        |> Ash.Query.filter(^filter)
+        |> Ash.Query.set_tenant(request.tenant)
 
       params =
         if through_resource || request.action.type != :read do
@@ -328,6 +341,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         source_resource
         |> Ash.Query.new(request.api)
         |> Ash.Query.load([{relationship.name, destination_query}])
+        |> Ash.Query.set_tenant(request.tenant)
 
       params =
         if AshJsonApi.authorize?(api) do

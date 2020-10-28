@@ -48,6 +48,12 @@ defmodule AshJsonApi.MixProject do
       main: "readme",
       source_ref: "v#{@version}",
       logo: "logos/small-logo.png",
+      extras: [
+        "README.md",
+        "documentation/getting_started.md",
+        "documentation/multitenancy.md"
+      ],
+      extras_section: "GUIDES",
       groups_for_modules: [
         entrypoint: [AshJsonApi],
         "resource dsl transformers": ~r/AshJsonApi.Resource.Transformers/,
@@ -78,7 +84,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 1.20")},
+      {:ash, ash_version("~> 1.22")},
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
