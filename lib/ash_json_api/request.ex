@@ -245,9 +245,7 @@ defmodule AshJsonApi.Request do
   defp add_fields(request, resource, fields, parameter?) do
     type = AshJsonApi.Resource.type(resource)
 
-    attributes =
-      resource
-      |> Ash.Resource.attributes()
+    attributes = Ash.Resource.public_attributes(resource)
 
     fields
     |> String.split(",")
