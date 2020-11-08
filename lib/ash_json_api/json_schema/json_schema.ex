@@ -215,14 +215,14 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_attributes(resource) do
     resource
-    |> Ash.Resource.attributes()
+    |> Ash.Resource.public_attributes()
     |> Enum.reject(& &1.allow_nil?)
     |> Enum.map(&to_string(&1.name))
   end
 
   defp resource_attributes(resource) do
     resource
-    |> Ash.Resource.attributes()
+    |> Ash.Resource.public_attributes()
     |> Enum.reduce(%{}, fn attr, acc ->
       Map.put(acc, to_string(attr.name), resource_field_type(resource, attr))
     end)
@@ -239,7 +239,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp resource_relationships(resource) do
     resource
-    |> Ash.Resource.relationships()
+    |> Ash.Resource.public_relationships()
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
       links = resource_relationship_link_data(resource, rel)
@@ -422,7 +422,7 @@ defmodule AshJsonApi.JsonSchema do
   defp sort_format(resource) do
     sorts =
       resource
-      |> Ash.Resource.attributes()
+      |> Ash.Resource.public_attributes()
       |> Enum.flat_map(fn attr -> [attr.name, "-#{attr.name}"] end)
 
     "(#{Enum.join(sorts, "|")}),*"
@@ -448,20 +448,20 @@ defmodule AshJsonApi.JsonSchema do
   defp filter_props(resource) do
     acc =
       resource
-      |> Ash.Resource.attributes()
+      |> Ash.Resource.public_attributes()
       |> Enum.reduce(%{}, fn attr, acc ->
         Map.put(acc, to_string(attr.name), attribute_filter_schema(attr.type))
       end)
 
     acc =
       resource
-      |> Ash.Resource.relationships()
+      |> Ash.Resource.public_relationships()
       |> Enum.reduce(acc, fn rel, acc ->
         Map.put(acc, to_string(rel.name), relationship_filter_schema(rel))
       end)
 
     resource
-    |> Ash.Resource.aggregates()
+    |> Ash.Resource.public_aggregates()
     |> Enum.reduce(acc, fn agg, acc ->
       {:ok, type} = Aggregate.kind_to_type(agg.kind)
       Map.put(acc, to_string(agg.name), attribute_filter_schema(type))
@@ -641,7 +641,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_write_attributes(resource, accept) do
     resource
-    |> Ash.Resource.attributes()
+    |> Ash.Resource.public_attributes()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.filter(& &1.writable?)
     |> Enum.reject(& &1.allow_nil?)
@@ -652,7 +652,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp write_attributes(resource, accept) do
     resource
-    |> Ash.Resource.attributes()
+    |> Ash.Resource.public_attributes()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.filter(& &1.writable?)
     |> Enum.reduce(%{}, fn attribute, acc ->
@@ -662,7 +662,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_relationship_attributes(resource, accept) do
     resource
-    |> Ash.Resource.relationships()
+    |> Ash.Resource.public_relationships()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.filter(&Map.get(&1, :required?))
     |> Enum.map(&to_string(&1.name))
@@ -670,7 +670,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp write_relationships(resource, accept) do
     resource
-    |> Ash.Resource.relationships()
+    |> Ash.Resource.public_relationships()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)

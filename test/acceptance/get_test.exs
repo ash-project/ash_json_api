@@ -32,7 +32,7 @@ defmodule Test.Acceptance.GetTest do
     attributes do
       attribute(:id, :uuid, primary_key?: true, default: &Ecto.UUID.generate/0)
       attribute(:name, :string)
-      attribute(:hidden, :string)
+      attribute(:hidden, :string, private?: true)
     end
   end
 
@@ -82,6 +82,13 @@ defmodule Test.Acceptance.GetTest do
       Api
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_equals("name", post.name)
+    end
+
+    @tag :attributes
+    test "private attributes are not rendered in the payload", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}", status: 200)
+      |> assert_attribute_missing("hidden")
     end
   end
 end

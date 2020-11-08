@@ -75,7 +75,7 @@ defmodule Test.Acceptance.PatchTest do
     attributes do
       attribute(:id, :uuid, primary_key?: true)
       attribute(:name, :string)
-      attribute(:hidden, :string)
+      attribute(:hidden, :string, private?: true)
 
       attribute(:email, :string,
         allow_nil?: true,
@@ -149,6 +149,13 @@ defmodule Test.Acceptance.PatchTest do
       Api
       |> patch("/posts/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
       |> assert_attribute_equals("email", "dummy@test.com")
+    end
+
+    @tag :attributes
+    test "private attributes are not rendered in the payload", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}", status: 200)
+      |> assert_attribute_missing("hidden")
     end
   end
 

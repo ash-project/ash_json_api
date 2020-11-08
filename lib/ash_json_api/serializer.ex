@@ -578,7 +578,7 @@ defmodule AshJsonApi.Serializer do
 
   defp default_attributes(resource) do
     resource
-    |> Ash.Resource.attributes()
+    |> Ash.Resource.public_attributes()
     |> Enum.map(& &1.name)
   end
 
