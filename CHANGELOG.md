@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.24.0](https://github.com/ash-project/ash_json_api/compare/v0.23.0...v0.24.0) (2020-11-09)
+
+
+
+
+### Features:
+
+* only use public attributes for json_api (#45)
+
 ## [v0.23.0](https://github.com/ash-project/ash_json_api/compare/v0.22.0...v0.23.0) (2020-10-28)
 
 
