@@ -119,7 +119,7 @@ defmodule AshJsonApi.Error do
   defp class_to_status(:invalid), do: 400
 
   def new(opts) do
-    struct!(__MODULE__, opts)
+    struct(__MODULE__, opts)
   end
 
   def format_log(error) when is_bitstring(error) do

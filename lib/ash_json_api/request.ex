@@ -8,6 +8,7 @@ defmodule AshJsonApi.Request do
     InvalidHeader,
     InvalidQuery,
     InvalidType,
+    UnacceptableMediaType,
     UnsupportedMediaType
   }
 
@@ -148,6 +149,49 @@ defmodule AshJsonApi.Request do
         add_error(request, InvalidHeader.new(json_xema_error: error), request.route.type)
     end
     |> validate_accept_header()
+    |> validate_content_type_header()
+  end
+
+  defp validate_content_type_header(%{req_headers: headers} = request) do
+    headers
+    |> Enum.filter(fn {header, _value} ->
+      header == "content-type"
+    end)
+    |> Enum.map(fn {_header, value} ->
+      Conn.Utils.media_type(value)
+    end)
+    |> case do
+      [] ->
+        request
+
+      values ->
+        any_content_type_supported? =
+          Enum.any?(values, fn
+            {:ok, "*", _, _} ->
+              true
+
+            _ ->
+              false
+          end)
+
+        json_api_content_type_supported? =
+          Enum.all?(values, fn
+            {:ok, "*", _, _} ->
+              true
+
+            {:ok, "application", "vnd.api+json", params} ->
+              valid_header_params?(params)
+
+            _ ->
+              false
+          end)
+
+        if any_content_type_supported? || json_api_content_type_supported? do
+          request
+        else
+          add_error(request, UnsupportedMediaType.new([]), request.route.type)
+        end
+    end
   end
 
   defp validate_accept_header(%{req_headers: headers} = request) do
@@ -157,16 +201,53 @@ defmodule AshJsonApi.Request do
       |> Enum.flat_map(fn {_, value} ->
         String.split(value, ",")
       end)
-      |> Enum.any?(fn accept ->
-        parsed = Conn.Utils.media_type(accept)
+      |> Enum.map(fn
+        "" ->
+          ""
 
-        match?({:ok, "application", "vnd.api+json", _}, parsed)
+        value ->
+          Conn.Utils.media_type(value)
       end)
+      |> Enum.filter(fn
+        {:ok, "application", "vnd.api+json", _} -> true
+        _ -> false
+      end)
+      |> case do
+        [] ->
+          true
+
+        headers ->
+          Enum.any?(headers, fn {:ok, "application", "vnd.api+json", params} ->
+            valid_header_params?(params)
+          end)
+      end
 
     if accepts_json_api? do
       request
     else
-      add_error(request, UnsupportedMediaType.new([]), request.route.type)
+      add_error(request, UnacceptableMediaType.new([]), request.route.type)
+    end
+  end
+
+  defp valid_header_params?(params) do
+    params
+    |> Map.keys()
+    |> Enum.sort()
+    |> case do
+      [] ->
+        true
+
+      ["ext"] ->
+        true
+
+      ["profile"] ->
+        true
+
+      ["ext", "profile"] ->
+        true
+
+      _ ->
+        false
     end
   end
 

@@ -17,7 +17,7 @@ defmodule AshJsonApi do
   end
 
   def log_errors?(api) do
-    Extension.get_opt(api, [:json_api], :log_errors?, true, true)
+    Extension.get_opt(api, [:json_api], :log_errors?, false, true)
   end
 
   defmacro forward(path, api, opts \\ []) do

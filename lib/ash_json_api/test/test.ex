@@ -15,7 +15,6 @@ defmodule AshJsonApi.Test do
     result =
       :get
       |> conn(path)
-      |> set_content_type_request_header(opts)
       |> set_accept_request_header(opts)
       |> AshJsonApi.router(api).call(AshJsonApi.router(api).init([]))
 
@@ -46,8 +45,8 @@ defmodule AshJsonApi.Test do
     result =
       :post
       |> conn(path, Jason.encode!(body))
-      |> put_req_header("content-type", "application/vnd.api+json")
-      |> put_req_header("accept", "application/vnd.api+json")
+      |> set_content_type_request_header(opts)
+      |> set_accept_request_header(opts)
       |> AshJsonApi.router(api).call(AshJsonApi.router(api).init([]))
 
     assert result.state == :sent
@@ -76,8 +75,8 @@ defmodule AshJsonApi.Test do
     result =
       :patch
       |> conn(path, Jason.encode!(body))
-      |> put_req_header("content-type", "application/vnd.api+json")
-      |> put_req_header("accept", "application/vnd.api+json")
+      |> set_content_type_request_header(opts)
+      |> set_accept_request_header(opts)
       |> AshJsonApi.router(api).call(AshJsonApi.router(api).init([]))
 
     assert result.state == :sent
@@ -160,7 +159,7 @@ defmodule AshJsonApi.Test do
 
       opts[:req_accept_header] ->
         conn
-        |> put_req_header("accept", "application/vnd.api+json")
+        |> put_req_header("accept", opts[:req_accept_header])
 
       true ->
         conn

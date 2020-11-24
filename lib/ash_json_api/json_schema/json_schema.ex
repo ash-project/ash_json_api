@@ -93,7 +93,7 @@ defmodule AshJsonApi.JsonSchema do
         "content-type" => %{
           "type" => "array",
           "items" => %{
-            "const" => "application/vnd.api+json"
+            "type" => "string"
           }
         },
         "accept" => %{
