@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.24.1](https://github.com/ash-project/ash_json_api/compare/v0.24.0...v0.24.1) (2020-11-24)
+
+
+
+
+### Bug Fixes:
+
+* handle accept and content-type properly
+
 ## [v0.24.0](https://github.com/ash-project/ash_json_api/compare/v0.23.0...v0.24.0) (2020-11-09)
 
 
