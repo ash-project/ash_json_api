@@ -224,7 +224,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> Ash.Resource.public_attributes()
     |> Enum.reduce(%{}, fn attr, acc ->
-      Map.put(acc, to_string(attr.name), resource_field_type(resource, attr))
+      Map.put(acc, to_string(attr.name), resource_field_type(attr))
     end)
   end
 
@@ -310,53 +310,57 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp resource_field_type(_resource, type, raise? \\ false)
-
-  defp resource_field_type(_resource, %{type: Ash.Type.String}, _) do
+  defp resource_field_type(%{type: Ash.Type.String}) do
     %{
       "type" => "string"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.Boolean}, _) do
+  defp resource_field_type(%{type: Ash.Type.Boolean}) do
     %{
       "type" => "boolean"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.Integer}, _) do
+  defp resource_field_type(%{type: Ash.Type.Integer}) do
     %{
       "type" => "integer"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.UtcDatetime}, _) do
+  defp resource_field_type(%{type: Ash.Type.UtcDatetime}) do
     %{
       "type" => "string",
       "format" => "date-time"
     }
   end
 
-  defp resource_field_type(_resource, %{type: Ash.Type.UUID}, _) do
+  defp resource_field_type(%{type: Ash.Type.UUID}) do
     %{
       "type" => "string",
       "format" => "uuid"
     }
   end
 
-  defp resource_field_type(resource, %{type: {:array, type}}, _) do
+  defp resource_field_type(%{type: {:array, type}}) do
     %{
       "type" => "array",
-      "items" => resource_field_type(resource, %{type: type})
+      "items" => resource_field_type(%{type: type})
     }
   end
 
-  defp resource_field_type(_, %{type: type}, true) do
-    raise "unimplemented type #{type}"
-  end
-
-  defp resource_field_type(resource, %{type: type}, false) do
-    resource_field_type(resource, %{type: Ash.Type.storage_type(type)}, true)
+  defp resource_field_type(%{type: type} = attr) do
+    if :erlang.function_exported(type, :json_schema, 1) do
+      if Map.get(attr, :constraints) do
+        type.json_schema(attr.constraints)
+      else
+        type.json_schema([])
+      end
+    else
+      %{
+        "type" => "any"
+      }
+    end
   end
 
   defp href_schema(route, api, resource, properties) do
@@ -516,7 +520,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
        when type in [:post] do
-    accept = Ash.Resource.action(resource, action, action_type).accept
+    action = Ash.Resource.action(resource, action, action_type)
 
     %{
       "type" => "object",
@@ -533,14 +537,14 @@ defmodule AshJsonApi.JsonSchema do
             "attributes" => %{
               "type" => "object",
               "additionalProperties" => false,
-              "required" => required_write_attributes(resource, accept),
-              "properties" => write_attributes(resource, accept)
+              "required" => required_write_attributes(resource, action.arguments, action.accept),
+              "properties" => write_attributes(resource, action.arguments, action.accept)
             },
             "relationships" => %{
               "type" => "object",
-              "required" => required_relationship_attributes(resource, accept),
+              "required" => required_relationship_attributes(resource, action.accept),
               "additionalProperties" => false,
-              "properties" => write_relationships(resource, accept)
+              "properties" => write_relationships(resource, action.accept)
             }
           }
         }
@@ -550,7 +554,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
        when type in [:patch] do
-    accept = Ash.Resource.action(resource, action, action_type).accept
+    action = Ash.Resource.action(resource, action, action_type)
 
     %{
       "type" => "object",
@@ -561,19 +565,21 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
-            "id" => resource_field_type(resource, Ash.Resource.attribute(resource, :id)),
+            "id" => resource_field_type(Ash.Resource.attribute(resource, :id)),
             "type" => %{
               "const" => AshJsonApi.Resource.type(resource)
             },
             "attributes" => %{
               "type" => "object",
               "additionalProperties" => false,
-              "properties" => write_attributes(resource, accept)
+              "required" =>
+                action.arguments |> Enum.reject(& &1.allow_nil?) |> Enum.map(& &1.name),
+              "properties" => write_attributes(resource, action.arguments, action.accept)
             },
             "relationships" => %{
               "type" => "object",
               "additionalProperties" => false,
-              "properties" => write_relationships(resource, accept)
+              "properties" => write_relationships(resource, action.accept)
             }
           }
         }
@@ -605,11 +611,7 @@ defmodule AshJsonApi.JsonSchema do
             "required" => ["id", "type"],
             "additionalProperties" => false,
             "properties" => %{
-              "id" =>
-                resource_field_type(
-                  relationship.destination,
-                  Ash.Resource.attribute(relationship.destination, :id)
-                ),
+              "id" => resource_field_type(Ash.Resource.attribute(relationship.destination, :id)),
               "type" => %{
                 "const" => AshJsonApi.Resource.type(relationship.destination)
               },
@@ -634,29 +636,42 @@ defmodule AshJsonApi.JsonSchema do
       Map.put(
         acc,
         to_string(attribute.name),
-        resource_field_type(relationship.through, attribute)
+        resource_field_type(attribute)
       )
     end)
   end
 
-  defp required_write_attributes(resource, accept) do
-    resource
-    |> Ash.Resource.public_attributes()
-    |> Enum.filter(&(is_nil(accept) || &1.name in accept))
-    |> Enum.filter(& &1.writable?)
-    |> Enum.reject(& &1.allow_nil?)
-    |> Enum.reject(& &1.default)
-    |> Enum.reject(& &1.generated?)
-    |> Enum.map(&to_string(&1.name))
+  defp required_write_attributes(resource, arguments, accept) do
+    attributes =
+      resource
+      |> Ash.Resource.public_attributes()
+      |> Enum.filter(&(is_nil(accept) || &1.name in accept))
+      |> Enum.filter(& &1.writable?)
+      |> Enum.reject(& &1.allow_nil?)
+      |> Enum.reject(& &1.default)
+      |> Enum.reject(& &1.generated?)
+      |> Enum.map(&to_string(&1.name))
+
+    arguments =
+      arguments
+      |> Enum.reject(& &1.allow_nil?)
+      |> Enum.map(&to_string(&1.name))
+
+    attributes ++ arguments
   end
 
-  defp write_attributes(resource, accept) do
-    resource
-    |> Ash.Resource.public_attributes()
-    |> Enum.filter(&(is_nil(accept) || &1.name in accept))
-    |> Enum.filter(& &1.writable?)
-    |> Enum.reduce(%{}, fn attribute, acc ->
-      Map.put(acc, to_string(attribute.name), resource_field_type(resource, attribute))
+  defp write_attributes(resource, arguments, accept) do
+    attributes =
+      resource
+      |> Ash.Resource.public_attributes()
+      |> Enum.filter(&(is_nil(accept) || &1.name in accept))
+      |> Enum.filter(& &1.writable?)
+      |> Enum.reduce(%{}, fn attribute, acc ->
+        Map.put(acc, to_string(attribute.name), resource_field_type(attribute))
+      end)
+
+    Enum.reduce(arguments, attributes, fn argument, attributes ->
+      Map.put(attributes, argument.name, resource_field_type(argument))
     end)
   end
 

@@ -90,6 +90,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
       |> Ash.Changeset.set_tenant(request.tenant)
+      |> Ash.Changeset.set_arguments(request.arguments)
       |> api.create(params)
       |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
@@ -120,6 +121,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new(request.attributes || %{})
       |> replace_changeset_relationships(request.relationships || %{})
       |> Ash.Changeset.set_tenant(request.tenant)
+      |> Ash.Changeset.set_arguments(request.arguments)
       |> api.update(params)
       |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
@@ -145,6 +147,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new()
       |> Ash.Changeset.append_to_relationship(relationship_name, request.resource_identifiers)
       |> Ash.Changeset.set_tenant(request.tenant)
+      |> Ash.Changeset.set_arguments(request.arguments)
       |> api.update(params)
       |> api.load(fields(request, request.resource))
       |> case do
@@ -172,6 +175,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new()
       |> Ash.Changeset.replace_relationship(relationship_name, request.resource_identifiers)
       |> Ash.Changeset.set_tenant(request.tenant)
+      |> Ash.Changeset.set_arguments(request.arguments)
       |> api.update(params)
       |> api.load(fields(request, request.resource))
       |> case do
@@ -207,6 +211,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new()
       |> Ash.Changeset.remove_from_relationship(relationship_name, request.resource_identifiers)
       |> Ash.Changeset.set_tenant(request.tenant)
+      |> Ash.Changeset.set_arguments(request.arguments)
       |> api.update(params)
       |> api.load(fields(request, request.resource))
       |> case do

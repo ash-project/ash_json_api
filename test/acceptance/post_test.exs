@@ -19,13 +19,19 @@ defmodule Test.Acceptance.PostTest do
         base("/authors")
         get(:default)
         index(:default)
+        post :confirm_name, route: "/confirm_name"
       end
     end
 
     actions do
       read(:default)
 
-      create(:default)
+      create(:default, primary?: true)
+
+      create :confirm_name do
+        argument(:confirm, :string, allow_nil?: false)
+        change(confirm(:name, :confirm))
+      end
     end
 
     attributes do
@@ -240,6 +246,39 @@ defmodule Test.Acceptance.PostTest do
 
       assert error["detail"] ==
                "Expected only defined properties, got key [\"data\", \"attributes\", \"email\"]."
+    end
+
+    test "arguments are validated properly" do
+      Api
+      |> post(
+        "/authors/confirm_name",
+        %{
+          data: %{
+            type: "author",
+            attributes: %{
+              name: "foo",
+              confirm: "bar"
+            }
+          }
+        },
+        status: 400
+      )
+    end
+
+    test "arguments are threaded through properly" do
+      Api
+      |> post(
+        "/authors/confirm_name",
+        %{
+          data: %{
+            type: "author",
+            attributes: %{
+              name: "foo",
+              confirm: "bar"
+            }
+          }
+        }
+      )
     end
   end
 end

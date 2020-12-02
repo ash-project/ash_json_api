@@ -38,6 +38,7 @@ defmodule AshJsonApi.Request do
     :req_headers,
     :relationship,
     :route,
+    arguments: %{},
     filter_included: %{},
     sort: [],
     fields: %{},
@@ -476,21 +477,28 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_attributes(
-         %{resource: resource, body: %{"data" => %{"attributes" => attributes}}} = request
+         %{resource: resource, action: action, body: %{"data" => %{"attributes" => attributes}}} =
+           request
        )
        when is_map(attributes) do
     Enum.reduce(attributes, request, fn {key, value}, request ->
-      case Ash.Resource.attribute(resource, key) do
-        nil ->
-          add_error(request, "unknown attribute: #{key}", request.route.type)
+      cond do
+        attr = Ash.Resource.attribute(resource, key) ->
+          %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
 
-        attribute ->
-          %{request | attributes: Map.put(request.attributes || %{}, attribute.name, value)}
+        arg =
+            Enum.find(action.arguments, fn argument ->
+              to_string(argument.name) == key
+            end) ->
+          %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
+
+        true ->
+          add_error(request, "unknown attribute: #{key}", request.route.type)
       end
     end)
   end
 
-  defp parse_attributes(request), do: %{request | attributes: %{}}
+  defp parse_attributes(request), do: %{request | attributes: %{}, arguments: %{}}
 
   defp parse_relationships(
          %{
