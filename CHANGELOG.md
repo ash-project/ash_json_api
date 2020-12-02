@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.24.2](https://github.com/ash-project/ash_json_api/compare/v0.24.1...v0.24.2) (2020-12-02)
+
+
+
+
+### Improvements:
+
+* support arguments in post/patch payloads
+
 ## [v0.24.1](https://github.com/ash-project/ash_json_api/compare/v0.24.0...v0.24.1) (2020-11-24)
 
 
