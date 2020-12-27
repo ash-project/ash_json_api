@@ -1,5 +1,5 @@
 defmodule AshJsonApi.Resource.Route do
-  @moduledoc false
+  @moduledoc "Represents a route for a resource"
   defstruct [
     :route,
     :action,

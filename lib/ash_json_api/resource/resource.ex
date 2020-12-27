@@ -1,6 +1,4 @@
 defmodule AshJsonApi.Resource do
-  @moduledoc "The entrypoint for adding JSON:API behavior to a resource"
-
   @route_schema [
     route: [
       type: :string,
@@ -256,6 +254,24 @@ defmodule AshJsonApi.Resource do
         doc: "The base route for the resource, e.g `\"/users\"`"
       ]
     ],
+    examples: [
+      """
+      routes do
+        base_route "/posts"
+
+        get :default
+        get :me, route: "/me"
+        index :default
+        post :confirm_name, route: "/confirm_name"
+        patch :default
+        related :comments, :default
+        relationship :comments, :default
+        post_to_relationship :comments, :default
+        patch_relationship :comments, :default
+        delete_from_relationship :comments, :default
+      end
+      """
+    ],
     entities: [
       @get,
       @index,
@@ -273,6 +289,14 @@ defmodule AshJsonApi.Resource do
   @primary_key %Ash.Dsl.Section{
     name: :primary_key,
     describe: "Encode the id of the JSON API response from selected attributes of a resource",
+    examples: [
+      """
+      primary_key do
+        keys [:first_name, :last_name]
+        delimeter "~"
+      end
+      """
+    ],
     schema: [
       keys: [
         type: {:custom, Ash.OptionsHelpers, :list_of_atoms, []},
@@ -292,6 +316,34 @@ defmodule AshJsonApi.Resource do
     name: :json_api,
     sections: [@routes, @primary_key],
     describe: "Configure the resource's behavior in the JSON:API",
+    examples: [
+      """
+      json_api do
+        type "post"
+        includes [
+          friends: [
+            :comments
+          ],
+          comments: []
+        ]
+
+        routes do
+          base_route "/posts"
+
+          get :default
+          get :me, route: "/me"
+          index :default
+          post :confirm_name, route: "/confirm_name"
+          patch :default
+          related :comments, :default
+          relationship :comments, :default
+          post_to_relationship :comments, :default
+          patch_relationship :comments, :default
+          delete_from_relationship :comments, :default
+        end
+      end
+      """
+    ],
     schema: [
       type: [
         type: :string,
@@ -312,9 +364,20 @@ defmodule AshJsonApi.Resource do
     AshJsonApi.Resource.Transformers.RequirePrimaryKey
   ]
 
+  @sections [@json_api]
+
+  @moduledoc """
+  The entrypoint for adding JSON:API behavior to a resource"
+
+  # Table of Contents
+  #{Ash.Dsl.Extension.doc_index(@sections)}
+
+  #{Ash.Dsl.Extension.doc(@sections)}
+  """
+
   require Ash.Dsl.Extension
 
-  use Ash.Dsl.Extension, sections: [@json_api], transformers: @transformers
+  use Ash.Dsl.Extension, sections: @sections, transformers: @transformers
 
   def type(resource) do
     Extension.get_opt(resource, [:json_api], :type, nil, false)

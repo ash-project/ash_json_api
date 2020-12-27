@@ -1,6 +1,10 @@
 defmodule AshJsonApi do
   @moduledoc """
   Introspection functions for `AshJsonApi` apis.
+
+  For Api DSL documentation, see `AshJsonApi.Api`.
+
+  For Resource DSL documentation, see `AshJsonApi.Resource`
   """
   alias Ash.Dsl.Extension
 

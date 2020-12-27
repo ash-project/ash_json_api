@@ -1,11 +1,18 @@
 defmodule AshJsonApi.Api do
-  @moduledoc "The entrypoint for adding JSON:API behavior to an Ash API"
-
   @json_api %Ash.Dsl.Section{
     name: :json_api,
     describe: """
     Global configuration for JSON:API
     """,
+    examples: [
+      """
+      json_api do
+        prefix "/json_api"
+        serve_schema? true
+        log_errors? true
+      end
+      """
+    ],
     schema: [
       prefix: [
         type: :string,
@@ -30,6 +37,16 @@ defmodule AshJsonApi.Api do
   }
 
   @transformers [AshJsonApi.Api.Transformers.CreateRouter]
+  @sections [@json_api]
 
-  use Ash.Dsl.Extension, sections: [@json_api], transformers: @transformers
+  @moduledoc """
+  The entrypoint for adding JSON:API behavior to an Ash API
+
+  # Table of Contents
+  #{Ash.Dsl.Extension.doc_index(@sections)}
+
+  #{Ash.Dsl.Extension.doc(@sections)}
+  """
+
+  use Ash.Dsl.Extension, sections: @sections, transformers: @transformers
 end
