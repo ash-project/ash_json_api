@@ -467,7 +467,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> Ash.Resource.public_aggregates()
     |> Enum.reduce(acc, fn agg, acc ->
-      {:ok, type} = Aggregate.kind_to_type(agg.kind)
+      {:ok, type} = Aggregate.kind_to_type(agg.kind, nil)
       Map.put(acc, to_string(agg.name), attribute_filter_schema(type))
     end)
   end
