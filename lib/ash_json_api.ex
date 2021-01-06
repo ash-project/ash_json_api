@@ -40,6 +40,6 @@ defmodule AshJsonApi do
   end
 
   def router(api) do
-    :persistent_term.get({api, :ash_json_api, :router}, nil)
+    Extension.get_persisted(api, {:ash_json_api, :router}, nil)
   end
 end
