@@ -5,6 +5,11 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.24.4](https://github.com/ash-project/ash_json_api/compare/v0.24.3...v0.24.4) (2021-01-06)
+
+
+
+
 ## [v0.24.3](https://github.com/ash-project/ash_json_api/compare/v0.24.2...v0.24.3) (2021-01-06)
 
 
