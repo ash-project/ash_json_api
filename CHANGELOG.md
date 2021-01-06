@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.24.3](https://github.com/ash-project/ash_json_api/compare/v0.24.2...v0.24.3) (2021-01-06)
+
+
+
+
+### Bug Fixes:
+
+* support latest ash aggregate functions
+
+* support latest ash version
+
+### Improvements:
+
+* update to latest ash
+
 ## [v0.24.2](https://github.com/ash-project/ash_json_api/compare/v0.24.1...v0.24.2) (2020-12-02)
 
 
