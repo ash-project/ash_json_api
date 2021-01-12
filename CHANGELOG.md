@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.25.0](https://github.com/ash-project/ash_json_api/compare/v0.24.4...v0.25.0) (2021-01-12)
+
+
+
+
+### Features:
+
+* support embedded resources (as simple maps)
+
+### Bug Fixes:
+
+* fix delimiter spelling
+
 ## [v0.24.4](https://github.com/ash-project/ash_json_api/compare/v0.24.3...v0.24.4) (2021-01-06)
 
 
