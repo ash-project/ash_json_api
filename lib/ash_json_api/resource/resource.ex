@@ -293,7 +293,7 @@ defmodule AshJsonApi.Resource do
       """
       primary_key do
         keys [:first_name, :last_name]
-        delimeter "~"
+        delimiter "~"
       end
       """
     ],
@@ -303,11 +303,11 @@ defmodule AshJsonApi.Resource do
         doc: "the list of attributes to encode JSON API primary key",
         required: true
       ],
-      delimeter: [
+      delimiter: [
         type: :string,
         default: "-",
         required: false,
-        doc: "The delimeter to concatenate the primary key values. Default to be '-'"
+        doc: "The delimiter to concatenate the primary key values. Default to be '-'"
       ]
     ]
   }
@@ -399,12 +399,12 @@ defmodule AshJsonApi.Resource do
         Map.get(record, key)
 
       keys ->
-        delimeter = primary_key_delimeter(resource)
+        delimiter = primary_key_delimiter(resource)
 
         [_ | concatenated_keys] =
           keys
           |> Enum.reverse()
-          |> Enum.reduce([], fn key, acc -> [delimeter, to_string(Map.get(record, key)), acc] end)
+          |> Enum.reduce([], fn key, acc -> [delimiter, to_string(Map.get(record, key)), acc] end)
 
         IO.iodata_to_binary(concatenated_keys)
     end
@@ -414,8 +414,8 @@ defmodule AshJsonApi.Resource do
     Extension.get_opt(resource, [:json_api, :primary_key], :keys, [], false)
   end
 
-  def primary_key_delimeter(resource) do
-    Extension.get_opt(resource, [:json_api, :primary_key], :delimeter, [], false)
+  def primary_key_delimiter(resource) do
+    Extension.get_opt(resource, [:json_api, :primary_key], :delimiter, [], false)
   end
 
   def routes(resource) do

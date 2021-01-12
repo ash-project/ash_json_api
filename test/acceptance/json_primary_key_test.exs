@@ -57,7 +57,7 @@ defmodule Test.Acceptance.ResourceTest do
 
       primary_key do
         keys([:author_name, :name])
-        delimeter(",")
+        delimiter(",")
       end
 
       routes do

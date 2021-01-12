@@ -473,38 +473,44 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp attribute_filter_schema(type) do
-    case type do
-      Ash.Type.UUID ->
-        %{
-          "type" => "string",
-          "format" => "uuid"
-        }
+    if Ash.Type.embedded_type?(type) do
+      %{
+        "type" => "any"
+      }
+    else
+      case type do
+        Ash.Type.UUID ->
+          %{
+            "type" => "string",
+            "format" => "uuid"
+          }
 
-      Ash.Type.String ->
-        %{
-          "type" => "string"
-        }
+        Ash.Type.String ->
+          %{
+            "type" => "string"
+          }
 
-      Ash.Type.Boolean ->
-        %{
-          "type" => "boolean"
-        }
+        Ash.Type.Boolean ->
+          %{
+            "type" => "boolean"
+          }
 
-      Ash.Type.Integer ->
-        %{
-          "type" => "integer"
-        }
+        Ash.Type.Integer ->
+          %{
+            "type" => "integer"
+          }
 
-      Ash.Type.UtcDateTime ->
-        %{
-          "type" => "string",
-          "format" => "date-time"
-        }
+        Ash.Type.UtcDateTime ->
+          %{
+            "type" => "string",
+            "format" => "date-time"
+          }
 
-      {:array, _type} ->
-        %{
-          "type" => "any"
-        }
+        {:array, _type} ->
+          %{
+            "type" => "any"
+          }
+      end
     end
   end
 
