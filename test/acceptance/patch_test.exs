@@ -28,7 +28,7 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      uuid_primary_key(:id, writable?: true)
       attribute(:name, :string)
     end
 
@@ -73,7 +73,7 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      uuid_primary_key(:id, writable?: true)
       attribute(:name, :string)
       attribute(:hidden, :string, private?: true)
 

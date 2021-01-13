@@ -75,7 +75,7 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      uuid_primary_key(:id, writable?: true)
       attribute(:name, :string)
       attribute(:author_name, :string)
     end
@@ -110,7 +110,7 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      uuid_primary_key(:id, writable?: true)
       attribute(:name, :string)
     end
   end
