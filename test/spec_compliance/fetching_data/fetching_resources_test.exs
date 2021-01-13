@@ -31,7 +31,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      uuid_primary_key(:id)
       attribute(:name, :string)
     end
   end
@@ -64,7 +64,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      uuid_primary_key(:id)
       attribute(:name, :string)
     end
 

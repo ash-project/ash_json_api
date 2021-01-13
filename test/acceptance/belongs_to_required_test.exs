@@ -29,7 +29,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true)
+      uuid_primary_key(:id, writable?: true)
       attribute(:name, :string)
     end
 
@@ -69,7 +69,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     attributes do
-      attribute(:id, :uuid, primary_key?: true, allow_nil?: false)
+      uuid_primary_key(:id, writable?: true)
       attribute(:name, :string, allow_nil?: false)
       attribute(:hidden, :string)
 
