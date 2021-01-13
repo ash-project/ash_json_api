@@ -34,8 +34,8 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     attributes do
-      attribute(:first_name, :string, primary_key?: true)
-      attribute(:last_name, :string, primary_key?: true)
+      attribute(:first_name, :string, primary_key?: true, allow_nil?: false)
+      attribute(:last_name, :string, primary_key?: true, allow_nil?: false)
       attribute(:utc_now, :utc_datetime)
       attribute(:age, :integer)
     end
@@ -234,8 +234,8 @@ defmodule Test.Acceptance.ResourceTest do
                        end
 
                        attributes do
-                         attribute(:first_name, :string, primary_key?: true)
-                         attribute(:last_name, :string, primary_key?: true)
+                         attribute(:first_name, :string, primary_key?: true, allow_nil?: false)
+                         attribute(:last_name, :string, primary_key?: true, allow_nil?: false)
                        end
                      end
                    end
@@ -281,8 +281,8 @@ defmodule Test.Acceptance.ResourceTest do
                        end
 
                        attributes do
-                         attribute(:first_name, :string, primary_key?: true)
-                         attribute(:last_name, :string, primary_key?: true)
+                         attribute(:first_name, :string, primary_key?: true, allow_nil?: false)
+                         attribute(:last_name, :string, primary_key?: true, allow_nil?: false)
                        end
                      end
                    end
