@@ -18,7 +18,7 @@ defmodule AshJsonApi.Api.Transformers.CreateRouter do
         AshJsonApi.serve_schema?(api)
       )
 
-    dsl = Transformer.persist(dsl, {:ash_json_api, :router}, module_name)
+    dsl = Transformer.persist(dsl, :router, module_name)
 
     {:ok, dsl}
   end

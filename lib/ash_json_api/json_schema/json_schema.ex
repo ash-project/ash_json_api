@@ -537,6 +537,11 @@ defmodule AshJsonApi.JsonSchema do
           %{
             "type" => "any"
           }
+
+        _ ->
+          %{
+            "type" => "any"
+          }
       end
     end
   end

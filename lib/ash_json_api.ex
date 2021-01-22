@@ -28,9 +28,10 @@ defmodule AshJsonApi do
     quote bind_quoted: [path: path, api: api, opts: opts] do
       case Code.ensure_compiled(api) do
         {:module, module} ->
-          forward(path, :persistent_term.get({api, :ash_json_api, :router}, nil), opts)
+          api = AshJsonApi.router(api)
+          forward(path, api, opts)
 
-        _error ->
+        _ ->
           # We used to raise here, but this failing almost always implies
           # a compilation error in the api, which will be more informative
           # if we just let that be raised
@@ -40,6 +41,6 @@ defmodule AshJsonApi do
   end
 
   def router(api) do
-    Extension.get_persisted(api, {:ash_json_api, :router}, nil)
+    Extension.get_persisted(api, :router, nil)
   end
 end
