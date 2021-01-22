@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.27.0](https://github.com/ash-project/ash_json_api/compare/v0.26.0-rc0...v0.27.0) (2021-01-22)
+
+
+
+
+### Improvements:
+
+* support latest ash
+
 ## [v0.26.0-rc0](https://github.com/ash-project/ash_json_api/compare/v0.25.0...v0.26.0-rc0) (2021-01-22)
 
 
