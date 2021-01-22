@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.26.0-rc0](https://github.com/ash-project/ash_json_api/compare/v0.25.0...v0.26.0-rc0) (2021-01-22)
+
+
+
+
+### Features:
+
+* support latest ash
+
+* support query arg in path/query params
+
 ## [v0.25.0](https://github.com/ash-project/ash_json_api/compare/v0.24.4...v0.25.0) (2021-01-12)
 
 
