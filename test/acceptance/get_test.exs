@@ -19,12 +19,20 @@ defmodule Test.Acceptance.GetTest do
         base("/posts")
 
         get(:default)
+        get(:by_name, route: "/by_name/:name")
+
         index(:default)
       end
     end
 
     actions do
-      read(:default)
+      read(:default, primary?: true)
+
+      read :by_name do
+        argument(:name, :string, allow_nil?: false)
+
+        filter(name: arg(:name))
+      end
 
       create(:default)
     end
@@ -64,6 +72,24 @@ defmodule Test.Acceptance.GetTest do
         "detail" => "No post record found with `id: #{id}`",
         "title" => "Entity Not Found"
       })
+    end
+  end
+
+  @tag :arguments
+  describe "arguments" do
+    setup do
+      post =
+        Post
+        |> Ash.Changeset.new(%{name: "foo", hidden: "hidden"})
+        |> Api.create!()
+
+      %{post: post}
+    end
+
+    test "arguments can be used in routes" do
+      Api
+      |> get("/posts/by_name/foo", status: 200)
+      |> assert_attribute_equals("name", "foo")
     end
   end
 

@@ -90,6 +90,7 @@ defmodule AshJsonApi.Request do
     |> parse_filter()
     |> parse_sort()
     |> parse_attributes()
+    |> parse_read_arguments()
     |> parse_relationships()
     |> parse_resource_identifiers()
   end
@@ -499,6 +500,24 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_attributes(request), do: %{request | attributes: %{}, arguments: %{}}
+
+  defp parse_read_arguments(%{action: %{type: :read} = action} = request) do
+    action.arguments
+    |> Enum.reject(& &1.private?)
+    |> Enum.reduce(request, fn argument, request ->
+      name = to_string(argument.name)
+
+      with :error <- Map.fetch(request.query_params, name),
+           :error <- Map.fetch(request.path_params, name) do
+        request
+      else
+        {:ok, value} ->
+          %{request | arguments: Map.put(request.arguments, argument.name, value)}
+      end
+    end)
+  end
+
+  defp parse_read_arguments(request), do: request
 
   defp parse_relationships(
          %{

@@ -61,6 +61,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.set_tenant(request.tenant)
+      |> Ash.Query.set_arguments(request.arguments)
       |> request.api.read(params)
       |> case do
         {:ok, result} ->
@@ -274,6 +275,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         resource
         |> Ash.Query.filter(^filter)
         |> Ash.Query.set_tenant(request.tenant)
+        |> Ash.Query.set_arguments(request.arguments)
 
       params =
         if through_resource || request.action.type != :read do

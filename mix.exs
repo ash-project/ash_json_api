@@ -11,7 +11,7 @@ defmodule AshJsonApi.MixProject do
     [
       app: :ash_json_api,
       version: @version,
-      elixir: "~> 1.9",
+      elixir: "~> 1.11",
       description: @description,
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -84,7 +84,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 1.28")},
+      {:ash, ash_version("~> 1.29.0-rc1")},
       {:plug, "~> 1.8"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},

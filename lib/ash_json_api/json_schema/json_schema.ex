@@ -363,29 +363,29 @@ defmodule AshJsonApi.JsonSchema do
     end
   end
 
-  defp href_schema(route, api, resource, properties) do
+  defp href_schema(route, api, resource, required_properties) do
     base_properties =
-      Enum.into(properties, %{}, fn prop ->
+      Enum.into(required_properties, %{}, fn prop ->
         {prop, %{"type" => "string"}}
       end)
 
     case query_param_properties(route, api, resource) do
       nil ->
         {%{
-           "required" => properties,
+           "required" => required_properties,
            "properties" => base_properties
          }, ""}
 
-      {query_param_properties, query_param_string} ->
+      {query_param_properties, query_param_string, required} ->
         {%{
-           "required" => properties,
+           "required" => required_properties ++ required,
            "properties" => Map.merge(query_param_properties, base_properties)
          }, query_param_string}
     end
   end
 
-  defp query_param_properties(%{type: :index}, api, resource) do
-    props = %{
+  defp query_param_properties(%{type: :index} = route, api, resource) do
+    %{
       "filter" => %{
         "type" => "object",
         "properties" => filter_props(resource)
@@ -403,8 +403,8 @@ defmodule AshJsonApi.JsonSchema do
         "format" => include_format(resource)
       }
     }
-
-    {props, "{?filter,sort,page,include}"}
+    |> add_read_arguments(route, resource)
+    |> with_keys()
   end
 
   defp query_param_properties(%{type: type}, _, _)
@@ -412,7 +412,7 @@ defmodule AshJsonApi.JsonSchema do
     nil
   end
 
-  defp query_param_properties(_route, _api, resource) do
+  defp query_param_properties(route, _api, resource) do
     props = %{
       "include" => %{
         "type" => "string",
@@ -420,7 +420,34 @@ defmodule AshJsonApi.JsonSchema do
       }
     }
 
-    {props, "{?include}"}
+    if route.type in [:get, :related] do
+      props
+      |> add_read_arguments(route, resource)
+      |> with_keys()
+    else
+      with_keys(props)
+    end
+  end
+
+  defp add_read_arguments(props, route, resource) do
+    action = Ash.Resource.action(resource, route.action, :read)
+
+    {
+      action.arguments
+      |> Enum.reject(& &1.private?)
+      |> Enum.reduce(props, fn argument, props ->
+        Map.put(props, argument.name, attribute_filter_schema(argument.type))
+      end),
+      action.arguments |> Enum.reject(&(&1.allow_nil? || &1.private?)) |> Enum.map(&"#{&1.name}")
+    }
+  end
+
+  defp with_keys({map, required}) do
+    {map, "{" <> Enum.map_join(map, ",", &elem(&1, 0)) <> "}", required}
+  end
+
+  defp with_keys(map) do
+    {map, "{" <> Enum.map_join(map, ",", &elem(&1, 0)) <> "}", []}
   end
 
   defp sort_format(resource) do
