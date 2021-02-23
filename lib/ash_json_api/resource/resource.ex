@@ -395,7 +395,7 @@ defmodule AshJsonApi.Resource do
     case primary_key_fields(resource) do
       [] ->
         # Expect resource to have only 1 primary key if :primary_key section is not used
-        [key] = Ash.Resource.primary_key(resource)
+        [key] = Ash.Resource.Info.primary_key(resource)
         Map.get(record, key)
 
       keys ->

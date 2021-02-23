@@ -431,7 +431,7 @@ defmodule AshJsonApi.Serializer do
     fields = default_attributes(resource)
 
     resource
-    |> Ash.Resource.relationships()
+    |> Ash.Resource.Info.relationships()
     |> Stream.filter(&(&1.name in fields))
     |> Enum.into(%{}, fn relationship ->
       value =
@@ -578,7 +578,7 @@ defmodule AshJsonApi.Serializer do
 
   defp default_attributes(resource) do
     resource
-    |> Ash.Resource.public_attributes()
+    |> Ash.Resource.Info.public_attributes()
     |> Enum.map(& &1.name)
   end
 

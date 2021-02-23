@@ -54,9 +54,9 @@ defmodule AshJsonApi.Request do
 
   @spec from(
           conn :: Plug.Conn.t(),
-          resource :: Ash.resource(),
+          resource :: Ash.Resource.t(),
           action :: atom,
-          Ash.api(),
+          Ash.Api.t(),
           AshJsonApi.Resource.Route.t()
         ) ::
           t
@@ -290,7 +290,7 @@ defmodule AshJsonApi.Request do
     Enum.reduce(filter_included, request, fn {relationship_path, filter_statement}, request ->
       path = String.split(relationship_path)
 
-      case Ash.Resource.related(resource, path) do
+      case Ash.Resource.Info.related(resource, path) do
         nil ->
           add_error(request, "Invalid filter included", request.route.type)
 
@@ -328,7 +328,7 @@ defmodule AshJsonApi.Request do
   defp add_fields(request, resource, fields, parameter?) do
     type = AshJsonApi.Resource.type(resource)
 
-    attributes = Ash.Resource.public_attributes(resource)
+    attributes = Ash.Resource.Info.public_attributes(resource)
 
     fields
     |> String.split(",")
@@ -341,15 +341,15 @@ defmodule AshJsonApi.Request do
             request.route.type
           )
 
-        attr = Ash.Resource.attribute(resource, key) ->
+        attr = Ash.Resource.Info.attribute(resource, key) ->
           fields = Map.update(request.fields, resource, [attr.name], &[attr.name | &1])
           %{request | fields: fields}
 
-        rel = Ash.Resource.relationship(resource, key) ->
+        rel = Ash.Resource.Info.relationship(resource, key) ->
           fields = Map.update(request.fields, resource, [rel.name], &[rel.name | &1])
           %{request | fields: fields}
 
-        agg = Ash.Resource.aggregate(resource, key) ->
+        agg = Ash.Resource.Info.aggregate(resource, key) ->
           fields = Map.update(request.fields, resource, [agg.name], &[agg.name | &1])
           %{request | fields: fields}
 
@@ -383,10 +383,10 @@ defmodule AshJsonApi.Request do
       {order, field_name} = trim_sort_order(field)
 
       cond do
-        attr = Ash.Resource.attribute(resource, field_name) ->
+        attr = Ash.Resource.Info.attribute(resource, field_name) ->
           %{request | sort: [{attr.name, order} | request.sort]}
 
-        agg = Ash.Resource.aggregate(resource, field_name) ->
+        agg = Ash.Resource.Info.aggregate(resource, field_name) ->
           %{request | sort: [{agg.name, order} | request.sort]}
 
         true ->
@@ -431,7 +431,7 @@ defmodule AshJsonApi.Request do
 
   defp set_include_queries(includes, fields, filters, resource, path \\ []) do
     Enum.map(includes, fn {key, nested} ->
-      related = Ash.Resource.related(resource, key)
+      related = Ash.Resource.Info.related(resource, key)
       nested = set_include_queries(nested, fields, filters, related, path ++ [key])
 
       load =
@@ -484,7 +484,7 @@ defmodule AshJsonApi.Request do
        when is_map(attributes) do
     Enum.reduce(attributes, request, fn {key, value}, request ->
       cond do
-        attr = Ash.Resource.attribute(resource, key) ->
+        attr = Ash.Resource.Info.attribute(resource, key) ->
           %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
 
         arg =
@@ -529,7 +529,7 @@ defmodule AshJsonApi.Request do
     Enum.reduce(relationships, request, fn {name, value}, request ->
       with %{"data" => data} when is_map(data) or is_list(data) <- value,
            relationship when not is_nil(relationship) <-
-             Ash.Resource.relationship(resource, name),
+             Ash.Resource.Info.relationship(resource, name),
            {:ok, change_value} <- relationship_change_value(relationship, data) do
         %{
           request

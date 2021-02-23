@@ -6,7 +6,7 @@ defmodule AshJsonApi.JsonSchema do
     resources =
       api
       |> Ash.Api.resources()
-      |> Enum.filter(&(AshJsonApi.Resource in Ash.extensions(&1)))
+      |> Enum.filter(&(AshJsonApi.Resource in Ash.Resource.Info.extensions(&1)))
 
     route_schemas =
       Enum.flat_map(resources, fn resource ->
@@ -215,14 +215,14 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_attributes(resource) do
     resource
-    |> Ash.Resource.public_attributes()
+    |> Ash.Resource.Info.public_attributes()
     |> Enum.reject(& &1.allow_nil?)
     |> Enum.map(&to_string(&1.name))
   end
 
   defp resource_attributes(resource) do
     resource
-    |> Ash.Resource.public_attributes()
+    |> Ash.Resource.Info.public_attributes()
     |> Enum.reduce(%{}, fn attr, acc ->
       Map.put(acc, to_string(attr.name), resource_field_type(attr))
     end)
@@ -239,7 +239,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp resource_relationships(resource) do
     resource
-    |> Ash.Resource.public_relationships()
+    |> Ash.Resource.Info.public_relationships()
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
       links = resource_relationship_link_data(resource, rel)
@@ -430,7 +430,7 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp add_read_arguments(props, route, resource) do
-    action = Ash.Resource.action(resource, route.action, :read)
+    action = Ash.Resource.Info.action(resource, route.action, :read)
 
     {
       action.arguments
@@ -453,7 +453,7 @@ defmodule AshJsonApi.JsonSchema do
   defp sort_format(resource) do
     sorts =
       resource
-      |> Ash.Resource.public_attributes()
+      |> Ash.Resource.Info.public_attributes()
       |> Enum.flat_map(fn attr -> [attr.name, "-#{attr.name}"] end)
 
     "(#{Enum.join(sorts, "|")}),*"
@@ -479,20 +479,20 @@ defmodule AshJsonApi.JsonSchema do
   defp filter_props(resource) do
     acc =
       resource
-      |> Ash.Resource.public_attributes()
+      |> Ash.Resource.Info.public_attributes()
       |> Enum.reduce(%{}, fn attr, acc ->
         Map.put(acc, to_string(attr.name), attribute_filter_schema(attr.type))
       end)
 
     acc =
       resource
-      |> Ash.Resource.public_relationships()
+      |> Ash.Resource.Info.public_relationships()
       |> Enum.reduce(acc, fn rel, acc ->
         Map.put(acc, to_string(rel.name), relationship_filter_schema(rel))
       end)
 
     resource
-    |> Ash.Resource.public_aggregates()
+    |> Ash.Resource.Info.public_aggregates()
     |> Enum.reduce(acc, fn agg, acc ->
       {:ok, type} = Aggregate.kind_to_type(agg.kind, nil)
       Map.put(acc, to_string(agg.name), attribute_filter_schema(type))
@@ -558,7 +558,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
        when type in [:post] do
-    action = Ash.Resource.action(resource, action, action_type)
+    action = Ash.Resource.Info.action(resource, action, action_type)
 
     %{
       "type" => "object",
@@ -592,7 +592,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
        when type in [:patch] do
-    action = Ash.Resource.action(resource, action, action_type)
+    action = Ash.Resource.Info.action(resource, action, action_type)
 
     %{
       "type" => "object",
@@ -603,7 +603,7 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
-            "id" => resource_field_type(Ash.Resource.attribute(resource, :id)),
+            "id" => resource_field_type(Ash.Resource.Info.attribute(resource, :id)),
             "type" => %{
               "const" => AshJsonApi.Resource.type(resource)
             },
@@ -632,7 +632,7 @@ defmodule AshJsonApi.JsonSchema do
        )
        when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
     resource
-    |> Ash.Resource.relationship(relationship)
+    |> Ash.Resource.Info.relationship(relationship)
     |> relationship_resource_identifiers()
   end
 
@@ -649,7 +649,8 @@ defmodule AshJsonApi.JsonSchema do
             "required" => ["id", "type"],
             "additionalProperties" => false,
             "properties" => %{
-              "id" => resource_field_type(Ash.Resource.attribute(relationship.destination, :id)),
+              "id" =>
+                resource_field_type(Ash.Resource.Info.attribute(relationship.destination, :id)),
               "type" => %{
                 "const" => AshJsonApi.Resource.type(relationship.destination)
               },
@@ -667,7 +668,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp join_attribute_properties(relationship) do
     relationship.through
-    |> Ash.Resource.attributes()
+    |> Ash.Resource.Info.attributes()
     |> Enum.filter(&(&1.name in relationship.join_attributes))
     |> Enum.filter(& &1.writable?)
     |> Enum.reduce(%{}, fn attribute, acc ->
@@ -682,7 +683,7 @@ defmodule AshJsonApi.JsonSchema do
   defp required_write_attributes(resource, arguments, accept) do
     attributes =
       resource
-      |> Ash.Resource.public_attributes()
+      |> Ash.Resource.Info.public_attributes()
       |> Enum.filter(&(is_nil(accept) || &1.name in accept))
       |> Enum.filter(& &1.writable?)
       |> Enum.reject(& &1.allow_nil?)
@@ -701,7 +702,7 @@ defmodule AshJsonApi.JsonSchema do
   defp write_attributes(resource, arguments, accept) do
     attributes =
       resource
-      |> Ash.Resource.public_attributes()
+      |> Ash.Resource.Info.public_attributes()
       |> Enum.filter(&(is_nil(accept) || &1.name in accept))
       |> Enum.filter(& &1.writable?)
       |> Enum.reduce(%{}, fn attribute, acc ->
@@ -715,7 +716,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_relationship_attributes(resource, accept) do
     resource
-    |> Ash.Resource.public_relationships()
+    |> Ash.Resource.Info.public_relationships()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.filter(&Map.get(&1, :required?))
     |> Enum.map(&to_string(&1.name))
@@ -723,7 +724,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp write_relationships(resource, accept) do
     resource
-    |> Ash.Resource.public_relationships()
+    |> Ash.Resource.Info.public_relationships()
     |> Enum.filter(&(is_nil(accept) || &1.name in accept))
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
@@ -780,7 +781,7 @@ defmodule AshJsonApi.JsonSchema do
 
       type when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] ->
         resource
-        |> Ash.Resource.relationship(route.relationship)
+        |> Ash.Resource.Info.relationship(route.relationship)
         |> relationship_resource_identifiers()
 
       _ ->

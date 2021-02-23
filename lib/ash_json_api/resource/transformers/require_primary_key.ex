@@ -1,5 +1,5 @@
 defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
-  @moduledoc "Ensures that the resource either has a primary key 
+  @moduledoc "Ensures that the resource either has a primary key
     or includes primary_key section from json_api if it has a composite key
   "
 
@@ -9,7 +9,7 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
   def transform(resource, dsl) do
     case Transformer.get_option(dsl, [:json_api, :primary_key], :keys) do
       nil ->
-        case Ash.Resource.primary_key(resource) do
+        case Ash.Resource.Info.primary_key(resource) do
           [_only_one_primary_key] ->
             {:ok, dsl}
 

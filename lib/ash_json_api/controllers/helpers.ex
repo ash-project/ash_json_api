@@ -255,7 +255,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   defp path_filter(path_params, resource) do
     Enum.reduce(path_params, %{}, fn {key, value}, acc ->
-      case Ash.Resource.attribute(resource, key) do
+      case Ash.Resource.Info.attribute(resource, key) do
         nil ->
           acc
 
@@ -324,7 +324,7 @@ defmodule AshJsonApi.Controllers.Helpers do
                   assigns: %{result: %source_resource{} = record},
                   relationship: relationship
                 } = request ->
-      relationship = Ash.Resource.relationship(source_resource, relationship)
+      relationship = Ash.Resource.Info.relationship(source_resource, relationship)
 
       sort = request.sort || default_sort(request.resource)
 
@@ -394,13 +394,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   defp default_sort(resource) do
     created_at =
-      Ash.Resource.attribute(resource, :created_at) ||
-        Ash.Resource.attribute(resource, :inserted_at)
+      Ash.Resource.Info.attribute(resource, :created_at) ||
+        Ash.Resource.Info.attribute(resource, :inserted_at)
 
     if created_at do
       [{created_at.name, :asc}]
     else
-      Ash.Resource.primary_key(resource)
+      Ash.Resource.Info.primary_key(resource)
     end
   end
 
@@ -500,7 +500,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   # @spec with_request(
   #         Plug.Conn.t(),
-  #         Ash.resource(),
+  #         Ash.Resource.t(),
   #         Ash.action(),
   #         (AshJsonApi.Request.t() -> Plug.Conn.t())
   #       ) :: Plug.Conn.t()

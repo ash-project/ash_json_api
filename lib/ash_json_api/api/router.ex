@@ -23,7 +23,7 @@ defmodule AshJsonApi.Api.Router do
         plug(:dispatch)
 
         resources
-        |> Enum.filter(&(AshJsonApi.Resource in Ash.extensions(&1)))
+        |> Enum.filter(&(AshJsonApi.Resource in Ash.Resource.Info.extensions(&1)))
         |> Enum.each(fn resource ->
           for %{
                 route: route,
@@ -36,8 +36,8 @@ defmodule AshJsonApi.Api.Router do
                 AshJsonApi.Api.Router.routes(resource) do
             opts =
               [
-                relationship: Ash.Resource.relationship(resource, relationship_name),
-                action: Ash.Resource.action(resource, action_name, action_type),
+                relationship: Ash.Resource.Info.relationship(resource, relationship_name),
+                action: Ash.Resource.Info.action(resource, action_name, action_type),
                 resource: resource,
                 api: api,
                 prefix: prefix,

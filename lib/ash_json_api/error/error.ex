@@ -43,11 +43,11 @@ defmodule AshJsonApi.Error do
       %{fields: fields} = error ->
         Enum.map(fields, fn field ->
           %__MODULE__{
-            id: Ash.Error.id(error),
+            id: Ash.ErrorKind.id(error),
             status_code: class_to_status(error.class),
-            code: Ash.Error.code(error),
-            title: Ash.Error.code(error),
-            detail: Ash.Error.message(error),
+            code: Ash.ErrorKind.code(error),
+            title: Ash.ErrorKind.code(error),
+            detail: Ash.ErrorKind.message(error),
             source_pointer: source_pointer(resource, field, type)
           }
         end)
@@ -55,11 +55,11 @@ defmodule AshJsonApi.Error do
       %{field: field} = error ->
         [
           %__MODULE__{
-            id: Ash.Error.id(error),
+            id: Ash.ErrorKind.id(error),
             status_code: class_to_status(error.class),
-            code: Ash.Error.code(error),
-            title: Ash.Error.code(error),
-            detail: Ash.Error.message(error),
+            code: Ash.ErrorKind.code(error),
+            title: Ash.ErrorKind.code(error),
+            detail: Ash.ErrorKind.message(error),
             source_pointer: source_pointer(resource, field, type)
           }
         ]
@@ -67,11 +67,11 @@ defmodule AshJsonApi.Error do
       error ->
         [
           %__MODULE__{
-            id: Ash.Error.id(error),
+            id: Ash.ErrorKind.id(error),
             status_code: class_to_status(error.class),
-            code: Ash.Error.code(error),
-            title: Ash.Error.code(error),
-            detail: Ash.Error.message(error)
+            code: Ash.ErrorKind.code(error),
+            title: Ash.ErrorKind.code(error),
+            detail: Ash.ErrorKind.message(error)
           }
         ]
     end
@@ -80,7 +80,7 @@ defmodule AshJsonApi.Error do
   def to_json_api_errors(_resource, %{class: :forbidden} = error, _type) do
     [
       %__MODULE__{
-        id: Ash.Error.id(error),
+        id: Ash.ErrorKind.id(error),
         status_code: class_to_status(error.class),
         code: "forbidden",
         title: "Forbidden",
@@ -100,10 +100,10 @@ defmodule AshJsonApi.Error do
 
   defp source_pointer(resource, field, type) when type in [:create, :update] do
     cond do
-      Ash.Resource.attribute(resource, field) ->
+      Ash.Resource.Info.attribute(resource, field) ->
         "/data/attributes/#{field}"
 
-      Ash.Resource.relationship(resource, field) ->
+      Ash.Resource.Info.relationship(resource, field) ->
         "/data/relationships/#{field}"
 
       true ->
