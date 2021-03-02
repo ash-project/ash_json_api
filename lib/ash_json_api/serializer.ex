@@ -428,11 +428,8 @@ defmodule AshJsonApi.Serializer do
   defp add_keyset(meta, _), do: meta
 
   defp serialize_relationships(request, %resource{} = record) do
-    fields = default_attributes(resource)
-
     resource
-    |> Ash.Resource.Info.relationships()
-    |> Stream.filter(&(&1.name in fields))
+    |> Ash.Resource.Info.public_relationships()
     |> Enum.into(%{}, fn relationship ->
       value =
         %{
