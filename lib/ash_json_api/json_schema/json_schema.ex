@@ -655,9 +655,9 @@ defmodule AshJsonApi.JsonSchema do
                 "const" => AshJsonApi.Resource.type(relationship.destination)
               },
               "meta" => %{
-                "type" => "object",
-                "properties" => join_attribute_properties(relationship),
-                "additionalProperties" => false
+                "type" => "object"
+                #   "properties" => join_attribute_properties(relationship),
+                #   "additionalProperties" => false
               }
             }
           }
@@ -666,19 +666,19 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp join_attribute_properties(relationship) do
-    relationship.through
-    |> Ash.Resource.Info.attributes()
-    |> Enum.filter(&(&1.name in relationship.join_attributes))
-    |> Enum.filter(& &1.writable?)
-    |> Enum.reduce(%{}, fn attribute, acc ->
-      Map.put(
-        acc,
-        to_string(attribute.name),
-        resource_field_type(attribute)
-      )
-    end)
-  end
+  # defp join_attribute_properties(_relationship) do
+  #   # relationship.through
+  #   # |> Ash.Resource.Info.attributes()
+  #   # |> Enum.filter(&(&1.name in relationship.join_attributes))
+  #   # |> Enum.filter(& &1.writable?)
+  #   # |> Enum.reduce(%{}, fn attribute, acc ->
+  #   #   Map.put(
+  #   #     acc,
+  #   #     to_string(attribute.name),
+  #   #     resource_field_type(attribute)
+  #   #   )
+  #   # end)
+  # end
 
   defp required_write_attributes(resource, arguments, accept) do
     attributes =
