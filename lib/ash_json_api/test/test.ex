@@ -137,6 +137,17 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  defmacro assert_has_matching_include(conn, function) do
+    quote do
+      assert %{"included" => included} = unquote(conn).resp_body
+      assert is_list(included)
+
+      assert Enum.any?(included, fn included ->
+               unquote(function).(included)
+             end)
+    end
+  end
+
   defp set_content_type_request_header(conn, opts) do
     cond do
       opts[:exclude_req_content_type_header] ->

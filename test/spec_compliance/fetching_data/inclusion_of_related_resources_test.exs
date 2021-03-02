@@ -112,12 +112,14 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   # An endpoint MAY also support an include request parameter to allow the client to customize which related resources should be returned.
   # --------------------------
   describe "include request parameter" do
-    test "resource endpoint with include param of to-one relationship" do
+    test "resource endpoint with include param of to-one relationship (linkage)" do
       # GET /posts/1?include=author
       author =
         Author
         |> Ash.Changeset.new(%{name: "foo"})
         |> Api.create!()
+
+      author_id = author.id
 
       post =
         Post
@@ -125,7 +127,41 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
         |> Ash.Changeset.replace_relationship(:author, author)
         |> Api.create!()
 
-      get(Api, "/posts/#{post.id}/?include=author", status: 200)
+      assert %{
+               resp_body: %{
+                 "data" => %{
+                   "relationships" => %{
+                     "author" => %{"data" => %{"id" => ^author_id, "type" => "author"}}
+                   }
+                 }
+               }
+             } = get(Api, "/posts/#{post.id}/?include=author", status: 200)
+    end
+
+    test "resource endpoint with include param of to-one relationship (inclusion)" do
+      # GET /posts/1?include=author
+      author =
+        Author
+        |> Ash.Changeset.new(%{name: "foo"})
+        |> Api.create!()
+
+      author_id = author.id
+
+      post =
+        Post
+        |> Ash.Changeset.new(%{name: "foo"})
+        |> Ash.Changeset.replace_relationship(:author, author)
+        |> Api.create!()
+
+      Api
+      |> get("/posts/#{post.id}/?include=author", status: 200)
+      |> assert_has_matching_include(fn
+        %{"type" => "author", "id" => ^author_id} ->
+          true
+
+        _ ->
+          false
+      end)
     end
 
     test "resource endpoint with include param of to-many relationship" do
