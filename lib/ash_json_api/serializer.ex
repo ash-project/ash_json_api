@@ -125,7 +125,7 @@ defmodule AshJsonApi.Serializer do
     |> add_relationship_meta(record, source_record, relationship)
   end
 
-  defp add_relationship_meta(payload, row, source_record, relationship) do
+  defp add_relationship_meta(payload, _row, _source_record, _relationship) do
     payload
     # case relationship.join_attributes do
     #   [] ->
