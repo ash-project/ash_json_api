@@ -1,8 +1,99 @@
 defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   use ExUnit.Case
-  use Plug.Test
   # @router_opts AshJsonApi.Test.Router.init([])
   @moduletag :json_api_spec_1_0
+
+  defmodule Author do
+    use Ash.Resource,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("author")
+
+      routes do
+        base("/authors")
+        get(:default)
+        index(:default)
+      end
+
+      includes posts: [:author]
+    end
+
+    actions do
+      read(:default)
+
+      create(:default)
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:name, :string)
+    end
+
+    relationships do
+      has_many(:posts, AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Post,
+        destination_field: :author_id
+      )
+    end
+  end
+
+  defmodule Post do
+    use Ash.Resource,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("post")
+
+      routes do
+        base("/posts")
+        get(:default)
+        index(:default)
+      end
+
+      includes author: [:posts]
+    end
+
+    actions do
+      read(:default)
+
+      create(:default)
+
+      update(:default)
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:name, :string)
+    end
+
+    relationships do
+      belongs_to(:author, Author)
+    end
+  end
+
+  defmodule Api do
+    use Ash.Api,
+      extensions: [
+        AshJsonApi.Api
+      ]
+
+    resources do
+      resource(Post)
+      resource(Author)
+    end
+  end
+
+  import AshJsonApi.Test
 
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
 
@@ -23,6 +114,18 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   describe "include request parameter" do
     test "resource endpoint with include param of to-one relationship" do
       # GET /posts/1?include=author
+      author =
+        Author
+        |> Ash.Changeset.new(%{name: "foo"})
+        |> Api.create!()
+
+      post =
+        Post
+        |> Ash.Changeset.new(%{name: "foo"})
+        |> Ash.Changeset.replace_relationship(:author, author)
+        |> Api.create!()
+
+      get(Api, "/posts/#{post.id}/?include=author", status: 200)
     end
 
     test "resource endpoint with include param of to-many relationship" do

@@ -302,7 +302,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
 
       with {:ok, [record]} when not is_nil(record) <- api.read(query, params),
-           {:ok, record} <- api.load(record, fields_to_load) do
+           {:ok, record} <- api.load(record, fields_to_load ++ (request.includes_keyword || [])) do
         request
         |> Request.assign(:result, record)
         |> Request.assign(:record_from_path, record)
