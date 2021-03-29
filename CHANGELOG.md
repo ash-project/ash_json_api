@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.27.5](https://github.com/ash-project/ash_json_api/compare/v0.27.4...v0.27.5) (2021-03-29)
+
+
+
+
+### Bug Fixes:
+
+* remove references to `join_attributes`
+
+* properly include relationships
+
+* serialize public relationships
+
+### Improvements:
+
+* update to latest ash
+
 ## [v0.27.4](https://github.com/ash-project/ash_json_api/compare/v0.27.3...v0.27.4) (2021-02-23)
 
 
