@@ -17,15 +17,13 @@ defmodule Test.Acceptance.PostTest do
 
       routes do
         base("/authors")
-        get(:default)
-        index(:default)
+        get(:read)
+        index(:read)
         post :confirm_name, route: "/confirm_name"
       end
     end
 
     actions do
-      read(:default)
-
       create(:default, primary?: true)
 
       create :confirm_name do
@@ -60,16 +58,14 @@ defmodule Test.Acceptance.PostTest do
 
       routes do
         base("/posts")
-        get(:default)
-        index(:default)
-        post(:default)
+        get(:read)
+        index(:read)
+        post(:create)
       end
     end
 
     actions do
-      read(:default)
-
-      create :default do
+      create :create do
         accept([:id, :name, :hidden, :author])
       end
     end

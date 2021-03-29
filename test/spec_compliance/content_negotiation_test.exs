@@ -18,15 +18,9 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
       routes do
         base("/authors")
-        get(:default)
-        index(:default)
+        get(:read)
+        index(:read)
       end
-    end
-
-    actions do
-      read(:default)
-
-      create(:default)
     end
 
     attributes do
@@ -52,16 +46,10 @@ defmodule AshJsonApi.ContentNegotiationTest do
       routes do
         base("/posts")
 
-        get(:default)
-        index(:default)
-        post(:default)
+        get(:read)
+        index(:read)
+        post(:create)
       end
-    end
-
-    actions do
-      read(:default)
-
-      create(:default)
     end
 
     attributes do
@@ -183,11 +171,12 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Content-Type header includes JSON:API and JSON:API modified with a param" do
-      post(Api, "/posts", @create_body,
-        req_content_type_header:
-          "application/vnd.api+json, application/vnd.api+json; charset=test",
-        status: 415
-      )
+      assert_raise Plug.Parsers.UnsupportedMediaTypeError, fn ->
+        post(Api, "/posts", @create_body,
+          req_content_type_header:
+            "application/vnd.api+json, application/vnd.api+json; charset=test"
+        )
+      end
     end
 
     test "request Content-Type header includes two instances of JSON:API modified with a param" do
@@ -199,10 +188,9 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
 
     test "request Content-Type header is a random value" do
-      post(Api, "/posts", @create_body,
-        req_content_type_header: "foo",
-        status: 415
-      )
+      assert_raise Plug.Parsers.UnsupportedMediaTypeError, fn ->
+        post(Api, "/posts", @create_body, req_content_type_header: "foo")
+      end
     end
 
     test "request Content-Type header is a valid media type other than JSON:API" do

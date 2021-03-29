@@ -19,15 +19,9 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
       routes do
         base("/authors")
-        get(:default)
-        index(:default)
+        get(:read)
+        index(:read)
       end
-    end
-
-    actions do
-      read(:default)
-
-      create(:default)
     end
 
     attributes do
@@ -52,15 +46,9 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
       routes do
         base("/posts")
-        get(:default)
-        index(:default)
+        get(:read)
+        index(:read)
       end
-    end
-
-    actions do
-      read(:default)
-
-      create(:default)
     end
 
     attributes do

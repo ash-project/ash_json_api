@@ -21,14 +21,12 @@ defmodule Test.Acceptance.ResourceTest do
 
       routes do
         base("/authors")
-        post(:default)
+        post(:create)
       end
     end
 
     actions do
-      read(:default)
-
-      create :default do
+      create :create do
         accept([:first_name, :last_name, :age, :utc_now])
       end
     end
@@ -62,14 +60,12 @@ defmodule Test.Acceptance.ResourceTest do
 
       routes do
         base("/books")
-        post(:default)
+        post(:create)
       end
     end
 
     actions do
-      read(:default)
-
-      create :default do
+      create :create do
         accept([:id, :name, :author_name])
       end
     end
@@ -97,14 +93,12 @@ defmodule Test.Acceptance.ResourceTest do
 
       routes do
         base("/movies")
-        post(:default)
+        post(:create)
       end
     end
 
     actions do
-      read(:default)
-
-      create :default do
+      create :create do
         accept([:id, :name])
       end
     end
@@ -221,14 +215,12 @@ defmodule Test.Acceptance.ResourceTest do
 
                          routes do
                            base("/authors")
-                           post(:default)
+                           post(:create)
                          end
                        end
 
                        actions do
-                         read(:default)
-
-                         create :default do
+                         create :create do
                            accept([:first_name, :last_name])
                          end
                        end
@@ -268,14 +260,12 @@ defmodule Test.Acceptance.ResourceTest do
 
                          routes do
                            base("/authors")
-                           post(:default)
+                           post(:create)
                          end
                        end
 
                        actions do
-                         read(:default)
-
-                         create :default do
+                         create :create do
                            accept([:first_name, :last_name])
                          end
                        end

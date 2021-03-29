@@ -23,7 +23,7 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A GET route to retrieve a single record",
     examples: [
-      "get :default"
+      "get :read"
     ],
     schema:
       @route_schema
@@ -42,7 +42,7 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A GET route to retrieve a list of records",
     examples: [
-      "index :default"
+      "index :read"
     ],
     schema:
       @route_schema
@@ -62,7 +62,7 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A POST route to create a record",
     examples: [
-      "post :default"
+      "post :create"
     ],
     schema:
       @route_schema
@@ -81,7 +81,7 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A PATCH route to update a record",
     examples: [
-      "patch :default"
+      "patch :update"
     ],
     schema:
       @route_schema
@@ -100,7 +100,7 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A DELETE route to destroy a record",
     examples: [
-      "delete :default"
+      "delete :destroy"
     ],
     schema:
       @route_schema
@@ -119,7 +119,7 @@ defmodule AshJsonApi.Resource do
     args: [:relationship, :action],
     describe: "A GET route to read the related resources of a relationship",
     examples: [
-      "related :comments, :default"
+      "related :comments, :read"
     ],
     schema:
       @route_schema
@@ -142,7 +142,7 @@ defmodule AshJsonApi.Resource do
     args: [:relationship, :action],
     describe: "A READ route to read the relationship, returns resource identifiers.",
     examples: [
-      "relationship :comments, :default"
+      "relationship :comments, :read"
     ],
     schema:
       @route_schema
@@ -165,10 +165,10 @@ defmodule AshJsonApi.Resource do
 
   @post_to_relationship %Ash.Dsl.Entity{
     name: :post_to_relationship,
-    args: [:relationship, :action],
+    args: [:relationship],
     describe: "A POST route to create related entities using resource identifiers",
     examples: [
-      "post_to_relationship :comments, :default"
+      "post_to_relationship :comments"
     ],
     schema:
       @route_schema
@@ -180,7 +180,8 @@ defmodule AshJsonApi.Resource do
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
-      ),
+      )
+      |> Keyword.delete(:action),
     transform: {__MODULE__, :set_relationship_route, []},
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
@@ -192,10 +193,10 @@ defmodule AshJsonApi.Resource do
 
   @patch_relationship %Ash.Dsl.Entity{
     name: :patch_relationship,
-    args: [:relationship, :action],
+    args: [:relationship],
     describe: "A PATCH route to update a relationship using resource identifiers",
     examples: [
-      "patch_relationship :comments, :default"
+      "patch_relationship :comments"
     ],
     schema:
       @route_schema
@@ -207,7 +208,8 @@ defmodule AshJsonApi.Resource do
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
-      ),
+      )
+      |> Keyword.delete(:action),
     transform: {__MODULE__, :set_relationship_route, []},
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
@@ -219,10 +221,10 @@ defmodule AshJsonApi.Resource do
 
   @delete_from_relationship %Ash.Dsl.Entity{
     name: :delete_from_relationship,
-    args: [:relationship, :action],
+    args: [:relationship],
     describe: "A DELETE route to remove related entities using resource identifiers",
     examples: [
-      "delete_from_relationship :comments, :default"
+      "delete_from_relationship :comments"
     ],
     schema:
       @route_schema
@@ -234,7 +236,8 @@ defmodule AshJsonApi.Resource do
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
-      ),
+      )
+      |> Keyword.delete(:action),
     transform: {__MODULE__, :set_relationship_route, []},
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
@@ -259,16 +262,16 @@ defmodule AshJsonApi.Resource do
       routes do
         base_route "/posts"
 
-        get :default
+        get :read
         get :me, route: "/me"
-        index :default
+        index :read
         post :confirm_name, route: "/confirm_name"
-        patch :default
-        related :comments, :default
-        relationship :comments, :default
-        post_to_relationship :comments, :default
-        patch_relationship :comments, :default
-        delete_from_relationship :comments, :default
+        patch :update
+        related :comments, :read
+        relationship :comments, :read
+        post_to_relationship :comments
+        patch_relationship :comments
+        delete_from_relationship :comments
       end
       """
     ],
@@ -330,16 +333,16 @@ defmodule AshJsonApi.Resource do
         routes do
           base_route "/posts"
 
-          get :default
+          get :read
           get :me, route: "/me"
-          index :default
+          index :read
           post :confirm_name, route: "/confirm_name"
-          patch :default
-          related :comments, :default
-          relationship :comments, :default
-          post_to_relationship :comments, :default
-          patch_relationship :comments, :default
-          delete_from_relationship :comments, :default
+          patch :update
+          related :comments, :read
+          relationship :comments, :read
+          post_to_relationship :comments
+          patch_relationship :comments
+          delete_from_relationship :comments
         end
       end
       """

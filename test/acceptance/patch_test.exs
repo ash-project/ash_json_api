@@ -17,14 +17,9 @@ defmodule Test.Acceptance.PatchTest do
 
       routes do
         base("/authors")
-        get :default
-        index :default
+        get :read
+        index :read
       end
-    end
-
-    actions do
-      read(:default)
-      create(:default)
     end
 
     attributes do
@@ -53,21 +48,19 @@ defmodule Test.Acceptance.PatchTest do
 
       routes do
         base("/posts")
-        get :default
-        index :default
-        post :default
-        patch :default
+        get :read
+        index :read
+        post :create
+        patch :update
       end
     end
 
     actions do
-      read(:default)
-
-      create :default do
+      create :create do
         accept([:id, :name, :hidden])
       end
 
-      update :default do
+      update :update do
         accept([:id, :email, :author])
       end
     end

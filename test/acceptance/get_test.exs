@@ -18,23 +18,21 @@ defmodule Test.Acceptance.GetTest do
       routes do
         base("/posts")
 
-        get(:default)
+        get(:read)
         get(:by_name, route: "/by_name/:name")
 
-        index(:default)
+        index(:read)
       end
     end
 
     actions do
-      read(:default, primary?: true)
+      read(:read, primary?: true)
 
       read :by_name do
         argument(:name, :string, allow_nil?: false)
 
         filter(name: arg(:name))
       end
-
-      create(:default)
     end
 
     attributes do
@@ -80,7 +78,8 @@ defmodule Test.Acceptance.GetTest do
     setup do
       post =
         Post
-        |> Ash.Changeset.new(%{name: "foo", hidden: "hidden"})
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
         |> Api.create!()
 
       %{post: post}
@@ -98,7 +97,8 @@ defmodule Test.Acceptance.GetTest do
     setup do
       post =
         Post
-        |> Ash.Changeset.new(%{name: "foo", hidden: "hidden"})
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
         |> Api.create!()
 
       %{post: post}

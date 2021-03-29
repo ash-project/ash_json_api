@@ -29,11 +29,7 @@ defmodule Post do
   use Ash.Resource,
     data_layer: Ash.DataLayer.Postgres
 
-  actions do
-    read :default
-
-    create :default
-  end
+  # If no actions are defined, simple defaults are implemented called `:read`, `:create`, `:update`, `:destroy`
 
   attributes do
     attribute :name, :string
@@ -58,10 +54,10 @@ defmodule Post do
   json_api do
     routes do
       base "/posts"
-      # Add a `GET /posts/:id` route, that calls into the :read action called :default
-      get :default
-      # Add a `GET /posts` route, that calls into the :read action called :default
-      index :default
+      # Add a `GET /posts/:id` route, that calls into the :read action called :read
+      get :read
+      # Add a `GET /posts` route, that calls into the :read action called :read 
+      index :read
     end
 
   end
