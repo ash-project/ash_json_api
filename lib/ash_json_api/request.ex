@@ -27,7 +27,6 @@ defmodule AshJsonApi.Request do
     :includes_keyword,
     :attributes,
     :filter,
-    :relationships,
     :resource_identifiers,
     :body,
     :url,
@@ -521,28 +520,61 @@ defmodule AshJsonApi.Request do
 
   defp parse_relationships(
          %{
-           resource: resource,
-           body: %{"data" => %{"relationships" => relationships}}
+           body: %{"data" => %{"relationships" => relationships}},
+           action: action,
+           route: %{
+             relationship_arguments: relationship_arguments
+           }
          } = request
        )
        when is_map(relationships) do
     Enum.reduce(relationships, request, fn {name, value}, request ->
       with %{"data" => data} when is_map(data) or is_list(data) <- value,
-           relationship when not is_nil(relationship) <-
-             Ash.Resource.Info.relationship(resource, name),
-           {:ok, change_value} <- relationship_change_value(relationship, data) do
-        %{
-          request
-          | relationships: Map.put(request.relationships || %{}, relationship.name, change_value)
-        }
+           arg when not is_nil(arg) <-
+             Enum.find(
+               action.arguments,
+               &(to_string(&1.name) == name &&
+                   has_relationship_argument?(relationship_arguments, &1.name))
+             ),
+           {:ok, change_value} <-
+             relationship_change_value(data) do
+        case find_relationship_argument(relationship_arguments, arg.name) do
+          {:id, _arg} ->
+            %{
+              request
+              | arguments: Map.put(request.arguments || %{}, arg.name, change_value["id"])
+            }
+
+          _ ->
+            %{
+              request
+              | arguments: Map.put(request.arguments || %{}, arg.name, change_value)
+            }
+        end
       else
         _ ->
-          add_error(request, "invalid relationship: #{name}", request.route.type)
+          add_error(request, "invalid relationship input: #{name}", request.route.type)
       end
     end)
   end
 
-  defp parse_relationships(request), do: %{request | relationships: %{}}
+  defp parse_relationships(request), do: request
+
+  defp find_relationship_argument(relationship_arguments, name) do
+    Enum.find(relationship_arguments, fn
+      {:id, ^name} -> true
+      ^name -> true
+      _ -> false
+    end)
+  end
+
+  defp has_relationship_argument?(relationship_arguments, name) do
+    Enum.any?(relationship_arguments, fn
+      {:id, ^name} -> true
+      ^name -> true
+      _ -> false
+    end)
+  end
 
   defp parse_resource_identifiers(%{body: %{"data" => data}} = request)
        when is_list(data) do
@@ -570,10 +602,10 @@ defmodule AshJsonApi.Request do
     %{request | resource_identifiers: nil}
   end
 
-  defp relationship_change_value(%{cardinality: :many} = relationship, value)
+  defp relationship_change_value(value)
        when is_list(value) do
     value
-    |> Stream.map(&relationship_change_value(relationship, &1))
+    |> Stream.map(&relationship_change_value(&1))
     |> Enum.reduce({:ok, []}, fn
       {:ok, change}, {:ok, changes} ->
         {:ok, [change | changes]}
@@ -593,26 +625,18 @@ defmodule AshJsonApi.Request do
     end
   end
 
-  defp relationship_change_value(%{name: name}, value) when is_list(value) do
-    {:error, "supplied a list of related entities for a to_one relationship #{name}"}
-  end
-
-  defp relationship_change_value(%{cardinality: :many, name: name}, value)
-       when not is_list(value) do
-    {:error, "supplied a single related entity for a to_many relationship #{name}"}
-  end
-
-  defp relationship_change_value(_relationship, %{"id" => id, "type" => _type} = value) do
+  defp relationship_change_value(%{"id" => id} = value) do
     case Map.fetch(value, "meta") do
-      {:ok, meta} -> {:ok, Map.put(meta, :id, id)}
-      _ -> {:ok, %{id: id}}
+      {:ok, meta} -> {:ok, Map.put(meta, "id", id)}
+      _ -> {:ok, %{"id" => id}}
     end
   end
 
-  defp relationship_change_value(%{cardinality: :one}, nil), do: {:ok, nil}
-  defp relationship_change_value(_, value) when value == %{}, do: {:ok, nil}
+  defp relationship_change_value(value) when value in [nil, %{}] do
+    {:ok, nil}
+  end
 
-  defp relationship_change_value(%{name: name}, _) do
-    {:error, "invalid change for relationship #{name}"}
+  defp relationship_change_value(_) do
+    :error
   end
 end

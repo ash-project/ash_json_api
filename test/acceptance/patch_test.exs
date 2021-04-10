@@ -51,7 +51,7 @@ defmodule Test.Acceptance.PatchTest do
         get :read
         index :read
         post :create
-        patch :update
+        patch :update, relationship_arguments: [:author]
       end
     end
 
@@ -61,7 +61,10 @@ defmodule Test.Acceptance.PatchTest do
       end
 
       update :update do
-        accept([:id, :email, :author])
+        accept([:id, :email])
+        argument(:author, :map)
+
+        change(manage_relationship(:author, type: :replace))
       end
     end
 

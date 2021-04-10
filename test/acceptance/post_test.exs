@@ -60,13 +60,17 @@ defmodule Test.Acceptance.PostTest do
         base("/posts")
         get(:read)
         index(:read)
-        post(:create)
+        post(:create, relationship_arguments: [:author])
       end
     end
 
     actions do
       create :create do
-        accept([:id, :name, :hidden, :author])
+        accept([:id, :name, :hidden])
+
+        argument(:author, :map)
+
+        change(manage_relationship(:author, type: :replace))
       end
     end
 

@@ -30,6 +30,7 @@ locals_without_parens = [
   related: 3,
   relationship: 2,
   relationship: 3,
+  relationship_arguments: 1,
   route: 1,
   serve_schema?: 1,
   type: 1

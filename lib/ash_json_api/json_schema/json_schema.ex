@@ -264,24 +264,28 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp resource_relationship_field_data(_resource, %{
-         cardinality: :one,
-         destination: destination
+         type: {:array, _},
+         name: name
        }) do
     %{
-      "description" => "References to the related #{AshJsonApi.Resource.type(destination)}",
+      "description" => "Input for #{name}",
       "anyOf" => [
         %{
           "type" => "null"
         },
         %{
-          "description" =>
-            "Resource identifiers of the related #{AshJsonApi.Resource.type(destination)}",
+          "description" => "Identifiers for #{name}",
           "type" => "object",
           "required" => ["type", "id"],
           "additionalProperties" => false,
           "properties" => %{
-            "type" => %{"const" => AshJsonApi.Resource.type(destination)},
-            "id" => %{"type" => "string"}
+            "type" => %{"type" => "string"},
+            "id" => %{"type" => "string"},
+            "meta" => %{
+              "type" => "object",
+              "required" => [],
+              "additionalProperties" => true
+            }
           }
         }
       ]
@@ -289,21 +293,23 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp resource_relationship_field_data(_resource, %{
-         cardinality: :many,
-         destination: destination
+         name: name
        }) do
     %{
-      "description" =>
-        "An array of references to the related #{AshJsonApi.Resource.type(destination)}",
+      "description" => "An array of inputs for #{name}",
       "type" => "array",
       "items" => %{
-        "description" =>
-          "Resource identifiers of the related #{AshJsonApi.Resource.type(destination)}",
+        "description" => "Resource identifiers for #{name}",
         "type" => "object",
         "required" => ["type", "id"],
         "properties" => %{
-          "type" => %{"const" => AshJsonApi.Resource.type(destination)},
-          "id" => %{"type" => "string"}
+          "type" => %{"type" => "string"},
+          "id" => %{"type" => "string"},
+          "meta" => %{
+            "type" => "object",
+            "required" => [],
+            "additionalProperties" => true
+          }
         }
       },
       "uniqueItems" => true
@@ -556,9 +562,21 @@ defmodule AshJsonApi.JsonSchema do
     %{}
   end
 
-  defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
+  defp route_in_schema(
+         %{
+           type: type,
+           action: action,
+           action_type: action_type,
+           relationship_arguments: relationship_arguments
+         },
+         _api,
+         resource
+       )
        when type in [:post] do
     action = Ash.Resource.Info.action(resource, action, action_type)
+
+    non_relationship_arguments =
+      Enum.reject(action.arguments, &has_relationship_argument?(relationship_arguments, &1.name))
 
     %{
       "type" => "object",
@@ -575,14 +593,17 @@ defmodule AshJsonApi.JsonSchema do
             "attributes" => %{
               "type" => "object",
               "additionalProperties" => false,
-              "required" => required_write_attributes(resource, action.arguments, action.accept),
-              "properties" => write_attributes(resource, action.arguments, action.accept)
+              "required" =>
+                required_write_attributes(resource, non_relationship_arguments, action.accept),
+              "properties" =>
+                write_attributes(resource, non_relationship_arguments, action.accept)
             },
             "relationships" => %{
               "type" => "object",
-              "required" => required_relationship_attributes(resource, action.accept),
+              "required" =>
+                required_relationship_attributes(resource, relationship_arguments, action),
               "additionalProperties" => false,
-              "properties" => write_relationships(resource, action.accept)
+              "properties" => write_relationships(resource, relationship_arguments, action)
             }
           }
         }
@@ -590,9 +611,21 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp route_in_schema(%{type: type, action: action, action_type: action_type}, _api, resource)
+  defp route_in_schema(
+         %{
+           type: type,
+           action: action,
+           action_type: action_type,
+           relationship_arguments: relationship_arguments
+         },
+         _api,
+         resource
+       )
        when type in [:patch] do
     action = Ash.Resource.Info.action(resource, action, action_type)
+
+    non_relationship_arguments =
+      Enum.reject(action.arguments, &has_relationship_argument?(relationship_arguments, &1.name))
 
     %{
       "type" => "object",
@@ -611,13 +644,16 @@ defmodule AshJsonApi.JsonSchema do
               "type" => "object",
               "additionalProperties" => false,
               "required" =>
-                action.arguments |> Enum.reject(& &1.allow_nil?) |> Enum.map(& &1.name),
-              "properties" => write_attributes(resource, action.arguments, action.accept)
+                non_relationship_arguments |> Enum.reject(& &1.allow_nil?) |> Enum.map(& &1.name),
+              "properties" =>
+                write_attributes(resource, non_relationship_arguments, action.accept)
             },
             "relationships" => %{
               "type" => "object",
               "additionalProperties" => false,
-              "properties" => write_relationships(resource, action.accept)
+              "required" =>
+                required_relationship_attributes(resource, relationship_arguments, action),
+              "properties" => write_relationships(resource, relationship_arguments, action)
             }
           }
         }
@@ -666,20 +702,6 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  # defp join_attribute_properties(_relationship) do
-  #   # relationship.through
-  #   # |> Ash.Resource.Info.attributes()
-  #   # |> Enum.filter(&(&1.name in relationship.join_attributes))
-  #   # |> Enum.filter(& &1.writable?)
-  #   # |> Enum.reduce(%{}, fn attribute, acc ->
-  #   #   Map.put(
-  #   #     acc,
-  #   #     to_string(attribute.name),
-  #   #     resource_field_type(attribute)
-  #   #   )
-  #   # end)
-  # end
-
   defp required_write_attributes(resource, arguments, accept) do
     attributes =
       resource
@@ -714,34 +736,34 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp required_relationship_attributes(resource, accept) do
-    resource
-    |> Ash.Resource.Info.public_relationships()
-    |> Enum.filter(&(is_nil(accept) || &1.name in accept))
-    |> Enum.filter(&Map.get(&1, :required?))
+  defp required_relationship_attributes(_resource, relationship_arguments, action) do
+    action.arguments
+    |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
+    |> Enum.reject(& &1.allow_nil?)
     |> Enum.map(&to_string(&1.name))
   end
 
-  defp write_relationships(resource, accept) do
-    resource
-    |> Ash.Resource.Info.public_relationships()
-    |> Enum.filter(&(is_nil(accept) || &1.name in accept))
-    |> Enum.reduce(%{}, fn rel, acc ->
-      data = resource_relationship_field_data(resource, rel)
-      links = resource_relationship_link_data(resource, rel)
+  defp write_relationships(resource, relationship_arguments, action) do
+    action.arguments
+    |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
+    |> Enum.reduce(%{}, fn argument, acc ->
+      data = resource_relationship_field_data(resource, argument)
 
-      object =
-        if links do
-          %{"data" => data, "links" => links}
-        else
-          %{"data" => data}
-        end
+      object = %{"data" => data, "links" => %{"type" => "any"}}
 
       Map.put(
         acc,
-        to_string(rel.name),
+        to_string(argument.name),
         object
       )
+    end)
+  end
+
+  defp has_relationship_argument?(relationship_arguments, name) do
+    Enum.any?(relationship_arguments, fn
+      {:id, ^name} -> true
+      ^name -> true
+      _ -> false
     end)
   end
 

@@ -89,7 +89,6 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       resource
       |> Ash.Changeset.new(request.attributes || %{})
-      |> replace_changeset_relationships(request.relationships || %{})
       |> Ash.Changeset.set_tenant(request.tenant)
       |> Ash.Changeset.set_arguments(request.arguments)
       |> api.create(params)
@@ -120,7 +119,6 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       result
       |> Ash.Changeset.new(request.attributes || %{})
-      |> replace_changeset_relationships(request.relationships || %{})
       |> Ash.Changeset.set_tenant(request.tenant)
       |> Ash.Changeset.set_arguments(request.arguments)
       |> api.update(params)
@@ -402,12 +400,6 @@ defmodule AshJsonApi.Controllers.Helpers do
     else
       Ash.Resource.Info.primary_key(resource)
     end
-  end
-
-  defp replace_changeset_relationships(changeset, relationships) do
-    Enum.reduce(relationships, changeset, fn {key, value}, changeset ->
-      Ash.Changeset.replace_relationship(changeset, key, value)
-    end)
   end
 
   def fetch_id_path_param(request) do

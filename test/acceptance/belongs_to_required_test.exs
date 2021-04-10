@@ -50,13 +50,16 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         base("/posts")
         get(:read)
         index(:read)
-        post(:create)
+        post(:create, relationship_arguments: [{:id, :author}])
       end
     end
 
     actions do
       create :create do
-        accept([:id, :name, :hidden, :author])
+        accept([:id, :name, :hidden])
+        argument(:author, :uuid)
+
+        change(manage_relationship(:author, type: :replace))
       end
     end
 
@@ -139,9 +142,8 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
           }
         })
 
-      # response is a Plug.
       assert response.status == 400
-      assert %{"errors" => [%{"code" => "InvalidBody"}]} = response.resp_body
+      assert %{"errors" => [%{"code" => "required"}]} = response.resp_body
     end
 
     test "create with invalid author id in relationship" do

@@ -8,7 +8,8 @@ defmodule AshJsonApi.Resource.Route do
     :controller,
     :relationship,
     :type,
-    :primary?
+    :primary?,
+    relationship_arguments: []
   ]
 
   @type t :: %__MODULE__{}
