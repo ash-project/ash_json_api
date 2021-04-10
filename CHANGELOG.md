@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.28.0](https://github.com/ash-project/ash_json_api/compare/v0.27.6...v0.28.0) (2021-04-10)
+
+
+
+
+### Features:
+
+* update relationship logic to new argument style
+
 ## [v0.27.6](https://github.com/ash-project/ash_json_api/compare/v0.27.5...v0.27.6) (2021-04-08)
 
 
