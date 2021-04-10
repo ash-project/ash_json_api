@@ -732,7 +732,7 @@ defmodule AshJsonApi.JsonSchema do
       end)
 
     Enum.reduce(arguments, attributes, fn argument, attributes ->
-      Map.put(attributes, argument.name, resource_field_type(argument))
+      Map.put(attributes, to_string(argument.name), resource_field_type(argument))
     end)
   end
 

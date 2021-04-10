@@ -28,7 +28,7 @@ defmodule Test.Acceptance.PostTest do
 
       create :confirm_name do
         argument(:confirm, :string, allow_nil?: false)
-        change(confirm(:name, :confirm))
+        validate(confirm(:name, :confirm))
       end
     end
 
