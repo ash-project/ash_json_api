@@ -192,7 +192,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     end
   end
 
-  # I put this as "may" because sideloading is an optional feature
+  # I put this as "may" because loading is an optional feature
   @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
@@ -204,7 +204,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     # I'm not sure what exactly to do though - do we write a test, or just leave a comment saying "N/A"
   end
 
-  # I put this as "may" because sideloading is an optional feature
+  # I put this as "may" because loading is an optional feature
   @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
@@ -215,7 +215,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     # Perhaps this test is better done as part of a higher level test suite validation that runs every single time a request in the test suite is made (and validates against the JSON:API schema as one step)?
   end
 
-  # I put this as "may" because sideloading is an optional feature
+  # I put this as "may" because loading is an optional feature
   @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
