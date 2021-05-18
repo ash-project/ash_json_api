@@ -532,10 +532,21 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp at_host(request, route) do
+    path =
+      if request.json_api_prefix do
+        if route do
+          Path.join(request.json_api_prefix, route)
+        else
+          request.json_api_prefix
+        end
+      else
+        route || ""
+      end
+
     request.url
     |> URI.parse()
     |> Map.put(:query, nil)
-    |> Map.put(:path, "/" <> Path.join(request.json_api_prefix, route))
+    |> Map.put(:path, "/" <> path)
     |> Map.update!(:path, &replace_path_params(&1, request))
     |> URI.to_string()
     |> encode_link()
