@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.28.3](https://github.com/ash-project/ash_json_api/compare/v0.28.2...v0.28.3) (2021-05-19)
+
+
+
+
+### Bug Fixes:
+
+* handle nil route/json_api_prefix
+
 ## [v0.28.2](https://github.com/ash-project/ash_json_api/compare/v0.28.1...v0.28.2) (2021-05-09)
 
 
