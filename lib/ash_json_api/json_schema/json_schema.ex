@@ -324,13 +324,15 @@ defmodule AshJsonApi.JsonSchema do
 
   defp resource_field_type(%{type: Ash.Type.Boolean}) do
     %{
-      "type" => "boolean"
+      "type" => ["boolean", "string"],
+      "match" => "^(true|false)$"
     }
   end
 
   defp resource_field_type(%{type: Ash.Type.Integer}) do
     %{
-      "type" => "integer"
+      "type" => ["integer", "string"],
+      "match" => "^[1-9][0-9]*$"
     }
   end
 
@@ -525,12 +527,14 @@ defmodule AshJsonApi.JsonSchema do
 
         Ash.Type.Boolean ->
           %{
-            "type" => "boolean"
+            "type" => ["boolean", "string"],
+            "match" => "^(true|false)$"
           }
 
         Ash.Type.Integer ->
           %{
-            "type" => "integer"
+            "type" => ["integer", "string"],
+            "match" => "^[1-9][0-9]*$"
           }
 
         Ash.Type.UtcDateTime ->
