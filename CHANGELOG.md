@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.28.4](https://github.com/ash-project/ash_json_api/compare/v0.28.3...v0.28.4) (2021-06-25)
+
+
+
+
+### Bug Fixes:
+
+* handle integer and boolean types right (#53)
+
 ## [v0.28.3](https://github.com/ash-project/ash_json_api/compare/v0.28.2...v0.28.3) (2021-05-19)
 
 
