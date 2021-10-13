@@ -52,6 +52,8 @@ defmodule Post do
   ...
 
   json_api do
+    # Specify a json:api resource type
+    type "posts"
     routes do
       base "/posts"
       # Add a `GET /posts/:id` route, that calls into the :read action called :read
