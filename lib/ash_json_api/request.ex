@@ -289,7 +289,7 @@ defmodule AshJsonApi.Request do
     Enum.reduce(filter_included, request, fn {relationship_path, filter_statement}, request ->
       path = String.split(relationship_path)
 
-      case Ash.Resource.Info.related(resource, path) do
+      case public_related(resource, path) do
         nil ->
           add_error(request, "Invalid filter included", request.route.type)
 
@@ -324,31 +324,41 @@ defmodule AshJsonApi.Request do
 
   defp parse_fields(request), do: request
 
+  if function_exported?(Ash.Resource.Info, :public_related, 2) do
+    defp public_related(resource, relationship) do
+      Ash.Resource.Info.public_related(resource, relationship)
+    end
+  else
+    defp public_related(resource, relationship) when not is_list(relationship) do
+      public_related(resource, [relationship])
+    end
+
+    defp public_related(resource, []), do: resource
+
+    defp public_related(resource, [path | rest]) do
+      case Ash.Resource.Info.public_relationship(resource, path) do
+        %{destination: destination} -> public_related(destination, rest)
+        nil -> nil
+      end
+    end
+  end
+
   defp add_fields(request, resource, fields, parameter?) do
     type = AshJsonApi.Resource.type(resource)
-
-    attributes = Ash.Resource.Info.public_attributes(resource)
 
     fields
     |> String.split(",")
     |> Enum.reduce(request, fn key, request ->
       cond do
-        !Enum.find(attributes, &(to_string(&1.name) == key)) ->
-          add_error(
-            request,
-            InvalidField.new(type: type, parameter?: parameter?),
-            request.route.type
-          )
-
-        attr = Ash.Resource.Info.attribute(resource, key) ->
+        attr = Ash.Resource.Info.public_attribute(resource, key) ->
           fields = Map.update(request.fields, resource, [attr.name], &[attr.name | &1])
           %{request | fields: fields}
 
-        rel = Ash.Resource.Info.relationship(resource, key) ->
+        rel = Ash.Resource.Info.public_relationship(resource, key) ->
           fields = Map.update(request.fields, resource, [rel.name], &[rel.name | &1])
           %{request | fields: fields}
 
-        agg = Ash.Resource.Info.aggregate(resource, key) ->
+        agg = Ash.Resource.Info.public_aggregate(resource, key) ->
           fields = Map.update(request.fields, resource, [agg.name], &[agg.name | &1])
           %{request | fields: fields}
 
@@ -382,10 +392,10 @@ defmodule AshJsonApi.Request do
       {order, field_name} = trim_sort_order(field)
 
       cond do
-        attr = Ash.Resource.Info.attribute(resource, field_name) ->
+        attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
           %{request | sort: [{attr.name, order} | request.sort]}
 
-        agg = Ash.Resource.Info.aggregate(resource, field_name) ->
+        agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->
           %{request | sort: [{agg.name, order} | request.sort]}
 
         true ->
@@ -430,7 +440,7 @@ defmodule AshJsonApi.Request do
 
   defp set_include_queries(includes, fields, filters, resource, path \\ []) do
     Enum.map(includes, fn {key, nested} ->
-      related = Ash.Resource.Info.related(resource, key)
+      related = public_related(resource, key)
       nested = set_include_queries(nested, fields, filters, related, path ++ [key])
 
       load =
@@ -483,7 +493,7 @@ defmodule AshJsonApi.Request do
        when is_map(attributes) do
     Enum.reduce(attributes, request, fn {key, value}, request ->
       cond do
-        attr = Ash.Resource.Info.attribute(resource, key) ->
+        attr = Ash.Resource.Info.public_attribute(resource, key) ->
           %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
 
         arg =
@@ -493,7 +503,8 @@ defmodule AshJsonApi.Request do
           %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
 
         true ->
-          add_error(request, "unknown attribute: #{key}", request.route.type)
+          # The json_schema will have an error here
+          request
       end
     end)
   end

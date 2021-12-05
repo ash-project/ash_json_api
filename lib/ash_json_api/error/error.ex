@@ -100,10 +100,10 @@ defmodule AshJsonApi.Error do
 
   defp source_pointer(resource, field, type) when type in [:create, :update] do
     cond do
-      Ash.Resource.Info.attribute(resource, field) ->
+      Ash.Resource.Info.public_attribute(resource, field) ->
         "/data/attributes/#{field}"
 
-      Ash.Resource.Info.relationship(resource, field) ->
+      Ash.Resource.Info.public_relationship(resource, field) ->
         "/data/relationships/#{field}"
 
       true ->

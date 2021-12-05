@@ -640,7 +640,7 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
-            "id" => resource_field_type(Ash.Resource.Info.attribute(resource, :id)),
+            "id" => resource_field_type(Ash.Resource.Info.public_attribute(resource, :id)),
             "type" => %{
               "const" => AshJsonApi.Resource.type(resource)
             },
@@ -672,7 +672,7 @@ defmodule AshJsonApi.JsonSchema do
        )
        when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
     resource
-    |> Ash.Resource.Info.relationship(relationship)
+    |> Ash.Resource.Info.public_relationship(relationship)
     |> relationship_resource_identifiers()
   end
 
@@ -690,7 +690,9 @@ defmodule AshJsonApi.JsonSchema do
             "additionalProperties" => false,
             "properties" => %{
               "id" =>
-                resource_field_type(Ash.Resource.Info.attribute(relationship.destination, :id)),
+                resource_field_type(
+                  Ash.Resource.Info.public_attribute(relationship.destination, :id)
+                ),
               "type" => %{
                 "const" => AshJsonApi.Resource.type(relationship.destination)
               },
@@ -779,9 +781,7 @@ defmodule AshJsonApi.JsonSchema do
             %{
               "data" => %{
                 "description" =>
-                  "An array of resource objects representing a #{
-                    AshJsonApi.Resource.type(resource)
-                  }",
+                  "An array of resource objects representing a #{AshJsonApi.Resource.type(resource)}",
                 "type" => "array",
                 "items" => %{
                   "$ref" => "#/definitions/#{AshJsonApi.Resource.type(resource)}"
@@ -807,7 +807,7 @@ defmodule AshJsonApi.JsonSchema do
 
       type when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] ->
         resource
-        |> Ash.Resource.Info.relationship(route.relationship)
+        |> Ash.Resource.Info.public_relationship(route.relationship)
         |> relationship_resource_identifiers()
 
       _ ->

@@ -56,21 +56,20 @@ defmodule Test.Acceptance.IndexTest do
     end
 
     test "returns a list of posts", %{post: post} do
-      response =
-        Api
-        |> get("/posts", status: 200)
-        |> assert_data_equals([
-          %{
-            "attributes" => %{
-              "name" => "foo"
-            },
-            "id" => post.id,
-            "links" => %{},
-            "meta" => %{},
-            "relationships" => %{},
-            "type" => "post"
-          }
-        ])
+      Api
+      |> get("/posts", status: 200)
+      |> assert_data_equals([
+        %{
+          "attributes" => %{
+            "name" => "foo"
+          },
+          "id" => post.id,
+          "links" => %{},
+          "meta" => %{},
+          "relationships" => %{},
+          "type" => "post"
+        }
+      ])
     end
   end
 
