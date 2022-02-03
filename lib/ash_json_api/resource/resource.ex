@@ -207,7 +207,8 @@ defmodule AshJsonApi.Resource do
       |> Ash.OptionsHelpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
       |> Keyword.put(:relationship,
         type: :atom,
-        required: true
+        required: true,
+        action_type: :get_related
       ),
     transform: {__MODULE__, :set_related_route, []},
     target: AshJsonApi.Resource.Route,
@@ -239,7 +240,8 @@ defmodule AshJsonApi.Resource do
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :get,
-      controller: AshJsonApi.Controllers.GetRelationship
+      controller: AshJsonApi.Controllers.GetRelationship,
+      action_type: :relationship
     ]
   }
 
