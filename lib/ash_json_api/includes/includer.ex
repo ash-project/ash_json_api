@@ -49,13 +49,14 @@ defmodule AshJsonApi.Includes.Includer do
         Enum.map(
           preloaded_without_linkage,
           fn record ->
-            related = 
+            related =
               record
               |> Map.get(relationship, [])
               |> List.wrap()
 
             add_linkage(record, relationship, related)
-          end)
+          end
+        )
 
       {preloaded_with_linkage, [related, further_includes, includes_list]}
     end)
