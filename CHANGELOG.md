@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.28.6](https://github.com/ash-project/ash_json_api/compare/v0.28.5...v0.28.6) (2022-02-03)
+
+
+
+
+### Bug Fixes:
+
+* only link the proper related records
+
+* put action_type in auto_set_fields where it belongs
+
+* routes -> route
+
+* use action_type to link related routes
+
+* set action_type on relationship routes
+
 ## [v0.28.5](https://github.com/ash-project/ash_json_api/compare/v0.28.4...v0.28.5) (2021-12-05)
 
 
