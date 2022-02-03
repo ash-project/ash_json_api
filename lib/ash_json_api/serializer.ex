@@ -472,7 +472,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_related_link(links, request, %resource{} = record, relationship) do
     resource
-    |> AshJsonApi.Resource.routes(%{
+    |> AshJsonApi.Resource.route(%{
       relationship: relationship.name,
       primary?: true,
       action_type: :get_related
