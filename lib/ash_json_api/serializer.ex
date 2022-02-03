@@ -454,7 +454,7 @@ defmodule AshJsonApi.Serializer do
     |> AshJsonApi.Resource.route(%{
       relationship: relationship.name,
       primary?: true,
-      action: :get_relationship
+      action_type: :relationship
     })
     |> case do
       nil ->
@@ -466,16 +466,16 @@ defmodule AshJsonApi.Serializer do
           |> with_path_params(%{"id" => AshJsonApi.Resource.encode_primary_key(record)})
           |> at_host(route)
 
-        Map.put(links, "relationship", link)
+        Map.put(links, "self", link)
     end
   end
 
   defp add_related_link(links, request, %resource{} = record, relationship) do
     resource
-    |> AshJsonApi.Resource.route(%{
+    |> AshJsonApi.Resource.routes(%{
       relationship: relationship.name,
       primary?: true,
-      action: :get_related
+      action_type: :get_related
     })
     |> case do
       nil ->
