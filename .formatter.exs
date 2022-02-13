@@ -15,6 +15,7 @@ locals_without_parens = [
   index: 2,
   keys: 1,
   log_errors?: 1,
+  member_name_transformer: 1,
   paginate?: 1,
   patch: 1,
   patch: 2,

@@ -24,6 +24,11 @@ defmodule AshJsonApi do
     Extension.get_opt(api, [:json_api], :log_errors?, false, true)
   end
 
+  def member_name_transformer(api) do
+    Extension.get_opt(api, [:json_api], :member_name_transformer, false, true)
+  end
+
+
   defmacro forward(path, api, opts \\ []) do
     quote bind_quoted: [path: path, api: api, opts: opts] do
       case Code.ensure_compiled(api) do

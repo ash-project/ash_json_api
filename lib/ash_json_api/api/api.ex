@@ -18,6 +18,11 @@ defmodule AshJsonApi.Api do
         type: :string,
         doc: "The route prefix at which you are serving the JSON:API"
       ],
+      member_name_transformer: [
+        type: :string,
+        doc: "Transformer to use on attribute names.",
+        default: "snake_case",
+      ],
       serve_schema?: [
         type: :boolean,
         doc: "Whether or not create a /schema route that serves the JSON schema of your API",

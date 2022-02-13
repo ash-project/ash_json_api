@@ -575,12 +575,12 @@ defmodule AshJsonApi.Serializer do
 
   defp serialize_attributes(request, %resource{} = record) do
     fields = Map.get(request.fields || %{}, resource) || default_attributes(resource)
-
+    serializer_format = AshJsonApi.member_name_transformer(request.api)
     Enum.reduce(fields, %{}, fn field, acc ->
       if field == :id do
         acc
       else
-        Map.put(acc, field, Map.get(record, field))
+        Map.put(acc, transform_field(field, serializer_format), Map.get(record, field))
       end
     end)
   end
@@ -599,5 +599,13 @@ defmodule AshJsonApi.Serializer do
     #   URI.encode_www_form(query)
     # end)
     # |> URI.to_string()
+  end
+
+  defp transform_field(field, serializer_format) do
+    case serializer_format do
+      "camel_case" -> AshJsonApi.Resource.Transformers.MemberName.CamelCase.transform_in(field)
+      "dasherized" -> AshJsonApi.Resource.Transformers.MemberName.Dasherize.transform_in(field)
+      _ -> field
+    end
   end
 end
