@@ -387,9 +387,11 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp serialize_one_record(request, %resource{} = record) do
+    serializer_format = AshJsonApi.member_name_transformer(request.api)
+
     %{
       id: AshJsonApi.Resource.encode_primary_key(record),
-      type: AshJsonApi.Resource.type(resource),
+      type: transform_field(AshJsonApi.Resource.type(resource), serializer_format),
       attributes: serialize_attributes(request, record),
       relationships: serialize_relationships(request, record),
       links: %{} |> add_one_record_self_link(request, record)
@@ -429,6 +431,8 @@ defmodule AshJsonApi.Serializer do
   defp add_keyset(meta, _), do: meta
 
   defp serialize_relationships(request, %resource{} = record) do
+    serializer_format = AshJsonApi.member_name_transformer(request.api)
+
     resource
     |> Ash.Resource.Info.public_relationships()
     |> Enum.into(%{}, fn relationship ->
@@ -437,9 +441,9 @@ defmodule AshJsonApi.Serializer do
           links: relationship_links(record, request, relationship),
           meta: %{}
         }
-        |> add_linkage(record, relationship)
+        |> add_linkage(record, relationship, serializer_format)
 
-      {relationship.name, value}
+      {transform_field(relationship.name, serializer_format), value}
     end)
   end
 
@@ -491,10 +495,10 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
+  defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}, serializer_format) do
     case record do
       %{__linkage__: %{^name => [%{id: id}]}} ->
-        Map.put(payload, :data, %{id: id, type: AshJsonApi.Resource.type(destination)})
+        Map.put(payload, :data, %{id: id, type: transform_field(AshJsonApi.Resource.type(destination), serializer_format)})
 
       # There could be another case here if a bug in the system gave us a list
       # of more than one shouldn't happen though
@@ -507,11 +511,12 @@ defmodule AshJsonApi.Serializer do
   defp add_linkage(
          payload,
          record,
-         %{destination: destination, cardinality: :many, name: name} = relationship
+         %{destination: destination, cardinality: :many, name: name} = relationship,
+         serializer_format
        ) do
     case record do
       %{__linkage__: %{^name => linkage}} ->
-        type = AshJsonApi.Resource.type(destination)
+        type = transform_field(AshJsonApi.Resource.type(destination), serializer_format)
 
         Map.put(
           payload,
