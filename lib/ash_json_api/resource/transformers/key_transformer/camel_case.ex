@@ -1,12 +1,12 @@
-defmodule AshJsonApi.Resource.Transformers.MemberName.CamelCase do
-  @behaviour AshJsonApi.Resource.Transformers.MemberName
+defmodule AshJsonApi.Resource.Transformers.KeyTransformer.CamelCase do
+  @behaviour AshJsonApi.Resource.Transformers.KeyTransformer
     @doc """
     Transforms snake case attribute names to camelCase.
 
     iex> #{__MODULE__}.transform_in("first_name")
     "firstName"
   """
-  def transform_in(attribute), do: camelize(attribute)
+  def convert_to(attribute), do: camelize(attribute)
 
     @doc """
     Transforms snake case attribute names to camelCase.
@@ -14,7 +14,7 @@ defmodule AshJsonApi.Resource.Transformers.MemberName.CamelCase do
     iex> #{__MODULE__}.transform_out("firstName")
     "first_name"
   """
-  def transform_out(attribute), do: underscore(attribute)
+  def convert_from(attribute), do: underscore(attribute)
 
   defp camelize(word, option \\ :lower) do
     case Regex.split(~r/(?:^|[-_])|(?=[A-Z])/, to_string(word)) do

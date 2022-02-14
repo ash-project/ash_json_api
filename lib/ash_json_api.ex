@@ -24,8 +24,8 @@ defmodule AshJsonApi do
     Extension.get_opt(api, [:json_api], :log_errors?, false, true)
   end
 
-  def member_name_transformer(api) do
-    Extension.get_opt(api, [:json_api], :member_name_transformer, false, true)
+  def key_transformer(api) do
+    Extension.get_opt(api, [:json_api], :key_transformer, false, true)
   end
 
 

@@ -18,7 +18,7 @@ defmodule AshJsonApi.Api do
         type: :string,
         doc: "The route prefix at which you are serving the JSON:API"
       ],
-      member_name_transformer: [
+      key_transformer: [
         type: :string,
         doc: "Transformer to use on attribute names.",
         default: "snake_case",

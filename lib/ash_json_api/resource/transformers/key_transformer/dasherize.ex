@@ -1,5 +1,5 @@
-defmodule AshJsonApi.Resource.Transformers.MemberName.Dasherize do
-  @behaviour AshJsonApi.Resource.Transformers.MemberName
+defmodule AshJsonApi.Resource.Transformers.KeyTransformer.Dasherize do
+  @behaviour AshJsonApi.Resource.Transformers.KeyTransformer
   @doc """
     Transforms snake case attribute names to dasherized.
 
@@ -7,7 +7,7 @@ defmodule AshJsonApi.Resource.Transformers.MemberName.Dasherize do
     iex> #{__MODULE__}.transform_in("first_name")
     "first-name"
   """
-  def transform_in(attribute), do: dasherize(attribute)
+  def convert_to(attribute), do: dasherize(attribute)
 
   @doc """
     Transforms dasherized attribute names to snake case.
@@ -16,7 +16,7 @@ defmodule AshJsonApi.Resource.Transformers.MemberName.Dasherize do
     iex> #{__MODULE__}.transform_out("first-name")
     "first_name"
   """
-  def transform_out(attribute), do: underscore(attribute)
+  def convert_from(attribute), do: underscore(attribute)
 
   defp dasherize(string, option \\ "-") do
     case Regex.split(~r/(?:^|[-_])|(?=[A-Z])/, to_string(string)) do

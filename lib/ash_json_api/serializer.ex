@@ -387,7 +387,7 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp serialize_one_record(request, %resource{} = record) do
-    serializer_format = AshJsonApi.member_name_transformer(request.api)
+    serializer_format = AshJsonApi.key_transformer(request.api)
 
     %{
       id: AshJsonApi.Resource.encode_primary_key(record),
@@ -431,7 +431,7 @@ defmodule AshJsonApi.Serializer do
   defp add_keyset(meta, _), do: meta
 
   defp serialize_relationships(request, %resource{} = record) do
-    serializer_format = AshJsonApi.member_name_transformer(request.api)
+    serializer_format = AshJsonApi.key_transformer(request.api)
 
     resource
     |> Ash.Resource.Info.public_relationships()
@@ -580,7 +580,7 @@ defmodule AshJsonApi.Serializer do
 
   defp serialize_attributes(request, %resource{} = record) do
     fields = Map.get(request.fields || %{}, resource) || default_attributes(resource)
-    serializer_format = AshJsonApi.member_name_transformer(request.api)
+    serializer_format = AshJsonApi.key_transformer(request.api)
     Enum.reduce(fields, %{}, fn field, acc ->
       if field == :id do
         acc
@@ -608,8 +608,8 @@ defmodule AshJsonApi.Serializer do
 
   defp transform_field(field, serializer_format) do
     case serializer_format do
-      "camel_case" -> AshJsonApi.Resource.Transformers.MemberName.CamelCase.transform_in(field)
-      "dasherized" -> AshJsonApi.Resource.Transformers.MemberName.Dasherize.transform_in(field)
+      "camel_case" -> AshJsonApi.Resource.Transformers.KeyTransformer.CamelCase.convert_to(field)
+      "dasherized" -> AshJsonApi.Resource.Transformers.KeyTransformer.Dasherize.convert_to(field)
       _ -> field
     end
   end
