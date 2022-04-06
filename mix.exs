@@ -16,6 +16,7 @@ defmodule AshJsonApi.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
+      consolidate_protocols: Mix.env() == :prod,
       docs: docs(),
       preferred_cli_env: [
         coveralls: :test,

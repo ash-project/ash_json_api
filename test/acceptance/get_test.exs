@@ -57,12 +57,17 @@ defmodule Test.Acceptance.GetTest do
       ]
 
     json_api do
+      router(Test.Acceptance.GetTest.Router)
       log_errors?(false)
     end
 
     resources do
       registry(Registry)
     end
+  end
+
+  defmodule Router do
+    use AshJsonApi.Api.Router, registry: Registry, api: Api
   end
 
   import AshJsonApi.Test

@@ -24,23 +24,7 @@ defmodule AshJsonApi do
     Extension.get_opt(api, [:json_api], :log_errors?, false, true)
   end
 
-  defmacro forward(path, api, opts \\ []) do
-    quote bind_quoted: [path: path, api: api, opts: opts] do
-      case Code.ensure_compiled(api) do
-        {:module, module} ->
-          api = AshJsonApi.router(api)
-          forward(path, api, opts)
-
-        _ ->
-          # We used to raise here, but this failing almost always implies
-          # a compilation error in the api, which will be more informative
-          # if we just let that be raised
-          :ok
-      end
-    end
-  end
-
   def router(api) do
-    Extension.get_persisted(api, :router, nil)
+    Extension.get_opt(api, [:json_api], :router, nil, false)
   end
 end

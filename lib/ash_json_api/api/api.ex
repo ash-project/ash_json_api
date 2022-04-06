@@ -13,7 +13,12 @@ defmodule AshJsonApi.Api do
       end
       """
     ],
+    modules: [:router],
     schema: [
+      router: [
+        type: :atom,
+        doc: "The router that you created for this Api. Use by test helpers to send requests"
+      ],
       prefix: [
         type: :string,
         doc: "The route prefix at which you are serving the JSON:API"
@@ -36,10 +41,6 @@ defmodule AshJsonApi.Api do
     ]
   }
 
-  @transformers [
-    AshJsonApi.Api.Transformers.SetRouterName,
-    AshJsonApi.Api.Transformers.CreateRouter
-  ]
   @sections [@json_api]
 
   @moduledoc """
@@ -51,5 +52,5 @@ defmodule AshJsonApi.Api do
   #{Ash.Dsl.Extension.doc(@sections)}
   """
 
-  use Ash.Dsl.Extension, sections: @sections, transformers: @transformers
+  use Ash.Dsl.Extension, sections: @sections
 end

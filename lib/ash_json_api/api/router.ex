@@ -1,68 +1,63 @@
 defmodule AshJsonApi.Api.Router do
   @moduledoc false
-  def define_router(module_name, api, resources, prefix, serve_schema?) do
-    Module.create(
-      module_name,
-      quote bind_quoted: [
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      api = opts[:api] || raise "Api option must be provided"
+      registry = opts[:registry] || raise "registry option must be provided"
+      prefix = AshJsonApi.prefix(api)
+      serve_schema? = AshJsonApi.serve_schema?(api)
+      resources = Ash.Registry.entries(registry)
+
+      use Plug.Router
+      require Ash
+
+      plug(:match)
+
+      plug(Plug.Parsers,
+        parsers: [:json],
+        pass: ["application/vnd.api+json"],
+        json_decoder: Jason
+      )
+
+      plug(:dispatch)
+
+      resources
+      |> Enum.filter(&(AshJsonApi.Resource in Ash.Resource.Info.extensions(&1)))
+      |> Enum.each(fn resource ->
+        for %{
+              route: route,
+              action: action_name,
+              controller: controller,
+              method: method,
+              action_type: action_type,
+              relationship: relationship_name
+            } = route_struct <-
+              AshJsonApi.Api.Router.routes(resource) do
+          opts =
+            [
+              relationship: Ash.Resource.Info.public_relationship(resource, relationship_name),
+              action: Ash.Resource.Info.action(resource, action_name, action_type),
+              resource: resource,
               api: api,
               prefix: prefix,
-              resources: resources,
-              serve_schema?: serve_schema?
-            ] do
-        use Plug.Router
-        require Ash
+              route: route_struct
+            ]
+            |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 
-        plug(:match)
-
-        plug(Plug.Parsers,
-          parsers: [:json],
-          pass: ["application/vnd.api+json"],
-          json_decoder: Jason
-        )
-
-        plug(:dispatch)
-
-        resources
-        |> Enum.filter(&(AshJsonApi.Resource in Ash.Resource.Info.extensions(&1)))
-        |> Enum.each(fn resource ->
-          for %{
-                route: route,
-                action: action_name,
-                controller: controller,
-                method: method,
-                action_type: action_type,
-                relationship: relationship_name
-              } = route_struct <-
-                AshJsonApi.Api.Router.routes(resource) do
-            opts =
-              [
-                relationship: Ash.Resource.Info.public_relationship(resource, relationship_name),
-                action: Ash.Resource.Info.action(resource, action_name, action_type),
-                resource: resource,
-                api: api,
-                prefix: prefix,
-                route: route_struct
-              ]
-              |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-
-            match(route, via: method, to: controller, init_opts: opts)
-          end
-        end)
-
-        if serve_schema? do
-          match("/schema",
-            via: :get,
-            to: AshJsonApi.Controllers.Schema,
-            init_opts: [api: api]
-          )
+          match(route, via: method, to: controller, init_opts: opts)
         end
+      end)
 
-        match(_, to: AshJsonApi.Controllers.NoRouteFound)
-      end,
-      Macro.Env.location(__ENV__)
-    )
+      if serve_schema? do
+        match("/schema",
+          via: :get,
+          to: AshJsonApi.Controllers.Schema,
+          init_opts: [api: api]
+        )
+      end
 
-    module_name
+      match(_, to: AshJsonApi.Controllers.NoRouteFound)
+    end
   end
 
   @doc false

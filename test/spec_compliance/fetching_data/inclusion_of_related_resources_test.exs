@@ -82,9 +82,17 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
         AshJsonApi.Api
       ]
 
+    json_api do
+      router(AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Router)
+    end
+
     resources do
       registry(Registry)
     end
+  end
+
+  defmodule Router do
+    use AshJsonApi.Api.Router, registry: Registry, api: Api
   end
 
   import AshJsonApi.Test

@@ -6,6 +6,15 @@ The easiest set up involves using Phoenix. It should be roughly the same to set 
 
 See `AshJsonApi.Api` and `AshJsonApi.Resource` for information on configuring your apis and resources.
 
+### Create a router
+
+```elixir
+defmodule MyApp.MyApi.Router do
+  # The registry must be explicitly provided here
+  use AshJsonApi.Api.Router, api: Api, registry: Registry 
+end
+```
+
 ### Accept json_api content type
 
 Add the following to your `config/config.exs`
@@ -21,7 +30,7 @@ This configuration is required to support working with the JSON:API custom mime 
 
 ### Add the routes from your API module(s)
 
-In your router, use `AshJsonApi.forward/2`.
+Forward requests to the from your Phoenix router to the router you created for your Api.
 
 For example:
 
@@ -29,7 +38,7 @@ For example:
 scope "/json_api" do
   pipe_through(:api)
 
-  AshJsonApi.forward("/helpdesk", Helpdesk.Helpdesk.Api)
+  forward "/helpdesk", MyApp.MyApi.Router
 end
 ```
 
