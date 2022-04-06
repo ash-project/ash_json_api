@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.28.7](https://github.com/ash-project/ash_json_api/compare/v0.28.6...v0.28.7) (2022-04-06)
+
+
+
+
+### Improvements:
+
+* rework router to be an explicit module w/ registry dependency
+
+* fully deprecate resources, try to fix compile time issues
+
 ## [v0.28.6](https://github.com/ash-project/ash_json_api/compare/v0.28.5...v0.28.6) (2022-02-03)
 
 
