@@ -28,6 +28,14 @@ defmodule Test.Acceptance.IndexTest do
     end
   end
 
+  defmodule Registry do
+    use Ash.Registry
+
+    entries do
+      entry(Post)
+    end
+  end
+
   defmodule Api do
     use Ash.Api,
       extensions: [
@@ -39,7 +47,7 @@ defmodule Test.Acceptance.IndexTest do
     end
 
     resources do
-      resource(Post)
+      registry(Registry)
     end
   end
 

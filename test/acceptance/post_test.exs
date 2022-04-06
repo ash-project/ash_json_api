@@ -92,6 +92,15 @@ defmodule Test.Acceptance.PostTest do
     end
   end
 
+  defmodule Registry do
+    use Ash.Registry
+
+    entries do
+      entry(Author)
+      entry(Post)
+    end
+  end
+
   defmodule Api do
     use Ash.Api,
       extensions: [
@@ -103,8 +112,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     resources do
-      resource(Post)
-      resource(Author)
+      registry(Registry)
     end
   end
 

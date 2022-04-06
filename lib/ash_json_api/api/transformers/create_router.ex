@@ -2,28 +2,32 @@ defmodule AshJsonApi.Api.Transformers.CreateRouter do
   @moduledoc "Defines a router module to be included in the router"
 
   use Ash.Dsl.Transformer
-  alias Ash.Dsl.Transformer
   alias AshJsonApi.Api.Router
 
   @impl true
+  def after_compile?, do: true
+
+  @impl true
   def transform(api, dsl) do
-    module_name = Module.concat(api, Router)
+    registry = Ash.Api.registry(api)
 
-    module_name =
-      Router.define_router(
-        module_name,
-        api,
-        Ash.Api.resources(api),
-        AshJsonApi.prefix(api),
-        AshJsonApi.serve_schema?(api)
-      )
+    resources =
+      if registry do
+        Code.ensure_compiled!(registry)
 
-    dsl = Transformer.persist(dsl, :router, module_name)
+        Ash.Registry.entries(registry)
+      else
+        []
+      end
+
+    Router.define_router(
+      AshJsonApi.router(api),
+      api,
+      resources,
+      AshJsonApi.prefix(api),
+      AshJsonApi.serve_schema?(api)
+    )
 
     {:ok, dsl}
   end
-
-  @impl true
-  def after?(Ash.Api.Transformers.EnsureResourcesCompiled), do: true
-  def after?(_), do: false
 end

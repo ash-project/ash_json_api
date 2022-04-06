@@ -62,6 +62,15 @@ defmodule AshJsonApi.ContentNegotiationTest do
     end
   end
 
+  defmodule Registry do
+    use Ash.Registry
+
+    entries do
+      entry(Author)
+      entry(Post)
+    end
+  end
+
   defmodule Api do
     use Ash.Api,
       extensions: [
@@ -69,8 +78,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       ]
 
     resources do
-      resource(Post)
-      resource(Author)
+      registry(Registry)
     end
   end
 

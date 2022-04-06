@@ -109,6 +109,16 @@ defmodule Test.Acceptance.ResourceTest do
     end
   end
 
+  defmodule Registry do
+    use Ash.Registry
+
+    entries do
+      entry(Author)
+      entry(Book)
+      entry(Movie)
+    end
+  end
+
   defmodule Api do
     use Ash.Api,
       extensions: [
@@ -120,9 +130,7 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     resources do
-      resource(Author)
-      resource(Book)
-      resource(Movie)
+      registry(Registry)
     end
   end
 

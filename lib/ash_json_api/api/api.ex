@@ -36,7 +36,10 @@ defmodule AshJsonApi.Api do
     ]
   }
 
-  @transformers [AshJsonApi.Api.Transformers.CreateRouter]
+  @transformers [
+    AshJsonApi.Api.Transformers.SetRouterName,
+    AshJsonApi.Api.Transformers.CreateRouter
+  ]
   @sections [@json_api]
 
   @moduledoc """
