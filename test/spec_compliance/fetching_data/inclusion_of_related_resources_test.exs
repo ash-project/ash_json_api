@@ -29,6 +29,10 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
       attribute(:name, :string)
     end
 
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
+
     relationships do
       has_many(:posts, AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Post,
         destination_field: :author_id
@@ -40,6 +44,10 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     use Ash.Resource,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshJsonApi.Resource]
+
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
 
     ets do
       private?(true)

@@ -26,6 +26,7 @@ defmodule Test.Acceptance.GetTest do
     end
 
     actions do
+      defaults([:create, :update, :destroy])
       read(:read, primary?: true)
 
       read :by_name do

@@ -22,6 +22,10 @@ defmodule Test.Acceptance.IndexTest do
       end
     end
 
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
+
     attributes do
       uuid_primary_key(:id)
       attribute(:name, :string)

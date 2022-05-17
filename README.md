@@ -35,6 +35,10 @@ defmodule Post do
     attribute :name, :string
   end
 
+  actions do
+    defaults [:create, :read, :update, :destroy]
+  end
+
   relationships do
     belongs_to :author, Author
   end

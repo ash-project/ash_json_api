@@ -22,6 +22,10 @@ defmodule Test.Acceptance.PatchTest do
       end
     end
 
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
+
     attributes do
       uuid_primary_key(:id, writable?: true)
       attribute(:name, :string)
@@ -56,11 +60,15 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     actions do
+      defaults([:read, :destroy])
+
       create :create do
+        primary? true
         accept([:id, :name, :hidden])
       end
 
       update :update do
+        primary? true
         accept([:id, :email])
         argument(:author, :map)
 

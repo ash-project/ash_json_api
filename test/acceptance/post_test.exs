@@ -24,6 +24,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     actions do
+      defaults([:read, :update, :destroy])
       create(:default, primary?: true)
 
       create :confirm_name do
@@ -65,7 +66,10 @@ defmodule Test.Acceptance.PostTest do
     end
 
     actions do
+      defaults([:read, :update, :destroy])
+
       create :create do
+        primary? true
         accept([:id, :name, :hidden])
 
         argument(:author, :map)

@@ -29,6 +29,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
       attribute(:name, :string)
     end
 
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
+
     relationships do
       has_many(:posts, AshJsonApiTest.FetchingData.FetchingRelationships.Post,
         destination_field: :author_id
@@ -58,6 +62,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     attributes do
       uuid_primary_key(:id)
       attribute(:name, :string)
+    end
+
+    actions do
+      defaults([:create, :read, :update, :destroy])
     end
 
     relationships do

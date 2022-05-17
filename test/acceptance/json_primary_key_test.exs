@@ -26,7 +26,10 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     actions do
+      defaults([:read, :update, :destroy])
+
       create :create do
+        primary? true
         accept([:first_name, :last_name, :age, :utc_now])
       end
     end
@@ -65,7 +68,10 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     actions do
+      defaults([:read, :update, :destroy])
+
       create :create do
+        primary? true
         accept([:id, :name, :author_name])
       end
     end
@@ -98,7 +104,10 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     actions do
+      defaults([:read, :update, :destroy])
+
       create :create do
+        primary? true
         accept([:id, :name])
       end
     end

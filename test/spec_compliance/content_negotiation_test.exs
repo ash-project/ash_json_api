@@ -23,6 +23,10 @@ defmodule AshJsonApi.ContentNegotiationTest do
       end
     end
 
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
+
     attributes do
       uuid_primary_key(:id)
       attribute(:name, :string)
@@ -50,6 +54,10 @@ defmodule AshJsonApi.ContentNegotiationTest do
         index(:read)
         post(:create)
       end
+    end
+
+    actions do
+      defaults([:create, :read, :update, :destroy])
     end
 
     attributes do

@@ -22,6 +22,10 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
       end
     end
 
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
+
     attributes do
       uuid_primary_key(:id, writable?: true)
       attribute(:name, :string)
@@ -55,7 +59,10 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     actions do
+      defaults([:read, :update, :destroy])
+
       create :create do
+        primary? true
         accept([:id, :name, :hidden])
         argument(:author, :uuid)
 

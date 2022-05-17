@@ -24,6 +24,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       end
     end
 
+    actions do
+      defaults([:create, :read, :update, :destroy])
+    end
+
     attributes do
       uuid_primary_key(:id)
       attribute(:name, :string)
@@ -49,6 +53,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
         get(:read)
         index(:read)
       end
+    end
+
+    actions do
+      defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
