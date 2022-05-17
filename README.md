@@ -2,7 +2,6 @@
 
 ![Elixir CI](https://github.com/ash-project/ash_json_api/workflows/Elixir%20CI/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Coverage Status](https://coveralls.io/repos/github/ash-project/ash_json_api/badge.svg?branch=master)](https://coveralls.io/github/ash-project/ash_json_api?branch=master)
 [![Hex version badge](https://img.shields.io/hexpm/v/ash_json_api.svg)](https://hex.pm/packages/ash_json_api)
 
 AshJsonApi allows you to take resources created with [Ash](https://github.com/ash-project/ash) and build complete JSON:API compliant endpoints with just a few lines of code.
