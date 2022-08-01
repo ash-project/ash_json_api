@@ -143,7 +143,8 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
 
       # response is a Plug.
       assert response.status == 400
-      assert %{"errors" => [%{"code" => "required"}]} = response.resp_body
+
+      assert Enum.any?(response.resp_body["errors"], &(&1["code"] == "required"))
     end
 
     test "create without an author in relationship" do
@@ -163,7 +164,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         })
 
       assert response.status == 400
-      assert %{"errors" => [%{"code" => "required"}]} = response.resp_body
+      assert Enum.any?(response.resp_body["errors"], &(&1["code"] == "required"))
     end
 
     test "create with invalid author id in relationship" do
@@ -189,7 +190,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
 
       # response is a Plug.
       assert response.status == 400
-      assert %{"errors" => [%{"code" => "not_found"}]} = response.resp_body
+      assert Enum.any?(response.resp_body["errors"], &(&1["code"] == "not_found"))
     end
   end
 
