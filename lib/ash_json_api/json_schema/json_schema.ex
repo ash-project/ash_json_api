@@ -444,7 +444,7 @@ defmodule AshJsonApi.JsonSchema do
       action.arguments
       |> Enum.reject(& &1.private?)
       |> Enum.reduce(props, fn argument, props ->
-        Map.put(props, argument.name, attribute_filter_schema(argument.type))
+        Map.put(props, to_string(argument.name), attribute_filter_schema(argument.type))
       end),
       action.arguments |> Enum.reject(&(&1.allow_nil? || &1.private?)) |> Enum.map(&"#{&1.name}")
     }
@@ -648,7 +648,9 @@ defmodule AshJsonApi.JsonSchema do
               "type" => "object",
               "additionalProperties" => false,
               "required" =>
-                non_relationship_arguments |> Enum.reject(& &1.allow_nil?) |> Enum.map(& &1.name),
+                non_relationship_arguments
+                |> Enum.reject(& &1.allow_nil?)
+                |> Enum.map(&to_string(&1.name)),
               "properties" =>
                 write_attributes(resource, non_relationship_arguments, action.accept)
             },

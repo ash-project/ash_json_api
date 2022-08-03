@@ -80,7 +80,7 @@ defmodule AshJsonApi.Resource do
 
   # And an argument by that name in the action
   actions do
-    update :cupdate do
+    update :update do
       argument :authors, {:array, :map}, allow_nil?: false
 
       change manage_relationship(:authors, type: :replace) # Use the authors argument to allow changing the related authors on update
