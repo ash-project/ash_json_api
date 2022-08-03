@@ -493,14 +493,14 @@ defmodule AshJsonApi.Request do
        when is_map(attributes) do
     Enum.reduce(attributes, request, fn {key, value}, request ->
       cond do
-        attr = Ash.Resource.Info.public_attribute(resource, key) ->
-          %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
-
         arg =
             Enum.find(action.arguments, fn argument ->
               to_string(argument.name) == key
             end) ->
           %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
+
+        attr = Ash.Resource.Info.public_attribute(resource, key) ->
+          %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
 
         true ->
           # The json_schema will have an error here
