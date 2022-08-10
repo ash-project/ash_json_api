@@ -82,7 +82,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           status: |
-            Beta version "${{ steps.tagName.outputs.tag }}" of AshJsonApi released!
+            AshJsonApi version "${{ steps.tagName.outputs.tag }}" released!
 
             #myelixirstatus
 
