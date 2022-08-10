@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.29.1](https://github.com/ash-project/ash_json_api/compare/v0.29.0...v0.29.1) (2022-08-10)
+
+
+
+
+### Bug Fixes:
+
+* check for arguments before attributes
+
+* handle empty path when showing schema errors
+
+* use string argument names for required arguments
+
+### Improvements:
+
+* update to latest ash
+
 ## [v0.29.0](https://github.com/ash-project/ash_json_api/compare/v0.28.7...v0.29.0) (2022-04-06)
 
 
