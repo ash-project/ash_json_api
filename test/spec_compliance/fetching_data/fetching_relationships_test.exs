@@ -122,7 +122,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
       # Create a post without an author
       post =
         Post
-        |> Ash.Changeset.new(%{name: "foo"})
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
         |> Api.create!()
 
       get(Api, "/posts/#{post.id}/relationships/author", status: 200)

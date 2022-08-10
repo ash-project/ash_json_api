@@ -66,7 +66,7 @@ defmodule Test.Acceptance.IndexTest do
     setup do
       post =
         Post
-        |> Ash.Changeset.new(%{name: "foo"})
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
         |> Api.create!()
 
       %{post: post}

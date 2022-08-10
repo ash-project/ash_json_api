@@ -38,31 +38,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def fetch_records(request) do
     chain(request, fn request ->
-      params =
-        if AshJsonApi.authorize?(request.api) do
-          [actor: request.actor]
-        else
-          []
-        end
-
-      page_params = Map.get(request.assigns, :page)
-
-      params =
-        if page_params do
-          Keyword.put(params, :page, page_params)
-        else
-          params
-        end
-
       request.resource
-      |> Ash.Query.new(request.api)
       |> Ash.Query.load(request.includes_keyword)
       |> Ash.Query.filter(^request.filter)
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
-      |> Ash.Query.set_tenant(request.tenant)
-      |> Ash.Query.set_arguments(request.arguments)
-      |> request.api.read(params)
+      |> Ash.Query.for_read(request.action.name, request.arguments, Request.opts(request))
+      |> request.api.read()
       |> case do
         {:ok, result} ->
           Request.assign(request, :result, result)
@@ -75,23 +57,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def create_record(request) do
     chain(request, fn %{api: api, resource: resource} ->
-      params =
-        if AshJsonApi.authorize?(request.api) do
-          [
-            action: request.action,
-            actor: request.actor
-          ]
-        else
-          [
-            action: request.action
-          ]
-        end
-
       resource
-      |> Ash.Changeset.new(request.attributes || %{})
-      |> Ash.Changeset.set_tenant(request.tenant)
-      |> Ash.Changeset.set_arguments(request.arguments)
-      |> api.create(params)
+      |> Ash.Changeset.for_create(
+        request.action.name,
+        Map.merge(request.attributes, request.arguments),
+        Request.opts(request)
+      )
+      |> api.create()
       |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
         {:ok, record} ->
@@ -105,23 +77,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def update_record(request) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
-      params =
-        if AshJsonApi.authorize?(request.api) do
-          [
-            action: request.action,
-            actor: request.actor
-          ]
-        else
-          [
-            action: request.action
-          ]
-        end
-
       result
-      |> Ash.Changeset.new(request.attributes || %{})
-      |> Ash.Changeset.set_tenant(request.tenant)
-      |> Ash.Changeset.set_arguments(request.arguments)
-      |> api.update(params)
+      |> Ash.Changeset.for_update(
+        request.action.name,
+        Map.merge(request.attributes, request.arguments),
+        Request.opts(request)
+      )
+      |> api.update()
       |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
         {:ok, record} ->
@@ -135,19 +97,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def add_to_relationship(request, relationship_name) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
-      params =
-        if AshJsonApi.authorize?(request.api) do
-          [actor: request.actor]
-        else
-          []
-        end
+      action = Ash.Resource.Info.primary_action!(request.resource, :update).name
 
       result
       |> Ash.Changeset.new()
       |> Ash.Changeset.append_to_relationship(relationship_name, request.resource_identifiers)
-      |> Ash.Changeset.set_tenant(request.tenant)
-      |> Ash.Changeset.set_arguments(request.arguments)
-      |> api.update(params)
+      |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
+      |> api.update()
       |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
@@ -163,19 +119,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def replace_relationship(request, relationship_name) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
-      params =
-        if AshJsonApi.authorize?(request.api) do
-          [actor: request.actor]
-        else
-          []
-        end
+      action = Ash.Resource.Info.primary_action!(request.resource, :update).name
 
       result
       |> Ash.Changeset.new()
       |> Ash.Changeset.replace_relationship(relationship_name, request.resource_identifiers)
-      |> Ash.Changeset.set_tenant(request.tenant)
-      |> Ash.Changeset.set_arguments(request.arguments)
-      |> api.update(params)
+      |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
+      |> api.update()
       |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
@@ -191,27 +141,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def delete_from_relationship(request, relationship_name) do
     chain(request, fn %{api: api, assigns: %{result: result}} ->
-      params = [
-        relationships: %{
-          relationship_name => %{
-            remove: request.resource_identifiers
-          }
-        }
-      ]
-
-      params =
-        if AshJsonApi.authorize?(request.api) do
-          Keyword.put(params, :actor, request.actor)
-        else
-          params
-        end
+      action = Ash.Resource.Info.primary_action!(request.resource, :update).name
 
       result
       |> Ash.Changeset.new()
       |> Ash.Changeset.remove_from_relationship(relationship_name, request.resource_identifiers)
-      |> Ash.Changeset.set_tenant(request.tenant)
-      |> Ash.Changeset.set_arguments(request.arguments)
-      |> api.update(params)
+      |> Ash.Changeset.for_update(action, Request.opts(request))
+      |> api.update()
       |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
@@ -226,21 +162,10 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def destroy_record(request) do
-    chain(request, fn %{api: api, assigns: %{result: result}} ->
-      params =
-        if AshJsonApi.authorize?(request.api) do
-          [
-            action: request.action,
-            actor: request.actor
-          ]
-        else
-          [action: request.action]
-        end
-
+    chain(request, fn %{api: api, assigns: %{result: result}} = request ->
       result
-      |> Ash.Changeset.new()
-      |> Ash.Changeset.set_tenant(request.tenant)
-      |> api.destroy(params)
+      |> Ash.Changeset.for_destroy(%{}, Request.opts(request))
+      |> api.destroy()
       |> case do
         :ok ->
           Request.assign(request, :result, nil)
@@ -269,27 +194,11 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       filter = path_filter(request.path_params, resource)
 
-      query =
-        resource
-        |> Ash.Query.filter(^filter)
-        |> Ash.Query.set_tenant(request.tenant)
-        |> Ash.Query.set_arguments(request.arguments)
-
-      params =
+      action =
         if through_resource || request.action.type != :read do
-          [page: false]
+          Ash.Resource.Info.primary_action!(resource, :read).name
         else
-          [
-            action: request.action,
-            page: false
-          ]
-        end
-
-      params =
-        if AshJsonApi.authorize?(api) do
-          Keyword.put(params, :actor, request.actor)
-        else
-          params
+          request.action.name
         end
 
       fields_to_load =
@@ -299,15 +208,26 @@ defmodule AshJsonApi.Controllers.Helpers do
           fields(request, request.resource)
         end
 
-      with {:ok, [record]} when not is_nil(record) <- api.read(query, params),
-           {:ok, record} <- api.load(record, fields_to_load ++ (request.includes_keyword || [])) do
-        request
-        |> Request.assign(:result, record)
-        |> Request.assign(:record_from_path, record)
-      else
-        {:ok, _} ->
+      resource
+      |> Ash.Query.filter(^filter)
+      |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
+      |> Ash.Query.for_read(
+        action,
+        request.arguments,
+        Keyword.put(Request.opts(request), :page, false)
+      )
+      |> api.read_one()
+      |> case do
+        {:ok, nil} ->
           error = Error.NotFound.new(filter: filter, resource: resource)
           Request.add_error(request, error, :fetch_from_path)
+
+          Request.add_error(request, error, :fetch_from_path)
+
+        {:ok, record} ->
+          request
+          |> Request.assign(:result, record)
+          |> Request.assign(:record_from_path, record)
 
         {:error, error} ->
           Request.add_error(request, error, :fetch_from_path)
@@ -348,17 +268,10 @@ defmodule AshJsonApi.Controllers.Helpers do
         |> Ash.Query.load([{relationship.name, destination_query}])
         |> Ash.Query.set_tenant(request.tenant)
 
-      params =
-        if AshJsonApi.authorize?(api) do
-          [actor: request.actor]
-        else
-          []
-        end
-
       case api.load(
              record,
              origin_query,
-             params
+             Request.load_opts(request)
            ) do
         {:ok, record} ->
           paginated_result =

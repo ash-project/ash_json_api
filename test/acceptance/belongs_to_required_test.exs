@@ -199,7 +199,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     setup do
       author =
         Author
-        |> Ash.Changeset.new(%{id: Ecto.UUID.generate(), name: "John"})
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
         |> Api.create!()
 
       %{author: author}

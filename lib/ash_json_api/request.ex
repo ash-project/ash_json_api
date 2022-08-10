@@ -25,7 +25,6 @@ defmodule AshJsonApi.Request do
     :query_params,
     :includes,
     :includes_keyword,
-    :attributes,
     :filter,
     :resource_identifiers,
     :body,
@@ -37,6 +36,7 @@ defmodule AshJsonApi.Request do
     :req_headers,
     :relationship,
     :route,
+    attributes: %{},
     arguments: %{},
     filter_included: %{},
     sort: [],
@@ -92,6 +92,29 @@ defmodule AshJsonApi.Request do
     |> parse_read_arguments()
     |> parse_relationships()
     |> parse_resource_identifiers()
+  end
+
+  def load_opts(request) do
+    [actor: request.actor, authorize?: AshJsonApi.authorize?(request.api), tenant: request.tenant]
+  end
+
+  def opts(request, merge \\ []) do
+    page_params = Map.get(request.assigns, :page)
+
+    opts = [
+      actor: request.actor,
+      authorize?: AshJsonApi.authorize?(request.api),
+      tenant: request.tenant
+    ]
+
+    opts =
+      if page_params do
+        Keyword.put(opts, :page, page_params)
+      else
+        opts
+      end
+
+    Keyword.merge(merge, opts)
   end
 
   def assign(request, key, value) do

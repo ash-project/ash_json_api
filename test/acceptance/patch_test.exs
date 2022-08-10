@@ -123,24 +123,6 @@ defmodule Test.Acceptance.PatchTest do
     use AshJsonApi.Api.Router, registry: Registry, api: Api
   end
 
-  describe "patch" do
-    test "Update post with email id" do
-      id = Ecto.UUID.generate()
-
-      post =
-        Post
-        |> Ash.Changeset.new(%{name: "Valid Post", hidden: "hidden", id: id})
-        |> Api.create!()
-
-      assert post.name == "Valid Post"
-      assert post.id == id
-      assert post.hidden == "hidden"
-      assert is_nil(post.email)
-
-      assert is_nil(post.author) == false
-    end
-  end
-
   import AshJsonApi.Test
 
   @tag :attributes
@@ -150,7 +132,7 @@ defmodule Test.Acceptance.PatchTest do
 
       post =
         Post
-        |> Ash.Changeset.new(%{name: "Valid Post", hidden: "hidden", id: id})
+        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", hidden: "hidden", id: id})
         |> Api.create!()
 
       %{post: post}
@@ -182,12 +164,12 @@ defmodule Test.Acceptance.PatchTest do
 
       author =
         Author
-        |> Ash.Changeset.new(%{id: Ecto.UUID.generate(), name: "John"})
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
         |> Api.create!()
 
       post =
         Post
-        |> Ash.Changeset.new(%{name: "Valid Post", hidden: "hidden", id: id})
+        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", hidden: "hidden", id: id})
         |> Api.create!()
 
       %{post: post, author: author}

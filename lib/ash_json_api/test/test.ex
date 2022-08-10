@@ -31,10 +31,6 @@ defmodule AshJsonApi.Test do
     end
 
     if Keyword.get(opts, :decode?, true) do
-      # resp_body = Jason.decode!(result.resp_body)
-
-      # JsonXema.validate!(@schema, resp_body)
-
       %{result | resp_body: Jason.decode!(result.resp_body)}
     else
       result

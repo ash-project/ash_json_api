@@ -25,7 +25,7 @@ defmodule Test.Acceptance.PostTest do
 
     actions do
       defaults([:read, :update, :destroy])
-      create(:default, primary?: true)
+      create(:create, primary?: true)
 
       create :confirm_name do
         argument(:confirm, :string, allow_nil?: false)
