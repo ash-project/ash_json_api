@@ -573,6 +573,12 @@ defmodule AshJsonApi.Serializer do
     |> Path.join()
   end
 
+  defp serialize_attributes(_, nil), do: nil
+
+  defp serialize_attributes(request, records) when is_list(records) do
+    Enum.map(records, &serialize_attributes(request, &1))
+  end
+
   defp serialize_attributes(request, %resource{} = record) do
     fields = Map.get(request.fields || %{}, resource) || default_attributes(resource)
 
@@ -580,7 +586,22 @@ defmodule AshJsonApi.Serializer do
       if field == :id do
         acc
       else
-        Map.put(acc, field, Map.get(record, field))
+        field = Ash.Resource.Info.field(resource, field)
+
+        cond do
+          !field ->
+            acc
+
+          Ash.Type.embedded_type?(field.type) ->
+            Map.put(
+              acc,
+              field.name,
+              serialize_attributes(%{fields: %{}}, Map.get(record, field.name))
+            )
+
+          true ->
+            Map.put(acc, field.name, Map.get(record, field.name))
+        end
       end
     end)
   end

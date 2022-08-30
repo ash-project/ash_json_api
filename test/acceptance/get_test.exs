@@ -1,6 +1,15 @@
 defmodule Test.Acceptance.GetTest do
   use ExUnit.Case, async: true
 
+  defmodule Profile do
+    use Ash.Resource,
+      data_layer: :embedded
+
+    attributes do
+      attribute(:bio, :string)
+    end
+  end
+
   defmodule Post do
     use Ash.Resource,
       data_layer: Ash.DataLayer.Ets,
@@ -40,6 +49,7 @@ defmodule Test.Acceptance.GetTest do
       uuid_primary_key(:id)
       attribute(:name, :string)
       attribute(:hidden, :string, private?: true)
+      attribute(:profile, Profile)
     end
   end
 
@@ -111,7 +121,7 @@ defmodule Test.Acceptance.GetTest do
     setup do
       post =
         Post
-        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.for_create(:create, %{name: "foo", profile: %{bio: "Bio"}})
         |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
         |> Api.create!()
 
