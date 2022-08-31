@@ -5,7 +5,7 @@ defmodule AshJsonApi.MixProject do
   A JSON API front end for the `Ash` resource framework
   """
 
-  @version "0.30.0-rc.0"
+  @version "0.30.0-rc.1"
 
   def project do
     [
@@ -119,7 +119,7 @@ defmodule AshJsonApi.MixProject do
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
-      {:git_ops, "~> 2.0.1", only: :dev},
+      {:git_ops, "~> 2.4", only: :dev},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
       {:ex_check, "~> 0.12.0", only: :dev},
       {:credo, ">= 0.0.0", only: :dev, runtime: false},

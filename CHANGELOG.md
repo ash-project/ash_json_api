@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.30.0-rc.1](https://github.com/ash-project/ash_json_api/compare/v0.30.0-rc.0...v0.30.0-rc.1) (2022-08-31)
+
+
+
+
+### Improvements:
+
+* align better with `.Info` pattern
+
 ## [v0.29.1](https://github.com/ash-project/ash_json_api/compare/v0.29.0...v0.29.1) (2022-08-10)
 
 
