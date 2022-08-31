@@ -35,7 +35,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
     relationships do
       has_many(:posts, AshJsonApiTest.FetchingData.FetchingRelationships.Post,
-        destination_field: :author_id
+        destination_attribute: :author_id
       )
     end
   end

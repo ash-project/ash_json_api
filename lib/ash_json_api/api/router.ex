@@ -6,7 +6,7 @@ defmodule AshJsonApi.Api.Router do
       registry = opts[:registry] || raise "registry option must be provided"
       prefix = AshJsonApi.prefix(api)
       serve_schema? = AshJsonApi.serve_schema?(api)
-      resources = Ash.Registry.entries(registry)
+      resources = Ash.Registry.Info.entries(registry)
 
       use Plug.Router
       require Ash
@@ -22,7 +22,7 @@ defmodule AshJsonApi.Api.Router do
       plug(:dispatch)
 
       resources
-      |> Enum.filter(&(AshJsonApi.Resource in Ash.Resource.Info.extensions(&1)))
+      |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
       |> Enum.each(fn resource ->
         for %{
               route: route,

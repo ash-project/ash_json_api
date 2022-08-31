@@ -32,7 +32,7 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.PatchTest.Post, destination_field: :author_id)
+      has_many(:posts, Test.Acceptance.PatchTest.Post, destination_attribute: :author_id)
     end
   end
 

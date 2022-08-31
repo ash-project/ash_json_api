@@ -5,8 +5,8 @@ defmodule AshJsonApi.JsonSchema do
   def generate(api) do
     resources =
       api
-      |> Ash.Api.resources()
-      |> Enum.filter(&(AshJsonApi.Resource in Ash.Resource.Info.extensions(&1)))
+      |> Ash.Api.Info.resources()
+      |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
 
     route_schemas =
       Enum.flat_map(resources, fn resource ->
@@ -224,7 +224,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> Ash.Resource.Info.public_attributes()
     |> Enum.reduce(%{}, fn attr, acc ->
-      Map.put(acc, to_string(attr.name), resource_field_type(attr))
+      Map.put(acc, to_string(attr.name), resource_attribute_type(attr))
     end)
   end
 
@@ -316,48 +316,48 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp resource_field_type(%{type: Ash.Type.String}) do
+  defp resource_attribute_type(%{type: Ash.Type.String}) do
     %{
       "type" => "string"
     }
   end
 
-  defp resource_field_type(%{type: Ash.Type.Boolean}) do
+  defp resource_attribute_type(%{type: Ash.Type.Boolean}) do
     %{
       "type" => ["boolean", "string"],
       "match" => "^(true|false)$"
     }
   end
 
-  defp resource_field_type(%{type: Ash.Type.Integer}) do
+  defp resource_attribute_type(%{type: Ash.Type.Integer}) do
     %{
       "type" => ["integer", "string"],
       "match" => "^[1-9][0-9]*$"
     }
   end
 
-  defp resource_field_type(%{type: Ash.Type.UtcDatetime}) do
+  defp resource_attribute_type(%{type: Ash.Type.UtcDatetime}) do
     %{
       "type" => "string",
       "format" => "date-time"
     }
   end
 
-  defp resource_field_type(%{type: Ash.Type.UUID}) do
+  defp resource_attribute_type(%{type: Ash.Type.UUID}) do
     %{
       "type" => "string",
       "format" => "uuid"
     }
   end
 
-  defp resource_field_type(%{type: {:array, type}}) do
+  defp resource_attribute_type(%{type: {:array, type}}) do
     %{
       "type" => "array",
-      "items" => resource_field_type(%{type: type})
+      "items" => resource_attribute_type(%{type: type})
     }
   end
 
-  defp resource_field_type(%{type: type} = attr) do
+  defp resource_attribute_type(%{type: type} = attr) do
     if :erlang.function_exported(type, :json_schema, 1) do
       if Map.get(attr, :constraints) do
         type.json_schema(attr.constraints)
@@ -640,7 +640,7 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
-            "id" => resource_field_type(Ash.Resource.Info.public_attribute(resource, :id)),
+            "id" => resource_attribute_type(Ash.Resource.Info.public_attribute(resource, :id)),
             "type" => %{
               "const" => AshJsonApi.Resource.type(resource)
             },
@@ -692,7 +692,7 @@ defmodule AshJsonApi.JsonSchema do
             "additionalProperties" => false,
             "properties" => %{
               "id" =>
-                resource_field_type(
+                resource_attribute_type(
                   Ash.Resource.Info.public_attribute(relationship.destination, :id)
                 ),
               "type" => %{
@@ -732,11 +732,11 @@ defmodule AshJsonApi.JsonSchema do
       |> Ash.Resource.Info.public_attributes()
       |> Enum.filter(&((is_nil(accept) || &1.name in accept) && &1.writable?))
       |> Enum.reduce(%{}, fn attribute, acc ->
-        Map.put(acc, to_string(attribute.name), resource_field_type(attribute))
+        Map.put(acc, to_string(attribute.name), resource_attribute_type(attribute))
       end)
 
     Enum.reduce(arguments, attributes, fn argument, attributes ->
-      Map.put(attributes, to_string(argument.name), resource_field_type(argument))
+      Map.put(attributes, to_string(argument.name), resource_attribute_type(argument))
     end)
   end
 

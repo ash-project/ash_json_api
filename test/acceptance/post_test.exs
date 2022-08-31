@@ -39,7 +39,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.PostTest.Post, destination_field: :author_id)
+      has_many(:posts, Test.Acceptance.PostTest.Post, destination_attribute: :author_id)
     end
   end
 

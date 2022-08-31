@@ -132,12 +132,12 @@ defmodule AshJsonApi.Serializer do
     #     payload
 
     #   attributes ->
-    #     destination_value = Map.get(row, relationship.destination_field)
+    #     destination_value = Map.get(row, relationship.destination_attribute)
 
     #     source_record
     #     |> Map.get(relationship.join_relationship)
     #     |> Enum.find(fn join_row ->
-    #       Map.get(join_row, relationship.destination_field_on_join_table) == destination_value
+    #       Map.get(join_row, relationship.destination_attribute_on_join_resource) == destination_value
     #     end)
     #     |> case do
     #       nil ->

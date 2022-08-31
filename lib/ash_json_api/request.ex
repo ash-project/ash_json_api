@@ -333,7 +333,7 @@ defmodule AshJsonApi.Request do
   defp parse_fields(%{query_params: %{"fields" => fields}} = request) when is_map(fields) do
     Enum.reduce(fields, request, fn {type, fields}, request ->
       request.api
-      |> Ash.Api.resources()
+      |> Ash.Api.Info.resources()
       |> Enum.find(&(AshJsonApi.Resource.type(&1) == type))
       |> case do
         nil ->

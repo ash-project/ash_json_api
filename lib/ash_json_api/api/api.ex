@@ -1,5 +1,5 @@
 defmodule AshJsonApi.Api do
-  @json_api %Ash.Dsl.Section{
+  @json_api %Spark.Dsl.Section{
     name: :json_api,
     describe: """
     Global configuration for JSON:API
@@ -47,10 +47,10 @@ defmodule AshJsonApi.Api do
   The entrypoint for adding JSON:API behavior to an Ash API
 
   # Table of Contents
-  #{Ash.Dsl.Extension.doc_index(@sections)}
+  #{Spark.Dsl.Extension.doc_index(@sections)}
 
-  #{Ash.Dsl.Extension.doc(@sections)}
+  #{Spark.Dsl.Extension.doc(@sections)}
   """
 
-  use Ash.Dsl.Extension, sections: @sections
+  use Spark.Dsl.Extension, sections: @sections
 end

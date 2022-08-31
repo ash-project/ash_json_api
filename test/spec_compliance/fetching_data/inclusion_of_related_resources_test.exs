@@ -35,7 +35,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
     relationships do
       has_many(:posts, AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Post,
-        destination_field: :author_id
+        destination_attribute: :author_id
       )
     end
   end

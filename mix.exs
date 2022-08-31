@@ -2,10 +2,10 @@ defmodule AshJsonApi.MixProject do
   use Mix.Project
 
   @description """
-  A rigorous JSON API front end for the `Ash` resource framework
+  A JSON API front end for the `Ash` resource framework
   """
 
-  @version "0.29.1"
+  @version "0.30.0-rc.0"
 
   def project do
     [
@@ -38,31 +38,61 @@ defmodule AshJsonApi.MixProject do
     [
       name: :ash_json_api,
       licenses: ["MIT"],
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE*
+      CHANGELOG* documentation),
       links: %{
         GitHub: "https://github.com/ash-project/ash_json_api"
       }
     ]
   end
 
+  defp extras() do
+    "documentation/**/*.md"
+    |> Path.wildcard()
+    |> Enum.map(fn path ->
+      title =
+        path
+        |> Path.basename(".md")
+        |> String.split(~r/[-_]/)
+        |> Enum.map(&String.capitalize/1)
+        |> Enum.join(" ")
+        |> case do
+          "F A Q" ->
+            "FAQ"
+
+          other ->
+            other
+        end
+
+      {String.to_atom(path),
+       [
+         title: title
+       ]}
+    end)
+  end
+
+  defp groups_for_extras() do
+    "documentation/*"
+    |> Path.wildcard()
+    |> Enum.map(fn folder ->
+      name =
+        folder
+        |> Path.basename()
+        |> String.split(~r/[-_]/)
+        |> Enum.map(&String.capitalize/1)
+        |> Enum.join(" ")
+
+      {name, folder |> Path.join("**") |> Path.wildcard()}
+    end)
+  end
+
   defp docs do
     [
-      main: "readme",
+      main: "getting-started-with-json-api",
       source_ref: "v#{@version}",
-      logo: "logos/small-logo.png",
-      extras: [
-        "README.md",
-        "documentation/getting_started.md",
-        "documentation/multitenancy.md"
-      ],
-      extras_section: "GUIDES",
-      groups_for_modules: [
-        entrypoint: [AshJsonApi],
-        "resource dsl transformers": ~r/AshJsonApi.Resource.Transformers/,
-        "resource dsl": ~r/AshJsonApi.Resource/,
-        "api dsl transformers": ~r/AshJsonApi.Api.Transformers/,
-        "api dsl": ~r/AshJsonApi.Api/,
-        errors: ~r/AshJsonApi.Error/
-      ]
+      extras: extras(),
+      groups_for_extras: groups_for_extras(),
+      logo: "logos/small-logo.png"
     ]
   end
 
@@ -85,7 +115,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 1.53 and >= 1.53.1")},
+      {:ash, ash_version("~> 2.0.0-rc.0")},
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},

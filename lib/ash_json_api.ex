@@ -6,7 +6,7 @@ defmodule AshJsonApi do
 
   For Resource DSL documentation, see `AshJsonApi.Resource`
   """
-  alias Ash.Dsl.Extension
+  alias Spark.Dsl.Extension
 
   def prefix(api) do
     Extension.get_opt(api, [:json_api], :prefix, nil, true)

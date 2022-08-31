@@ -18,7 +18,7 @@ defmodule AshJsonApi.Resource do
     ]
   ]
 
-  @get %Ash.Dsl.Entity{
+  @get %Spark.Dsl.Entity{
     name: :get,
     args: [:action],
     describe: "A GET route to retrieve a single record",
@@ -27,7 +27,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/:id"),
+      |> Spark.OptionsHelpers.set_default!(:route, "/:id"),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :get,
@@ -37,7 +37,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @index %Ash.Dsl.Entity{
+  @index %Spark.Dsl.Entity{
     name: :index,
     args: [:action],
     describe: "A GET route to retrieve a list of records",
@@ -46,7 +46,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/")
+      |> Spark.OptionsHelpers.set_default!(:route, "/")
       |> Keyword.put(:paginate?, type: :boolean, default: true),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
@@ -127,7 +127,7 @@ defmodule AshJsonApi.Resource do
   instead of `:author`, use `{:id, :author}`. This works for `{:array, _}` type arguments as well, so the value would be a list of ids.
   """
 
-  @post %Ash.Dsl.Entity{
+  @post %Spark.Dsl.Entity{
     name: :post,
     args: [:action],
     describe: "A POST route to create a record",
@@ -136,7 +136,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/")
+      |> Spark.OptionsHelpers.set_default!(:route, "/")
       |> Keyword.put(:relationship_arguments,
         type: :any,
         doc: @relationship_arguments_doc,
@@ -151,7 +151,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @patch %Ash.Dsl.Entity{
+  @patch %Spark.Dsl.Entity{
     name: :patch,
     args: [:action],
     describe: "A PATCH route to update a record",
@@ -160,7 +160,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/:id")
+      |> Spark.OptionsHelpers.set_default!(:route, "/:id")
       |> Keyword.put(:relationship_arguments,
         type: :any,
         doc: @relationship_arguments_doc,
@@ -175,7 +175,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @delete %Ash.Dsl.Entity{
+  @delete %Spark.Dsl.Entity{
     name: :delete,
     args: [:action],
     describe: "A DELETE route to destroy a record",
@@ -184,7 +184,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.set_default!(:route, "/:id"),
+      |> Spark.OptionsHelpers.set_default!(:route, "/:id"),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :delete,
@@ -194,7 +194,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @related %Ash.Dsl.Entity{
+  @related %Spark.Dsl.Entity{
     name: :related,
     args: [:relationship, :action],
     describe: "A GET route to read the related resources of a relationship",
@@ -203,8 +203,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.make_optional!(:route)
-      |> Ash.OptionsHelpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
+      |> Spark.OptionsHelpers.make_optional!(:route)
+      |> Spark.OptionsHelpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -218,7 +218,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @relationship %Ash.Dsl.Entity{
+  @relationship %Spark.Dsl.Entity{
     name: :relationship,
     args: [:relationship, :action],
     describe: "A READ route to read the relationship, returns resource identifiers.",
@@ -227,8 +227,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.make_optional!(:route)
-      |> Ash.OptionsHelpers.append_doc!(
+      |> Spark.OptionsHelpers.make_optional!(:route)
+      |> Spark.OptionsHelpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -245,7 +245,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @post_to_relationship %Ash.Dsl.Entity{
+  @post_to_relationship %Spark.Dsl.Entity{
     name: :post_to_relationship,
     args: [:relationship],
     describe: "A POST route to create related entities using resource identifiers",
@@ -254,8 +254,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.make_optional!(:route)
-      |> Ash.OptionsHelpers.append_doc!(
+      |> Spark.OptionsHelpers.make_optional!(:route)
+      |> Spark.OptionsHelpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -273,7 +273,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @patch_relationship %Ash.Dsl.Entity{
+  @patch_relationship %Spark.Dsl.Entity{
     name: :patch_relationship,
     args: [:relationship],
     describe: "A PATCH route to update a relationship using resource identifiers",
@@ -282,8 +282,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.make_optional!(:route)
-      |> Ash.OptionsHelpers.append_doc!(
+      |> Spark.OptionsHelpers.make_optional!(:route)
+      |> Spark.OptionsHelpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -301,7 +301,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @delete_from_relationship %Ash.Dsl.Entity{
+  @delete_from_relationship %Spark.Dsl.Entity{
     name: :delete_from_relationship,
     args: [:relationship],
     describe: "A DELETE route to remove related entities using resource identifiers",
@@ -310,8 +310,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Ash.OptionsHelpers.make_optional!(:route)
-      |> Ash.OptionsHelpers.append_doc!(
+      |> Spark.OptionsHelpers.make_optional!(:route)
+      |> Spark.OptionsHelpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -329,7 +329,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @routes %Ash.Dsl.Section{
+  @routes %Spark.Dsl.Section{
     name: :routes,
     describe: "Configure the routes that will be exposed via the JSON:API",
     schema: [
@@ -371,7 +371,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @primary_key %Ash.Dsl.Section{
+  @primary_key %Spark.Dsl.Section{
     name: :primary_key,
     describe: "Encode the id of the JSON API response from selected attributes of a resource",
     examples: [
@@ -384,7 +384,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema: [
       keys: [
-        type: {:custom, Ash.OptionsHelpers, :list_of_atoms, []},
+        type: {:custom, Spark.OptionsHelpers, :list_of_atoms, []},
         doc: "the list of attributes to encode JSON API primary key",
         required: true
       ],
@@ -397,7 +397,7 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  @json_api %Ash.Dsl.Section{
+  @json_api %Spark.Dsl.Section{
     name: :json_api,
     sections: [@routes, @primary_key],
     describe: "Configure the resource's behavior in the JSON:API",
@@ -455,14 +455,14 @@ defmodule AshJsonApi.Resource do
   The entrypoint for adding JSON:API behavior to a resource"
 
   # Table of Contents
-  #{Ash.Dsl.Extension.doc_index(@sections)}
+  #{Spark.Dsl.Extension.doc_index(@sections)}
 
-  #{Ash.Dsl.Extension.doc(@sections)}
+  #{Spark.Dsl.Extension.doc(@sections)}
   """
 
-  require Ash.Dsl.Extension
+  require Spark.Dsl.Extension
 
-  use Ash.Dsl.Extension, sections: @sections, transformers: @transformers
+  use Spark.Dsl.Extension, sections: @sections, transformers: @transformers
 
   def type(resource) do
     Extension.get_opt(resource, [:json_api], :type, nil, false)

@@ -3,18 +3,18 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
     or includes primary_key section from json_api if it has a composite key
   "
 
-  use Ash.Dsl.Transformer
-  alias Ash.Dsl.Transformer
+  use Spark.Dsl.Transformer
+  alias Spark.Dsl.Transformer
 
-  def transform(resource, dsl) do
+  def transform(dsl) do
     case Transformer.get_option(dsl, [:json_api, :primary_key], :keys) do
       nil ->
-        case Ash.Resource.Info.primary_key(resource) do
+        case Transformer.get_persisted(dsl, :primary_key) do
           [_only_one_primary_key] ->
             {:ok, dsl}
 
           _ ->
-            raise Ash.Error.Dsl.DslError,
+            raise Spark.Error.DslError,
               module: __MODULE__,
               path: [:json_api, :primary_key],
               message: "AshJsonApi requires primary key when a resource has a composite key"
@@ -29,7 +29,7 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
             {:ok, dsl}
 
           false ->
-            raise Ash.Error.Dsl.DslError,
+            raise Spark.Error.DslError,
               module: __MODULE__,
               path: [:json_api, :primary_key],
               message: "AshJsonApi primary key must be from the resource's attributes"

@@ -1,10 +1,11 @@
 defmodule AshJsonApi.Resource.Transformers.ValidateNoOverlappingRoutes do
   @moduledoc "Validates that all method/route combinations are unique"
-  use Ash.Dsl.Transformer
+  use Spark.Dsl.Transformer
+  alias Spark.Dsl.Transformer
 
-  def transform(resource, dsl) do
-    resource
-    |> AshJsonApi.Resource.routes()
+  def transform(dsl) do
+    dsl
+    |> Transformer.get_entities([:json_api, :routes])
     |> Enum.group_by(fn route ->
       {route.method, route.route}
     end)

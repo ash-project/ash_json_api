@@ -1,14 +1,14 @@
 defmodule AshJsonApi.Resource.Transformers.PrependRoutePrefix do
   @moduledoc "Ensures that the `base` route is prepended to each route"
-  use Ash.Dsl.Transformer
+  use Spark.Dsl.Transformer
 
-  alias Ash.Dsl.Transformer
+  alias Spark.Dsl.Transformer
 
-  def transform(resource, dsl) do
-    prefix = AshJsonApi.Resource.base_route(resource)
+  def transform(dsl) do
+    prefix = Transformer.get_option(dsl, [:json_api, :routes], :base)
 
-    resource
-    |> AshJsonApi.Resource.routes()
+    dsl
+    |> Transformer.get_entities([:json_api, :routes])
     |> Enum.reduce({:ok, dsl}, fn route, {:ok, dsl} ->
       new_route =
         "/" <>
