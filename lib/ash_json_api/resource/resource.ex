@@ -460,21 +460,25 @@ defmodule AshJsonApi.Resource do
   #{Spark.Dsl.Extension.doc(@sections)}
   """
 
-  require Spark.Dsl.Extension
-
   use Spark.Dsl.Extension, sections: @sections, transformers: @transformers
 
-  def type(resource) do
-    Extension.get_opt(resource, [:json_api], :type, nil, false)
-  end
+  @deprecated "See AshJsonApi.Resource.Info.type/1"
+  defdelegate type(resource), to: AshJsonApi.Resource.Info
 
-  def includes(resource) do
-    Extension.get_opt(resource, [:json_api], :includes, [], false)
-  end
+  @deprecated "See AshJsonApi.Resource.Info.includes/1"
+  defdelegate includes(resource), to: AshJsonApi.Resource.Info
 
-  def base_route(resource) do
-    Extension.get_opt(resource, [:json_api, :routes], :base, nil, false)
-  end
+  @deprecated "See AshJsonApi.Resource.Info.base_route/1"
+  defdelegate base_route(resource), to: AshJsonApi.Resource.Info
+
+  @deprecated "See AshJsonApi.Resource.Info.primary_key_fields/1"
+  defdelegate primary_key_fields(resource), to: AshJsonApi.Resource.Info
+
+  @deprecated "See AshJsonApi.Resource.Info.primary_key_delimiter/1"
+  defdelegate primary_key_delimiter(resource), to: AshJsonApi.Resource.Info
+
+  @deprecated "See AshJsonApi.Resource.Info.routes/1"
+  defdelegate routes(resource), to: AshJsonApi.Resource.Info
 
   def encode_primary_key(%resource{} = record) do
     case primary_key_fields(resource) do
@@ -493,18 +497,6 @@ defmodule AshJsonApi.Resource do
 
         IO.iodata_to_binary(concatenated_keys)
     end
-  end
-
-  def primary_key_fields(resource) do
-    Extension.get_opt(resource, [:json_api, :primary_key], :keys, [], false)
-  end
-
-  def primary_key_delimiter(resource) do
-    Extension.get_opt(resource, [:json_api, :primary_key], :delimiter, [], false)
-  end
-
-  def routes(resource) do
-    Extension.get_entities(resource, [:json_api, :routes])
   end
 
   def route(resource, criteria \\ %{}) do

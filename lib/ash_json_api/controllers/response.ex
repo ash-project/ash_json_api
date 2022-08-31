@@ -4,7 +4,7 @@ defmodule AshJsonApi.Controllers.Response do
 
   # sobelow_skip ["XSS.SendResp"]
   def render_errors(conn, request, opts \\ []) do
-    if AshJsonApi.log_errors?(request.api) do
+    if AshJsonApi.Api.Info.log_errors?(request.api) do
       log_errors(request.errors, opts)
     end
 

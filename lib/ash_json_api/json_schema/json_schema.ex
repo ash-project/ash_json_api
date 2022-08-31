@@ -11,7 +11,7 @@ defmodule AshJsonApi.JsonSchema do
     route_schemas =
       Enum.flat_map(resources, fn resource ->
         resource
-        |> AshJsonApi.Resource.routes()
+        |> AshJsonApi.Resource.Info.routes()
         |> Enum.map(&route_schema(&1, api, resource))
       end)
 
@@ -19,7 +19,7 @@ defmodule AshJsonApi.JsonSchema do
 
     definitions =
       Enum.reduce(resources, base_definitions(), fn resource, acc ->
-        Map.put(acc, AshJsonApi.Resource.type(resource), resource_object_schema(resource))
+        Map.put(acc, AshJsonApi.Resource.Info.type(resource), resource_object_schema(resource))
       end)
 
     %{
@@ -111,7 +111,7 @@ defmodule AshJsonApi.JsonSchema do
   def resource_object_schema(resource) do
     %{
       "description" =>
-        "A \"Resource object\" representing a #{AshJsonApi.Resource.type(resource)}",
+        "A \"Resource object\" representing a #{AshJsonApi.Resource.Info.type(resource)}",
       "type" => "object",
       "required" => ["type", "id"],
       "properties" => %{
@@ -205,7 +205,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp attributes(resource) do
     %{
-      "description" => "An attributes object for a #{AshJsonApi.Resource.type(resource)}",
+      "description" => "An attributes object for a #{AshJsonApi.Resource.Info.type(resource)}",
       "type" => "object",
       "required" => required_attributes(resource),
       "properties" => resource_attributes(resource),
@@ -230,7 +230,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp relationships(resource) do
     %{
-      "description" => "A relationships object for a #{AshJsonApi.Resource.type(resource)}",
+      "description" => "A relationships object for a #{AshJsonApi.Resource.Info.type(resource)}",
       "type" => "object",
       "properties" => resource_relationships(resource),
       "additionalProperties" => false
@@ -592,7 +592,7 @@ defmodule AshJsonApi.JsonSchema do
           "additionalProperties" => false,
           "properties" => %{
             "type" => %{
-              "const" => AshJsonApi.Resource.type(resource)
+              "const" => AshJsonApi.Resource.Info.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -642,7 +642,7 @@ defmodule AshJsonApi.JsonSchema do
           "properties" => %{
             "id" => resource_attribute_type(Ash.Resource.Info.public_attribute(resource, :id)),
             "type" => %{
-              "const" => AshJsonApi.Resource.type(resource)
+              "const" => AshJsonApi.Resource.Info.type(resource)
             },
             "attributes" => %{
               "type" => "object",
@@ -696,7 +696,7 @@ defmodule AshJsonApi.JsonSchema do
                   Ash.Resource.Info.public_attribute(relationship.destination, :id)
                 ),
               "type" => %{
-                "const" => AshJsonApi.Resource.type(relationship.destination)
+                "const" => AshJsonApi.Resource.Info.type(relationship.destination)
               },
               "meta" => %{
                 "type" => "object"
@@ -779,10 +779,10 @@ defmodule AshJsonApi.JsonSchema do
             %{
               "data" => %{
                 "description" =>
-                  "An array of resource objects representing a #{AshJsonApi.Resource.type(resource)}",
+                  "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
                 "type" => "array",
                 "items" => %{
-                  "$ref" => "#/definitions/#{AshJsonApi.Resource.type(resource)}"
+                  "$ref" => "#/definitions/#{AshJsonApi.Resource.Info.type(resource)}"
                 },
                 "uniqueItems" => true
               }
@@ -813,7 +813,7 @@ defmodule AshJsonApi.JsonSchema do
           "oneOf" => [
             %{
               "data" => %{
-                "$ref" => "#/definitions/#{AshJsonApi.Resource.type(resource)}"
+                "$ref" => "#/definitions/#{AshJsonApi.Resource.Info.type(resource)}"
               }
             },
             %{
@@ -827,7 +827,7 @@ defmodule AshJsonApi.JsonSchema do
   defp route_href(route, api) do
     {path, path_params} =
       api
-      |> AshJsonApi.prefix()
+      |> AshJsonApi.Api.Info.prefix()
       |> Kernel.||("")
       |> Path.join(route.route)
       |> Path.split()

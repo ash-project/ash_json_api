@@ -16,7 +16,7 @@ defmodule AshJsonApi.Test do
       :get
       |> conn(path)
       |> set_accept_request_header(opts)
-      |> AshJsonApi.router(api).call(AshJsonApi.router(api).init([]))
+      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
 
     assert result.state == :sent
 
@@ -43,7 +43,7 @@ defmodule AshJsonApi.Test do
       |> conn(path, Jason.encode!(body))
       |> set_content_type_request_header(opts)
       |> set_accept_request_header(opts)
-      |> AshJsonApi.router(api).call(AshJsonApi.router(api).init([]))
+      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
 
     assert result.state == :sent
 
@@ -73,7 +73,7 @@ defmodule AshJsonApi.Test do
       |> conn(path, Jason.encode!(body))
       |> set_content_type_request_header(opts)
       |> set_accept_request_header(opts)
-      |> AshJsonApi.router(api).call(AshJsonApi.router(api).init([]))
+      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
 
     assert result.state == :sent
 

@@ -31,9 +31,9 @@ defmodule AshJsonApi.Error.NotFound do
           end
         end)
 
-      "No #{AshJsonApi.Resource.type(resource)} record found with `#{filter}`"
+      "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{filter}`"
     else
-      "No #{AshJsonApi.Resource.type(resource)} record found with `#{inspect(filter)}`"
+      "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{inspect(filter)}`"
     end
   end
 end

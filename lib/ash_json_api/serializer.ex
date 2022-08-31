@@ -120,7 +120,7 @@ defmodule AshJsonApi.Serializer do
   defp serialize_relationship_data(record, source_record, relationship) do
     %{
       id: record.id,
-      type: AshJsonApi.Resource.type(relationship.destination)
+      type: AshJsonApi.Resource.Info.type(relationship.destination)
     }
     |> add_relationship_meta(record, source_record, relationship)
   end
@@ -389,7 +389,7 @@ defmodule AshJsonApi.Serializer do
   defp serialize_one_record(request, %resource{} = record) do
     %{
       id: AshJsonApi.Resource.encode_primary_key(record),
-      type: AshJsonApi.Resource.type(resource),
+      type: AshJsonApi.Resource.Info.type(resource),
       attributes: serialize_attributes(request, record),
       relationships: serialize_relationships(request, record),
       links: %{} |> add_one_record_self_link(request, record)
@@ -494,7 +494,7 @@ defmodule AshJsonApi.Serializer do
   defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
     case record do
       %{__linkage__: %{^name => [%{id: id}]}} ->
-        Map.put(payload, :data, %{id: id, type: AshJsonApi.Resource.type(destination)})
+        Map.put(payload, :data, %{id: id, type: AshJsonApi.Resource.Info.type(destination)})
 
       # There could be another case here if a bug in the system gave us a list
       # of more than one shouldn't happen though
@@ -511,7 +511,7 @@ defmodule AshJsonApi.Serializer do
        ) do
     case record do
       %{__linkage__: %{^name => linkage}} ->
-        type = AshJsonApi.Resource.type(destination)
+        type = AshJsonApi.Resource.Info.type(destination)
 
         Map.put(
           payload,

@@ -77,7 +77,7 @@ defmodule AshJsonApi.Request do
       schema: AshJsonApi.JsonSchema.route_schema(route, api, resource),
       relationship: route.relationship,
       route: route,
-      json_api_prefix: AshJsonApi.prefix(api)
+      json_api_prefix: AshJsonApi.Api.Info.prefix(api)
     }
     |> validate_params()
     |> validate_href_schema()
@@ -95,7 +95,11 @@ defmodule AshJsonApi.Request do
   end
 
   def load_opts(request) do
-    [actor: request.actor, authorize?: AshJsonApi.authorize?(request.api), tenant: request.tenant]
+    [
+      actor: request.actor,
+      authorize?: AshJsonApi.Api.Info.authorize?(request.api),
+      tenant: request.tenant
+    ]
   end
 
   def opts(request, merge \\ []) do
@@ -103,7 +107,7 @@ defmodule AshJsonApi.Request do
 
     opts = [
       actor: request.actor,
-      authorize?: AshJsonApi.authorize?(request.api),
+      authorize?: AshJsonApi.Api.Info.authorize?(request.api),
       tenant: request.tenant
     ]
 
@@ -334,7 +338,7 @@ defmodule AshJsonApi.Request do
     Enum.reduce(fields, request, fn {type, fields}, request ->
       request.api
       |> Ash.Api.Info.resources()
-      |> Enum.find(&(AshJsonApi.Resource.type(&1) == type))
+      |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
       |> case do
         nil ->
           add_error(request, InvalidType.new(type: type), request.route.type)
@@ -367,7 +371,7 @@ defmodule AshJsonApi.Request do
   end
 
   defp add_fields(request, resource, fields, parameter?) do
-    type = AshJsonApi.Resource.type(resource)
+    type = AshJsonApi.Resource.Info.type(resource)
 
     fields
     |> String.split(",")

@@ -6,25 +6,19 @@ defmodule AshJsonApi do
 
   For Resource DSL documentation, see `AshJsonApi.Resource`
   """
-  alias Spark.Dsl.Extension
 
-  def prefix(api) do
-    Extension.get_opt(api, [:json_api], :prefix, nil, true)
-  end
+  @deprecated "See `AshJsonApi.Api.Info.prefix/1`"
+  defdelegate prefix(api), to: AshJsonApi.Api.Info
 
-  def serve_schema?(api) do
-    Extension.get_opt(api, [:json_api], :serve_schema?, false, true)
-  end
+  @deprecated "See `AshJsonApi.Api.Info.serve_schema?/1`"
+  defdelegate serve_schema?(api), to: AshJsonApi.Api.Info
 
-  def authorize?(api) do
-    Extension.get_opt(api, [:json_api], :authorize?, true, true)
-  end
+  @deprecated "See `AshJsonApi.Api.Info.authorize?/1`"
+  defdelegate authorize?(api), to: AshJsonApi.Api.Info
 
-  def log_errors?(api) do
-    Extension.get_opt(api, [:json_api], :log_errors?, false, true)
-  end
+  @deprecated "See `AshJsonApi.Api.Info.log_errors?/1`"
+  defdelegate log_errors?(api), to: AshJsonApi.Api.Info
 
-  def router(api) do
-    Extension.get_opt(api, [:json_api], :router, nil, false)
-  end
+  @deprecated "See `AshJsonApi.Api.Info.router/1`"
+  defdelegate router(api), to: AshJsonApi.Api.Info
 end

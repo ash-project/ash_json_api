@@ -4,8 +4,8 @@ defmodule AshJsonApi.Api.Router do
     quote bind_quoted: [opts: opts] do
       api = opts[:api] || raise "Api option must be provided"
       registry = opts[:registry] || raise "registry option must be provided"
-      prefix = AshJsonApi.prefix(api)
-      serve_schema? = AshJsonApi.serve_schema?(api)
+      prefix = AshJsonApi.Api.Info.prefix(api)
+      serve_schema? = AshJsonApi.Api.Info.serve_schema?(api)
       resources = Ash.Registry.Info.entries(registry)
 
       use Plug.Router
@@ -63,7 +63,7 @@ defmodule AshJsonApi.Api.Router do
   @doc false
   def routes(resource) do
     resource
-    |> AshJsonApi.Resource.routes()
+    |> AshJsonApi.Resource.Info.routes()
     |> Enum.sort(fn left, right ->
       left_path = Path.split(left.route)
       right_path = Path.split(right.route)
