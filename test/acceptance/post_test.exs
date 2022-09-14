@@ -92,7 +92,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.PostTest.Author, required?: false)
+      belongs_to(:author, Test.Acceptance.PostTest.Author, allow_nil?: true)
     end
   end
 

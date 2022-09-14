@@ -86,7 +86,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.BelongsToRequiredTest.Author, required?: true)
+      belongs_to(:author, Test.Acceptance.BelongsToRequiredTest.Author, allow_nil?: false)
     end
   end
 
