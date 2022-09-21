@@ -101,7 +101,9 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       result
       |> Ash.Changeset.new()
-      |> Ash.Changeset.append_to_relationship(relationship_name, request.resource_identifiers)
+      |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
+        type: :append
+      )
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> api.update()
       |> api.load(fields(request, request.resource))
@@ -123,7 +125,9 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       result
       |> Ash.Changeset.new()
-      |> Ash.Changeset.replace_relationship(relationship_name, request.resource_identifiers)
+      |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
+        type: :append_and_remove
+      )
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> api.update()
       |> api.load(fields(request, request.resource))
@@ -145,7 +149,9 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       result
       |> Ash.Changeset.new()
-      |> Ash.Changeset.remove_from_relationship(relationship_name, request.resource_identifiers)
+      |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
+        type: :remove
+      )
       |> Ash.Changeset.for_update(action, Request.opts(request))
       |> api.update()
       |> api.load(fields(request, request.resource))

@@ -134,7 +134,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Ash.Changeset.replace_relationship(:author, author)
+        |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
         |> Api.create!()
 
       assert %{
@@ -160,7 +160,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Ash.Changeset.replace_relationship(:author, author)
+        |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
         |> Api.create!()
 
       Api

@@ -68,7 +68,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         accept([:id, :name, :hidden])
         argument(:author, :uuid)
 
-        change(manage_relationship(:author, type: :replace))
+        change(manage_relationship(:author, type: :append_and_remove))
       end
     end
 

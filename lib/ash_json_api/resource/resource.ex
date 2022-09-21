@@ -83,7 +83,7 @@ defmodule AshJsonApi.Resource do
     update :update do
       argument :authors, {:array, :map}, allow_nil?: false
 
-      change manage_relationship(:authors, type: :replace) # Use the authors argument to allow changing the related authors on update
+      change manage_relationship(:authors, type: :append_and_remove) # Use the authors argument to allow changing the related authors on update
     end
   end
   ```

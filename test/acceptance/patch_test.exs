@@ -72,7 +72,7 @@ defmodule Test.Acceptance.PatchTest do
         accept([:id, :email])
         argument(:author, :map)
 
-        change(manage_relationship(:author, type: :replace))
+        change(manage_relationship(:author, type: :append_and_remove))
       end
     end
 
