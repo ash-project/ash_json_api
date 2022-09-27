@@ -38,9 +38,18 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def fetch_records(request) do
     chain(request, fn request ->
+      filter =
+        case request.filter do
+          empty when empty in [%{}, nil] ->
+            nil
+
+          other ->
+            other
+        end
+
       request.resource
       |> Ash.Query.load(request.includes_keyword)
-      |> Ash.Query.filter(^request.filter)
+      |> Ash.Query.do_filter(filter)
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.for_read(request.action.name, request.arguments, Request.opts(request))

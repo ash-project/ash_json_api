@@ -142,7 +142,7 @@ defmodule AshJsonApi.MixProject do
     [
       sobelow: "sobelow --skip",
       credo: "credo --strict",
-      "ash.formatter": "ash.formatter --extensions AshJsonApi.Resource,AshJsonApi.Api"
+      "spark.formatter": "spark.formatter --extensions AshJsonApi.Resource,AshJsonApi.Api"
     ]
   end
 end
