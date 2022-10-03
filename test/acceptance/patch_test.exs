@@ -64,7 +64,7 @@ defmodule Test.Acceptance.PatchTest do
 
       create :create do
         primary? true
-        accept([:id, :name, :hidden])
+        accept([:id, :name])
       end
 
       update :update do
