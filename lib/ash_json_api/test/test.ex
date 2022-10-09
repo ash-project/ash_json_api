@@ -97,6 +97,32 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  def delete(api, path, opts \\ []) do
+    result =
+      :delete
+      |> conn(path)
+      |> set_accept_request_header(opts)
+      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
+
+    assert result.state == :sent
+
+    unless opts[:skip_resp_header_check] do
+      if 200 <= result.status and result.status <= 300 do
+        assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+      end
+    end
+
+    if opts[:status] do
+      assert result.status == opts[:status]
+    end
+
+    if Keyword.get(opts, :decode?, true) do
+      %{result | resp_body: Jason.decode!(result.resp_body)}
+    else
+      result
+    end
+  end
+
   defmacro assert_data_equals(conn, expected_data) do
     quote bind_quoted: [conn: conn, expected_data: expected_data] do
       assert %{"data" => ^expected_data} = conn.resp_body
