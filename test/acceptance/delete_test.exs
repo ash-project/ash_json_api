@@ -88,8 +88,7 @@ defmodule Test.Acceptance.DeleteTest do
     end
   end
 
-  @tag :attributes
-  describe "attributes" do
+  describe "found" do
     setup do
       post =
         Post
@@ -100,13 +99,7 @@ defmodule Test.Acceptance.DeleteTest do
       %{post: post}
     end
 
-    test "string attributes are rendered properly", %{post: post} do
-      Api
-      |> delete("/posts/#{post.id}", status: 200)
-    end
-
-    @tag :attributes
-    test "private attributes are not rendered in the payload", %{post: post} do
+    test "delete responds with 200", %{post: post} do
       Api
       |> delete("/posts/#{post.id}", status: 200)
     end
