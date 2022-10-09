@@ -179,7 +179,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def destroy_record(request) do
     chain(request, fn %{api: api, assigns: %{result: result}} = request ->
       result
-      |> Ash.Changeset.for_destroy(%{}, Request.opts(request))
+      |> Ash.Changeset.for_destroy(request.action.name, %{}, Request.opts(request))
       |> api.destroy()
       |> case do
         :ok ->
