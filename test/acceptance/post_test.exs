@@ -62,6 +62,12 @@ defmodule Test.Acceptance.PostTest do
         get(:read)
         index(:read)
         post(:create, relationship_arguments: [:author])
+
+        post(:accepts_email,
+          upsert?: true,
+          upsert_identity: :unique_email,
+          route: "/upsert_by_email"
+        )
       end
     end
 
@@ -76,6 +82,14 @@ defmodule Test.Acceptance.PostTest do
 
         change(manage_relationship(:author, type: :append_and_remove))
       end
+
+      create :accepts_email do
+        accept([:name, :email])
+      end
+    end
+
+    identities do
+      identity(:unique_email, [:email], pre_check_with: Test.Acceptance.PostTest.Api)
     end
 
     attributes do
@@ -167,6 +181,27 @@ defmodule Test.Acceptance.PostTest do
       })
       |> assert_attribute_equals("email", nil)
     end
+  end
+
+  describe "post with upsert" do
+    post =
+      Api.create!(
+        Ash.Changeset.for_create(Post, :create, %{name: "Post"})
+        |> Ash.Changeset.force_change_attribute(:email, "foo@bar.com")
+      )
+
+    Api
+    |> post("/posts/upsert_by_email", %{
+      data: %{
+        type: "post",
+        attributes: %{
+          name: "New Post",
+          email: post.email
+        }
+      }
+    })
+    |> assert_attribute_equals("name", "New Post")
+    |> assert_id_equals(post.id)
   end
 
   describe "post_email_id_exception" do

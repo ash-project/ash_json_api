@@ -65,14 +65,30 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def create_record(request) do
-    chain(request, fn %{api: api, resource: resource} ->
+    chain(request, fn %{api: api, resource: resource} = request ->
+      opts =
+        if request.route.upsert? do
+          if request.route.upsert_identity do
+            [
+              upsert?: true,
+              upsert_identity: request.route.upsert_identity
+            ]
+          else
+            [
+              upsert?: true
+            ]
+          end
+        else
+          []
+        end
+
       resource
       |> Ash.Changeset.for_create(
         request.action.name,
         Map.merge(request.attributes, request.arguments),
         Request.opts(request)
       )
-      |> api.create()
+      |> api.create(opts)
       |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
         {:ok, record} ->

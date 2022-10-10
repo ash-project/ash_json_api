@@ -136,6 +136,16 @@ defmodule AshJsonApi.Test do
   defmacro assert_attribute_equals(conn, attribute, expected_value) do
     quote bind_quoted: [attribute: attribute, expected_value: expected_value, conn: conn] do
       assert %{"data" => %{"attributes" => %{^attribute => ^expected_value}}} = conn.resp_body
+
+      conn
+    end
+  end
+
+  defmacro assert_id_equals(conn, expected_value) do
+    quote bind_quoted: [expected_value: expected_value, conn: conn] do
+      assert %{"data" => %{"id" => ^expected_value}} = conn.resp_body
+
+      conn
     end
   end
 

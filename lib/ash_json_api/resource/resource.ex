@@ -137,10 +137,18 @@ defmodule AshJsonApi.Resource do
     schema:
       @route_schema
       |> Spark.OptionsHelpers.set_default!(:route, "/")
-      |> Keyword.put(:relationship_arguments,
-        type: :any,
-        doc: @relationship_arguments_doc,
-        default: []
+      |> Keyword.merge(
+        relationship_arguments: [type: :any, doc: @relationship_arguments_doc, default: []],
+        upsert?: [
+          type: :boolean,
+          default: false,
+          doc: "Whether or not to use the `upsert?: true` option when calling `YourApi.create/2`."
+        ],
+        upsert_identity: [
+          type: :atom,
+          default: false,
+          doc: "Which identity to use for the upsert"
+        ]
       ),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
