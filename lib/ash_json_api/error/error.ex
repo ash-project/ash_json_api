@@ -24,8 +24,9 @@ defmodule AshJsonApi.Error do
     Enum.flat_map(errors, &to_json_api_errors(resource, &1, type))
   end
 
-  def to_json_api_errors(resource, %Unknown{error: error, errors: errors}, type) do
-    to_json_api_errors(resource, List.flatten(List.wrap(error)) ++ errors, type)
+  def to_json_api_errors(resource, %Unknown{errors: errors} = unknown, type) do
+    inner_errors = List.flatten(List.wrap(Map.get(unknown, :error)))
+    to_json_api_errors(resource, inner_errors ++ errors, type)
   end
 
   def to_json_api_errors(resource, %mod{errors: errors}, type)
