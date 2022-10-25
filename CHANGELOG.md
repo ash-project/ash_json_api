@@ -5,6 +5,25 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.30.1](https://github.com/ash-project/ash_json_api/compare/v0.30.0-rc.4...v0.30.1) (2022-10-25)
+
+
+
+
+### Bug Fixes:
+
+* handle newer version of ash w/ `Unknown` error changes
+
+* delete status-code response (#57)
+
+* proper action when deleting
+
+### Improvements:
+
+* update to ash 2.0
+
+* support upsert? and upsert_identity? on post
+
 ## [v0.30.0-rc.4](https://github.com/ash-project/ash_json_api/compare/v0.30.0-rc.3...v0.30.0-rc.4) (2022-09-28)
 
 
