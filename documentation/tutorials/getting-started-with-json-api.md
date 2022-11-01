@@ -9,7 +9,7 @@ To add a JSON API, we need to do the following things:
 
 1. Add the `:ash_json_api` package to your dependencies.
 2. Add the JSON API extension to your `Ash.Resource` and `Ash.Api` modules.
-3. Tell Ash which Resource actions to via the API.
+3. Tell Ash which Resource actions expose over via the API.
 4. Add a custom media type as specified by https://jsonapi.org/.
 5. Create a router module
 6. Make your router available in your applications main router.
