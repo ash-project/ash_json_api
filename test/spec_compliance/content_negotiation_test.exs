@@ -207,7 +207,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       post(Api, "/posts", @create_body,
         req_content_type_header:
           "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test",
-        status: 415
+        status: 406
       )
     end
 
@@ -220,7 +220,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     test "request Content-Type header is a valid media type other than JSON:API" do
       post(Api, "/posts", @create_body,
         req_content_type_header: "application/vnd.api+json; charset=\"utf-8\"",
-        status: 415
+        status: 406
       )
     end
   end
@@ -270,7 +270,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       get(Api, "/posts/#{post.id}",
         req_accept_header:
           "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test",
-        status: 406
+        status: 415
       )
     end
 
@@ -289,7 +289,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
     test "request Accept header is a valid media type other than JSON:API", %{post: post} do
       get(Api, "/posts/#{post.id}",
         req_accept_header: "application/vnd.api+json; charset=\"utf-8\"",
-        status: 406
+        status: 415
       )
     end
   end
