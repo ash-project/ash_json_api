@@ -53,7 +53,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.for_read(request.action.name, request.arguments, Request.opts(request))
-      |> request.api.read()
+      |> request.api.read(Request.opts(request))
       |> case do
         {:ok, result} ->
           Request.assign(request, :result, result)
