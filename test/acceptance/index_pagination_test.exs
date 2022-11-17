@@ -23,10 +23,11 @@ defmodule Test.Acceptance.IndexPaginationTest do
     end
 
     actions do
-      defaults [:create, :update, :destroy]
+      defaults([:create, :update, :destroy])
+
       read :read do
         primary? true
-        pagination offset?: true, required?: true, countable: true, default_limit: 5
+        pagination(offset?: true, required?: true, countable: true, default_limit: 5)
       end
     end
 
@@ -68,36 +69,41 @@ defmodule Test.Acceptance.IndexPaginationTest do
 
   describe "index endpoint with pagination" do
     setup do
-      posts = Enum.each(1..10, fn i ->
-        Post
-        |> Ash.Changeset.for_create(:create, %{name: "foo_#{i}"})
-        |> Api.create!()
-      end)
+      posts =
+        Enum.each(1..10, fn i ->
+          Post
+          |> Ash.Changeset.for_create(:create, %{name: "foo_#{i}"})
+          |> Api.create!()
+        end)
 
       %{posts: posts}
     end
 
     test "returns a list of posts - default limit" do
-      response = Api
+      response =
+        Api
         |> get("/posts", status: 200)
+
       data = response.resp_body["data"]
       assert length(data) == 5
     end
 
     test "returns a list of posts - pagination limit" do
-      response = Api
+      response =
+        Api
         |> get("/posts?page[limit]=1", status: 200)
+
       data = response.resp_body["data"]
       assert length(data) == 1
     end
 
     test "returns a list of posts - pagination limit + offset" do
-      response = Api
+      response =
+        Api
         |> get("/posts?page[offset]=5&page[limit]=10", status: 200)
+
       data = response.resp_body["data"]
       assert length(data) == 5
     end
-
   end
-
 end
