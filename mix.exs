@@ -119,6 +119,7 @@ defmodule AshJsonApi.MixProject do
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
+      {:open_api_spex, "~> 3.16", optional: true},
       {:git_ops, "~> 2.4", only: :dev},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
       {:ex_check, "~> 0.12.0", only: :dev},

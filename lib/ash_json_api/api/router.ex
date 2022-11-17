@@ -2,10 +2,12 @@ defmodule AshJsonApi.Api.Router do
   @moduledoc false
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
+      @before_compile AshJsonApi.Api.Router
       api = opts[:api] || raise "Api option must be provided"
       registry = opts[:registry] || raise "registry option must be provided"
       prefix = AshJsonApi.Api.Info.prefix(api)
       serve_schema? = AshJsonApi.Api.Info.serve_schema?(api)
+      open_api = AshJsonApi.Api.Info.open_api(api)
       resources = Ash.Registry.Info.entries(registry)
 
       use Plug.Router
@@ -56,6 +58,18 @@ defmodule AshJsonApi.Api.Router do
         )
       end
 
+      if open_api do
+        match("/openapi",
+          via: :get,
+          to: AshJsonApi.Controllers.OpenApi,
+          init_opts: [open_api: open_api]
+        )
+      end
+    end
+  end
+
+  defmacro __before_compile__(_env) do
+    quote do
       match(_, to: AshJsonApi.Controllers.NoRouteFound)
     end
   end

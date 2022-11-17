@@ -824,7 +824,8 @@ defmodule AshJsonApi.JsonSchema do
     end
   end
 
-  defp route_href(route, api) do
+  @doc false
+  def route_href(route, api) do
     {path, path_params} =
       api
       |> AshJsonApi.Api.Info.prefix()
