@@ -28,6 +28,11 @@ defmodule AshJsonApi.Api do
         doc: "Whether or not create a /schema route that serves the JSON schema of your API",
         default: false
       ],
+      serve_open_api?: [
+        type: :boolean,
+        doc: "Whether or not create a /openapi route that serves the OpenAPI schema of your API",
+        default: false
+      ],
       authorize?: [
         type: :boolean,
         doc: "Whether or not to perform authorization for this API",

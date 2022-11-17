@@ -10,6 +10,10 @@ defmodule AshJsonApi.Api.Info do
     Extension.get_opt(api, [:json_api], :serve_schema?, false, true)
   end
 
+  def serve_open_api?(api) do
+    Extension.get_opt(api, [:json_api], :serve_open_api?, false, true)
+  end
+
   def authorize?(api) do
     Extension.get_opt(api, [:json_api], :authorize?, true, true)
   end

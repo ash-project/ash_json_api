@@ -6,6 +6,7 @@ defmodule AshJsonApi.Api.Router do
       registry = opts[:registry] || raise "registry option must be provided"
       prefix = AshJsonApi.Api.Info.prefix(api)
       serve_schema? = AshJsonApi.Api.Info.serve_schema?(api)
+      serve_open_api? = AshJsonApi.Api.Info.serve_open_api?(api)
       resources = Ash.Registry.Info.entries(registry)
 
       use Plug.Router
@@ -52,7 +53,15 @@ defmodule AshJsonApi.Api.Router do
         match("/schema",
           via: :get,
           to: AshJsonApi.Controllers.Schema,
-          init_opts: [api: api]
+          init_opts: [api: api, format: :json_schema]
+        )
+      end
+
+      if serve_open_api? do
+        match("/openapi",
+          via: :get,
+          to: AshJsonApi.Controllers.Schema,
+          init_opts: [api: api, format: :open_api]
         )
       end
 
