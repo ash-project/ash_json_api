@@ -360,7 +360,7 @@ defmodule AshJsonApi.Resource do
     examples: [
       """
       routes do
-        base_route "/posts"
+        base "/posts"
 
         get :read
         get :me, route: "/me"
@@ -431,7 +431,7 @@ defmodule AshJsonApi.Resource do
         ]
 
         routes do
-          base_route "/posts"
+          base "/posts"
 
           get :read
           get :me, route: "/me"

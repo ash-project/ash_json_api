@@ -9,6 +9,7 @@ defmodule AshJsonApi.Api do
       json_api do
         prefix "/json_api"
         serve_schema? true
+        open_api MyApp.OpenApi
         log_errors? true
       end
       """
@@ -27,6 +28,11 @@ defmodule AshJsonApi.Api do
         type: :boolean,
         doc: "Whether or not create a /schema route that serves the JSON schema of your API",
         default: false
+      ],
+      open_api: [
+        type: {:spark_behaviour, OpenApiSpex.OpenApi},
+        doc: "Serve an OpenAPI spec at /openapi generated from the given OpenApi module",
+        default: nil
       ],
       authorize?: [
         type: :boolean,
