@@ -116,7 +116,7 @@ defmodule AshJsonApi.JsonSchema do
       "required" => ["type", "id"],
       "properties" => %{
         "type" => %{
-          "additionalProperties" => false
+          "type" => "string"
         },
         "id" => %{
           "type" => "string"
@@ -342,7 +342,7 @@ defmodule AshJsonApi.JsonSchema do
     %{
       "oneOf" => [
         %{"type" => "integer"},
-        %{"type" => "string", "pattern" => "^[1-9][0-9]*$"}
+        %{"type" => "string", "pattern" => "^0|([1-9][0-9]*)$"}
       ]
     }
   end
@@ -483,11 +483,11 @@ defmodule AshJsonApi.JsonSchema do
     %{
       "limit" => %{
         "type" => "string",
-        "pattern" => "^[1-9][0-9]*$"
+        "pattern" => "^0|([1-9][0-9]*)$"
       },
       "offset" => %{
         "type" => "string",
-        "pattern" => "^[1-9][0-9]*$"
+        "pattern" => "^0|([1-9][0-9]*)$"
       }
     }
   end
@@ -549,7 +549,7 @@ defmodule AshJsonApi.JsonSchema do
           %{
             "oneOf" => [
               %{"type" => "integer"},
-              %{"type" => "string", "pattern" => "^[1-9][0-9]*$"}
+              %{"type" => "string", "pattern" => "^0|([1-9][0-9]*)$"}
             ]
           }
 
@@ -559,9 +559,10 @@ defmodule AshJsonApi.JsonSchema do
             "format" => "date-time"
           }
 
-        {:array, _type} ->
+        {:array, type} ->
           %{
-            "type" => "any"
+            "type" => "array",
+            "items" => attribute_filter_schema(type)
           }
 
         _ ->
