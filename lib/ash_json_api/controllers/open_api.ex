@@ -6,7 +6,7 @@ defmodule AshJsonApi.Controllers.OpenApi do
 
   # sobelow_skip ["XSS.SendResp"]
   def call(conn, opts) do
-    {mod, _opts}= opts[:open_api]
+    {mod, _opts} = opts[:open_api]
 
     spec =
       mod.spec()
