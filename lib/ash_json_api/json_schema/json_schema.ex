@@ -673,12 +673,20 @@ defmodule AshJsonApi.JsonSchema do
          resource
        )
        when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
-    resource
-    |> Ash.Resource.Info.public_relationship(relationship)
-    |> relationship_resource_identifiers()
+    case Ash.Resource.Info.public_relationship(resource, relationship) do
+      nil ->
+        raise ArgumentError, """
+        Expected resource  #{resource} to define relationship #{relationship} of type #{type}
+
+        Please verify all json_api relationship routes have relationships
+        """
+
+      other ->
+        relationship_resource_identifiers(other)
+    end
   end
 
-  defp relationship_resource_identifiers(relationship) do
+  defp relationship_resource_identifiers(relationship) when is_map(relationship) do
     %{
       "type" => "object",
       "required" => ["data"],
