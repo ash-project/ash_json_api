@@ -54,6 +54,12 @@ defmodule AshJsonApi.Api.Router do
           to: AshJsonApi.Controllers.Schema,
           init_opts: [api: api]
         )
+
+        match("/schema.json",
+          via: :get,
+          to: AshJsonApi.Controllers.Schema,
+          init_opts: [api: api]
+        )
       end
 
       match(_, to: AshJsonApi.Controllers.NoRouteFound)
