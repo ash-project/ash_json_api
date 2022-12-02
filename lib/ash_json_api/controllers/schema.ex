@@ -14,6 +14,7 @@ defmodule AshJsonApi.Controllers.Schema do
       |> Jason.encode!()
 
     conn
+    |> Plug.Conn.put_resp_content_type("application/schema+json")
     |> Plug.Conn.send_resp(200, schema)
     |> Plug.Conn.halt()
   end
