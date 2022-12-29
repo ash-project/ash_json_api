@@ -5,6 +5,29 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.31.0](https://github.com/ash-project/ash_json_api/compare/v0.30.1...v0.31.0) (2022-12-29)
+### Breaking Changes:
+
+* Status should be a string from json:api documentation (#67)
+
+
+
+### Features:
+
+* Ash.PlugHelpers: Support standard actor/tenant configuration. (#58)
+
+### Bug Fixes:
+
+* properly send 415/406 errors
+
+### Improvements:
+
+* Serve schema with json content-type (#65)
+
+* update ash
+
+* use new docs
+
 ## [v0.30.1](https://github.com/ash-project/ash_json_api/compare/v0.30.0-rc.4...v0.30.1) (2022-10-25)
 
 
