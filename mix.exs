@@ -92,6 +92,29 @@ defmodule AshJsonApi.MixProject do
       source_ref: "v#{@version}",
       extras: extras(),
       groups_for_extras: groups_for_extras(),
+      spark: [
+        extensions: [
+          %{
+            module: AshJsonApi.Resource,
+            name: "AshJsonApi Resource",
+            target: "Ash.Resource",
+            type: "JSON:API Resource"
+          },
+          %{
+            module: AshJsonApi.Api,
+            name: "AshJsonApi Api",
+            target: "Ash.Api",
+            type: "JSON:API Api"
+          }
+        ]
+      ],
+      groups_for_modules: [
+        Introspection: [
+          AshJsonApi.Resource.Info,
+          AshJsonApi.Api.Info
+        ],
+        Internals: ~r/.*/
+      ],
       logo: "logos/small-logo.png"
     ]
   end
