@@ -31,7 +31,7 @@ defmodule AshJsonApi.Api do
       ],
       open_api: [
         type: {:spark_behaviour, OpenApiSpex.OpenApi},
-        doc: "Serve an OpenAPI spec at /openapi generated from the given OpenApi module",
+        doc: "Serve an OpenAPI spec at /openapi generated from the given OpenApi module"
       ],
       authorize?: [
         type: :boolean,
