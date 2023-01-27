@@ -241,42 +241,104 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   describe "Get route" do
-    test "id parameter" do
-      flunk "TODO"
+    test "id parameter", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Parameter{} = filter = operation.parameters |> Enum.find(& &1.name == "id")
+      assert filter.in == :path
+      assert filter.required == true
+      assert filter.style == :nil
+      %Schema{} = schema = filter.schema
+      assert schema.type == :string
     end
 
-    test "include parameter" do
-      flunk "TODO"
+    test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Parameter{} = include = operation.parameters |> Enum.find(& &1.name == :include)
+      assert include.in == :query
+      assert include.required == false
+      assert include.style == :form
+      assert include.explode == false
+      %Schema{} = schema = include.schema
+      assert schema.type == :array
+      assert schema.items.type == :string
+      assert schema.items.pattern |> is_struct(Regex)
+      assert Regex.match?(schema.items.pattern, "author")
+      refute Regex.match?(schema.items.pattern, "000")
+      refute Regex.match?(schema.items.pattern, "a b c")
     end
 
-    test "fields parameter" do
-      flunk "TODO"
+    test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(& &1.name == :fields)
+      assert fields.in == :query
+      assert fields.required == false
+      assert fields.style == :deepObject
+      %Schema{} = schema = fields.schema
+      assert schema.type == :object
+      assert schema.additionalProperties
+      assert schema.properties.post.type == :string
+      assert schema.properties.post.description =~ "field names for post"
     end
 
-    test "Has no request body" do
-      flunk "TODO"
+    test "Has no request body", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      refute operation.requestBody
     end
 
-    test "Response body schema" do
-      flunk "TODO"
+    @tag :focus
+    test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      response = operation.responses[200]
+      schema = response.content["application/vnd.api+json"].schema
+      assert schema.properties.data.'$ref' == "#/components/schemas/post"
     end
   end
 
   describe "Create route" do
-    test "include parameter" do
-      flunk "TODO"
+    test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      %OpenApiSpex.Parameter{} = include = operation.parameters |> Enum.find(& &1.name == :include)
+      assert include.in == :query
+      assert include.required == false
+      assert include.style == :form
+      assert include.explode == false
+      %Schema{} = schema = include.schema
+      assert schema.type == :array
+      assert schema.items.type == :string
+      assert schema.items.pattern |> is_struct(Regex)
+      assert Regex.match?(schema.items.pattern, "author")
+      refute Regex.match?(schema.items.pattern, "000")
+      refute Regex.match?(schema.items.pattern, "a b c")
     end
 
-    test "fields parameter" do
-      flunk "TODO"
+    test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(& &1.name == :fields)
+      assert fields.in == :query
+      assert fields.required == false
+      assert fields.style == :deepObject
+      %Schema{} = schema = fields.schema
+      assert schema.type == :object
+      assert schema.additionalProperties
+      assert schema.properties.post.type == :string
+      assert schema.properties.post.description =~ "field names for post"
     end
 
-    test "Request body schema" do
-      flunk "TODO"
+    test "Request body schema", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      %OpenApiSpex.RequestBody{} = body = operation.requestBody
+      schema = body.content["application/vnd.api+json"].schema
+      assert schema.properties.data.type == :object
+      assert schema.properties.data.properties.attributes.required == [:name]
+      assert schema.properties.data.properties.attributes.type == :object
     end
 
-    test "Response body schema" do
-      flunk "TODO"
+    @tag :focus
+    test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      response = operation.responses[200]
+      schema = response.content["application/vnd.api+json"].schema
+      assert schema.properties.data.'$ref' == "#/components/schemas/post"
     end
   end
 end
