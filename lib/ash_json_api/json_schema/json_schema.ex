@@ -49,10 +49,6 @@ defmodule AshJsonApi.JsonSchema do
   def route_schema(route, api, resource) do
     {href, properties} = route_href(route, api)
 
-    unless properties == [] or properties == ["id"] do
-      raise "Haven't figured out more complex route parameters yet."
-    end
-
     {href_schema, query_param_string} = href_schema(route, api, resource, properties)
 
     %{
@@ -377,22 +373,16 @@ defmodule AshJsonApi.JsonSchema do
         {prop, %{"type" => "string"}}
       end)
 
-    case query_param_properties(route, api, resource) do
-      nil ->
-        {%{
-           "required" => required_properties,
-           "properties" => base_properties
-         }, ""}
+    {query_param_properties, query_param_string, required} =
+      query_param_properties(route, api, resource, required_properties)
 
-      {query_param_properties, query_param_string, required} ->
-        {%{
-           "required" => required_properties ++ required,
-           "properties" => Map.merge(query_param_properties, base_properties)
-         }, query_param_string}
-    end
+    {%{
+       "required" => required_properties ++ required,
+       "properties" => Map.merge(query_param_properties, base_properties)
+     }, query_param_string}
   end
 
-  defp query_param_properties(%{type: :index} = route, api, resource) do
+  defp query_param_properties(%{type: :index} = route, api, resource, properties) do
     %{
       "filter" => %{
         "type" => "object",
@@ -411,16 +401,19 @@ defmodule AshJsonApi.JsonSchema do
         "format" => include_format(resource)
       }
     }
+    |> Map.merge(Map.new(properties, &{&1, %{"type" => "any"}}))
     |> add_read_arguments(route, resource)
     |> with_keys()
   end
 
-  defp query_param_properties(%{type: type}, _, _)
+  defp query_param_properties(%{type: type}, _, resource, properties)
        when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
-    nil
+    %{}
+    |> add_route_properties(resource, properties)
+    |> with_keys()
   end
 
-  defp query_param_properties(route, _api, resource) do
+  defp query_param_properties(route, _api, resource, properties) do
     props = %{
       "include" => %{
         "type" => "string",
@@ -430,11 +423,25 @@ defmodule AshJsonApi.JsonSchema do
 
     if route.type in [:get, :related] do
       props
+      |> add_route_properties(resource, properties)
       |> add_read_arguments(route, resource)
       |> with_keys()
     else
       with_keys(props)
     end
+  end
+
+  defp add_route_properties(keys, resource, properties) do
+    Enum.reduce(properties, keys, fn property, keys ->
+      spec =
+        if attribute = Ash.Resource.Info.public_attribute(resource, property) do
+          resource_attribute_type(attribute)
+        else
+          %{"type" => "any"}
+        end
+
+      Map.put(keys, property, spec)
+    end)
   end
 
   defp add_read_arguments(props, route, resource) do
