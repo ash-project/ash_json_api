@@ -11,6 +11,7 @@ defmodule AshJsonApi.Resource.Route do
     :primary?,
     :upsert?,
     :upsert_identity,
+    :read_action,
     relationship_arguments: []
   ]
 

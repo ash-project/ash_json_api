@@ -207,14 +207,20 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  defp path_filter(path_params, resource) do
-    Enum.reduce(path_params, %{}, fn {key, value}, acc ->
-      case Ash.Resource.Info.public_attribute(resource, key) do
+  defp path_args_and_filter(path_params, resource, action) do
+    Enum.reduce(path_params, {%{}, %{}}, fn {key, value}, {params, filter} ->
+      case Enum.find(action.arguments, &(to_string(&1.name) == key)) do
         nil ->
-          acc
+          case Ash.Resource.Info.public_attribute(resource, key) do
+            nil ->
+              {params, filter}
 
-        attribute ->
-          Map.put(acc, attribute.name, value)
+            attribute ->
+              {params, Map.put(filter, attribute.name, value)}
+          end
+
+        argument ->
+          {Map.put(params, argument.name, value), filter}
       end
     end)
   end
@@ -223,14 +229,20 @@ defmodule AshJsonApi.Controllers.Helpers do
     chain(request, fn %{api: api, resource: request_resource} = request ->
       resource = through_resource || request_resource
 
-      filter = path_filter(request.path_params, resource)
-
       action =
         if through_resource || request.action.type != :read do
-          Ash.Resource.Info.primary_action!(resource, :read).name
+          if request.route.read_action do
+            Ash.Resource.Info.action(request.resource, request.route.read_action)
+          else
+            Ash.Resource.Info.primary_action!(resource, :read)
+          end
         else
-          request.action.name
+          request.action
         end
+
+      {params, filter} = path_args_and_filter(request.path_params, resource, action)
+
+      action = action.name
 
       fields_to_load =
         if through_resource do
@@ -239,12 +251,19 @@ defmodule AshJsonApi.Controllers.Helpers do
           fields(request, request.resource)
         end
 
-      resource
-      |> Ash.Query.filter(^filter)
+      query =
+        if filter do
+          resource
+          |> Ash.Query.filter(^filter)
+        else
+          resource
+        end
+
+      query
       |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
       |> Ash.Query.for_read(
         action,
-        request.arguments,
+        Map.merge(request.arguments, params),
         Keyword.put(Request.opts(request), :page, false)
       )
       |> api.read_one()

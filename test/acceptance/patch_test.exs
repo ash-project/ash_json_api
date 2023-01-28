@@ -56,6 +56,11 @@ defmodule Test.Acceptance.PatchTest do
         index :read
         post :create
         patch :update, relationship_arguments: [:author]
+
+        patch :update do
+          read_action(:by_name)
+          route("/by_name/:name")
+        end
       end
     end
 
@@ -73,6 +78,14 @@ defmodule Test.Acceptance.PatchTest do
         argument(:author, :map)
 
         change(manage_relationship(:author, type: :append_and_remove))
+      end
+
+      read :by_name do
+        argument :name, :string do
+          allow_nil?(false)
+        end
+
+        filter(expr(name == ^arg(:name)))
       end
     end
 
@@ -155,6 +168,35 @@ defmodule Test.Acceptance.PatchTest do
       Api
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_missing("hidden")
+    end
+  end
+
+  describe "routes" do
+    setup do
+      id = Ecto.UUID.generate()
+
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", hidden: "hidden", id: id})
+        |> Api.create!()
+
+      %{post: post}
+    end
+
+    test "allows using a different read action", %{post: post} do
+      response =
+        Api
+        |> patch("/posts/by_name/#{post.name}", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              email: "dummy@test.com"
+            }
+          }
+        })
+
+      assert %{"data" => %{"attributes" => %{"email" => email}}} = response.resp_body
+      assert email == "dummy@test.com"
     end
   end
 

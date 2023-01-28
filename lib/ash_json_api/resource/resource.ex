@@ -169,6 +169,11 @@ defmodule AshJsonApi.Resource do
     schema:
       @route_schema
       |> Spark.OptionsHelpers.set_default!(:route, "/:id")
+      |> Keyword.put(:read_action,
+        type: :atom,
+        default: nil,
+        doc: "The read action to use to look the record up before updating"
+      )
       |> Keyword.put(:relationship_arguments,
         type: :any,
         doc: @relationship_arguments_doc,
@@ -192,7 +197,12 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.set_default!(:route, "/:id"),
+      |> Spark.OptionsHelpers.set_default!(:route, "/:id")
+      |> Keyword.put(:read_action,
+        type: :atom,
+        default: nil,
+        doc: "The read action to use to look the record up before updating"
+      ),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :delete,
