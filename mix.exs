@@ -142,12 +142,12 @@ defmodule AshJsonApi.MixProject do
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4.0"},
-      {:git_ops, "~> 2.4", only: :dev},
-      {:ex_doc, "~> 0.23", only: :dev, runtime: false},
-      {:ex_check, "~> 0.12.0", only: :dev},
-      {:credo, ">= 0.0.0", only: :dev, runtime: false},
-      {:dialyxir, ">= 0.0.0", only: :dev, runtime: false},
-      {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
+      {:git_ops, "~> 2.4", only: [:dev, :test]},
+      {:ex_doc, "~> 0.23", only: [:dev, :test], runtime: false},
+      {:ex_check, "~> 0.12.0", only: [:dev, :test]},
+      {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.13.0", only: [:dev, :test]}
     ]
   end
