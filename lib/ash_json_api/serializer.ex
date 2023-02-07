@@ -607,8 +607,8 @@ defmodule AshJsonApi.Serializer do
             nil ->
               nil
 
-            type ->
-              type
+            attribute ->
+              attribute.type
           end
 
         cond do
