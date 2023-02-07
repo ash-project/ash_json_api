@@ -588,11 +588,34 @@ defmodule AshJsonApi.Serializer do
       else
         field = Ash.Resource.Info.field(resource, field)
 
+        type =
+          case field do
+            %Ash.Resource.Aggregate{} = agg ->
+              field_type =
+                if agg.field do
+                  related = Ash.Resource.Info.related(resource, agg.relationship_path)
+                  field = Ash.Resource.Info.field(related, agg.field)
+
+                  if field do
+                    field.type
+                  end
+                end
+
+              {:ok, type} = Ash.Query.Aggregate.kind_to_type(agg.kind, field_type)
+              type
+
+            nil ->
+              nil
+
+            type ->
+              type
+          end
+
         cond do
           !field ->
             acc
 
-          Ash.Type.embedded_type?(field.type) ->
+          Ash.Type.embedded_type?(type) ->
             Map.put(
               acc,
               field.name,
