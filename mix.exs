@@ -109,6 +109,9 @@ defmodule AshJsonApi.MixProject do
         ]
       ],
       groups_for_modules: [
+        AshJsonApi: [
+          AshJsonApi
+        ],
         Introspection: [
           AshJsonApi.Resource.Info,
           AshJsonApi.Api.Info
