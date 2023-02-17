@@ -29,14 +29,13 @@ defmodule AshJsonApi.Api.Router do
               action: action_name,
               controller: controller,
               method: method,
-              action_type: action_type,
               relationship: relationship_name
             } = route_struct <-
               AshJsonApi.Api.Router.routes(resource) do
           opts =
             [
               relationship: Ash.Resource.Info.public_relationship(resource, relationship_name),
-              action: Ash.Resource.Info.action(resource, action_name, action_type),
+              action: Ash.Resource.Info.action(resource, action_name),
               resource: resource,
               api: api,
               prefix: prefix,

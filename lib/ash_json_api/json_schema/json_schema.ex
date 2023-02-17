@@ -587,14 +587,13 @@ defmodule AshJsonApi.JsonSchema do
          %{
            type: type,
            action: action,
-           action_type: action_type,
            relationship_arguments: relationship_arguments
          },
          _api,
          resource
        )
        when type in [:post] do
-    action = Ash.Resource.Info.action(resource, action, action_type)
+    action = Ash.Resource.Info.action(resource, action)
 
     non_relationship_arguments =
       Enum.reject(action.arguments, &has_relationship_argument?(relationship_arguments, &1.name))
@@ -636,14 +635,13 @@ defmodule AshJsonApi.JsonSchema do
          %{
            type: type,
            action: action,
-           action_type: action_type,
            relationship_arguments: relationship_arguments
          },
          _api,
          resource
        )
        when type in [:patch] do
-    action = Ash.Resource.Info.action(resource, action, action_type)
+    action = Ash.Resource.Info.action(resource, action)
 
     non_relationship_arguments =
       Enum.reject(action.arguments, &has_relationship_argument?(relationship_arguments, &1.name))
