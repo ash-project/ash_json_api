@@ -399,7 +399,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_one_record_self_link(links, request, %resource{} = record) do
     resource
-    |> AshJsonApi.Resource.route(%{action: :get, primary?: true})
+    |> AshJsonApi.Resource.route(%{method: :get, primary?: true})
     |> case do
       nil ->
         links
