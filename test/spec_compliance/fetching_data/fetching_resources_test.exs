@@ -19,7 +19,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
       routes do
         base("/authors")
-        get(:read)
+        get(:read, primary?: true)
         index(:read)
       end
     end
@@ -108,7 +108,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "200 OK response" do
     test "individual resource" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
 
       get(Api, "/posts/#{post.id}", status: 200)
     end
@@ -126,19 +129,19 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "resource collection primary data." do
     test "data exists" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
+      post2 =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "bar"})
+        |> Api.create!()
 
-      Api
-      |> get("/posts", status: 200)
-      |> assert_data_equals([
-        %{
-          "attributes" => %{"name" => post.name},
-          "id" => post.id,
-          "links" => %{},
-          "relationships" => %{},
-          "type" => "post"
-        }
-      ])
+      conn =
+        Api
+        |> get("/posts", status: 200)
+        |> assert_valid_resource_objects("post", [post.id, post2.id])
     end
 
     test "data does NOT exist" do
@@ -156,22 +159,24 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "individual resource primary data." do
     test "data exists" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
 
-      Api
-      |> get("/posts/#{post.id}", status: 200)
-      |> assert_data_equals(%{
-        "attributes" => %{"name" => post.name},
-        "id" => post.id,
-        "links" => %{},
-        "relationships" => %{},
-        "type" => "post"
-      })
+      conn =
+        Api
+        |> get("/posts/#{post.id}", status: 200)
+        |> assert_valid_resource_object("post", post.id)
+        |> assert_attribute_equals("name", post.name)
     end
 
     test "data does NOT exist" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
 
       Api
       |> get("/posts/#{post.id}/author", status: 200)
@@ -217,5 +222,31 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   # --------------------------
   describe "HTTP semantics" do
     # I'm not sure how to test this...
+  end
+
+  @tag :spec_may
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # The optional links member within each resource object contains links related to the resource.
+  # If present, this links object MAY contain a self link that identifies the resource represented by the resource object.
+  # --------------------------
+  describe "5.2.7 Resource Links" do
+    setup do
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
+
+      %{author: author}
+    end
+
+    test "self link is set", %{author: author} do
+      conn = Api
+      |> get("/authors/#{author.id}", status: 200)
+
+      %{"data" => %{ "links" => %{ "self" => link_to_self } }} = conn.resp_body
+
+      assert link_to_self =~ "/authors/#{author.id}"
+    end
   end
 end
