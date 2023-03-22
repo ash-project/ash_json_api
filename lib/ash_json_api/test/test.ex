@@ -161,11 +161,11 @@ defmodule AshJsonApi.Test do
   defmacro assert_valid_resource_object(conn, expected_type, expected_id) do
     quote bind_quoted: [conn: conn, expected_type: expected_type, expected_id: expected_id] do
       assert %{
-        "data" => %{
-          "type" => ^expected_type,
-          "id" => ^expected_id
-        }
-      } = conn.resp_body
+               "data" => %{
+                 "type" => ^expected_type,
+                 "id" => ^expected_id
+               }
+             } = conn.resp_body
 
       conn
     end
@@ -174,15 +174,16 @@ defmodule AshJsonApi.Test do
   defmacro assert_valid_resource_objects(conn, expected_type, expected_ids) do
     quote bind_quoted: [conn: conn, expected_type: expected_type, expected_ids: expected_ids] do
       assert %{
-        "data" => results
-      } = conn.resp_body
+               "data" => results
+             } = conn.resp_body
 
       assert Enum.all?(results, fn
-        %{"type" => ^expected_type, "id" => maybe_known_id} ->
-          Enum.member?(expected_ids, maybe_known_id)
-        _ ->
-          false
-      end)
+               %{"type" => ^expected_type, "id" => maybe_known_id} ->
+                 Enum.member?(expected_ids, maybe_known_id)
+
+               _ ->
+                 false
+             end)
 
       conn
     end

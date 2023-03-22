@@ -133,6 +133,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
         |> Api.create!()
+
       post2 =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "bar"})
@@ -241,10 +242,11 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
 
     test "self link is set", %{author: author} do
-      conn = Api
-      |> get("/authors/#{author.id}", status: 200)
+      conn =
+        Api
+        |> get("/authors/#{author.id}", status: 200)
 
-      %{"data" => %{ "links" => %{ "self" => link_to_self } }} = conn.resp_body
+      %{"data" => %{"links" => %{"self" => link_to_self}}} = conn.resp_body
 
       assert link_to_self =~ "/authors/#{author.id}"
     end
