@@ -108,7 +108,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "200 OK response" do
     test "individual resource" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
 
       get(Api, "/posts/#{post.id}", status: 200)
     end
@@ -126,19 +129,19 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "resource collection primary data." do
     test "data exists" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
+      post2 =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "bar"})
+        |> Api.create!()
 
-      Api
-      |> get("/posts", status: 200)
-      |> assert_data_equals([
-        %{
-          "attributes" => %{"name" => post.name},
-          "id" => post.id,
-          "links" => %{},
-          "relationships" => %{},
-          "type" => "post"
-        }
-      ])
+      conn =
+        Api
+        |> get("/posts", status: 200)
+        |> assert_valid_resource_objects("post", [post.id, post2.id])
     end
 
     test "data does NOT exist" do
@@ -156,17 +159,16 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   describe "individual resource primary data." do
     test "data exists" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
 
-      Api
-      |> get("/posts/#{post.id}", status: 200)
-      |> assert_data_equals(%{
-        "attributes" => %{"name" => post.name},
-        "id" => post.id,
-        "links" => %{},
-        "relationships" => %{},
-        "type" => "post"
-      })
+      conn =
+        Api
+        |> get("/posts/#{post.id}", status: 200)
+        |> assert_valid_resource_object("post", post.id)
+        |> assert_attribute_equals("name", post.name)
     end
 
     test "data does NOT exist" do
