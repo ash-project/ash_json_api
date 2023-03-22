@@ -173,7 +173,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
     test "data does NOT exist" do
       # Create a post
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
 
       Api
       |> get("/posts/#{post.id}/author", status: 200)
