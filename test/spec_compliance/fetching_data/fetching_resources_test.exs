@@ -19,7 +19,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
       routes do
         base("/authors")
-        get(:read)
+        get(:read, primary?: true)
         index(:read)
       end
     end
@@ -217,5 +217,31 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   # --------------------------
   describe "HTTP semantics" do
     # I'm not sure how to test this...
+  end
+
+  @tag :spec_may
+  # JSON:API 1.0 Specification
+  # --------------------------
+  # The optional links member within each resource object contains links related to the resource.
+  # If present, this links object MAY contain a self link that identifies the resource represented by the resource object.
+  # --------------------------
+  describe "5.2.7 Resource Links" do
+    setup do
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
+
+      %{author: author}
+    end
+
+    test "self link is set", %{author: author} do
+      conn = Api
+      |> get("/authors/#{author.id}", status: 200)
+
+      %{"data" => %{ "links" => %{ "self" => link_to_self } }} = conn.resp_body
+
+      assert link_to_self =~ "/authors/#{author.id}"
+    end
   end
 end
