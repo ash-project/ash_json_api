@@ -1,17 +1,37 @@
 defmodule AshJsonApi.Api.Router do
+  defmacro open_api(route, opts) do
+    quote do
+      opts = unquote(opts)
+      route = unquote(route)
+
+      unless opts[:apis] do
+        raise ArgumentError, "Must supply the `apis` option."
+      end
+
+      match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
+    end
+  end
+
+  defmacro json_schema(route, opts) do
+    quote do
+      opts = unquote(opts)
+      route = unquote(route)
+
+      unless opts[:apis] do
+        raise ArgumentError, "Must supply the `apis` option."
+      end
+
+      match(route, via: :get, to: AshJsonApi.Controllers.Schema, init_opts: opts)
+    end
+  end
+
   @moduledoc false
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
-      @before_compile AshJsonApi.Api.Router
-      api = opts[:api] || raise "Api option must be provided"
-      registry = opts[:registry] || raise "registry option must be provided"
-      prefix = AshJsonApi.Api.Info.prefix(api)
-      serve_schema? = AshJsonApi.Api.Info.serve_schema?(api)
-      open_api = AshJsonApi.Api.Info.open_api(api)
-      resources = Ash.Registry.Info.entries(registry)
-
+      require Ash.Api.Info
       use Plug.Router
       require Ash
+      apis = List.wrap(opts[:api] || opts[:apis])
 
       plug(:match)
 
@@ -23,59 +43,55 @@ defmodule AshJsonApi.Api.Router do
 
       plug(:dispatch)
 
-      resources
-      |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
-      |> Enum.each(fn resource ->
-        for %{
-              route: route,
-              action: action_name,
-              controller: controller,
-              method: method,
-              relationship: relationship_name
-            } = route_struct <-
-              AshJsonApi.Api.Router.routes(resource) do
-          opts =
-            [
-              relationship: Ash.Resource.Info.public_relationship(resource, relationship_name),
-              action: Ash.Resource.Info.action(resource, action_name),
-              resource: resource,
-              api: api,
-              prefix: prefix,
-              route: route_struct
-            ]
-            |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+      if apis == [] do
+        raise "At least one api option must be provided"
+      end
 
-          match(route, via: method, to: controller, init_opts: opts)
+      for api <- apis do
+        prefix = AshJsonApi.Api.Info.prefix(api)
+        resources = Ash.Api.Info.depend_on_resources(api)
+
+        resources
+        |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
+        |> Enum.each(fn resource ->
+          for %{
+                route: route,
+                action: action_name,
+                controller: controller,
+                method: method,
+                action_type: action_type,
+                relationship: relationship_name
+              } = route_struct <-
+                AshJsonApi.Api.Router.routes(resource) do
+            opts =
+              [
+                relationship: Ash.Resource.Info.public_relationship(resource, relationship_name),
+                action: Ash.Resource.Info.action(resource, action_name, action_type),
+                resource: resource,
+                api: api,
+                prefix: prefix,
+                route: route_struct
+              ]
+              |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+
+            match(route, via: method, to: controller, init_opts: opts)
+          end
+        end)
+
+        schema_apis = Enum.filter(apis, &AshJsonApi.Api.Info.serve_schema?(&1))
+
+        unless Enum.empty?(schema_apis) do
+          match("/schema", via: :get, to: AshJsonApi.Controllers.Schema, init_opts: [apis: apis])
+
+          match("/schema.json",
+            via: :get,
+            to: AshJsonApi.Controllers.Schema,
+            init_opts: [apis: apis]
+          )
         end
-      end)
 
-      if serve_schema? do
-        match("/schema",
-          via: :get,
-          to: AshJsonApi.Controllers.Schema,
-          init_opts: [api: api]
-        )
-
-        match("/schema.json",
-          via: :get,
-          to: AshJsonApi.Controllers.Schema,
-          init_opts: [api: api]
-        )
+        match(_, to: AshJsonApi.Controllers.NoRouteFound)
       end
-
-      if open_api do
-        match("/openapi",
-          via: :get,
-          to: AshJsonApi.Controllers.OpenApi,
-          init_opts: [open_api: open_api]
-        )
-      end
-    end
-  end
-
-  defmacro __before_compile__(_env) do
-    quote do
-      match(_, to: AshJsonApi.Controllers.NoRouteFound)
     end
   end
 

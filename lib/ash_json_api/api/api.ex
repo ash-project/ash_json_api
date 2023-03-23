@@ -9,12 +9,15 @@ defmodule AshJsonApi.Api do
       json_api do
         prefix "/json_api"
         serve_schema? true
-        open_api MyApp.OpenApi
+        serve_open_api? true
         log_errors? true
       end
       """
     ],
     modules: [:router],
+    deprecations: [
+      serve_schema?: "Use the new `json_schema/1` helper in your router"
+    ],
     schema: [
       router: [
         type: :atom,
@@ -28,10 +31,6 @@ defmodule AshJsonApi.Api do
         type: :boolean,
         doc: "Whether or not create a /schema route that serves the JSON schema of your API",
         default: false
-      ],
-      open_api: [
-        type: {:spark_behaviour, OpenApiSpex.OpenApi},
-        doc: "Serve an OpenAPI spec at /openapi generated from the given OpenApi module"
       ],
       authorize?: [
         type: :boolean,

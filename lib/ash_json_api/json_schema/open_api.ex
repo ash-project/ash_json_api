@@ -46,6 +46,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
+    @dialyzer {:nowarn_function, {:action_description, 2}}
+    @dialyzer {:nowarn_function, {:relationship_resource_identifiers, 1}}
+    @dialyzer {:nowarn_function, {:resource_object_schema, 1}}
+
     @doc """
     Common responses to include in the API Spec.
     """
@@ -66,7 +70,17 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @doc """
     Resource schemas to include in the API spec.
     """
-    @spec schemas(api :: module) :: %{String.t() => Schema.t()}
+    @spec schemas(api :: module | [module]) :: %{String.t() => Schema.t()}
+    def schemas(apis) when is_list(apis) do
+      apis
+      |> Enum.reduce(base_definitions(), fn api, definitions ->
+        api
+        |> resources
+        |> Enum.map(&{AshJsonApi.Resource.Info.type(&1), resource_object_schema(&1)})
+        |> Enum.into(definitions)
+      end)
+    end
+
     def schemas(api) do
       api
       |> resources
@@ -151,7 +165,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
     end
 
-    @spec resource_object_schema(resource :: module) :: Schema.t()
+    @spec resource_object_schema(resource :: Ash.Resource.t()) :: Schema.t()
     defp resource_object_schema(resource) do
       %Schema{
         description:
@@ -171,7 +185,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    @spec attributes(resource :: module) :: Schema.t()
+    @spec attributes(resource :: Ash.Resource.t()) :: Schema.t()
     defp attributes(resource) do
       %Schema{
         description: "An attributes object for a #{AshJsonApi.Resource.Info.type(resource)}",
@@ -191,7 +205,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
     end
 
-    @spec resource_attribute_type(%{type: module}) :: Schema.t()
+    @spec resource_attribute_type(Ash.Resource.Attribute.t() | Ash.Resource.Actions.Argument.t()) ::
+            Schema.t()
     defp resource_attribute_type(%{type: Ash.Type.String}) do
       %Schema{type: :string}
     end
@@ -218,10 +233,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp resource_attribute_type(%{type: {:array, type}}) do
+    defp resource_attribute_type(%{type: {:array, type}} = attr) do
       %Schema{
         type: :array,
-        items: resource_attribute_type(%{type: type})
+        items:
+          resource_attribute_type(%{
+            attr
+            | type: type,
+              constraints: attr.constraints[:items] || []
+          })
       }
     end
 
@@ -252,7 +272,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    @spec relationships(resource :: module) :: Schema.t()
+    @spec relationships(resource :: Ash.Resource.t()) :: Schema.t()
     defp relationships(resource) do
       %Schema{
         description: "A relationships object for a #{AshJsonApi.Resource.Info.type(resource)}",
@@ -336,7 +356,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @doc """
     Tags based on resource names to include in the API spec
     """
-    @spec tags(api :: module) :: [Tag.t()]
+    @spec tags(api :: module | [module]) :: [Tag.t()]
+    def tags(apis) when is_list(apis) do
+      Enum.flat_map(apis, &tags/1)
+    end
+
     def tags(api) do
       api
       |> resources()
@@ -353,7 +377,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @doc """
     Paths (routes) from the API.
     """
-    @spec paths(api :: module) :: Paths.t()
+    @spec paths(api :: module | [module]) :: Paths.t()
+    def paths(apis) when is_list(apis) do
+      apis
+      |> Enum.map(&paths/1)
+      |> Enum.reduce(&Map.merge/2)
+    end
+
     def paths(api) do
       api
       |> resources()
@@ -384,9 +414,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       action = Ash.Resource.Info.action(resource, route.action)
 
       %Operation{
-        description:
-          action.description ||
-            "#{action.name} operation on #{AshJsonApi.Resource.Info.type(resource)} resource",
+        description: action_description(action, resource),
         tags: [to_string(AshJsonApi.Resource.Info.type(resource))],
         parameters: path_parameters(path_params, action) ++ query_parameters(route, resource),
         responses: %{
@@ -397,6 +425,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
         },
         requestBody: request_body(route, resource)
       }
+    end
+
+    defp action_description(action, resource) do
+      action.description ||
+        "#{action.name} operation on #{AshJsonApi.Resource.Info.type(resource)} resource"
     end
 
     @spec path_parameters(path_params :: [String.t()], action :: Actions.action()) ::
@@ -524,7 +557,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    @spec filter_parameter(resource :: module) :: Parameter.t()
+    @spec fields_parameter(resource :: module) :: Parameter.t()
     defp fields_parameter(resource) do
       type = AshJsonApi.Resource.Info.type(resource)
 
@@ -538,7 +571,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type: :object,
           additionalProperties: true,
           properties: %{
-            :"#{type}" => %Schema{
+            String.to_existing_atom(type) => %Schema{
               description: "Comma separated field names for #{type}",
               type: :string,
               example:
@@ -557,7 +590,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       action.arguments
       |> Enum.reject(& &1.private?)
       |> Enum.map(fn argument ->
-        schema = resource_attribute_type(%{type: argument.type})
+        schema = resource_attribute_type(argument)
 
         %Parameter{
           name: argument.name,
@@ -638,7 +671,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
           Ash.Type.UtcDateTime ->
             %Schema{type: :string, format: :"date-time"}
 
-          # TODO: Precise schemas for filtering arrays
           {:array, _type} ->
             %Schema{
               type: :object,
@@ -752,8 +784,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           data: %Schema{
             type: :object,
             additionalProperties: false,
+            required: [:id],
             properties: %{
-              id: resource_attribute_type(Ash.Resource.Info.public_attribute(resource, :id)),
+              id: %Schema{
+                type: :string
+              },
               type: %Schema{
                 enum: [AshJsonApi.Resource.Info.type(resource)]
               },
@@ -832,7 +867,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec required_relationship_attributes(
             resource :: module,
             [Actions.Argument.t()],
-            Actions.action_type()
+            Actions.action()
           ) :: [atom()]
     defp required_relationship_attributes(_resource, relationship_arguments, action) do
       action.arguments
@@ -841,7 +876,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.map(& &1.name)
     end
 
-    @spec write_relationships(resource :: module, [Actions.Argument.t()], Actions.action_type()) ::
+    @spec write_relationships(resource :: module, [Actions.Argument.t()], Actions.action()) ::
             %{atom() => Schema.t()}
     defp write_relationships(resource, relationship_arguments, action) do
       action.arguments
@@ -942,10 +977,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
               required: [:id, :type],
               additionalProperties: false,
               properties: %{
-                id:
-                  resource_attribute_type(
-                    Ash.Resource.Info.public_attribute(relationship.destination, :id)
-                  ),
+                id: %Schema{
+                  type: :string
+                },
                 type: %Schema{
                   enum: [AshJsonApi.Resource.Info.type(relationship.destination)]
                 },

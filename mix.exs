@@ -23,7 +23,7 @@ defmodule AshJsonApi.MixProject do
         "coveralls.github": :test
       ],
       dialyzer: [
-        plt_add_apps: [:ex_unit]
+        plt_add_apps: [:ex_unit, :open_api_spex]
       ],
       deps: deps(),
       docs: docs(),

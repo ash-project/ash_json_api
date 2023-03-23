@@ -116,18 +116,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   setup do
-    api_spec = %OpenApi{
-      info: %OpenApiSpex.Info{
-        title: "My App",
-        version: "1.0"
-      },
-      paths: AshJsonApi.OpenApi.paths(Blogs),
-      components: %OpenApiSpex.Components{
-        schemas: AshJsonApi.OpenApi.schemas(Blogs),
-        responses: AshJsonApi.OpenApi.responses()
-      },
-      tags: AshJsonApi.OpenApi.tags(Blogs)
-    }
+    api_spec = AshJsonApi.Controllers.OpenApi.spec(%{private: %{}}, apis: [Blogs])
 
     %{open_api_spec: api_spec}
   end
