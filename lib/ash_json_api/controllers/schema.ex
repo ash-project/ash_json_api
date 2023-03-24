@@ -6,7 +6,7 @@ defmodule AshJsonApi.Controllers.Schema do
 
   # sobelow_skip ["XSS.SendResp"]
   def call(conn, opts) do
-    apis = opts[:apis]
+    apis = List.wrap(opts[:api] || opts[:apis])
 
     schema =
       apis

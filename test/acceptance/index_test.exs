@@ -57,7 +57,7 @@ defmodule Test.Acceptance.IndexTest do
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Api.Router, api: Api
   end
 
   import AshJsonApi.Test

@@ -1,38 +1,11 @@
 defmodule AshJsonApi.Api.Router do
-  defmacro open_api(route, opts \\ []) do
-    quote do
-      opts = unquote(opts)
-      route = unquote(route)
-
-      unless opts[:apis] do
-        raise ArgumentError, "Must supply the `apis` option."
-      end
-
-      match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
-    end
-  end
-
-  defmacro json_schema(route, opts \\ []) do
-    quote do
-      opts = unquote(opts)
-      route = unquote(route)
-
-      unless opts[:apis] do
-        raise ArgumentError, "Must supply the `apis` option."
-      end
-
-      match(route, via: :get, to: AshJsonApi.Controllers.Schema, init_opts: opts)
-    end
-  end
-
   @moduledoc false
   defmacro __using__(opts) do
-    quote do
+    quote bind_quoted: [opts: opts] do
       require Ash.Api.Info
       use Plug.Router
       require Ash
-      @before_compile AshJsonApi.Api.Router
-      apis = List.wrap(unquote(opts[:api] || opts[:apis]))
+      apis = List.wrap(opts[:api] || opts[:apis])
 
       plug(:match)
 
@@ -92,7 +65,37 @@ defmodule AshJsonApi.Api.Router do
         )
       end
 
-      unquote(opts[:do])
+      case opts[:open_api] do
+        nil ->
+          :ok
+
+        true ->
+          match("/open_api", via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
+
+        routes when is_list(routes) ->
+          for route <- routes do
+            match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
+          end
+
+        route ->
+          match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
+      end
+
+      case opts[:json_schema] do
+        nil ->
+          :ok
+
+        true ->
+          match("/json_schema", via: :get, to: AshJsonApi.Controllers.Schema, init_opts: opts)
+
+        routes when is_list(routes) ->
+          for route <- routes do
+            match(route, via: :get, to: AshJsonApi.Controllers.Schema, init_opts: opts)
+          end
+
+        route ->
+          match(route, via: :get, to: AshJsonApi.Controllers.Schema, init_opts: opts)
+      end
 
       match(_, to: AshJsonApi.Controllers.NoRouteFound)
     end
@@ -138,11 +141,5 @@ defmodule AshJsonApi.Api.Router do
           {:cont, :undecided}
       end
     end)
-  end
-
-  defmacro __before_compile__(_) do
-    quote do
-      require Plug.Router
-    end
   end
 end
