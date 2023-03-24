@@ -110,7 +110,8 @@ defmodule AshJsonApi.MixProject do
       ],
       groups_for_modules: [
         AshJsonApi: [
-          AshJsonApi
+          AshJsonApi,
+          AshJsonApi.Api.Router
         ],
         Introspection: [
           AshJsonApi.Resource.Info,
