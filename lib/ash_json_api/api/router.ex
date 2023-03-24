@@ -1,5 +1,5 @@
 defmodule AshJsonApi.Api.Router do
-  defmacro open_api(route, opts) do
+  defmacro open_api(route, opts \\ []) do
     quote do
       opts = unquote(opts)
       route = unquote(route)
@@ -12,7 +12,7 @@ defmodule AshJsonApi.Api.Router do
     end
   end
 
-  defmacro json_schema(route, opts) do
+  defmacro json_schema(route, opts \\ []) do
     quote do
       opts = unquote(opts)
       route = unquote(route)
