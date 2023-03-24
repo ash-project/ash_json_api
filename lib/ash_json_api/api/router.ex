@@ -1,5 +1,26 @@
 defmodule AshJsonApi.Api.Router do
-  @moduledoc false
+  @moduledoc """
+  Use this module to create a router for your AshJsonApi.
+
+  To use this, create a module and do the following:
+
+  ```elixir
+  defmodule YourRouter do
+    use AshJsonApi.Api.Router,
+      apis: [YourApi, YourOtherApi],
+      # these next two are optional, only add them if you want those endpoints
+      open_api: "/open_api",
+      json_schema: "/json_schema"
+  end
+  ```
+
+  Then in your Phoenix router or plug pipeline, forward to this plug.
+  In phoenix, that looks like this:
+
+  ```elixir
+      forward "/api", YourRouter
+  ```
+  """
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
       require Ash.Api.Info
