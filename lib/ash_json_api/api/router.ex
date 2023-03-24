@@ -27,11 +27,12 @@ defmodule AshJsonApi.Api.Router do
 
   @moduledoc false
   defmacro __using__(opts) do
-    quote bind_quoted: [opts: opts] do
+    quote do
       require Ash.Api.Info
       use Plug.Router
       require Ash
-      apis = List.wrap(opts[:api] || opts[:apis])
+      @before_compile AshJsonApi.Api.Router
+      apis = List.wrap(unquote(opts[:api] || opts[:apis]))
 
       plug(:match)
 
@@ -77,21 +78,23 @@ defmodule AshJsonApi.Api.Router do
             match(route, via: method, to: controller, init_opts: opts)
           end
         end)
-
-        schema_apis = Enum.filter(apis, &AshJsonApi.Api.Info.serve_schema?(&1))
-
-        unless Enum.empty?(schema_apis) do
-          match("/schema", via: :get, to: AshJsonApi.Controllers.Schema, init_opts: [apis: apis])
-
-          match("/schema.json",
-            via: :get,
-            to: AshJsonApi.Controllers.Schema,
-            init_opts: [apis: apis]
-          )
-        end
-
-        match(_, to: AshJsonApi.Controllers.NoRouteFound)
       end
+
+      schema_apis = Enum.filter(apis, &AshJsonApi.Api.Info.serve_schema?(&1))
+
+      unless Enum.empty?(schema_apis) do
+        match("/schema", via: :get, to: AshJsonApi.Controllers.Schema, init_opts: [apis: apis])
+
+        match("/schema.json",
+          via: :get,
+          to: AshJsonApi.Controllers.Schema,
+          init_opts: [apis: apis]
+        )
+      end
+
+      unquote(opts[:do])
+
+      match(_, to: AshJsonApi.Controllers.NoRouteFound)
     end
   end
 
@@ -135,5 +138,11 @@ defmodule AshJsonApi.Api.Router do
           {:cont, :undecided}
       end
     end)
+  end
+
+  defmacro __before_compile__(_) do
+    quote do
+      require Plug.Router
+    end
   end
 end
