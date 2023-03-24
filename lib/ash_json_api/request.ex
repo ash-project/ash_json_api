@@ -416,21 +416,28 @@ defmodule AshJsonApi.Request do
        when is_bitstring(sort_string) do
     sort_string
     |> String.split(",")
-    |> Enum.reverse()
-    |> Enum.reduce(request, fn field, request ->
-      {order, field_name} = trim_sort_order(field)
+    |> case do
+      [] ->
+        request
 
-      cond do
-        attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
-          %{request | sort: [{attr.name, order} | request.sort]}
+      sort ->
+        sort
+        |> Enum.reverse()
+        |> Enum.reduce(request, fn field, request ->
+          {order, field_name} = trim_sort_order(field)
 
-        agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->
-          %{request | sort: [{agg.name, order} | request.sort]}
+          cond do
+            attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
+              %{request | sort: [{attr.name, order} | request.sort]}
 
-        true ->
-          add_error(request, "invalid sort #{field}", request.route.type)
-      end
-    end)
+            agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->
+              %{request | sort: [{agg.name, order} | request.sort]}
+
+            true ->
+              add_error(request, "invalid sort #{field}", request.route.type)
+          end
+        end)
+    end
   end
 
   defp parse_sort(%{query_params: %{"sort" => _sort_string}} = request) do

@@ -487,11 +487,11 @@ defmodule AshJsonApi.JsonSchema do
     %{
       "limit" => %{
         "type" => "string",
-        "pattern" => "^[1-9][0-9]*$"
+        "pattern" => "^[0-9]*$"
       },
       "offset" => %{
         "type" => "string",
-        "pattern" => "^[1-9][0-9]*$"
+        "pattern" => "^[0-9]*$"
       }
     }
   end
