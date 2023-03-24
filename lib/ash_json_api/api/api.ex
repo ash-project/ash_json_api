@@ -8,7 +8,6 @@ defmodule AshJsonApi.Api do
       """
       json_api do
         prefix "/json_api"
-        serve_schema? true
         serve_open_api? true
         log_errors? true
       end
@@ -16,7 +15,7 @@ defmodule AshJsonApi.Api do
     ],
     modules: [:router],
     deprecations: [
-      serve_schema?: "Use the new `json_schema/1` helper in your router"
+      serve_schema?: "Use the `json_schema` option to `use AshJsonApi.Api.Router` instead."
     ],
     schema: [
       router: [

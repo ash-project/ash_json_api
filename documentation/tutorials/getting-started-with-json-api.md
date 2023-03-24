@@ -87,7 +87,7 @@ mix deps.compile mime --force
 
 ## Create a router
 
-Create a separate Router Module to work with your Api and Registry. It will generate the routes for
+Create a separate Router Module to work with your Apis. It will generate the routes for
 your Resources and provide the functions you would usually have in a Controller.
 
 We will later forward requests from your Applications primary (Phoenix) Router to you Ash JSON API Router.
@@ -95,10 +95,13 @@ We will later forward requests from your Applications primary (Phoenix) Router t
 ```elixir
 defmodule HelpdeskWeb.Support.Router do
   use AshJsonApi.Api.Router,
-    # Your Ash.Api Module
-    api: Helpdesk.Support,
-    # Your Ash.Registry Module
-    registry: Helpdesk.Support.Registry
+    # The api modules you want to serve
+    apis: [Helpdesk.Support],
+    # optionally a json_schema route
+    json_schema: "/json_schema",
+    # optionally an open_api route
+    open_api: "/open_api"
+
 end
 ```
 
