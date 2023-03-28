@@ -69,3 +69,23 @@ forward "/api", YourApp.YourApiRouter
 
 Now you can go to `/api/swaggerui` and `/api/redoc`!
 
+## Customize values in the OpenAPI documentation
+
+To override any value in the OpenApi documentation you can use the `:modify_open_api` options key:
+
+```elixir
+  use AshJsonApi.Api.Router,
+    apis: [...],
+    open_api: "/open_api",
+    modify_open_api: {__MODULE__, :modify_open_api, []}
+
+  def modify_open_api(spec, _, _) do
+    %{
+      spec
+      | info: %{spec.info | title: "MyApp Title JSON API", version: Mix.Project.config()[:version]}
+    }
+  end
+```
+
+
+
