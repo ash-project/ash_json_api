@@ -86,20 +86,26 @@ defmodule AshJsonApi.Api.Router do
         )
       end
 
+      open_api_opts = AshJsonApi.Api.Router.open_api_opts(opts)
+
       case opts[:open_api] do
         nil ->
           :ok
 
         true ->
-          match("/open_api", via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
+          match("/open_api",
+            via: :get,
+            to: AshJsonApi.Controllers.OpenApi,
+            init_opts: open_api_opts
+          )
 
         routes when is_list(routes) ->
           for route <- routes do
-            match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
+            match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: open_api_opts)
           end
 
         route ->
-          match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: opts)
+          match(route, via: :get, to: AshJsonApi.Controllers.OpenApi, init_opts: open_api_opts)
       end
 
       case opts[:json_schema] do
@@ -120,6 +126,12 @@ defmodule AshJsonApi.Api.Router do
 
       match(_, to: AshJsonApi.Controllers.NoRouteFound)
     end
+  end
+
+  def open_api_opts(opts) do
+    opts
+    |> Keyword.put(:modify, Keyword.get(opts, :modify_open_api))
+    |> Keyword.delete(:modify)
   end
 
   @doc false
