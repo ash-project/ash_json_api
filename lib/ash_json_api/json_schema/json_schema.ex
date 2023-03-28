@@ -245,6 +245,9 @@ defmodule AshJsonApi.JsonSchema do
   defp resource_relationships(resource) do
     resource
     |> Ash.Resource.Info.public_relationships()
+    |> Enum.filter(fn relationship ->
+      AshJsonApi.Resource in Spark.extensions(relationship)
+    end)
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
       links = resource_relationship_link_data(resource, rel)
