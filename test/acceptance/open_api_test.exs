@@ -115,10 +115,22 @@ defmodule Test.Acceptance.OpenApiTest do
     end
   end
 
+  def modify(spec, _conn, _opts) do
+    %{spec | info: %{spec.info | title: "foobar"}}
+  end
+
   setup do
-    api_spec = AshJsonApi.Controllers.OpenApi.spec(%{private: %{}}, apis: [Blogs])
+    api_spec =
+      AshJsonApi.Controllers.OpenApi.spec(%{private: %{}},
+        apis: [Blogs],
+        modify: {__MODULE__, :modify, []}
+      )
 
     %{open_api_spec: api_spec}
+  end
+
+  test "modify option is honored", %{open_api_spec: api_spec} do
+    assert api_spec.info.title == "foobar"
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do

@@ -10,7 +10,6 @@ defmodule AshJsonApi.Controllers.OpenApi do
     spec =
       conn
       |> spec(opts)
-      |> modify(conn, opts)
       |> Jason.encode!(pretty: true)
 
     conn
@@ -46,7 +45,7 @@ defmodule AshJsonApi.Controllers.OpenApi do
 
     %OpenApi{
       info: %Info{
-        title: "AshHQ Docs API",
+        title: "Open API Specification",
         version: "1.1"
       },
       servers: servers,
@@ -71,5 +70,6 @@ defmodule AshJsonApi.Controllers.OpenApi do
         }
       ]
     }
+    |> modify(conn, opts)
   end
 end

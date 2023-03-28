@@ -131,7 +131,7 @@ defmodule AshJsonApi.Api.Router do
   def open_api_opts(opts) do
     opts
     |> Keyword.put(:modify, Keyword.get(opts, :modify_open_api))
-    |> Keyword.delete(:modify)
+    |> Keyword.delete(:modify_open_api)
   end
 
   @doc false
