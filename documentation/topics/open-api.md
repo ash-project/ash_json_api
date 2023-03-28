@@ -82,7 +82,7 @@ To override any value in the OpenApi documentation you can use the `:modify_open
   def modify_open_api(spec, _, _) do
     %{
       spec
-      | info: %{spec.info | title: "MyApp Title JSON API", version: Mix.Project.config()[:version]}
+      | info: %{spec.info | title: "MyApp Title JSON API", version: Application.spec(:my_app, :vsn) |> to_string()}
     }
   end
 ```
