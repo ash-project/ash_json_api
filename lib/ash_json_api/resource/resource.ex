@@ -10,6 +10,11 @@ defmodule AshJsonApi.Resource do
       required: true,
       doc: "The action to call when this route is hit"
     ],
+    default_fields: [
+      type: {:list, :atom},
+      required: false,
+      doc: "A list of fields to be shown in the attributes of the called route"
+    ],
     primary?: [
       type: :boolean,
       default: false,

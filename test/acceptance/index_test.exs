@@ -19,6 +19,7 @@ defmodule Test.Acceptance.IndexTest do
         base("/posts")
 
         index(:read)
+        index(:read, route: "/names", default_fields: [:name])
       end
     end
 
@@ -29,6 +30,7 @@ defmodule Test.Acceptance.IndexTest do
     attributes do
       uuid_primary_key(:id)
       attribute(:name, :string)
+      attribute(:content, :string)
     end
   end
 
@@ -66,7 +68,7 @@ defmodule Test.Acceptance.IndexTest do
     setup do
       post =
         Post
-        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.for_create(:create, %{name: "foo", content: "bar baz"})
         |> Api.create!()
 
       %{post: post}
@@ -78,7 +80,25 @@ defmodule Test.Acceptance.IndexTest do
       |> assert_data_equals([
         %{
           "attributes" => %{
-            "name" => "foo"
+            "name" => "foo",
+            "content" => "bar baz"
+          },
+          "id" => post.id,
+          "links" => %{},
+          "meta" => %{},
+          "relationships" => %{},
+          "type" => "post"
+        }
+      ])
+    end
+
+    test "returns a list of posts names only", %{post: post} do
+      Api
+      |> get("/posts/names", status: 200)
+      |> assert_data_equals([
+        %{
+          "attributes" => %{
+            "name" => "foo",
           },
           "id" => post.id,
           "links" => %{},

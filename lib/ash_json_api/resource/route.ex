@@ -4,6 +4,7 @@ defmodule AshJsonApi.Resource.Route do
     :route,
     :action,
     :action_type,
+    :default_fields,
     :method,
     :controller,
     :relationship,
