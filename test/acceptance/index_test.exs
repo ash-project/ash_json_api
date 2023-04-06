@@ -98,7 +98,7 @@ defmodule Test.Acceptance.IndexTest do
       |> assert_data_equals([
         %{
           "attributes" => %{
-            "name" => "foo",
+            "name" => "foo"
           },
           "id" => post.id,
           "links" => %{},
