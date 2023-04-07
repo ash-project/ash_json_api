@@ -581,7 +581,7 @@ defmodule AshJsonApi.Serializer do
 
   defp serialize_attributes(request, %resource{} = record) do
     fields =
-      Map.get(request.fields || %{}, resource) || Map.get(request.route, :default_fields) ||
+      Map.get(request.fields, resource) || Map.get(request.route, :default_fields) ||
         default_attributes(resource)
 
     Enum.reduce(fields, %{}, fn field, acc ->
@@ -621,7 +621,7 @@ defmodule AshJsonApi.Serializer do
             Map.put(
               acc,
               field.name,
-              serialize_attributes(%{fields: %{}}, Map.get(record, field.name))
+              serialize_attributes(%{fields: %{}, route: %{}}, Map.get(record, field.name))
             )
 
           true ->
