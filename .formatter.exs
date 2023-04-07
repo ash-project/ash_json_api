@@ -1,6 +1,7 @@
 spark_locals_without_parens = [
   authorize?: 1,
   base: 1,
+  default_fields: 1,
   delete: 1,
   delete: 2,
   delete_from_relationship: 1,
