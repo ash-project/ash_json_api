@@ -136,23 +136,23 @@ defmodule Test.Acceptance.OpenApiTest do
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
     assert map_size(api_spec.paths) == 4
 
-    assert %{"authors" => _, "authors/{id}" => _, "posts" => _, "posts/{id}" => _} =
+    assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
 
-    assert %OpenApiSpex.Operation{} = api_spec.paths["authors"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["authors/{id}"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["authors/{id}"].patch
-    assert nil == api_spec.paths["authors"].post
+    assert %OpenApiSpex.Operation{} = api_spec.paths["/authors"].get
+    assert %OpenApiSpex.Operation{} = api_spec.paths["/authors/{id}"].get
+    assert %OpenApiSpex.Operation{} = api_spec.paths["/authors/{id}"].patch
+    assert nil == api_spec.paths["/authors"].post
 
-    assert %OpenApiSpex.Operation{} = api_spec.paths["posts"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["posts/{id}"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["posts"].post
-    assert nil == api_spec.paths["posts/{id}"].patch
+    assert %OpenApiSpex.Operation{} = api_spec.paths["/posts"].get
+    assert %OpenApiSpex.Operation{} = api_spec.paths["/posts/{id}"].get
+    assert %OpenApiSpex.Operation{} = api_spec.paths["/posts"].post
+    assert nil == api_spec.paths["/posts/{id}"].patch
   end
 
   describe "Index route" do
     test "filter parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       %OpenApiSpex.Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == :filter))
       assert filter.in == :query
       assert filter.required == false
@@ -172,7 +172,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "sort parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       %OpenApiSpex.Parameter{} = sort = operation.parameters |> Enum.find(&(&1.name == :sort))
       assert sort.in == :query
       assert sort.required == false
@@ -195,7 +195,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "page parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       %OpenApiSpex.Parameter{} = page = operation.parameters |> Enum.find(&(&1.name == :page))
       assert page.in == :query
       assert page.required == false
@@ -210,7 +210,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
 
       %OpenApiSpex.Parameter{} =
         include = operation.parameters |> Enum.find(&(&1.name == :include))
@@ -229,7 +229,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
       assert fields.in == :query
       assert fields.required == false
@@ -242,13 +242,13 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Has no request body", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       refute operation.requestBody
     end
 
     @tag :focus
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.type == :object
@@ -260,7 +260,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
   describe "Get route" do
     test "id parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
       %OpenApiSpex.Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == "id"))
       assert filter.in == :path
       assert filter.required == true
@@ -270,7 +270,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
 
       %OpenApiSpex.Parameter{} =
         include = operation.parameters |> Enum.find(&(&1.name == :include))
@@ -289,7 +289,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
       %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
       assert fields.in == :query
       assert fields.required == false
@@ -302,13 +302,13 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Has no request body", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
       refute operation.requestBody
     end
 
     @tag :focus
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts/{id}"].get
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.properties.data."$ref" == "#/components/schemas/post"
@@ -317,7 +317,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
   describe "Create route" do
     test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
 
       %OpenApiSpex.Parameter{} =
         include = operation.parameters |> Enum.find(&(&1.name == :include))
@@ -336,7 +336,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
       %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
       assert fields.in == :query
       assert fields.required == false
@@ -349,7 +349,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Request body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
       %OpenApiSpex.RequestBody{} = body = operation.requestBody
       schema = body.content["application/vnd.api+json"].schema
       assert schema.properties.data.type == :object
@@ -359,7 +359,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     @tag :focus
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["posts"].post
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.properties.data."$ref" == "#/components/schemas/post"
