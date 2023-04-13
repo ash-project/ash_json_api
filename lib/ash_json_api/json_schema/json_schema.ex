@@ -874,6 +874,9 @@ defmodule AshJsonApi.JsonSchema do
         end
       end)
 
-    {path |> Enum.reverse() |> Path.join(), path_params}
+    {path |> Enum.reverse() |> Path.join() |> prepend_slash(), path_params}
   end
+
+  defp prepend_slash("/" <> _ = path), do: path
+  defp prepend_slash(path), do: "/" <> path
 end
