@@ -573,6 +573,17 @@ defmodule AshJsonApi.Serializer do
     |> Path.join()
   end
 
+  defp field_type_from_aggregate(resource, agg) do
+    if agg.field do
+      related = Ash.Resource.Info.related(resource, agg.relationship_path)
+      field = Ash.Resource.Info.field(related, agg.field)
+
+      if field do
+        field.type
+      end
+    end
+  end
+
   defp serialize_attributes(_, nil), do: nil
 
   defp serialize_attributes(request, records) when is_list(records) do
@@ -593,15 +604,7 @@ defmodule AshJsonApi.Serializer do
         type =
           case field do
             %Ash.Resource.Aggregate{} = agg ->
-              field_type =
-                if agg.field do
-                  related = Ash.Resource.Info.related(resource, agg.relationship_path)
-                  field = Ash.Resource.Info.field(related, agg.field)
-
-                  if field do
-                    field.type
-                  end
-                end
+              field_type = field_type_from_aggregate(resource, agg)
 
               {:ok, type} = Ash.Query.Aggregate.kind_to_type(agg.kind, field_type)
               type
