@@ -17,7 +17,7 @@ defmodule AshJsonApi.Request do
 
   require Ash.Query
 
-  import Ash.PlugHelpers, only: [get_actor: 1, get_tenant: 1]
+  import Ash.PlugHelpers, only: [get_actor: 1, get_tenant: 1, get_context: 1]
 
   defstruct [
     :api,
@@ -34,6 +34,7 @@ defmodule AshJsonApi.Request do
     :json_api_prefix,
     :actor,
     :tenant,
+    :context,
     :schema,
     :req_headers,
     :relationship,
@@ -75,6 +76,7 @@ defmodule AshJsonApi.Request do
       req_headers: conn.req_headers,
       actor: get_actor(conn),
       tenant: get_tenant(conn),
+      context: get_context(conn),
       body: conn.body_params,
       schema: AshJsonApi.JsonSchema.route_schema(route, api, resource),
       relationship: route.relationship,

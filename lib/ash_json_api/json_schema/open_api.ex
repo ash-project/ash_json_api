@@ -576,6 +576,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           properties: %{
             # There is a static set of types (one per resource)
             # so this is safe.
+            #
+            # sobelow_skip ["DOS.StringToAtom"]
             String.to_atom(type) => %Schema{
               description: "Comma separated field names for #{type}",
               type: :string,
