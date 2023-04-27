@@ -260,35 +260,46 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       query =
         if filter do
-          resource
-          |> Ash.Query.filter(^filter)
+          case Ash.Filter.parse_input(resource, filter) do
+            {:ok, parsed} ->
+              {:ok, Ash.Query.filter(resource, ^parsed)}
+
+            {:error, error} ->
+              {:error, error}
+          end
         else
-          resource
+          {:ok, resource}
         end
 
-      query
-      |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
-      |> Ash.Query.set_context(request.context)
-      |> Ash.Query.for_read(
-        action,
-        Map.merge(request.arguments, params),
-        Keyword.put(Request.opts(request), :page, false)
-      )
-      |> api.read_one()
-      |> case do
-        {:ok, nil} ->
-          error = Error.NotFound.new(filter: filter, resource: resource)
-          Request.add_error(request, error, :fetch_from_path)
-
-          Request.add_error(request, error, :fetch_from_path)
-
-        {:ok, record} ->
-          request
-          |> Request.assign(:result, record)
-          |> Request.assign(:record_from_path, record)
-
+      case query do
         {:error, error} ->
-          Request.add_error(request, error, :fetch_from_path)
+          {:error, Request.add_error(request, error, :filter)}
+
+        {:ok, query} ->
+          query
+          |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
+          |> Ash.Query.set_context(request.context)
+          |> Ash.Query.for_read(
+            action,
+            Map.merge(request.arguments, params),
+            Keyword.put(Request.opts(request), :page, false)
+          )
+          |> api.read_one()
+          |> case do
+            {:ok, nil} ->
+              error = Error.NotFound.new(filter: filter, resource: resource)
+              Request.add_error(request, error, :fetch_from_path)
+
+              Request.add_error(request, error, :fetch_from_path)
+
+            {:ok, record} ->
+              request
+              |> Request.assign(:result, record)
+              |> Request.assign(:record_from_path, record)
+
+            {:error, error} ->
+              Request.add_error(request, error, :fetch_from_path)
+          end
       end
     end)
   end
