@@ -88,8 +88,8 @@ defmodule AshJsonApi.Api.Router do
 
       open_api_opts = AshJsonApi.Api.Router.open_api_opts(opts)
 
-      case opts[:open_api] do
-        nil ->
+      case Code.ensure_loaded?(OpenApiSpex) && opts[:open_api] do
+        falsy when falsy in [nil, false] ->
           :ok
 
         true ->

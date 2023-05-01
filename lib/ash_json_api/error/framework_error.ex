@@ -1,6 +1,6 @@
 defmodule AshJsonApi.Error.FrameworkError do
   @moduledoc """
-  Returned when an unexpected error in the framework has occured.
+  Returned when an unexpected error in the framework has occurred.
   """
   @detail @moduledoc
   @title "Framework Error"
