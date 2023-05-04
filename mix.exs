@@ -5,7 +5,7 @@ defmodule AshJsonApi.MixProject do
   A JSON API front end for the `Ash` resource framework
   """
 
-  @version "0.31.2"
+  @version "0.31.3"
 
   def project do
     [

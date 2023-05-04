@@ -22,7 +22,7 @@ In your mix.exs, add the Ash JSON API dependency:
   defp deps do
     [
       # .. other dependencies
-      {:ash_json_api, "~> 0.31.2"},
+      {:ash_json_api, "~> 0.31.3"},
     ]
   end
 ```

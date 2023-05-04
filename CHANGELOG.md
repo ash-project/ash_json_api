@@ -5,6 +5,55 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.31.3](https://github.com/ash-project/ash_json_api/compare/v0.31.2...v0.31.3) (2023-05-04)
+
+
+
+
+### Bug Fixes:
+
+* OpenApi: Don't cause a compilation failure when open_api_spex is not present. (#78)
+
+* parse filter as input
+
+* Prepend slashes to relative paths (#77)
+
+* Match shape for definitions and schemas when generating a json schema (#75)
+
+* only include other AshJsonApi resources
+
+* only include other AshJsonApi relationships in schema
+
+* properly pass `modify` option to open api plug
+
+* use `String.to_atom/1`
+
+* sort/pagination schema improvements
+
+* don't pass type through to `Info.action/3`
+
+* properly extract attribute types in json schema
+
+* support aggregate types in serializer
+
+* properly fetch related field for aggregate type checking
+
+* support complex route parameters in json schema
+
+### Improvements:
+
+* thread context from `PlugHelpers.get_context` through to `Query` and `Changeset` (#71)
+
+* added route default_fields with test (#76)
+
+* update option name for pass through
+
+* support `__using__` block for router
+
+* Record self linking improvements (#70)
+
+* add `read_action` to `patch` and `delete`
+
 ## [v0.31.2](https://github.com/ash-project/ash_json_api/compare/v0.31.1...v0.31.2) (2023-04-27)
 
 
