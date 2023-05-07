@@ -287,7 +287,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       resource
       |> Ash.Resource.Info.public_relationships()
       |> Enum.filter(fn relationship ->
-        AshJsonApi.Resource in Spark.extensions(relationship)
+        AshJsonApi.Resource.Info.type(relationship)
       end)
       |> Map.new(fn rel ->
         data = resource_relationship_field_data(resource, rel)

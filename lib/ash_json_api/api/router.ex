@@ -47,7 +47,7 @@ defmodule AshJsonApi.Api.Router do
         resources = Ash.Api.Info.depend_on_resources(api)
 
         resources
-        |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
+        |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
         |> Enum.each(fn resource ->
           for %{
                 route: route,

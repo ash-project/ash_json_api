@@ -10,7 +10,7 @@ defmodule AshJsonApi.JsonSchema do
         resources =
           api
           |> Ash.Api.Info.resources()
-          |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
+          |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
 
         new_route_schemas =
           Enum.flat_map(resources, fn resource ->
@@ -246,7 +246,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> Ash.Resource.Info.public_relationships()
     |> Enum.filter(fn relationship ->
-      AshJsonApi.Resource in Spark.extensions(relationship)
+      AshJsonApi.Resource.Info.type(relationship)
     end)
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
