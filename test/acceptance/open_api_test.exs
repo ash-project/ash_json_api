@@ -51,6 +51,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     json_api do
       type("post")
+      includes :tags
 
       routes do
         base("/posts")
@@ -87,6 +88,32 @@ defmodule Test.Acceptance.OpenApiTest do
 
     relationships do
       belongs_to(:author, Test.Acceptance.OpenApiTest.Author, allow_nil?: false)
+      has_many(:tags, Test.Acceptance.OpenApiTest.Tag, destination_attribute: :post_id)
+    end
+  end
+
+  defmodule Tag do
+    use Ash.Resource,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    actions do
+      defaults([:read, :create, :update, :destroy])
+    end
+
+    attributes do
+      uuid_primary_key(:id, writable?: true)
+      attribute(:name, :string, allow_nil?: false)
+    end
+
+    relationships do
+      belongs_to(:post, Test.Acceptance.OpenApiTest.Post, allow_nil?: false)
     end
   end
 
@@ -96,6 +123,7 @@ defmodule Test.Acceptance.OpenApiTest do
     entries do
       entry(Post)
       entry(Author)
+      entry(Tag)
     end
   end
 
@@ -133,6 +161,11 @@ defmodule Test.Acceptance.OpenApiTest do
     assert api_spec.info.title == "foobar"
   end
 
+  test "resources without a json_api are not included in the schema", %{open_api_spec: api_spec} do
+    schema_keys = api_spec.components.schemas |> Map.keys()
+    assert "tags" not in schema_keys
+  end
+
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
     assert map_size(api_spec.paths) == 4
 
@@ -165,7 +198,8 @@ defmodule Test.Acceptance.OpenApiTest do
                author: %Schema{type: :string},
                email: %Schema{type: :string},
                hidden: %Schema{type: :string},
-               name: %Schema{type: :string}
+               name: %Schema{type: :string},
+               tags: %Schema{type: :string}
              }
 
       assert schema.required == nil
