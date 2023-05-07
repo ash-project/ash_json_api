@@ -162,7 +162,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resources(api) do
       api
       |> Ash.Api.Info.resources()
-      |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
+      |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
     end
 
     @spec resource_object_schema(resource :: Ash.Resource.t()) :: Schema.t()
