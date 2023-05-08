@@ -221,13 +221,14 @@ defmodule AshJsonApi.JsonSchema do
   defp required_attributes(resource) do
     resource
     |> Ash.Resource.Info.public_attributes()
-    |> Enum.reject(& &1.allow_nil?)
+    |> Enum.filter(& &1.allow_nil? || &1.name == :id)
     |> Enum.map(&to_string(&1.name))
   end
 
   defp resource_attributes(resource) do
     resource
     |> Ash.Resource.Info.public_attributes()
+    |> Enum.reject(& &1.name == :id)
     |> Enum.reduce(%{}, fn attr, acc ->
       Map.put(acc, to_string(attr.name), resource_attribute_type(attr))
     end)
