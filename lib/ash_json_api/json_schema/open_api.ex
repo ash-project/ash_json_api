@@ -200,7 +200,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_attributes(resource) do
       resource
       |> Ash.Resource.Info.public_attributes()
-      |> Enum.reject(&(&1.name == :id))
+      |> Enum.reject(&(AshJsonApi.Resource.reject_id?(&1.name) && &1.primary_key?))
       |> Map.new(fn attr ->
         {attr.name, resource_attribute_type(attr)}
       end)
@@ -265,7 +265,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp required_attributes(resource) do
       resource
       |> Ash.Resource.Info.public_attributes()
-      |> Enum.reject(&(&1.allow_nil? || &1.name == :id))
+      |> Enum.reject(
+        &(&1.allow_nil? || (AshJsonApi.Resource.reject_id?(&1.name) && &1.primary_key?))
+      )
       |> Enum.map(& &1.name)
       |> case do
         [] -> nil
