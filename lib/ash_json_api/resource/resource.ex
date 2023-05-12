@@ -555,13 +555,4 @@ defmodule AshJsonApi.Resource do
 
   def reject_id?(:id), do: true
   def reject_id?(_), do: false
-
-  def primary_key?(resource, field) do
-    resource
-    |> Ash.Resource.Info.primary_key()
-    |> case do
-      [^field] -> true
-      _ -> false
-    end
-  end
 end
