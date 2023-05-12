@@ -140,5 +140,12 @@ defmodule Test.Acceptance.GetTest do
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_missing("hidden")
     end
+
+    @tag :attributes
+    test "primary keys are not rendered in attributes object", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}", status: 200)
+      |> assert_attribute_missing("id")
+    end
   end
 end
