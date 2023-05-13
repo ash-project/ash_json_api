@@ -596,7 +596,7 @@ defmodule AshJsonApi.Serializer do
         default_attributes(resource)
 
     Enum.reduce(fields, %{}, fn field, acc ->
-      if AshJsonApi.Resource.reject_id?(field) do
+      if AshJsonApi.Resource.only_primary_key?(resource, field) do
         acc
       else
         field = Ash.Resource.Info.field(resource, field)
