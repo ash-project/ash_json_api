@@ -552,4 +552,13 @@ defmodule AshJsonApi.Resource do
       {:error, "Invalid fields"}
     end
   end
+
+  def only_primary_key?(resource, field) do
+    resource
+    |> Ash.Resource.Info.primary_key()
+    |> case do
+      [^field] -> true
+      _ -> false
+    end
+  end
 end
