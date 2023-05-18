@@ -593,7 +593,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @spec read_argument_parameters(Route.t(), resource :: module) :: [Parameter.t()]
     defp read_argument_parameters(route, resource) do
-      action = Ash.Resource.Info.action(resource, route.action, :read)
+      action = Ash.Resource.Info.action(resource, route.action)
 
       action.arguments
       |> Enum.reject(& &1.private?)
@@ -722,12 +722,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
            %{
              type: :post,
              action: action,
-             action_type: action_type,
              relationship_arguments: relationship_arguments
            },
            resource
          ) do
-      action = Ash.Resource.Info.action(resource, action, action_type)
+      action = Ash.Resource.Info.action(resource, action)
 
       non_relationship_arguments =
         Enum.reject(
@@ -771,12 +770,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
            %{
              type: :patch,
              action: action,
-             action_type: action_type,
              relationship_arguments: relationship_arguments
            },
            resource
          ) do
-      action = Ash.Resource.Info.action(resource, action, action_type)
+      action = Ash.Resource.Info.action(resource, action)
 
       non_relationship_arguments =
         Enum.reject(

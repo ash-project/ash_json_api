@@ -458,7 +458,7 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp add_read_arguments(props, route, resource) do
-    action = Ash.Resource.Info.action(resource, route.action, :read)
+    action = Ash.Resource.Info.action(resource, route.action)
 
     {
       action.arguments
