@@ -293,12 +293,16 @@ defmodule AshJsonApi.ContentNegotiationTest do
       )
     end
 
-    test "request Accept header is a valid media type other than JSON:API with bypass config", %{post: post} do
+    test "request Accept header is a valid media type other than JSON:API with bypass config", %{
+      post: post
+    } do
       Application.put_env(:ash_json_api, :allow_all_media_type_params?, true)
+
       get(Api, "/posts/#{post.id}",
         req_accept_header: "application/vnd.api+json; charset=\"utf-8\"",
         status: 200
       )
+
       Application.put_env(:ash_json_api, :allow_all_media_type_params?, nil)
     end
   end
