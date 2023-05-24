@@ -250,7 +250,8 @@ defmodule AshJsonApi.Request do
 
         headers ->
           Enum.any?(headers, fn {:ok, "application", "vnd.api+json", params} ->
-            valid_header_params?(params)
+            Application.get_env(:ash_json_api, :allow_all_media_type_params?, false) ||
+              valid_header_params?(params)
           end)
       end
 
