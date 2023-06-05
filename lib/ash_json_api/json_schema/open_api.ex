@@ -202,7 +202,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Ash.Resource.Info.public_attributes()
       |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
       |> Map.new(fn attr ->
-        {attr.name, resource_attribute_type(attr)}
+        {attr.name, resource_attribute_type(attr) |> with_attribute_description(attr)}
       end)
     end
 
@@ -259,6 +259,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
           additionalProperties: true
         }
       end
+    end
+
+    @spec with_attribute_description(
+            Schema.t(),
+            Ash.Resource.Attribute.t() | Ash.Resource.Actions.Argument.t()
+          ) :: Schema.t()
+    defp with_attribute_description(schema, %{description: nil}) do
+      schema
+    end
+
+    defp with_attribute_description(schema, %{description: description}) do
+      %{schema | description: description}
     end
 
     @spec required_attributes(resource :: module) :: nil | [:atom]
@@ -621,7 +633,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         resource
         |> Ash.Resource.Info.public_attributes()
         |> Map.new(fn attr ->
-          {attr.name, attribute_filter_schema(attr.type)}
+          {attr.name, attribute_filter_schema(attr.type) |> with_attribute_description(attr)}
         end)
 
       props =
