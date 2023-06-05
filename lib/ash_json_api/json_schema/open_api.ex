@@ -220,6 +220,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
       %Schema{type: :integer}
     end
 
+    defp resource_attribute_type(%{type: Ash.Type.Float}) do
+      %Schema{type: :number, format: :float}
+    end
+
     defp resource_attribute_type(%{type: Ash.Type.UtcDatetime}) do
       %Schema{
         type: :string,
@@ -687,6 +691,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
           Ash.Type.Integer ->
             %Schema{type: :integer}
+
+          Ash.Type.Float ->
+            %Schema{type: :number, format: :float}
 
           Ash.Type.UtcDateTime ->
             %Schema{type: :string, format: :"date-time"}
