@@ -75,8 +75,8 @@ defmodule Test.Acceptance.OpenApiTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, allow_nil?: false)
-      attribute(:hidden, :string)
+      attribute(:name, :string, allow_nil?: false, description: "description of attribute :name")
+      attribute(:hidden, :string, description: "description of attribute :hidden")
 
       attribute(:email, :string,
         allow_nil?: true,
@@ -197,8 +197,8 @@ defmodule Test.Acceptance.OpenApiTest do
                id: %Schema{format: :uuid, type: :string},
                author: %Schema{type: :string},
                email: %Schema{type: :string},
-               hidden: %Schema{type: :string},
-               name: %Schema{type: :string},
+               hidden: %Schema{type: :string, description: "description of attribute :hidden"},
+               name: %Schema{type: :string, description: "description of attribute :name"},
                tags: %Schema{type: :string}
              }
 
@@ -289,6 +289,40 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.type == :array
       assert schema.properties.data.uniqueItems == true
       assert schema.properties.data.items."$ref" == "#/components/schemas/post"
+
+      assert api_spec.components.schemas["post"] == %OpenApiSpex.Schema{
+               additionalProperties: false,
+               description: "A \"Resource object\" representing a post",
+               properties: %{
+                 attributes: %OpenApiSpex.Schema{
+                   additionalProperties: false,
+                   description: "An attributes object for a post",
+                   properties: %{
+                     email: %OpenApiSpex.Schema{type: :string},
+                     hidden: %OpenApiSpex.Schema{
+                       description: "description of attribute :hidden",
+                       type: :string
+                     },
+                     name: %OpenApiSpex.Schema{
+                       description: "description of attribute :name",
+                       type: :string
+                     }
+                   },
+                   required: [:name],
+                   type: :object
+                 },
+                 id: %{type: :string},
+                 relationships: %OpenApiSpex.Schema{
+                   additionalProperties: false,
+                   description: "A relationships object for a post",
+                   properties: %{},
+                   type: :object
+                 },
+                 type: %OpenApiSpex.Schema{type: :string}
+               },
+               required: [:type, :id],
+               type: :object
+             }
     end
   end
 
