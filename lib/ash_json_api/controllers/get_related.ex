@@ -17,8 +17,7 @@ defmodule AshJsonApi.Controllers.GetRelated do
 
     conn
     |> Request.from(resource, action, api, route)
-    |> Helpers.fetch_record_from_path(options[:resource])
-    |> Helpers.fetch_related()
+    |> Helpers.fetch_related(options[:resource])
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->
       case relationship.cardinality do

@@ -8,7 +8,6 @@ defmodule AshJsonApi.Api do
       """
       json_api do
         prefix "/json_api"
-        serve_open_api? true
         log_errors? true
       end
       """

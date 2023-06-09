@@ -90,8 +90,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         Request.opts(request)
       )
       |> Ash.Changeset.set_context(request.context)
+      |> Ash.Changeset.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> api.create(opts)
-      |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -111,8 +111,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         Request.opts(request)
       )
       |> Ash.Changeset.set_context(request.context)
+      |> Ash.Changeset.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> api.update()
-      |> api.load(fields(request, request.resource) ++ (request.includes_keyword || []))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -134,8 +134,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       )
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
+      |> Ash.Changeset.load(fields(request, request.resource))
       |> api.update()
-      |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
           request
@@ -159,8 +159,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       )
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
+      |> Ash.Changeset.load(fields(request, request.resource))
       |> api.update()
-      |> api.load(fields(request, request.resource))
       |> case do
         {:ok, updated} ->
           request
@@ -232,7 +232,7 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  def fetch_record_from_path(request, through_resource \\ nil) do
+  def fetch_record_from_path(request, through_resource \\ nil, load \\ nil) do
     chain(request, fn %{api: api, resource: request_resource} = request ->
       resource = through_resource || request_resource
 
@@ -276,6 +276,13 @@ defmodule AshJsonApi.Controllers.Helpers do
           {:error, Request.add_error(request, error, :filter)}
 
         {:ok, query} ->
+          query =
+            if load do
+              Ash.Query.load(query, load)
+            else
+              query
+            end
+
           query
           |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
           |> Ash.Query.set_context(request.context)
@@ -304,58 +311,46 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  def fetch_related(request) do
+  def fetch_related(request, through_resource \\ nil) do
+    relationship =
+      Ash.Resource.Info.public_relationship(
+        through_resource || request.resource,
+        request.relationship
+      )
+
+    sort = request.sort || default_sort(request.resource)
+
+    load_params =
+      if Map.get(request.assigns, :page) do
+        [page: request.assigns.page]
+      else
+        []
+      end
+
+    destination_query =
+      relationship.destination
+      |> Ash.Query.new(request.api)
+      |> Ash.Query.filter(^request.filter)
+      |> Ash.Query.sort(sort)
+      |> Ash.Query.load(request.includes_keyword)
+      |> Ash.Query.load(fields(request, request.resource))
+      |> Ash.Query.set_context(request.context)
+      |> Ash.Query.put_context(:override_api_params, load_params)
+
     request
+    |> fetch_record_from_path(through_resource, [{relationship.name, destination_query}])
     |> chain(fn %{
-                  api: api,
-                  assigns: %{result: %source_resource{} = record},
+                  assigns: %{result: record},
                   relationship: relationship
                 } = request ->
-      relationship = Ash.Resource.Info.public_relationship(source_resource, relationship)
+      paginated_result =
+        record
+        |> Map.get(relationship.name)
+        |> paginator_or_list()
 
-      sort = request.sort || default_sort(request.resource)
-
-      load_params =
-        if Map.get(request.assigns, :page) do
-          [page: request.assigns.page]
-        else
-          []
-        end
-
-      destination_query =
-        relationship.destination
-        |> Ash.Query.new(request.api)
-        |> Ash.Query.filter(^request.filter)
-        |> Ash.Query.sort(sort)
-        |> Ash.Query.load(request.includes_keyword)
-        |> Ash.Query.load(fields(request, request.resource))
-        |> Ash.Query.set_context(request.context)
-        |> Ash.Query.put_context(:override_api_params, load_params)
-
-      origin_query =
-        source_resource
-        |> Ash.Query.new(request.api)
-        |> Ash.Query.load([{relationship.name, destination_query}])
-        |> Ash.Query.set_context(request.context)
-
-      case api.load(
-             record,
-             origin_query,
-             Request.load_opts(request)
-           ) do
-        {:ok, record} ->
-          paginated_result =
-            record
-            |> Map.get(relationship.name)
-            |> paginator_or_list()
-
-          request
-          |> Request.assign(:record_from_path, record)
-          |> Request.assign(:result, paginated_result)
-
-        {:error, error} ->
-          Request.add_error(request, error, :fetch_related)
-      end
+      request
+      |> Request.assign(:record_from_path, record)
+      |> Request.assign(:result, paginated_result)
     end)
   end
 
