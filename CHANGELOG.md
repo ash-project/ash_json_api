@@ -5,6 +5,29 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.32.0](https://github.com/ash-project/ash_json_api/compare/v0.31.3...v0.32.0) (2023-06-09)
+
+
+
+
+### Features:
+
+* add attribute description to schema (#84)
+
+### Bug Fixes:
+
+* don't use unnecessary `Info.action/3`
+
+* Remove id from resource attributes (#80)
+
+### Improvements:
+
+* always load in query/changeset
+
+* Add config to allow all media type params (#83)
+
+* Filter for resources that have a json_api type defined (#79)
+
 ## [v0.31.3](https://github.com/ash-project/ash_json_api/compare/v0.31.2...v0.31.3) (2023-05-04)
 
 
