@@ -345,7 +345,7 @@ defmodule AshJsonApi.Controllers.Helpers do
                 } = request ->
       paginated_result =
         record
-        |> Map.get(relationship.name)
+        |> Map.get(relationship)
         |> paginator_or_list()
 
       request
