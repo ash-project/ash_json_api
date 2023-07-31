@@ -20,7 +20,7 @@ defmodule AshJsonApi.Controllers.Patch do
     |> Helpers.update_record()
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->
-      Response.render_one(conn, request, 201, request.assigns.result, request.assigns.includes)
+      Response.render_one(conn, request, 200, request.assigns.result, request.assigns.includes)
     end)
   end
 end
