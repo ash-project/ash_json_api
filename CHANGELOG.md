@@ -5,6 +5,13 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.33.0](https://github.com/ash-project/ash_json_api/compare/v0.32.1...v0.33.0) (2023-07-31)
+### Breaking Changes:
+
+* properly set 200 status on updates
+
+
+
 ## [v0.32.1](https://github.com/ash-project/ash_json_api/compare/v0.32.0...v0.32.1) (2023-07-17)
 
 
