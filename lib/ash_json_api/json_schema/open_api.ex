@@ -964,7 +964,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 },
                 uniqueItems: true
               },
-              included: included_resource_schemas(resource),
+              included: included_resource_schemas(resource)
             }
           }
 
@@ -1064,7 +1064,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.uniq()
     end
 
-    def relationship_destination(resource, include) do
+    defp relationship_destination(resource, include) do
       resource
       |> Ash.Resource.Info.public_relationship(include)
       |> case do
