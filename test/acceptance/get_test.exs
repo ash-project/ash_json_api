@@ -36,9 +36,10 @@ defmodule Test.Acceptance.GetTest do
 
     actions do
       defaults([:create, :update, :destroy])
+
       read :read do
         primary? true
-        prepare build(load: [:name_twice])
+        prepare(build(load: [:name_twice]))
       end
 
       read :by_name do
@@ -57,7 +58,7 @@ defmodule Test.Acceptance.GetTest do
     end
 
     calculations do
-      calculate :name_twice, :string, concat([:name, :name], "-")
+      calculate(:name_twice, :string, concat([:name, :name], "-"))
     end
   end
 
