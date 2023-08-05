@@ -303,7 +303,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_relationships(resource) do
       resource
       |> Ash.Resource.Info.public_relationships()
-      |> Enum.filter(fn relationship ->
+      |> Enum.filter(fn %{destination: relationship} ->
         AshJsonApi.Resource.Info.type(relationship)
       end)
       |> Map.new(fn rel ->
@@ -963,7 +963,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
                   "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
                 },
                 uniqueItems: true
-              }
+              },
+              included: included_resource_schemas(resource)
             }
           }
 
@@ -981,7 +982,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
             properties: %{
               data: %Reference{
                 "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
-              }
+              },
+              included: included_resource_schemas(resource)
             }
           }
       end
@@ -1017,6 +1019,62 @@ if Code.ensure_loaded?(OpenApiSpex) do
           }
         }
       }
+    end
+
+    defp included_resource_schemas(resource) do
+      includes = AshJsonApi.Resource.Info.includes(resource)
+      include_resources = includes_to_resources(resource, includes)
+
+      include_schemas =
+        include_resources
+        |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
+        |> Enum.map(fn resource ->
+          %Reference{"$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"}
+        end)
+
+      %Schema{
+        type: :array,
+        uniqueItems: true,
+        items: %Schema{
+          oneOf: include_schemas
+        }
+      }
+    end
+
+    defp includes_to_resources(nil, _), do: []
+    defp includes_to_resources([], _), do: []
+
+    defp includes_to_resources(resource, includes) when is_list(includes) do
+      includes
+      |> Enum.flat_map(fn
+        {include, []} ->
+          relationship_destination(resource, include) |> List.wrap()
+
+        {include, includes} ->
+          case relationship_destination(resource, include) do
+            nil ->
+              []
+
+            resource ->
+              [resource | includes_to_resources(resource, includes)]
+          end
+
+        include ->
+          relationship_destination(resource, include) |> List.wrap()
+      end)
+      |> Enum.uniq()
+    end
+
+    defp includes_to_resources(resource, include),
+      do: relationship_destination(resource, include) |> List.wrap()
+
+    defp relationship_destination(resource, include) do
+      resource
+      |> Ash.Resource.Info.public_relationship(include)
+      |> case do
+        %{destination: destination} -> destination
+        _ -> nil
+      end
     end
   end
 end

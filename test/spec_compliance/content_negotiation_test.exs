@@ -203,6 +203,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       end
     end
 
+    @tag capture_log: true
     test "request Content-Type header includes two instances of JSON:API modified with a param" do
       post(Api, "/posts", @create_body,
         req_content_type_header:
@@ -217,6 +218,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       end
     end
 
+    @tag capture_log: true
     test "request Content-Type header is a valid media type other than JSON:API" do
       post(Api, "/posts", @create_body,
         req_content_type_header: "application/vnd.api+json; charset=\"utf-8\"",
@@ -264,6 +266,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       )
     end
 
+    @tag capture_log: true
     test "request Accept header includes two instances of JSON:API modified with a param", %{
       post: post
     } do
@@ -286,6 +289,7 @@ defmodule AshJsonApi.ContentNegotiationTest do
       get(Api, "/posts/#{post.id}", req_accept_header: "*/*;q=0.8", status: 200)
     end
 
+    @tag capture_log: true
     test "request Accept header is a valid media type other than JSON:API", %{post: post} do
       get(Api, "/posts/#{post.id}",
         req_accept_header: "application/vnd.api+json; charset=\"utf-8\"",

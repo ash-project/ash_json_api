@@ -139,7 +139,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
         |> Ash.Changeset.for_create(:create, %{name: "bar"})
         |> Api.create!()
 
-      conn =
+      _conn =
         Api
         |> get("/posts", status: 200)
         |> assert_valid_resource_objects("post", [post.id, post2.id])
@@ -165,7 +165,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
         |> Api.create!()
 
-      conn =
+      _conn =
         Api
         |> get("/posts/#{post.id}", status: 200)
         |> assert_valid_resource_object("post", post.id)
