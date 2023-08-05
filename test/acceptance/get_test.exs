@@ -36,7 +36,11 @@ defmodule Test.Acceptance.GetTest do
 
     actions do
       defaults([:create, :update, :destroy])
-      read(:read, primary?: true)
+
+      read :read do
+        primary? true
+        prepare(build(load: [:name_twice]))
+      end
 
       read :by_name do
         argument(:name, :string, allow_nil?: false)
@@ -48,8 +52,13 @@ defmodule Test.Acceptance.GetTest do
     attributes do
       uuid_primary_key(:id)
       attribute(:name, :string)
+      attribute(:tag, :string)
       attribute(:hidden, :string, private?: true)
       attribute(:profile, Profile)
+    end
+
+    calculations do
+      calculate(:name_twice, :string, concat([:name, :name], "-"))
     end
   end
 
@@ -121,9 +130,10 @@ defmodule Test.Acceptance.GetTest do
     setup do
       post =
         Post
-        |> Ash.Changeset.for_create(:create, %{name: "foo", profile: %{bio: "Bio"}})
+        |> Ash.Changeset.for_create(:create, %{name: "foo", tag: "ash", profile: %{bio: "Bio"}})
         |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
         |> Api.create!()
+        |> Api.load!(:name_twice)
 
       %{post: post}
     end
@@ -132,6 +142,18 @@ defmodule Test.Acceptance.GetTest do
       Api
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_equals("name", post.name)
+    end
+
+    test "string attributes accessed with the fields param render properly", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}?fields[post]=tag", status: 200)
+      |> assert_attribute_equals("tag", post.tag)
+    end
+
+    test "calculated fields are rendered properly", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}?fields[post]=name_twice")
+      |> assert_attribute_equals("name_twice", post.name_twice)
     end
 
     @tag :attributes
