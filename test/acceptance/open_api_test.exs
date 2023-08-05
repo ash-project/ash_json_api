@@ -15,6 +15,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     json_api do
       type("author")
+      includes posts: [:tags]
 
       routes do
         base("/authors")
@@ -280,7 +281,6 @@ defmodule Test.Acceptance.OpenApiTest do
       refute operation.requestBody
     end
 
-    @tag :focus
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       response = operation.responses[200]
@@ -315,7 +315,30 @@ defmodule Test.Acceptance.OpenApiTest do
                  relationships: %OpenApiSpex.Schema{
                    additionalProperties: false,
                    description: "A relationships object for a post",
-                   properties: %{},
+                   properties: %{
+                     author: %OpenApiSpex.Schema{
+                       properties: %{
+                         data: %OpenApiSpex.Schema{
+                           type: :array,
+                           description: "An array of inputs for author",
+                           items: %{
+                             type: :object,
+                             description: "Resource identifiers for author",
+                             required: [:type, :id],
+                             properties: %{
+                               id: %OpenApiSpex.Schema{type: :string},
+                               meta: %OpenApiSpex.Schema{
+                                 type: :object,
+                                 additionalProperties: true
+                               },
+                               type: %OpenApiSpex.Schema{type: :string}
+                             }
+                           },
+                           uniqueItems: true
+                         }
+                       }
+                     }
+                   },
                    type: :object
                  },
                  type: %OpenApiSpex.Schema{type: :string}
@@ -374,12 +397,24 @@ defmodule Test.Acceptance.OpenApiTest do
       refute operation.requestBody
     end
 
-    @tag :focus
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.properties.data."$ref" == "#/components/schemas/post"
+      assert schema.properties.included.type == :array
+      assert schema.properties.included.items.oneOf == []
+    end
+
+    test "Response body schema with includes", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/{id}"].get
+      response = operation.responses[200]
+      schema = response.content["application/vnd.api+json"].schema
+      assert schema.properties.data."$ref" == "#/components/schemas/author"
+
+      assert schema.properties.included.items.oneOf == [
+               %OpenApiSpex.Reference{"$ref": "#/components/schemas/post"}
+             ]
     end
   end
 
@@ -425,7 +460,6 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.properties.attributes.type == :object
     end
 
-    @tag :focus
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
       response = operation.responses[200]

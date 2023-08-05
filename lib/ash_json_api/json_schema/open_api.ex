@@ -1027,6 +1027,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       include_schemas =
         include_resources
+        |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
         |> Enum.map(fn resource ->
           %Reference{"$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"}
         end)
@@ -1042,8 +1043,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp includes_to_resources(nil, _), do: []
     defp includes_to_resources([], _), do: []
-
-    defp includes_to_resources(resource, includes) do
+    defp includes_to_resources(resource, includes) when is_list(includes) do
       includes
       |> Enum.flat_map(fn
         {include, []} ->
@@ -1063,6 +1063,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
       |> Enum.uniq()
     end
+    defp includes_to_resources(resource, include), do: relationship_destination(resource, include) |> List.wrap()
 
     defp relationship_destination(resource, include) do
       resource
