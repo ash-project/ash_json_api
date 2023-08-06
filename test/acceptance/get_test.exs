@@ -59,6 +59,7 @@ defmodule Test.Acceptance.GetTest do
 
     calculations do
       calculate(:name_twice, :string, concat([:name, :name], "-"))
+      # calculate(:name_thrice, :string, concat([:name, :name, :name], "-"))
     end
   end
 
@@ -133,7 +134,6 @@ defmodule Test.Acceptance.GetTest do
         |> Ash.Changeset.for_create(:create, %{name: "foo", tag: "ash", profile: %{bio: "Bio"}})
         |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
         |> Api.create!()
-        |> Api.load!(:name_twice)
 
       %{post: post}
     end
@@ -150,11 +150,29 @@ defmodule Test.Acceptance.GetTest do
       |> assert_attribute_equals("tag", post.tag)
     end
 
-    test "calculated fields are rendered properly", %{post: post} do
+    test "calculated fields are rendered properly in a field param", %{post: post} do
       Api
       |> get("/posts/#{post.id}?fields[post]=name_twice")
-      |> assert_attribute_equals("name_twice", post.name_twice)
+      |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
     end
+
+    test "calculated fields are rendered properly by default", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}")
+      |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
+    end
+
+    test "calculated fields can be sorted on", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}?sort=name_twice")
+      |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
+    end
+
+    # test "calculated fields not loaded are skipped", %{post: post} do
+    #   Api
+    #   |> get("/posts/#{post.id}?fields[post]=name_thrice")
+    #   |> assert_attribute_equals("name_thrice", nil)
+    # end
 
     @tag :attributes
     test "private attributes are not rendered in the payload", %{post: post} do

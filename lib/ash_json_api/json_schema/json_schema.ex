@@ -228,6 +228,7 @@ defmodule AshJsonApi.JsonSchema do
   defp resource_attributes(resource) do
     resource
     |> Ash.Resource.Info.public_attributes()
+    |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
     |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
     |> Enum.reduce(%{}, fn attr, acc ->
       Map.put(acc, to_string(attr.name), resource_attribute_type(attr))
@@ -482,6 +483,7 @@ defmodule AshJsonApi.JsonSchema do
     sorts =
       resource
       |> Ash.Resource.Info.public_attributes()
+      |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
       |> Enum.flat_map(fn attr -> [attr.name, "-#{attr.name}"] end)
 
     "(#{Enum.join(sorts, "|")}),*"
