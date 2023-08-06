@@ -1035,11 +1035,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         end)
 
       %Schema{
-        type: :array,
-        uniqueItems: true,
-        items: %Schema{
-          oneOf: include_schemas
-        }
+        anyOf: include_schemas
       }
     end
 
