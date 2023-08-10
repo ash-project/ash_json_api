@@ -170,8 +170,8 @@ defmodule Test.Acceptance.GetTest do
 
     test "calculated fields not loaded are skipped", %{post: post} do
       Api
-      |> get("/posts/#{post.id}?fields[post]=name_tripled")
-      |> assert_attribute_equals("name_tripled", nil)
+      |> get("/posts/#{post.id}")
+      |> assert_attribute_missing("name_tripled")
     end
 
     @tag :attributes

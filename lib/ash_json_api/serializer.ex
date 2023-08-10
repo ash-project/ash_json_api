@@ -627,6 +627,10 @@ defmodule AshJsonApi.Serializer do
               serialize_attributes(%{fields: %{}, route: %{}}, Map.get(record, field.name))
             )
 
+          match?(%Ash.Resource.Calculation{}, field) &&
+              match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
+            acc
+
           true ->
             Map.put(acc, field.name, Map.get(record, field.name))
         end

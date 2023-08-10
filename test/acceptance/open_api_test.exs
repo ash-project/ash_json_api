@@ -229,9 +229,7 @@ defmodule Test.Acceptance.OpenApiTest do
                "hidden",
                "-hidden",
                "email",
-               "-email",
-               "name_twice",
-               "-name_twice"
+               "-email"
              ]
     end
 
