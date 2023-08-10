@@ -59,7 +59,7 @@ defmodule Test.Acceptance.GetTest do
 
     calculations do
       calculate(:name_twice, :string, concat([:name, :name], "-"))
-      # calculate(:name_thrice, :string, concat([:name, :name, :name], "-"))
+      calculate(:name_tripled, :string, concat([:name, :name, :name], "-"))
     end
   end
 
@@ -168,11 +168,11 @@ defmodule Test.Acceptance.GetTest do
       |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
     end
 
-    # test "calculated fields not loaded are skipped", %{post: post} do
-    #   Api
-    #   |> get("/posts/#{post.id}?fields[post]=name_thrice")
-    #   |> assert_attribute_equals("name_thrice", nil)
-    # end
+    test "calculated fields not loaded are skipped", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}?fields[post]=name_tripled")
+      |> assert_attribute_equals("name_tripled", nil)
+    end
 
     @tag :attributes
     test "private attributes are not rendered in the payload", %{post: post} do
