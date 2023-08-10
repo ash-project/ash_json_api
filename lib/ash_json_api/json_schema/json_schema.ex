@@ -483,7 +483,10 @@ defmodule AshJsonApi.JsonSchema do
     sorts =
       resource
       |> Ash.Resource.Info.public_attributes()
-      |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
+      |> Enum.concat(
+        Ash.Resource.Info.public_calculations(resource)
+        |> Enum.filter(&Ash.Resource.Info.sortable?(resource, &1))
+      )
       |> Enum.flat_map(fn attr -> [attr.name, "-#{attr.name}"] end)
 
     "(#{Enum.join(sorts, "|")}),*"
