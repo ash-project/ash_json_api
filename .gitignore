@@ -24,3 +24,5 @@ ash_json_api-*.tar
 
 # Ignoring Elixir Language Server
 .elixir_ls/
+
+.elixir-tools/

@@ -394,6 +394,10 @@ defmodule AshJsonApi.Request do
           fields = Map.update(request.fields, resource, [agg.name], &[agg.name | &1])
           %{request | fields: fields}
 
+        calc = Ash.Resource.Info.public_calculation(resource, key) ->
+          fields = Map.update(request.fields, resource, [calc.name], &[calc.name | &1])
+          %{request | fields: fields}
+
         true ->
           add_error(
             request,
@@ -431,6 +435,9 @@ defmodule AshJsonApi.Request do
 
           cond do
             attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
+              %{request | sort: [{attr.name, order} | request.sort]}
+
+            attr = Ash.Resource.Info.public_calculation(resource, field_name) ->
               %{request | sort: [{attr.name, order} | request.sort]}
 
             agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->

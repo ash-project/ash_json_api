@@ -87,6 +87,10 @@ defmodule Test.Acceptance.OpenApiTest do
       )
     end
 
+    calculations do
+      calculate(:name_twice, :string, concat([:name, :name], "-"))
+    end
+
     relationships do
       belongs_to(:author, Test.Acceptance.OpenApiTest.Author, allow_nil?: false)
       has_many(:tags, Test.Acceptance.OpenApiTest.Tag, destination_attribute: :post_id)
@@ -306,7 +310,8 @@ defmodule Test.Acceptance.OpenApiTest do
                      name: %OpenApiSpex.Schema{
                        description: "description of attribute :name",
                        type: :string
-                     }
+                     },
+                     name_twice: %OpenApiSpex.Schema{type: :string}
                    },
                    required: [:name],
                    type: :object

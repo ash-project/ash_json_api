@@ -200,6 +200,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_attributes(resource) do
       resource
       |> Ash.Resource.Info.public_attributes()
+      |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
       |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
       |> Map.new(fn attr ->
         {attr.name, resource_attribute_type(attr) |> with_attribute_description(attr)}
@@ -521,6 +522,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
       sorts =
         resource
         |> Ash.Resource.Info.public_attributes()
+        |> Enum.concat(
+          Ash.Resource.Info.public_calculations(resource)
+          |> Enum.filter(&Ash.Resource.Info.sortable?(resource, &1))
+        )
         |> Enum.flat_map(fn attr -> [to_string(attr.name), "-#{attr.name}"] end)
 
       %Parameter{
