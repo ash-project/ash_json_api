@@ -174,6 +174,15 @@ defmodule Test.Acceptance.GetTest do
       |> assert_attribute_missing("name_tripled")
     end
 
+    test "calculated fields unloaded by default are loaded if specified", %{post: post} do
+      Api
+      |> get("/posts/#{post.id}?fields[post]=name_tripled")
+      |> assert_attribute_equals(
+        "name_tripled",
+        post.name <> "-" <> post.name <> "-" <> post.name
+      )
+    end
+
     @tag :attributes
     test "private attributes are not rendered in the payload", %{post: post} do
       Api
