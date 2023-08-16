@@ -405,13 +405,9 @@ defmodule AshJsonApi.Serializer do
   # If paginating fowards we set the previous link to the first in the result set
   defp add_prev_link(links, uri, query, %{results: results, before: nil} = paginator) do
     # TODO: Fix put_page_params using after only if before is set
-
     paginator =
       Map.put(paginator, :before, List.first(results).__metadata__.keyset)
       |> Map.put(:after, nil)
-
-    IO.inspect(paginator)
-    IO.inspect(put_page_params(query, paginator), label: "Link ---> ")
 
     new_query =
       query
