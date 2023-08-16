@@ -320,11 +320,6 @@ defmodule AshJsonApi.Serializer do
   # Pagination forward, there are results
   # If there is more, add next link, else next link is nil
   defp add_next_link(links, uri, query, %{results: results, after: _, before: nil} = paginator) do
-    # IO.inspect(paginator.limit)
-    # IO.inspect(Enum.count(paginator.results))
-    # IO.inspect(paginator.after)
-    # IO.inspect(paginator.before)
-
     if paginator.more? do
       new_query =
         query
