@@ -27,7 +27,7 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
-  def serialize_many(request, paginator, includes, meta \\ nil) do
+  def serialize_many(request, paginator, includes) do
     data =
       case paginator do
         %{results: results} ->
@@ -41,6 +41,7 @@ defmodule AshJsonApi.Serializer do
     json_api = %{version: "1.0"}
 
     links = many_links(request, paginator)
+    meta = add_metadata(request, paginator)
 
     %{data: data, jsonapi: json_api, links: links}
     |> add_includes(request, includes)

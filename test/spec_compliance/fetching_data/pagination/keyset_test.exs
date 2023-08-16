@@ -33,8 +33,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
         pagination(
           keyset?: true,
-          default_limit: 5,
-          countable: true
+          default_limit: 5
         )
       end
     end
@@ -328,6 +327,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
              }
     end
 
+    # TODO: Not sure why, but getting invalid keyset here sometimes...
     test "[After] when there are results, prev & next are set" do
       # Read first 5 posts
       # Prev: 1, Next: 5
@@ -452,9 +452,32 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
   # Using examples from https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id-collection-sizes
   #
   describe "[Keyset] Meta object members" do
+    setup do
+      posts =
+        for index <- 1..15 do
+          Post
+          |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
+          |> Api.create!()
+        end
+
+      [posts: posts, page_size: 5]
+    end
+
     # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
     # in the list of results that's being paginated
     test "collection sizes" do
+      page_size = 5
+
+      conn =
+        get(
+          Api,
+          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=true",
+          status: 200
+        )
+
+      assert %{"meta" => meta} = conn.resp_body
+
+      assert meta == %{"page" => %{"total" => 15}}
     end
 
     # Item cursors
