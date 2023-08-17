@@ -446,12 +446,11 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
   @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
-  # Defines a Meta object that reserves a `page` member.
-  # Entries to this object describe the collection being paginated with the next, prev cursor, page size etc.
+  # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
+  # in the list of results that's being paginated
   # --------------------------
   # Using examples from https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id-collection-sizes
-  #
-  describe "[Keyset] Meta object members" do
+  describe "[Keyset] Pagination meta" do
     setup do
       posts =
         for index <- 1..15 do
@@ -463,10 +462,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       [posts: posts, page_size: 5]
     end
 
-    # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
-    # in the list of results that's being paginated
-    test "collection sizes" do
+    test "collection total is included when specified" do
       page_size = 5
+
+      {:ok, %Ash.Page.Keyset{} = keyset_at_15} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+          page: [after: after_cursor_at_10, limit: page_size]
+        )
+
+      before_cursor = List.first(keyset_at_15.results).__metadata__.keyset
 
       conn =
         get(
@@ -477,15 +481,22 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       assert %{"meta" => meta} = conn.resp_body
 
-      assert meta == %{"page" => %{"total" => 15}}
+      assert meta == %{"page" => %{"total" => 15, "before" => "", "after" => ""}}
     end
 
-    # Item cursors
-    # https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id--item-cursors
-    test "item cursors: next & prev members are defined" do
-    end
+    test "collection total is nil when count is false" do
+      page_size = 5
 
-    test "" do
+      conn =
+        get(
+          Api,
+          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=false",
+          status: 200
+        )
+
+      assert %{"meta" => meta} = conn.resp_body
+
+      assert meta == %{"page" => %{"total" => nil, "before" => "", "after" => ""}}
     end
   end
 

@@ -50,7 +50,7 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp add_page_metadata(%Ash.Page.Offset{} = paginator) do
-    %{page: %{total: paginator.count, offset: paginator.offset, limit: paginator.limit}}
+    %{page: %{total: paginator.count}}
   end
 
   defp add_page_metadata(%Ash.Page.Keyset{} = paginator) do

@@ -215,12 +215,11 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
   @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
-  # Defines a Meta object that reserves a `page` member.
-  # Entries to this object describe the collection being paginated with the next, prev cursor, page size etc.
+  # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
+  # in the list of results that's being paginated
   # --------------------------
   # Using examples from https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id-collection-sizes
-  #
-  describe "[Offset] Meta object members" do
+  describe "[Offset] Pagination meta" do
     setup do
       posts =
         for index <- 1..15 do
@@ -234,7 +233,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
     # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
     # in the list of results that's being paginated
-    test "collection sizes" do
+    test "collection total is included when specified" do
       page_size = 5
 
       conn =
@@ -246,27 +245,22 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       assert %{"meta" => meta} = conn.resp_body
 
-      assert meta == %{"page" => %{"total" => 15, "limit" => 5, "offset" => 0}}
+      assert meta == %{"page" => %{"total" => 15}}
     end
 
-    # Item cursors
-    # https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id--item-cursors
-    test "item cursors: offset and limit members are defined" do
+    test "collection total is nil when count is false" do
       page_size = 5
 
       conn =
         get(
           Api,
-          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=true&page[offset]=5",
+          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=false",
           status: 200
         )
 
       assert %{"meta" => meta} = conn.resp_body
 
-      assert meta == %{"page" => %{"total" => 15, "offset" => 5, "limit" => page_size}}
-    end
-
-    test "" do
+      assert meta == %{"page" => %{"total" => nil}}
     end
   end
 
