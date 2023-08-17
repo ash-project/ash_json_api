@@ -235,9 +235,9 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
     end
   end
 
-  defp encode_page_query(page) do
-    Plug.Conn.Query.encode(%{page: page})
-  end
+  # defp encode_page_query(page) do
+  #   Plug.Conn.Query.encode(%{page: page})
+  # end
 
   # Figure out what our pagination strategy is from this note:
   # Note: JSON:API is agnostic about the pagination strategy used by a server.

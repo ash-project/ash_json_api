@@ -36,8 +36,7 @@ defmodule AshJsonApi.Controllers.GetRelated do
             request,
             200,
             request.assigns.result,
-            request.assigns.includes,
-            false
+            request.assigns.includes
           )
       end
     end)
