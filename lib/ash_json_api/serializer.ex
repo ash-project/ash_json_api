@@ -49,6 +49,7 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
+  # Adds page level metadata, like total count of records
   defp add_page_metadata(%Ash.Page.Offset{} = paginator) do
     %{page: %{total: paginator.count}}
   end
@@ -219,55 +220,56 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp put_count_param(query, %{count: count}) when is_integer(count) do
-    Map.update(query, "page", %{count: count}, &Map.put(&1, :count, count))
+    Map.update(query, "page", %{count: count}, &Map.put(&1, :count, true))
   end
 
   defp put_count_param(query, _), do: query
 
-  defp put_page_params(query, %{limit: nil, offset: offset}) when offset in [0, nil] do
-    query
+  defp put_page_params(query, %Ash.Page.Offset{} = paginator) do
+    %{limit: limit, offset: offset} = paginator
+
+    cond do
+      is_nil(limit) and offset in [0, nil] ->
+        query
+
+      offset in [0, nil] ->
+        Map.put(query, "page", %{
+          limit: limit
+        })
+
+      is_nil(limit) ->
+        Map.put(query, "page", %{
+          offset: offset
+        })
+
+      true ->
+        Map.put(query, "page", %{
+          limit: limit,
+          offset: offset
+        })
+    end
   end
 
-  defp put_page_params(query, %{limit: limit, offset: offset}) when offset in [0, nil] do
-    Map.put(query, "page", %{
-      limit: limit
-    })
-  end
+  defp put_page_params(query, %Ash.Page.Keyset{} = paginator) do
+    %{after: after_cursor, before: before_cursor, limit: limit} = paginator
 
-  defp put_page_params(query, %{limit: nil, offset: offset}) do
-    Map.put(query, "page", %{
-      offset: offset
-    })
-  end
+    cond do
+      is_nil(limit) ->
+        Map.put(query, "page", %{after: after_cursor})
 
-  defp put_page_params(query, %{limit: limit, offset: offset}) do
-    Map.put(query, "page", %{
-      limit: limit,
-      offset: offset
-    })
-  end
+      is_binary(after_cursor) ->
+        Map.put(query, "page", %{after: after_cursor, limit: limit})
 
-  defp put_page_params(query, %{after: after_keyset, limit: nil}) when is_binary(after_keyset) do
-    Map.put(query, "page", %{after: after_keyset})
-  end
+      is_nil(limit) and is_binary(before_cursor) ->
+        Map.put(query, "page", %{before: before_cursor})
 
-  defp put_page_params(query, %{after: after_keyset, limit: limit})
-       when is_binary(after_keyset) do
-    Map.put(query, "page", %{after: after_keyset, limit: limit})
-  end
+      is_binary(before_cursor) ->
+        Map.put(query, "page", %{before: before_cursor, limit: limit})
 
-  defp put_page_params(query, %{before: before_keyset, limit: nil})
-       when is_binary(before_keyset) do
-    Map.put(query, "page", %{before: before_keyset})
+      true ->
+        Map.put(query, "page", %{limit: limit})
+    end
   end
-
-  defp put_page_params(query, %{before: before_keyset, limit: limit})
-       when is_binary(before_keyset) do
-    Map.put(query, "page", %{before: before_keyset, limit: limit})
-  end
-
-  defp put_page_params(query, %{limit: limit}) when is_integer(limit),
-    do: Map.put(query, "page", %{limit: limit})
 
   defp put_page_params(query, _), do: query
 
@@ -362,9 +364,9 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp next_page(%{limit: nil} = paginator), do: paginator
+  defp next_page(%Ash.Page.Offset{limit: nil} = paginator), do: paginator
 
-  defp next_page(%{limit: limit, offset: offset} = paginator),
+  defp next_page(%Ash.Page.Offset{limit: limit, offset: offset} = paginator),
     do: %{paginator | offset: limit + (offset || 0)}
 
   # Offset pagination

@@ -148,6 +148,30 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
     end
 
     test "next, prev, first & self links are present" do
+      # Read first 10 posts
+      # Prev: 1, Next: 10
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # |-------|--------------------------
+
+      page_size = 5
+
+      {:ok, %Ash.Page.Offset{} = offset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
+
+      conn = get(Api, "/posts?sort=-inserted_at", status: 200)
+
+      next_offset = offset.limit
+      assert %{"links" => links} = conn.resp_body
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "next" =>
+                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" => nil
+             }
     end
   end
 
@@ -175,19 +199,193 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       [posts: posts, page_size: 5]
     end
 
-    test "[Initial] when paginating with no cursors set and there are results, next is set, prev is nil" do
+    test "[Initial] when paginating with no offset params and there are results, next is set, prev is nil" do
+      # Read first 5 posts
+      # Prev: 1, Next: 5
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # |-------|--------------------------
+
+      page_size = 5
+
+      {:ok, %Ash.Page.Offset{} = offset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
+
+      conn = get(Api, "/posts?sort=-inserted_at&page[size]=#{page_size}", status: 200)
+
+      assert %{"links" => links} = conn.resp_body
+
+      next_offset = offset.limit
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "next" =>
+                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" => nil
+             }
     end
 
-    test "[Before] when there are no more results, prev is nil" do
+    test "when there are no more results in the prev direction, prev is nil" do
+      # Read first 5 posts
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # |-------|--------------------------
+
+      page_size = 5
+
+      {:ok, %Ash.Page.Offset{} = offset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size, offset: 0])
+
+      conn = get(Api, "/posts?sort=-inserted_at&page[offset]=0", status: 200)
+
+      next_offset = offset.limit
+      assert %{"links" => links} = conn.resp_body
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "next" =>
+                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" => nil
+             }
     end
 
-    test "[Before] when there are results, prev and next are set" do
+    test "when there are results in both directions, prev and next are set" do
+      # Read first 5 posts at offset 10
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # ----------------------|-----------|
+
+      page_size = 5
+      initial_offset = page_size * 2
+
+      {:ok, %Ash.Page.Offset{} = offset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+          page: [limit: page_size, offset: initial_offset]
+        )
+
+      conn = get(Api, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}", status: 200)
+
+      next_offset = offset.offset + offset.limit
+      prev_offset = offset.offset - offset.limit
+
+      assert %{"links" => links} = conn.resp_body
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "next" =>
+                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" =>
+                 "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
+             }
     end
 
-    test "[After] when there are results, prev & next are set" do
+    test "when there are no more results in next direction and count is true, next is nil" do
+      # Read first 5 posts at offset 5
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # ----------------------|-----------|
+
+      page_size = 5
+      initial_offset = page_size * 2
+
+      {:ok, %Ash.Page.Offset{} = offset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+          page: [limit: page_size, offset: initial_offset, count: true]
+        )
+
+      conn =
+        get(Api, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}&page[count]=true",
+          status: 200
+        )
+
+      prev_offset = offset.offset - offset.limit
+
+      assert %{"links" => links} = conn.resp_body
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[count]=true&page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "next" => nil,
+               "last" =>
+                 "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" =>
+                 "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
+             }
     end
 
-    test "[After] when there are no more results, next is nil" do
+    test "when there are no more results in next direction and count is false, next has an offset" do
+      # Read first 5 posts at offset 5
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # ----------------------|-----------|
+
+      page_size = 5
+      initial_offset = page_size * 2
+
+      {:ok, %Ash.Page.Offset{} = offset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+          page: [limit: page_size, offset: initial_offset]
+        )
+
+      conn =
+        get(Api, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}", status: 200)
+
+      next_offset = offset.offset + offset.limit
+      prev_offset = offset.offset - offset.limit
+
+      assert %{"links" => links} = conn.resp_body
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "next" =>
+                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" =>
+                 "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
+             }
+    end
+
+    test "when count is true last link is present" do
+      # Read first 5 posts
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # |-------|--------------------------
+
+      page_size = 5
+
+      {:ok, %Ash.Page.Offset{} = offset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+          page: [limit: page_size, offset: page_size, count: true]
+        )
+
+      conn =
+        get(Api, "/posts?sort=-inserted_at&page[offset]=#{page_size}&page[count]=true",
+          status: 200
+        )
+
+      next_offset = offset.offset + offset.limit
+      last_offset = offset.count - offset.limit
+
+      assert %{"links" => links} = conn.resp_body
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[count]=true&page[offset]=#{page_size}&page[limit]=#{page_size}&sort=-inserted_at",
+               "next" =>
+                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "last" =>
+                 "http://www.example.com/posts?page[offset]=#{last_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at"
+             }
     end
   end
 
@@ -233,7 +431,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
     # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
     # in the list of results that's being paginated
-    test "collection total is included when specified" do
+    test "collection total is included when count is true" do
       page_size = 5
 
       conn =
@@ -263,10 +461,6 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       assert meta == %{"page" => %{"total" => nil}}
     end
   end
-
-  # defp encode_page_query(page) do
-  #   Plug.Conn.Query.encode(%{page: page})
-  # end
 
   # Figure out what our pagination strategy is from this note:
   # Note: JSON:API is agnostic about the pagination strategy used by a server.
