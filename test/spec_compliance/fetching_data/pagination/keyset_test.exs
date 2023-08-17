@@ -327,7 +327,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
              }
     end
 
-    # TODO: Not sure why, but getting invalid keyset here sometimes...
+    # FIX: Not sure why, but getting invalid keyset here sometimes...
     test "[After] when there are results, prev & next are set" do
       # Read first 5 posts
       # Prev: 1, Next: 5
