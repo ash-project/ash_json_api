@@ -50,19 +50,11 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp add_page_metadata(%Ash.Page.Offset{} = paginator) do
-    if paginator.count do
-      %{page: %{total: paginator.count, offset: paginator.offset, limit: paginator.limit}}
-    else
-      %{page: %{}}
-    end
+    %{page: %{total: paginator.count, offset: paginator.offset, limit: paginator.limit}}
   end
 
   defp add_page_metadata(%Ash.Page.Keyset{} = paginator) do
-    if paginator.count do
-      %{page: %{total: paginator.count}}
-    else
-      %{page: %{}}
-    end
+    %{page: %{total: paginator.count}}
   end
 
   # This is added because some tests on `Test.Acceptance.IndexTest` fail

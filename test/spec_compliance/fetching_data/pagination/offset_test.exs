@@ -221,14 +221,49 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
   # Using examples from https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id-collection-sizes
   #
   describe "[Offset] Meta object members" do
+    setup do
+      posts =
+        for index <- 1..15 do
+          Post
+          |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
+          |> Api.create!()
+        end
+
+      [posts: posts, page_size: 5]
+    end
+
     # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
     # in the list of results that's being paginated
     test "collection sizes" do
+      page_size = 5
+
+      conn =
+        get(
+          Api,
+          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=true",
+          status: 200
+        )
+
+      assert %{"meta" => meta} = conn.resp_body
+
+      assert meta == %{"page" => %{"total" => 15, "limit" => 5, "offset" => 0}}
     end
 
     # Item cursors
     # https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id--item-cursors
-    test "item cursors: next & prev members are defined" do
+    test "item cursors: offset and limit members are defined" do
+      page_size = 5
+
+      conn =
+        get(
+          Api,
+          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=true&page[offset]=5",
+          status: 200
+        )
+
+      assert %{"meta" => meta} = conn.resp_body
+
+      assert meta == %{"page" => %{"total" => 15, "offset" => 5, "limit" => page_size}}
     end
 
     test "" do
