@@ -286,13 +286,13 @@ defmodule AshJsonApi.Serializer do
 
     cond do
       not is_nil(count) and not is_nil(offset) and offset + limit >= count ->
-        links
+        Map.put(links, :next, nil)
 
       not is_nil(count) and is_nil(offset) and limit >= count ->
-        links
+        Map.put(links, :next, nil)
 
       Enum.count(results) < limit ->
-        links
+        Map.put(links, :next, nil)
 
       true ->
         new_query =
@@ -309,41 +309,6 @@ defmodule AshJsonApi.Serializer do
         Map.put(links, :next, link)
     end
   end
-
-  # defp add_next_link(links, _uri, _query, %Ash.Page.Offset{
-  #        offset: offset,
-  #        limit: limit,
-  #        count: count
-  #      })
-  #      when not is_nil(count) and not is_nil(offset) and offset + limit >= count,
-  #      do: links
-
-  # defp add_next_link(links, _uri, _query, %Ash.Page.Offset{
-  #        offset: offset,
-  #        limit: limit,
-  #        count: count
-  #      })
-  #      when not is_nil(count) and is_nil(offset) and limit >= count,
-  #      do: links
-
-  # defp add_next_link(links, uri, query, %Ash.Page.Offset{} = paginator) do
-  #   if Enum.count(paginator.results) < paginator.limit do
-  #     links
-  #   else
-  #     new_query =
-  #       query
-  #       |> put_page_params(next_page(paginator))
-  #       |> Conn.Query.encode()
-
-  #     link =
-  #       uri
-  #       |> put_query(new_query)
-  #       |> URI.to_string()
-  #       |> encode_link()
-
-  #     Map.put(links, :next, link)
-  #   end
-  # end
 
   ## Cursor pagination
 
@@ -415,7 +380,7 @@ defmodule AshJsonApi.Serializer do
   defp add_prev_link(links, uri, query, %Ash.Page.Offset{} = paginator) do
     cond do
       paginator.offset in [0, nil] ->
-        links
+        Map.put(links, :prev, nil)
 
       true ->
         new_query =
