@@ -411,23 +411,26 @@ defmodule AshJsonApi.Serializer do
     do: %{paginator | offset: limit + (offset || 0)}
 
   # Offset pagination
-  defp add_prev_link(links, _uri, _query, %Ash.Page.Offset{offset: offset})
-       when offset in [0, nil],
-       do: links
 
   defp add_prev_link(links, uri, query, %Ash.Page.Offset{} = paginator) do
-    new_query =
-      query
-      |> put_page_params(prev_page(paginator))
-      |> Conn.Query.encode()
+    cond do
+      paginator.offset in [0, nil] ->
+        links
 
-    link =
-      uri
-      |> put_query(new_query)
-      |> URI.to_string()
-      |> encode_link()
+      true ->
+        new_query =
+          query
+          |> put_page_params(prev_page(paginator))
+          |> Conn.Query.encode()
 
-    Map.put(links, :prev, link)
+        link =
+          uri
+          |> put_query(new_query)
+          |> URI.to_string()
+          |> encode_link()
+
+        Map.put(links, :prev, link)
+    end
   end
 
   ## Cursor pagination
