@@ -465,13 +465,6 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
     test "collection total is included when specified" do
       page_size = 5
 
-      {:ok, %Ash.Page.Keyset{} = keyset_at_15} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
-          page: [after: after_cursor_at_10, limit: page_size]
-        )
-
-      before_cursor = List.first(keyset_at_15.results).__metadata__.keyset
-
       conn =
         get(
           Api,
@@ -481,7 +474,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       assert %{"meta" => meta} = conn.resp_body
 
-      assert meta == %{"page" => %{"total" => 15, "before" => "", "after" => ""}}
+      assert meta == %{"page" => %{"total" => 15}}
     end
 
     test "collection total is nil when count is false" do
@@ -496,7 +489,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       assert %{"meta" => meta} = conn.resp_body
 
-      assert meta == %{"page" => %{"total" => nil, "before" => "", "after" => ""}}
+      assert meta == %{"page" => %{"total" => nil}}
     end
   end
 
