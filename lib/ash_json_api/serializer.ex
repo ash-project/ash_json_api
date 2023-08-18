@@ -290,19 +290,7 @@ defmodule AshJsonApi.Serializer do
         Map.put(links, :next, nil)
 
       true ->
-        new_query =
-          query
-          |> put_page_params(next_page(paginator))
-          |> put_count_param(paginator)
-          |> Conn.Query.encode()
-
-        link =
-          uri
-          |> put_query(new_query)
-          |> URI.to_string()
-          |> encode_link()
-
-        Map.put(links, :next, link)
+        Map.put(links, :next, build_link(uri, query, next_page(paginator)))
     end
   end
 
@@ -312,19 +300,9 @@ defmodule AshJsonApi.Serializer do
     case paginator do
       # This is a query for the first page, no cursors are set
       %{results: results, after: nil, before: nil, more?: true} ->
-        new_query =
-          query
-          |> put_page_params(%{paginator | after: List.last(results).__metadata__.keyset})
-          |> put_count_param(paginator)
-          |> Conn.Query.encode()
+        paginator = %{paginator | after: List.last(results).__metadata__.keyset}
 
-        link =
-          uri
-          |> put_query(new_query)
-          |> URI.to_string()
-          |> encode_link()
-
-        Map.put(links, :next, link)
+        Map.put(links, :next, build_link(uri, query, paginator))
 
       # No results at all
       %{after: nil, before: nil, more?: false} ->
@@ -337,36 +315,20 @@ defmodule AshJsonApi.Serializer do
       # Pagination forward with after, there are results
       # If there is more, add next link, else next link is nil
       %{results: results, after: _, before: nil, more?: true} ->
-        new_query =
-          query
-          |> put_page_params(%{paginator | after: List.last(results).__metadata__.keyset})
-          |> put_count_param(paginator)
-          |> Conn.Query.encode()
+        paginator = %{paginator | after: List.last(results).__metadata__.keyset}
 
-        link =
-          uri
-          |> put_query(new_query)
-          |> URI.to_string()
-          |> encode_link()
-
-        Map.put(links, :next, link)
+        Map.put(links, :next, build_link(uri, query, paginator))
 
       # Pagination backward, there are results
       # Since we are paginating backwards from a result, we assume there will be more
       %{results: results, after: nil} ->
-        new_query =
-          query
-          |> put_page_params(%{paginator | after: List.last(results).__metadata__.keyset})
-          |> put_count_param(paginator)
-          |> Conn.Query.encode()
+        paginator = %{paginator | after: List.last(results).__metadata__.keyset}
 
-        link =
-          uri
-          |> put_query(new_query)
-          |> URI.to_string()
-          |> encode_link()
-
-        Map.put(links, :next, link)
+        Map.put(
+          links,
+          :next,
+          build_link(uri, query, paginator)
+        )
 
       _ ->
         Map.put(links, :next, nil)
@@ -384,19 +346,7 @@ defmodule AshJsonApi.Serializer do
     if paginator.offset in [0, nil] do
       Map.put(links, :prev, nil)
     else
-      new_query =
-        query
-        |> put_page_params(prev_page(paginator))
-        |> put_count_param(paginator)
-        |> Conn.Query.encode()
-
-      link =
-        uri
-        |> put_query(new_query)
-        |> URI.to_string()
-        |> encode_link()
-
-      Map.put(links, :prev, link)
+      Map.put(links, :prev, build_link(uri, query, prev_page(paginator)))
     end
   end
 
@@ -417,43 +367,33 @@ defmodule AshJsonApi.Serializer do
       %{results: results, more?: true, after: nil} ->
         paginator = Map.put(paginator, :before, List.first(results).__metadata__.keyset)
 
-        new_query =
-          query
-          |> put_page_params(paginator)
-          |> put_count_param(paginator)
-          |> Conn.Query.encode()
-
-        link =
-          uri
-          |> put_query(new_query)
-          |> URI.to_string()
-          |> encode_link()
-
-        Map.put(links, :prev, link)
+        Map.put(links, :prev, build_link(uri, query, paginator))
 
       # If paginating fowards with after, we set the previous link to the first in the result set
       %{results: results, before: nil} ->
         paginator =
-          Map.put(paginator, :before, List.first(results).__metadata__.keyset)
+          paginator
+          |> Map.put(:before, List.first(results).__metadata__.keyset)
           |> Map.put(:after, nil)
 
-        new_query =
-          query
-          |> put_page_params(paginator)
-          |> put_count_param(paginator)
-          |> Conn.Query.encode()
-
-        link =
-          uri
-          |> put_query(new_query)
-          |> URI.to_string()
-          |> encode_link()
-
-        Map.put(links, :prev, link)
+        Map.put(links, :prev, build_link(uri, query, paginator))
 
       _ ->
         Map.put(links, :prev, nil)
     end
+  end
+
+  defp build_link(uri, query, paginator) do
+    new_query =
+      query
+      |> put_page_params(paginator)
+      |> put_count_param(paginator)
+      |> Conn.Query.encode()
+
+    uri
+    |> put_query(new_query)
+    |> URI.to_string()
+    |> encode_link()
   end
 
   defp prev_page(%Ash.Page.Offset{} = paginator) do
