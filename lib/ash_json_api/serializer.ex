@@ -198,6 +198,7 @@ defmodule AshJsonApi.Serializer do
     new_query =
       query
       |> put_page_params(paginator)
+      |> put_count_param(paginator)
       |> Conn.Query.encode()
 
     uri
@@ -292,6 +293,7 @@ defmodule AshJsonApi.Serializer do
         new_query =
           query
           |> put_page_params(next_page(paginator))
+          |> put_count_param(paginator)
           |> Conn.Query.encode()
 
         link =
@@ -313,6 +315,7 @@ defmodule AshJsonApi.Serializer do
         new_query =
           query
           |> put_page_params(%{paginator | after: List.last(results).__metadata__.keyset})
+          |> put_count_param(paginator)
           |> Conn.Query.encode()
 
         link =
@@ -322,6 +325,10 @@ defmodule AshJsonApi.Serializer do
           |> encode_link()
 
         Map.put(links, :next, link)
+
+      # No results at all
+      %{after: nil, before: nil, more?: false} ->
+        Map.put(links, :next, nil)
 
       # Pagination forward with after, but no more results
       %{results: [], after: _, before: nil, more?: false} ->
@@ -333,6 +340,7 @@ defmodule AshJsonApi.Serializer do
         new_query =
           query
           |> put_page_params(%{paginator | after: List.last(results).__metadata__.keyset})
+          |> put_count_param(paginator)
           |> Conn.Query.encode()
 
         link =
@@ -349,6 +357,7 @@ defmodule AshJsonApi.Serializer do
         new_query =
           query
           |> put_page_params(%{paginator | after: List.last(results).__metadata__.keyset})
+          |> put_count_param(paginator)
           |> Conn.Query.encode()
 
         link =
@@ -378,6 +387,7 @@ defmodule AshJsonApi.Serializer do
       new_query =
         query
         |> put_page_params(prev_page(paginator))
+        |> put_count_param(paginator)
         |> Conn.Query.encode()
 
       link =
@@ -410,6 +420,7 @@ defmodule AshJsonApi.Serializer do
         new_query =
           query
           |> put_page_params(paginator)
+          |> put_count_param(paginator)
           |> Conn.Query.encode()
 
         link =
@@ -429,6 +440,7 @@ defmodule AshJsonApi.Serializer do
         new_query =
           query
           |> put_page_params(paginator)
+          |> put_count_param(paginator)
           |> Conn.Query.encode()
 
         link =
@@ -459,13 +471,14 @@ defmodule AshJsonApi.Serializer do
     links
   end
 
-  defp add_last_link(links, uri, query, %{count: total, limit: limit}) do
+  defp add_last_link(links, uri, query, %Ash.Page.Offset{count: total, limit: limit} = paginator) do
     new_query =
       query
       |> Map.put("page", %{
         limit: limit,
         offset: total - limit
       })
+      |> put_count_param(paginator)
       |> Conn.Query.encode()
 
     link =

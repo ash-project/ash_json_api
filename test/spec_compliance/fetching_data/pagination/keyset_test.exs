@@ -420,6 +420,47 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
                  "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
              }
     end
+
+    test "when count is true page[count] is present in links" do
+      # Read first 5 posts
+      # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+      # ----------|--------|---------------
+
+      page_size = 5
+
+      {:ok, %Ash.Page.Keyset{} = keyset} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+          page: [limit: page_size, count: true]
+        )
+
+      initial_after_cursor = List.last(keyset.results).__metadata__.keyset
+
+      {:ok, %Ash.Page.Keyset{} = keyset_at_10} =
+        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+          page: [after: initial_after_cursor, limit: page_size, count: true]
+        )
+
+      conn =
+        get(Api, "/posts?sort=-inserted_at&page[after]=#{keyset_at_10.after}&page[count]=true",
+          status: 200
+        )
+
+      before_cursor = List.first(keyset_at_10.results).__metadata__.keyset
+      after_cursor = List.last(keyset_at_10.results).__metadata__.keyset
+
+      assert %{"links" => links} = conn.resp_body
+
+      assert links == %{
+               "first" =>
+                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
+               "self" =>
+                 "http://www.example.com/posts?page[count]=true&#{encode_page_query(%{after: initial_after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+               "next" =>
+                 "http://www.example.com/posts?page[count]=true&#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" =>
+                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
+             }
+    end
   end
 
   # ** Not sure what this is supposed to do

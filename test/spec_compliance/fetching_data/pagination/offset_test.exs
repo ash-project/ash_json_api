@@ -309,14 +309,14 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       assert links == %{
                "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
                "self" =>
                  "http://www.example.com/posts?page[count]=true&page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
                "next" => nil,
                "last" =>
-                 "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+                 "http://www.example.com/posts?page[count]=true&page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
                "prev" =>
-                 "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
+                 "http://www.example.com/posts?page[count]=true&page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
              }
     end
 
@@ -377,14 +377,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       assert links == %{
                "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
                "self" =>
                  "http://www.example.com/posts?page[count]=true&page[offset]=#{page_size}&page[limit]=#{page_size}&sort=-inserted_at",
                "next" =>
-                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+                 "http://www.example.com/posts?page[count]=true&page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
                "last" =>
-                 "http://www.example.com/posts?page[offset]=#{last_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at"
+                 "http://www.example.com/posts?page[count]=true&page[offset]=#{last_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+               "prev" =>
+                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at"
              }
     end
   end
