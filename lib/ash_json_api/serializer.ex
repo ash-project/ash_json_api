@@ -221,7 +221,7 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp put_count_param(query, %{count: count}) when is_integer(count) do
-    Map.update(query, "page", %{count: count}, &Map.put(&1, :count, true))
+    Map.update(query, "page", %{count: true}, &Map.put(&1, :count, true))
   end
 
   defp put_count_param(query, _), do: query

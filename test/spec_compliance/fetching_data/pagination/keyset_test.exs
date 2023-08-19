@@ -143,7 +143,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           |> Api.create!()
         end
 
-      [posts: posts, page_size: 5]
+      [posts: posts]
     end
 
     test "next, prev, first & self links are present" do
@@ -441,7 +441,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
         )
 
       conn =
-        get(Api, "/posts?sort=-inserted_at&page[after]=#{keyset_at_10.after}&page[count]=true",
+        get(Api, "/posts?sort=-inserted_at&page[after]=#{initial_after_cursor}&page[count]=true",
           status: 200
         )
 
