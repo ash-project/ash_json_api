@@ -171,7 +171,13 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           page: [before: cursor_at_post_10, limit: page_size]
         )
 
-      conn = get(Api, "/posts?sort=-inserted_at&page[before]=#{cursor_at_post_10}", status: 200)
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[before]" => cursor_at_post_10
+        })
+
+      conn = get(Api, "/posts?#{encoded_query_params}", status: 200)
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
       before_cursor = List.first(keyset.results).__metadata__.keyset
@@ -226,7 +232,13 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       {:ok, %Ash.Page.Keyset{} = keyset} =
         Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
 
-      conn = get(Api, "/posts?sort=-inserted_at&page[size]=#{page_size}", status: 200)
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[size]" => page_size
+        })
+
+      conn = get(Api, "/posts?#{encoded_query_params}", status: 200)
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
 
@@ -266,7 +278,13 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           page: [before: cursor_at_post_5, limit: page_size]
         )
 
-      conn = get(Api, "/posts?sort=-inserted_at&page[before]=#{cursor_at_post_5}", status: 200)
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[before]" => cursor_at_post_5
+        })
+
+      conn = get(Api, "/posts?#{encoded_query_params}", status: 200)
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
 
@@ -308,7 +326,18 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           page: [before: cursor_at_post_10, limit: page_size]
         )
 
-      conn = get(Api, "/posts?sort=-inserted_at&page[before]=#{cursor_at_post_10}", status: 200)
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[before]" => cursor_at_post_10
+        })
+
+      conn =
+        get(
+          Api,
+          "/posts?#{encoded_query_params}",
+          status: 200
+        )
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
       before_cursor = List.first(keyset.results).__metadata__.keyset
@@ -345,11 +374,17 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       # Prev: 6, Next: 10
       # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
       # ----------|--------|---------------
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[size]" => page_size,
+          "page[after]" => after_cursor_at_5
+        })
 
       conn =
         get(
           Api,
-          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[after]=#{after_cursor_at_5}",
+          "/posts?#{encoded_query_params}",
           status: 200
         )
 
@@ -393,11 +428,17 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       # Prev: 6, Next: 10
       # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
       # -------------------|--------------|
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[size]" => page_size,
+          "page[after]" => after_cursor_at_10
+        })
 
       conn =
         get(
           Api,
-          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[after]=#{after_cursor_at_10}",
+          "/posts?#{encoded_query_params}",
           status: 200
         )
 
@@ -440,8 +481,17 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           page: [after: initial_after_cursor, limit: page_size, count: true]
         )
 
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[after]" => initial_after_cursor,
+          "page[count]" => true
+        })
+
       conn =
-        get(Api, "/posts?sort=-inserted_at&page[after]=#{initial_after_cursor}&page[count]=true",
+        get(
+          Api,
+          "/posts?#{encoded_query_params}",
           status: 200
         )
 
@@ -506,10 +556,17 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
     test "collection total is included when specified" do
       page_size = 5
 
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[size]" => page_size,
+          "page[count]" => true
+        })
+
       conn =
         get(
           Api,
-          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=true",
+          "/posts?#{encoded_query_params}",
           status: 200
         )
 
@@ -521,10 +578,17 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
     test "collection total is nil when count is false" do
       page_size = 5
 
+      encoded_query_params =
+        URI.encode_query(%{
+          "sort" => "-inserted_at",
+          "page[size]" => page_size,
+          "page[count]" => false
+        })
+
       conn =
         get(
           Api,
-          "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=false",
+          "/posts?#{encoded_query_params}",
           status: 200
         )
 
