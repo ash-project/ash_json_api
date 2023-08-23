@@ -44,15 +44,13 @@ defmodule AshJsonApi.Controllers.Response do
         request,
         status,
         paginator,
-        includes,
-        top_level_meta \\ nil
+        includes
       ) do
     serialized =
       AshJsonApi.Serializer.serialize_many(
         request,
         paginator,
-        includes,
-        top_level_meta
+        includes
       )
 
     send_resp(conn, status, serialized)

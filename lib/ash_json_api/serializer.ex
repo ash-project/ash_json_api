@@ -27,7 +27,7 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
-  def serialize_many(request, paginator, includes, meta \\ nil) do
+  def serialize_many(request, paginator, includes) do
     data =
       case paginator do
         %{results: results} ->
@@ -41,12 +41,26 @@ defmodule AshJsonApi.Serializer do
     json_api = %{version: "1.0"}
 
     links = many_links(request, paginator)
+    meta = add_page_metadata(paginator)
 
     %{data: data, jsonapi: json_api, links: links}
     |> add_includes(request, includes)
     |> add_top_level_meta(meta)
     |> Jason.encode!()
   end
+
+  # Adds page level metadata, like total count of records
+  defp add_page_metadata(%Ash.Page.Offset{} = paginator) do
+    %{page: %{total: paginator.count}}
+  end
+
+  defp add_page_metadata(%Ash.Page.Keyset{} = paginator) do
+    %{page: %{total: paginator.count}}
+  end
+
+  # This is added because some tests on `Test.Acceptance.IndexTest` fail
+  # because its passing in a list of resources instead of a paginator
+  defp add_page_metadata(_), do: %{}
 
   def serialize_one(request, record, includes, meta \\ nil)
 
@@ -184,6 +198,7 @@ defmodule AshJsonApi.Serializer do
     new_query =
       query
       |> put_page_params(paginator)
+      |> put_count_param(paginator)
       |> Conn.Query.encode()
 
     uri
@@ -206,146 +221,182 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp put_count_param(query, %{count: count}) when is_integer(count) do
-    Map.update(query, "page", %{count: count}, &Map.put(&1, :count, count))
+    Map.update(query, "page", %{count: true}, &Map.put(&1, :count, true))
   end
 
   defp put_count_param(query, _), do: query
 
-  defp put_page_params(query, %{limit: nil, offset: offset}) when offset in [0, nil] do
-    query
-  end
+  defp put_page_params(query, %Ash.Page.Offset{} = paginator) do
+    %{limit: limit, offset: offset} = paginator
 
-  defp put_page_params(query, %{limit: limit, offset: offset}) when offset in [0, nil] do
-    Map.put(query, "page", %{
-      limit: limit
-    })
-  end
-
-  defp put_page_params(query, %{limit: nil, offset: offset}) do
-    Map.put(query, "page", %{
-      offset: offset
-    })
-  end
-
-  defp put_page_params(query, %{limit: limit, offset: offset}) do
-    Map.put(query, "page", %{
-      limit: limit,
-      offset: offset
-    })
-  end
-
-  defp put_page_params(query, %{after: after_keyset, limit: nil}) when is_binary(after_keyset) do
-    Map.put(query, "page", %{after: after_keyset})
-  end
-
-  defp put_page_params(query, %{after: after_keyset, limit: limit})
-       when is_binary(after_keyset) do
-    Map.put(query, "page", %{after: after_keyset, limit: limit})
-  end
-
-  defp put_page_params(query, %{before: before_keyset, limit: nil})
-       when is_binary(before_keyset) do
-    Map.put(query, "page", %{before: before_keyset})
-  end
-
-  defp put_page_params(query, %{before: before_keyset, limit: limit})
-       when is_binary(before_keyset) do
-    Map.put(query, "page", %{before: before_keyset, limit: limit})
-  end
-
-  defp put_page_params(query, %{limit: limit}) when is_integer(limit),
-    do: Map.put(query, "page", %{limit: limit})
-
-  defp put_page_params(query, _), do: query
-
-  defp add_next_link(links, _uri, _query, %{offset: offset, limit: limit, total: total})
-       when not is_nil(total) and not is_nil(offset) and offset + limit >= total,
-       do: links
-
-  defp add_next_link(links, _uri, _query, %{offset: offset, limit: limit, total: total})
-       when not is_nil(total) and is_nil(offset) and limit >= total,
-       do: links
-
-  defp add_next_link(links, uri, query, %{offset: _} = paginator) do
-    if Enum.count(paginator.results) < paginator.limit do
-      links
-    else
-      new_query =
+    cond do
+      is_nil(limit) and offset in [0, nil] ->
         query
-        |> put_page_params(next_page(paginator))
-        |> Conn.Query.encode()
 
-      link =
-        uri
-        |> put_query(new_query)
-        |> URI.to_string()
-        |> encode_link()
+      offset in [0, nil] ->
+        Map.put(query, "page", %{
+          limit: limit
+        })
 
-      Map.put(links, :next, link)
+      is_nil(limit) ->
+        Map.put(query, "page", %{
+          offset: offset
+        })
+
+      true ->
+        Map.put(query, "page", %{
+          limit: limit,
+          offset: offset
+        })
     end
   end
 
-  defp add_next_link(links, _uri, _query, %{results: [], after: _}) do
-    links
+  defp put_page_params(query, %Ash.Page.Keyset{} = paginator) do
+    %{after: after_cursor, before: before_cursor, limit: limit} = paginator
+
+    cond do
+      is_nil(limit) ->
+        Map.put(query, "page", %{after: after_cursor})
+
+      is_binary(after_cursor) ->
+        Map.put(query, "page", %{after: after_cursor, limit: limit})
+
+      is_nil(limit) and is_binary(before_cursor) ->
+        Map.put(query, "page", %{before: before_cursor})
+
+      is_binary(before_cursor) ->
+        Map.put(query, "page", %{before: before_cursor, limit: limit})
+
+      true ->
+        Map.put(query, "page", %{limit: limit})
+    end
   end
 
-  defp add_next_link(links, uri, query, %{results: results, after: _} = paginator) do
-    new_query =
-      query
-      |> put_page_params(%{paginator | after: List.last(results).metadata.keyset})
-      |> Conn.Query.encode()
+  defp put_page_params(query, _), do: query
 
-    link =
-      uri
-      |> put_query(new_query)
-      |> URI.to_string()
-      |> encode_link()
+  # Offset pagination
 
-    Map.put(links, :next, link)
+  defp add_next_link(links, uri, query, %Ash.Page.Offset{} = paginator) do
+    %{results: results, count: count, offset: offset, limit: limit} = paginator
+
+    cond do
+      not is_nil(count) and not is_nil(offset) and offset + limit >= count ->
+        Map.put(links, :next, nil)
+
+      not is_nil(count) and is_nil(offset) and limit >= count ->
+        Map.put(links, :next, nil)
+
+      Enum.count(results) < limit ->
+        Map.put(links, :next, nil)
+
+      true ->
+        Map.put(links, :next, build_link(uri, query, next_page(paginator)))
+    end
   end
 
-  defp next_page(%{limit: nil} = paginator), do: paginator
+  ## Cursor pagination
 
-  defp next_page(%{limit: limit, offset: offset} = paginator),
+  defp add_next_link(links, uri, query, %Ash.Page.Keyset{} = paginator) do
+    case paginator do
+      # This is a query for the first page, no cursors are set
+      %{results: results, after: nil, before: nil, more?: true} ->
+        paginator = %{paginator | after: List.last(results).__metadata__.keyset}
+
+        Map.put(links, :next, build_link(uri, query, paginator))
+
+      # No results at all
+      %{after: nil, before: nil, more?: false} ->
+        Map.put(links, :next, nil)
+
+      # Pagination forward with after, but no more results
+      %{results: [], after: _, before: nil, more?: false} ->
+        Map.put(links, :next, nil)
+
+      # Pagination forward with after, there are results
+      # If there is more, add next link, else next link is nil
+      %{results: results, after: _, before: nil, more?: true} ->
+        paginator = %{paginator | after: List.last(results).__metadata__.keyset}
+
+        Map.put(links, :next, build_link(uri, query, paginator))
+
+      # Pagination backward, there are results
+      # Since we are paginating backwards from a result, we assume there will be more
+      %{results: results, after: nil} ->
+        paginator = %{paginator | after: List.last(results).__metadata__.keyset}
+
+        Map.put(
+          links,
+          :next,
+          build_link(uri, query, paginator)
+        )
+
+      _ ->
+        Map.put(links, :next, nil)
+    end
+  end
+
+  defp next_page(%Ash.Page.Offset{limit: nil} = paginator), do: paginator
+
+  defp next_page(%Ash.Page.Offset{limit: limit, offset: offset} = paginator),
     do: %{paginator | offset: limit + (offset || 0)}
 
-  defp add_prev_link(links, _uri, _query, %{offset: offset}) when offset in [0, nil], do: links
+  # Offset pagination
 
-  defp add_prev_link(links, _uri, _query, %{results: [], after: _}) do
-    links
+  defp add_prev_link(links, uri, query, %Ash.Page.Offset{} = paginator) do
+    if paginator.offset in [0, nil] do
+      Map.put(links, :prev, nil)
+    else
+      Map.put(links, :prev, build_link(uri, query, prev_page(paginator)))
+    end
   end
 
-  defp add_prev_link(links, uri, query, %{results: results, after: _} = paginator) do
+  ## Cursor pagination
+
+  defp add_prev_link(links, uri, query, %Ash.Page.Keyset{} = paginator) do
+    case paginator do
+      # First page in request, there should be no previous links since its fetching the latest data at the point in time
+      %{before: nil, after: nil} ->
+        Map.put(links, :prev, nil)
+
+      # When paginating with before, and there are no results, prev is nil
+      %{results: [], before: _, after: nil} ->
+        Map.put(links, :prev, nil)
+
+      # If there are results and paginating with before,
+      # Previous link is set, unless there is no more in that direction
+      %{results: results, more?: true, after: nil} ->
+        paginator = Map.put(paginator, :before, List.first(results).__metadata__.keyset)
+
+        Map.put(links, :prev, build_link(uri, query, paginator))
+
+      # If paginating fowards with after, we set the previous link to the first in the result set
+      %{results: results, before: nil} ->
+        paginator =
+          paginator
+          |> Map.put(:before, List.first(results).__metadata__.keyset)
+          |> Map.put(:after, nil)
+
+        Map.put(links, :prev, build_link(uri, query, paginator))
+
+      _ ->
+        Map.put(links, :prev, nil)
+    end
+  end
+
+  defp build_link(uri, query, paginator) do
     new_query =
       query
-      |> put_page_params(%{paginator | after: List.first(results).metadata.keyset})
+      |> put_page_params(paginator)
+      |> put_count_param(paginator)
       |> Conn.Query.encode()
 
-    link =
-      uri
-      |> put_query(new_query)
-      |> URI.to_string()
-      |> encode_link()
-
-    Map.put(links, :next, link)
+    uri
+    |> put_query(new_query)
+    |> URI.to_string()
+    |> encode_link()
   end
 
-  defp add_prev_link(links, uri, query, paginator) do
-    new_query =
-      query
-      |> put_page_params(prev_page(paginator))
-      |> Conn.Query.encode()
-
-    link =
-      uri
-      |> put_query(new_query)
-      |> URI.to_string()
-      |> encode_link()
-
-    Map.put(links, :prev, link)
-  end
-
-  defp prev_page(paginator) do
+  defp prev_page(%Ash.Page.Offset{} = paginator) do
     offset =
       if paginator.limit do
         max(paginator.offset - (paginator.limit || 0), 0)
@@ -360,13 +411,14 @@ defmodule AshJsonApi.Serializer do
     links
   end
 
-  defp add_last_link(links, uri, query, %{count: total, limit: limit}) do
+  defp add_last_link(links, uri, query, %Ash.Page.Offset{count: total, limit: limit} = paginator) do
     new_query =
       query
       |> Map.put("page", %{
         limit: limit,
         offset: total - limit
       })
+      |> put_count_param(paginator)
       |> Conn.Query.encode()
 
     link =
