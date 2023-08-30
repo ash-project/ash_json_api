@@ -101,10 +101,10 @@ defmodule Test.Acceptance.Links do
         |> Enum.sort()
 
       assert sorted_links == [
-               {"first", "#{TestPhoenixEndpoint.url()}?page[limit]=5"},
+               {"first", "#{TestPhoenixEndpoint.url}?page[limit]=5"},
                {"next", nil},
                {"prev", nil},
-               {"self", "#{TestPhoenixEndpoint.url()}?page[limit]=5"}
+               {"self", "#{TestPhoenixEndpoint.url}?page[limit]=5"}
              ]
     end
   end
