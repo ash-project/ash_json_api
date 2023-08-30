@@ -70,7 +70,7 @@ defmodule AshJsonApi.Request do
       resource: resource,
       action: action,
       includes: includes.allowed,
-      url: Conn.request_url(conn),
+      url: url(conn),
       path_params: conn.path_params,
       query_params: conn.query_params,
       req_headers: conn.req_headers,
@@ -695,5 +695,13 @@ defmodule AshJsonApi.Request do
 
   defp relationship_change_value(_) do
     :error
+  end
+
+  defp url(conn) do
+    if endpoint = conn.private[:phoenix_endpoint] do
+      endpoint.url()
+    else
+      Conn.request_url(conn)
+    end
   end
 end

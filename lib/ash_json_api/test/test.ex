@@ -9,12 +9,11 @@ defmodule AshJsonApi.Test do
   @schema_file "lib/ash_json_api/test/response_schema"
   @external_resource @schema_file
 
-  # @schema @schema_file |> File.read!() |> Jason.decode!() |> JsonXema.new()
-
   def get(api, path, opts \\ []) do
     result =
       :get
       |> conn(path)
+      |> maybe_set_endpoint(opts)
       |> set_accept_request_header(opts)
       |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
 
@@ -247,6 +246,14 @@ defmodule AshJsonApi.Test do
       true ->
         conn
         |> put_req_header("accept", "application/vnd.api+json")
+    end
+  end
+
+  defp maybe_set_endpoint(conn, opts) do
+    if endpoint = opts[:phoenix_endpoint] do
+      put_private(conn, :phoenix_endpoint, endpoint)
+    else
+      conn
     end
   end
 end
