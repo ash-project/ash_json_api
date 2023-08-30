@@ -62,8 +62,11 @@ defmodule Test.Acceptance.PostTest do
         get(:read)
         index(:read)
 
-        #post(:create, relationship_arguments: [:author])
-        post(:create, relationship_arguments: [:author], default_fields: [:name, :email, :hidden, :name_twice])
+        # post(:create, relationship_arguments: [:author])
+        post(:create,
+          relationship_arguments: [:author],
+          default_fields: [:name, :email, :hidden, :name_twice]
+        )
 
         post(:accepts_email,
           upsert?: true,
@@ -185,7 +188,6 @@ defmodule Test.Acceptance.PostTest do
           }
         }
       })
-      |> IO.inspect
       |> assert_attribute_equals("email", nil)
       |> assert_attribute_equals("name_twice", "Post 1-Post 1")
     end

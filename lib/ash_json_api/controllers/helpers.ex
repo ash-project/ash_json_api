@@ -365,7 +365,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   defp fields(request, resource) do
-    Map.get(request.fields, resource) || []
+    Map.get(request.fields, resource) || request.route.default_fields || []
   end
 
   defp default_sort(resource) do

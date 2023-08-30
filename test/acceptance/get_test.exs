@@ -164,7 +164,7 @@ defmodule Test.Acceptance.GetTest do
 
     test "calculated fields can be sorted on", %{post: post} do
       Api
-      |> get("/posts/#{post.id}?sort=name_twice")
+      |> get("/posts/#{post.id}?sort=name_twice&fields=name_twice")
       |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
     end
 

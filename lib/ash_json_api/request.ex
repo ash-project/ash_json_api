@@ -341,6 +341,8 @@ defmodule AshJsonApi.Request do
 
   defp parse_fields(%{query_params: %{"fields" => fields}} = request) when is_map(fields) do
     Enum.reduce(fields, request, fn {type, fields}, request ->
+      # Get all relevant resources better here, i.e using the includes keyword
+      # this could miss relationships to things in other apis
       request.api
       |> Ash.Api.Info.resources()
       |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
@@ -401,7 +403,7 @@ defmodule AshJsonApi.Request do
         true ->
           add_error(
             request,
-            InvalidField.new(type: type, parameter?: parameter?),
+            InvalidField.new(type: type, parameter?: parameter?, field: key),
             request.route.type
           )
       end
@@ -437,11 +439,11 @@ defmodule AshJsonApi.Request do
             attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
               %{request | sort: [{attr.name, order} | request.sort]}
 
-            attr = Ash.Resource.Info.public_calculation(resource, field_name) ->
-              %{request | sort: [{attr.name, order} | request.sort]}
-
             agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->
               %{request | sort: [{agg.name, order} | request.sort]}
+
+            calc = Ash.Resource.Info.public_calculation(resource, field_name) ->
+              %{request | sort: [{calc.name, order} | request.sort]}
 
             true ->
               add_error(request, "invalid sort #{field}", request.route.type)
