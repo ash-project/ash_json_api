@@ -71,7 +71,7 @@ defmodule Test.Acceptance.Links do
   end
 
   defmodule TestPhoenixEndpoint do
-    def url() do
+    def url do
       "https://test-endpoint.com"
     end
   end
