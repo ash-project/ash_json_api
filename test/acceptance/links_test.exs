@@ -58,7 +58,7 @@ defmodule Test.Acceptance.Links do
       ]
 
     json_api do
-      router(AshJsonApiTest.FetchingData.Pagination.Keyset.Router)
+      router(Test.Acceptance.Links.Router)
     end
 
     resources do
@@ -71,7 +71,7 @@ defmodule Test.Acceptance.Links do
   end
 
   defmodule TestPhoenixEndpoint do
-    def url do
+    def url() do
       "https://test-endpoint.com"
     end
   end
@@ -91,21 +91,23 @@ defmodule Test.Acceptance.Links do
 
   describe "link generation" do
     test "generates links when Phoenix Endpoint is present" do
+      page_size = 5
       conn = get(Api, "/posts", phoenix_endpoint: TestPhoenixEndpoint, status: 200)
 
-      assert %{"links" => links} = conn.resp_body
+      {:ok, %Ash.Page.Keyset{} = keyset} =
+        Api.read(Post,
+          page: [limit: page_size]
+        )
 
-      sorted_links =
-        links
-        |> Map.to_list()
-        |> Enum.sort()
+      after_cursor = List.last(keyset.results).__metadata__.keyset
 
-      assert sorted_links == [
-               {"first", "#{TestPhoenixEndpoint.url()}?page[limit]=5"},
-               {"next", nil},
-               {"prev", nil},
-               {"self", "#{TestPhoenixEndpoint.url()}?page[limit]=5"}
-             ]
+      assert_equal_links(conn, %{
+        "first" => "#{TestPhoenixEndpoint.url()}?page[limit]=#{page_size}",
+        "next" =>
+          "#{TestPhoenixEndpoint.url()}?page[after]=#{after_cursor}&page[limit]=#{page_size}",
+        "prev" => nil,
+        "self" => "#{TestPhoenixEndpoint.url()}?page[limit]=#{page_size}"
+      })
     end
   end
 end
