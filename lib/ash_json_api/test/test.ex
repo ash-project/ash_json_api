@@ -222,12 +222,21 @@ defmodule AshJsonApi.Test do
   defmacro assert_equal_links(conn, expected_links) do
     quote bind_quoted: [expected_links: expected_links, conn: conn] do
       %{"links" => resp_links} = conn.resp_body
+      assert Enum.sort(Map.keys(resp_links)) == Enum.sort(Map.keys(expected_links))
 
-      sorted_links = Enum.sort_by(resp_links, fn {key, _value} -> key end, :desc)
-      sorted_expected_links = Enum.sort_by(expected_links, fn {key, _value} -> key end, :desc)
-
-      assert sorted_links == sorted_expected_links
+      for {key, value} <- expected_links do
+        assert AshJsonApi.Test.uri_with_query(value) ==
+                 AshJsonApi.Test.uri_with_query(resp_links[key])
+      end
     end
+  end
+
+  def uri_with_query(nil), do: nil
+
+  def uri_with_query(value) do
+    value
+    |> URI.parse()
+    |> Map.update!(:query, &URI.decode_query(&1 || %{}))
   end
 
   defp set_content_type_request_header(conn, opts) do
