@@ -219,6 +219,17 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  defmacro assert_equal_links(conn, expected_links) do
+    quote bind_quoted: [expected_links: expected_links, conn: conn] do
+      %{"links" => resp_links} = conn.resp_body
+
+      sorted_links = Enum.sort_by(resp_links, fn {key, _value} -> key end, :desc)
+      sorted_expected_links = Enum.sort_by(expected_links, fn {key, _value} -> key end, :desc)
+
+      assert sorted_links == sorted_expected_links
+    end
+  end
+
   defp set_content_type_request_header(conn, opts) do
     cond do
       opts[:exclude_req_content_type_header] ->

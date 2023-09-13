@@ -182,18 +182,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       after_cursor = List.last(keyset.results).__metadata__.keyset
       before_cursor = List.first(keyset.results).__metadata__.keyset
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: cursor_at_post_10})}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: cursor_at_post_10})}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
+      })
     end
   end
 
@@ -242,17 +239,13 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" => nil
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" => nil
+      })
     end
 
     test "[Before] when there are no more results, prev is nil" do
@@ -288,17 +281,14 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: cursor_at_post_5})}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" => nil
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: cursor_at_post_5})}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" => nil
+      })
     end
 
     test "[Before] when there are results, prev and next are set" do
@@ -342,18 +332,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       after_cursor = List.last(keyset.results).__metadata__.keyset
       before_cursor = List.first(keyset.results).__metadata__.keyset
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: cursor_at_post_10})}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: cursor_at_post_10})}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
+      })
     end
 
     # FIX: Not sure why, but getting invalid keyset here sometimes...
@@ -396,18 +383,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       after_cursor = List.last(keyset_at_10.results).__metadata__.keyset
       before_cursor = List.first(keyset_at_10.results).__metadata__.keyset
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor_at_5})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor_at_5})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
+      })
     end
 
     test "[After] when there are no more results, next is nil" do
@@ -449,17 +433,14 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       before_cursor = List.first(keyset_at_15.results).__metadata__.keyset
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor_at_10})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "next" => nil,
-               "prev" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?#{encode_page_query(%{after: after_cursor_at_10})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "next" => nil,
+        "prev" =>
+          "http://www.example.com/posts?page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
+      })
     end
 
     test "when count is true page[count] is present in links" do
@@ -498,18 +479,16 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       before_cursor = List.first(keyset_at_10.results).__metadata__.keyset
       after_cursor = List.last(keyset_at_10.results).__metadata__.keyset
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[count]=true&#{encode_page_query(%{after: initial_after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?page[count]=true&#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" =>
+          "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[count]=true&#{encode_page_query(%{after: initial_after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?page[count]=true&#{encode_page_query(%{after: after_cursor})}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&#{encode_page_query(%{before: before_cursor})}&sort=-inserted_at"
+      })
     end
   end
 

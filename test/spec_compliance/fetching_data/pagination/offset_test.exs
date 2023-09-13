@@ -161,17 +161,14 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       conn = get(Api, "/posts?sort=-inserted_at", status: 200)
 
       next_offset = offset.limit
-      assert %{"links" => links} = conn.resp_body
 
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" => nil
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" => nil
+      })
     end
   end
 
@@ -212,19 +209,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       conn = get(Api, "/posts?sort=-inserted_at&page[size]=#{page_size}", status: 200)
 
-      assert %{"links" => links} = conn.resp_body
-
       next_offset = offset.limit
 
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" => nil
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" => nil
+      })
     end
 
     test "when there are no more results in the prev direction, prev is nil" do
@@ -240,17 +233,14 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       conn = get(Api, "/posts?sort=-inserted_at&page[offset]=0", status: 200)
 
       next_offset = offset.limit
-      assert %{"links" => links} = conn.resp_body
 
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" => nil
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" => nil
+      })
     end
 
     test "when there are results in both directions, prev and next are set" do
@@ -271,18 +261,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       next_offset = offset.offset + offset.limit
       prev_offset = offset.offset - offset.limit
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
+      })
     end
 
     test "when there are no more results in next direction and count is true, next is nil" do
@@ -305,19 +292,17 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       prev_offset = offset.offset - offset.limit
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[count]=true&page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "next" => nil,
-               "last" =>
-                 "http://www.example.com/posts?page[count]=true&page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[count]=true&page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" =>
+          "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[count]=true&page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "next" => nil,
+        "last" =>
+          "http://www.example.com/posts?page[count]=true&page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[count]=true&page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
+      })
     end
 
     test "when there are no more results in next direction and count is false, next has an offset" do
@@ -339,18 +324,15 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       next_offset = offset.offset + offset.limit
       prev_offset = offset.offset - offset.limit
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[offset]=#{initial_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[offset]=#{prev_offset}&page[limit]=#{page_size}&sort=-inserted_at"
+      })
     end
 
     test "when count is true last link is present" do
@@ -373,20 +355,18 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       next_offset = offset.offset + offset.limit
       last_offset = offset.count - offset.limit
 
-      assert %{"links" => links} = conn.resp_body
-
-      assert links == %{
-               "first" =>
-                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
-               "self" =>
-                 "http://www.example.com/posts?page[count]=true&page[offset]=#{page_size}&page[limit]=#{page_size}&sort=-inserted_at",
-               "next" =>
-                 "http://www.example.com/posts?page[count]=true&page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "last" =>
-                 "http://www.example.com/posts?page[count]=true&page[offset]=#{last_offset}&page[limit]=#{page_size}&sort=-inserted_at",
-               "prev" =>
-                 "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at"
-             }
+      assert_equal_links(conn, %{
+        "first" =>
+          "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at",
+        "self" =>
+          "http://www.example.com/posts?page[count]=true&page[offset]=#{page_size}&page[limit]=#{page_size}&sort=-inserted_at",
+        "next" =>
+          "http://www.example.com/posts?page[count]=true&page[offset]=#{next_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "last" =>
+          "http://www.example.com/posts?page[count]=true&page[offset]=#{last_offset}&page[limit]=#{page_size}&sort=-inserted_at",
+        "prev" =>
+          "http://www.example.com/posts?page[count]=true&page[limit]=#{page_size}&sort=-inserted_at"
+      })
     end
   end
 
