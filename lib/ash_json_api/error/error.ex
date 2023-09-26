@@ -92,10 +92,7 @@ defmodule AshJsonApi.Error do
 
   def to_json_api_errors(_resource, error, _type) do
     [
-      FrameworkError.new(
-        internal_description:
-          "something went wrong. Error messaging is incomplete so far: #{inspect(error)}"
-      )
+      FrameworkError.new(internal_description: "something went wrong. #{inspect(error)}")
     ]
   end
 
