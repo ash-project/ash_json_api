@@ -1,5 +1,10 @@
 import Config
 
+if Mix.env() == :test do
+  config :ash, :validate_api_resource_inclusion?, false
+  config :ash, :validate_api_config_inclusion?, false
+end
+
 if Mix.env() == :dev do
   config :git_ops,
     mix_project: AshJsonApi.MixProject,
