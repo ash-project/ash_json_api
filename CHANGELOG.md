@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.33.1](https://github.com/ash-project/ash_json_api/compare/v0.33.0...v0.33.1) (2023-09-26)
+
+
+
+
+### Bug Fixes:
+
+* various fixes for calculation handling
+
+### Improvements:
+
+* use phoenix endpoint if available (#95)
+
+* Add calculated fields to OpenAPI, JSON schema (#90)
+
 ## [v0.33.0](https://github.com/ash-project/ash_json_api/compare/v0.32.1...v0.33.0) (2023-07-31)
 ### Breaking Changes:
 
