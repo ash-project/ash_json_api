@@ -84,7 +84,7 @@ After adding the configuration above, compiling the project might throw an error
 ERROR! the application :mime has a different value set for key :types during runtime compared to compile time.
 ```
 This can happen if `:mime` was already compiled before the configuration was changed and can be
-fixed by running 
+fixed by running
 ```
 mix deps.compile mime --force
 ```
@@ -165,4 +165,4 @@ Examples:
 
 ## Open API
 
-If you want to expose your API via Swagger UI or Redoc, follow [this documentation](/documentation/topics/open-api.html).
+If you want to expose your API via Swagger UI or Redoc, see [the open api documentation](/documentation/topics/open-api.md).
