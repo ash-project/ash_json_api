@@ -162,3 +162,7 @@ Examples:
     # Add the uuid of a Ticket you created earlier
     curl 'localhost:4000/api/json/helpdesk/tickets/<uuid>'
     ```
+
+## Open API
+
+If you want to expose your API via Swagger UI or Redoc, follow [this documentation](/documentation/topics/open-api.html).
