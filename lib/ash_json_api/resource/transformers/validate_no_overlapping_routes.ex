@@ -1,5 +1,5 @@
 defmodule AshJsonApi.Resource.Transformers.ValidateNoOverlappingRoutes do
-  @moduledoc "Validates that all method/route combinations are unique"
+  @moduledoc false
   use Spark.Dsl.Transformer
   alias Spark.Dsl.Transformer
 

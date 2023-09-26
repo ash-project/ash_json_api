@@ -1,5 +1,5 @@
 defmodule AshJsonApi.Resource.Transformers.PrependRoutePrefix do
-  @moduledoc "Ensures that the `base` route is prepended to each route"
+  @moduledoc false
   use Spark.Dsl.Transformer
 
   alias Spark.Dsl.Transformer

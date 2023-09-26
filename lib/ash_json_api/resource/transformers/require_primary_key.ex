@@ -1,8 +1,5 @@
 defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
-  @moduledoc "Ensures that the resource either has a primary key
-    or includes primary_key section from json_api if it has a composite key
-  "
-
+  @moduledoc false
   use Spark.Dsl.Transformer
   alias Spark.Dsl.Transformer
 

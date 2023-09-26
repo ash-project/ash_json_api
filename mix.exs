@@ -47,15 +47,16 @@ defmodule AshJsonApi.MixProject do
   end
 
   defp extras() do
-    "documentation/**/*.md"
+    "documentation/**/*.{livemd,cheatmd,md}"
     |> Path.wildcard()
     |> Enum.map(fn path ->
       title =
         path
         |> Path.basename(".md")
+        |> Path.basename(".livemd")
+        |> Path.basename(".cheatmd")
         |> String.split(~r/[-_]/)
-        |> Enum.map(&String.capitalize/1)
-        |> Enum.join(" ")
+        |> Enum.map_join(" ", &capitalize/1)
         |> case do
           "F A Q" ->
             "FAQ"
@@ -72,17 +73,20 @@ defmodule AshJsonApi.MixProject do
   end
 
   defp groups_for_extras() do
-    "documentation/*"
-    |> Path.wildcard()
-    |> Enum.map(fn folder ->
-      name =
-        folder
-        |> Path.basename()
-        |> String.split(~r/[-_]/)
-        |> Enum.map(&String.capitalize/1)
-        |> Enum.join(" ")
+    [
+      Tutorials: ~r'documentation/tutorials',
+      "How To": ~r'documentation/how_to',
+      Topics: ~r'documentation/topics',
+      DSLs: ~r'documentation/dsls'
+    ]
+  end
 
-      {name, folder |> Path.join("**") |> Path.wildcard()}
+  defp capitalize(string) do
+    string
+    |> String.split(" ")
+    |> Enum.map(fn string ->
+      [hd | tail] = String.graphemes(string)
+      String.capitalize(hd) <> Enum.join(tail)
     end)
   end
 
@@ -111,11 +115,20 @@ defmodule AshJsonApi.MixProject do
       groups_for_modules: [
         AshJsonApi: [
           AshJsonApi,
-          AshJsonApi.Api.Router
+          AshJsonApi.Api.Router,
+          AshJsonApi.Resource,
+          AshJsonApi.Api
+        ],
+        Utilities: [
+          AshJsonApi.OpenApi
         ],
         Introspection: [
           AshJsonApi.Resource.Info,
-          AshJsonApi.Api.Info
+          AshJsonApi.Api.Info,
+          AshJsonApi.Resource.Route
+        ],
+        Errors: [
+          ~r/AshJsonApi.Error.*/
         ],
         Internals: ~r/.*/
       ],
@@ -170,8 +183,16 @@ defmodule AshJsonApi.MixProject do
     [
       sobelow: "sobelow --skip",
       credo: "credo --strict",
-      docs: ["docs", "ash.replace_doc_links"],
-      "spark.formatter": "spark.formatter --extensions AshJsonApi.Resource,AshJsonApi.Api"
+      docs: [
+        "spark.cheat_sheets",
+        "docs",
+        "ash.replace_doc_links",
+        "spark.cheat_sheets_in_search"
+      ],
+      "spark.formatter": "spark.formatter --extensions AshJsonApi.Resource,AshJsonApi.Api",
+      "spark.cheat_sheets_in_search":
+        "spark.cheat_sheets_in_search --extensions AshJsonApi.Resource,AshJsonApi.Api",
+      "spark.cheat_sheets": "spark.cheat_sheets --extensions AshJsonApi.Resource,AshJsonApi.Api"
     ]
   end
 end

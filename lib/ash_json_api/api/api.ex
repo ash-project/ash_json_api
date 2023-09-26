@@ -47,11 +47,6 @@ defmodule AshJsonApi.Api do
 
   @moduledoc """
   The entrypoint for adding JSON:API behavior to an Ash API
-
-  # Table of Contents
-  #{Spark.Dsl.Extension.doc_index(@sections)}
-
-  #{Spark.Dsl.Extension.doc(@sections)}
   """
 
   use Spark.Dsl.Extension, sections: @sections
