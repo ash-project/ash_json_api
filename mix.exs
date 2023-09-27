@@ -161,7 +161,7 @@ defmodule AshJsonApi.MixProject do
       {:json_xema, "~> 0.4.0"},
       {:open_api_spex, "~> 3.16", optional: true},
       {:git_ops, "~> 2.4", only: [:dev, :test]},
-      {:ex_doc, "~> 0.23", only: [:dev, :test], runtime: false},
+      {:ex_doc, github: "elixir-lang/ex_doc", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12.0", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
@@ -186,7 +186,7 @@ defmodule AshJsonApi.MixProject do
       docs: [
         "spark.cheat_sheets",
         "docs",
-        "ash.replace_doc_links",
+        "spark.replace_doc_links",
         "spark.cheat_sheets_in_search"
       ],
       "spark.formatter": "spark.formatter --extensions AshJsonApi.Resource,AshJsonApi.Api",
