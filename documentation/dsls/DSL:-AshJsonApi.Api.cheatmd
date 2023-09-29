@@ -136,6 +136,26 @@ end
   </td>
 </tr>
 
+<tr>
+  <td style="text-align: left">
+    <a id="json_api-include_nil_values?" href="#json_api-include_nil_values?">
+      <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
+        include_nil_values?
+      </span>
+    </a>
+      
+  </td>
+  <td style="text-align: left">
+    <code class="inline">boolean</code>
+  </td>
+  <td style="text-align: left">
+    <code class="inline">true</code>
+  </td>
+  <td style="text-align: left" colspan=2>
+    Whether or not to include properties for values that are nil in the JSON output
+  </td>
+</tr>
+
   </tbody>
 </table>
 

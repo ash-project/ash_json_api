@@ -44,8 +44,7 @@ defmodule AshJsonApi.Api do
         type: :boolean,
         doc: "Whether or not to include properties for values that are nil in the JSON output",
         default: true
-      ],
- 
+      ]
     ]
   }
 

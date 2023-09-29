@@ -675,21 +675,21 @@ defmodule AshJsonApi.Serializer do
           match?(%Ash.Resource.Calculation{}, field) &&
               match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
             acc
-	  
+
           true ->
-	    value =
-	      if Ash.Type.embedded_type?(type) do
-		req = %{fields: %{}, route: %{}, api: request.api}
-		serialize_attributes(req, Map.get(record, field.name))
-	      else
-		Map.get(record, field.name)
-	      end
-	    
-	    if not is_nil(value) or include_nil_values?(request, record) do
+            value =
+              if Ash.Type.embedded_type?(type) do
+                req = %{fields: %{}, route: %{}, api: request.api}
+                serialize_attributes(req, Map.get(record, field.name))
+              else
+                Map.get(record, field.name)
+              end
+
+            if not is_nil(value) or include_nil_values?(request, record) do
               Map.put(acc, field.name, value)
-	    else
-	      acc
-	    end
+            else
+              acc
+            end
         end
       end
     end)
