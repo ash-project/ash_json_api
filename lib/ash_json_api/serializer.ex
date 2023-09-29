@@ -647,50 +647,49 @@ defmodule AshJsonApi.Serializer do
       Map.get(request.fields, resource) || Map.get(request.route, :default_fields) ||
         default_attributes(resource)
 
-    Enum.reduce(fields, %{}, fn field, acc ->
-      if AshJsonApi.Resource.only_primary_key?(resource, field) do
-        acc
-      else
-        field = Ash.Resource.Info.field(resource, field)
+    Enum.reduce(fields, %{}, fn field_name, acc ->
+      field = Ash.Resource.Info.field(resource, field_name)
 
-        type =
-          case field do
-            %Ash.Resource.Aggregate{} = agg ->
-              field_type = field_type_from_aggregate(resource, agg)
+      type =
+        case field do
+          %Ash.Resource.Aggregate{} = agg ->
+            field_type = field_type_from_aggregate(resource, agg)
 
-              {:ok, type} = Ash.Query.Aggregate.kind_to_type(agg.kind, field_type)
-              type
+            {:ok, type} = Ash.Query.Aggregate.kind_to_type(agg.kind, field_type)
+            type
 
-            nil ->
-              nil
+          nil ->
+            nil
 
-            attribute ->
-              attribute.type
-          end
-
-        cond do
-          !field ->
-            acc
-
-          match?(%Ash.Resource.Calculation{}, field) &&
-              match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
-            acc
-
-          true ->
-            value =
-              if Ash.Type.embedded_type?(type) do
-                req = %{fields: %{}, route: %{}, api: request.api}
-                serialize_attributes(req, Map.get(record, field.name))
-              else
-                Map.get(record, field.name)
-              end
-
-            if not is_nil(value) or include_nil_values?(request, record) do
-              Map.put(acc, field.name, value)
-            else
-              acc
-            end
+          attribute ->
+            attribute.type
         end
+
+      cond do
+        AshJsonApi.Resource.only_primary_key?(resource, field_name) ->
+          acc
+
+        !field ->
+          acc
+
+        match?(%Ash.Resource.Calculation{}, field) &&
+            match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
+          acc
+
+        true ->
+          value =
+            if Ash.Type.embedded_type?(type) do
+              req = %{fields: %{}, route: %{}, api: request.api}
+              serialize_attributes(req, Map.get(record, field.name))
+            else
+              Map.get(record, field.name)
+            end
+
+          if not is_nil(value) or include_nil_values?(request, record) do
+            Map.put(acc, field.name, value)
+          else
+            acc
+          end
       end
     end)
   end
