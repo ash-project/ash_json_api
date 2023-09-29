@@ -9,6 +9,7 @@ spark_locals_without_parens = [
   delimiter: 1,
   get: 1,
   get: 2,
+  include_nil_values?: 1,
   includes: 1,
   index: 1,
   index: 2,

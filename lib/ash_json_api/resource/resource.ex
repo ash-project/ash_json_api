@@ -398,6 +398,11 @@ defmodule AshJsonApi.Resource do
         type: :any,
         default: [],
         doc: "A keyword list of all paths that are includable from this resource"
+      ],
+      include_nil_values?: [
+        type: :any,
+        default: nil,
+        doc: "Whether or not to include properties for values that are nil in the JSON output"
       ]
     ]
   }

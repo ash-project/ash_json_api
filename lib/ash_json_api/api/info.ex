@@ -21,4 +21,8 @@ defmodule AshJsonApi.Api.Info do
   def router(api) do
     Extension.get_opt(api, [:json_api], :router, nil, false)
   end
+
+  def include_nil_values?(api) do
+    Extension.get_opt(api, [:json_api], :include_nil_values?, true, true)
+  end
 end
