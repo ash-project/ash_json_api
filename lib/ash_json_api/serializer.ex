@@ -672,22 +672,37 @@ defmodule AshJsonApi.Serializer do
           !field ->
             acc
 
-          Ash.Type.embedded_type?(type) ->
-            Map.put(
-              acc,
-              field.name,
-              serialize_attributes(%{fields: %{}, route: %{}}, Map.get(record, field.name))
-            )
-
           match?(%Ash.Resource.Calculation{}, field) &&
               match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
             acc
-
+	  
           true ->
-            Map.put(acc, field.name, Map.get(record, field.name))
+	    value =
+	      if Ash.Type.embedded_type?(type) do
+		req = %{fields: %{}, route: %{}, api: request.api}
+		serialize_attributes(req, Map.get(record, field.name))
+	      else
+		Map.get(record, field.name)
+	      end
+	    
+	    if not is_nil(value) or include_nil_values?(request, record) do
+              Map.put(acc, field.name, value)
+	    else
+	      acc
+	    end
         end
       end
     end)
+  end
+
+  defp include_nil_values?(request, %resource{} = _record) do
+    # Whether we include nil values in the output depends on the include_nil_values?
+    # setting of the resource, or if it isn't set the include_nil_values? setting of
+    # the API.
+    case AshJsonApi.Resource.Info.include_nil_values?(resource) do
+      nil -> AshJsonApi.Api.Info.include_nil_values?(request.api)
+      val -> val
+    end
   end
 
   defp default_attributes(resource) do

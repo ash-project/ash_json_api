@@ -26,4 +26,8 @@ defmodule AshJsonApi.Resource.Info do
   def routes(resource) do
     Extension.get_entities(resource, [:json_api, :routes])
   end
+
+  def include_nil_values?(resource) do
+    Extension.get_opt(resource, [:json_api], :include_nil_values?, nil, true)
+  end
 end

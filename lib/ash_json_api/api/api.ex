@@ -39,7 +39,13 @@ defmodule AshJsonApi.Api do
         type: :boolean,
         doc: "Whether or not to log any errors produced",
         default: true
-      ]
+      ],
+      include_nil_values?: [
+        type: :boolean,
+        doc: "Whether or not to include properties for values that are nil in the JSON output",
+        default: true
+      ],
+ 
     ]
   }
 
