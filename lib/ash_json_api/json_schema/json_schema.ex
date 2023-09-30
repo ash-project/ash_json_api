@@ -542,6 +542,48 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
+  defp build_filter_schema(field_schema, opts \\ []) do
+    nullable = Keyword.get(opts, :nullable, true)
+    ordered = Keyword.get(opts, :ordered, false)
+
+    properties = %{
+      "equals" => field_schema,
+      "not_equals" => field_schema,
+      "eq" => field_schema,
+      "not_eq" => field_schema
+    }
+
+    properties =
+      if nullable,
+        do:
+          Map.merge(properties, %{
+            "is_nil" => %{
+              "type" => ["boolean", "string"],
+              "match" => "^(true|false)$"
+            }
+          }),
+        else: properties
+
+    properties =
+      if ordered,
+        do:
+          Map.merge(properties, %{
+            "gt" => field_schema,
+            "lt" => field_schema,
+            "gte" => field_schema,
+            "lte" => field_schema,
+            "less_than" => field_schema,
+            "greater_than" => field_schema,
+            "less_than_or_equal" => field_schema,
+            "greater_than_or_equal" => field_schema
+          }),
+        else: properties
+
+    predicate_schema = %{"type" => "object", "properties" => properties}
+
+    %{"oneOf" => [field_schema, predicate_schema]}
+  end
+
   defp attribute_filter_schema(type) do
     if Ash.Type.embedded_type?(type) do
       %{
@@ -550,33 +592,37 @@ defmodule AshJsonApi.JsonSchema do
     else
       case type do
         Ash.Type.UUID ->
-          %{
+          build_filter_schema(%{
             "type" => "string",
             "format" => "uuid"
-          }
+          })
 
         Ash.Type.String ->
-          %{
-            "type" => "string"
-          }
+          build_filter_schema(%{"type" => "string"})
 
         Ash.Type.Boolean ->
-          %{
+          build_filter_schema(%{
             "type" => ["boolean", "string"],
             "match" => "^(true|false)$"
-          }
+          })
 
         Ash.Type.Integer ->
-          %{
-            "type" => ["integer", "string"],
-            "match" => "^[1-9][0-9]*$"
-          }
+          build_filter_schema(
+            %{
+              "type" => ["integer", "string"],
+              "match" => "^[1-9][0-9]*$"
+            },
+            ordered: true
+          )
 
         Ash.Type.UtcDateTime ->
-          %{
-            "type" => "string",
-            "format" => "date-time"
-          }
+          build_filter_schema(
+            %{
+              "type" => "string",
+              "format" => "date-time"
+            },
+            ordered: true
+          )
 
         {:array, _type} ->
           %{
