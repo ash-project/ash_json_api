@@ -1,4 +1,8 @@
 defmodule AshJsonApi.JsonSchema.Helpers do
+  @moduledoc """
+  Helper functions for schema generation.
+  """
+
   @spec build_filter_schema(map(), keyword()) :: map()
   def build_filter_schema(field_schema, opts \\ []) do
     nullable = Keyword.get(opts, :nullable, true)

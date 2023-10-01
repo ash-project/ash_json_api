@@ -575,7 +575,14 @@ defmodule AshJsonApi.JsonSchema do
             ordered: true
           )
 
-        # TODO: What about Ash.Type.Float?
+        Ash.Type.Float ->
+          build_filter_schema(
+            %{
+              "type" => ["float", "integer", "string"],
+              "match" => "^[1-9][0-9]*(\.[0-9]*)?$"
+            },
+            ordered: true
+          )
 
         Ash.Type.UtcDateTime ->
           build_filter_schema(
