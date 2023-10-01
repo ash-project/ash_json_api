@@ -46,6 +46,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
+    import AshJsonApi.JsonSchema.Helpers
+
     @dialyzer {:nowarn_function, {:action_description, 2}}
     @dialyzer {:nowarn_function, {:relationship_resource_identifiers, 1}}
     @dialyzer {:nowarn_function, {:resource_object_schema, 1}}
@@ -683,25 +685,25 @@ if Code.ensure_loaded?(OpenApiSpex) do
       else
         case type do
           Ash.Type.UUID ->
-            %Schema{
-              type: :string,
-              format: :uuid
-            }
+            build_filter_schema(%Schema{type: "string", format: "uuid"})
 
           Ash.Type.String ->
-            %Schema{type: :string}
+            build_filter_schema(%Schema{type: "string"})
 
           Ash.Type.Boolean ->
-            %Schema{type: :boolean}
+            build_filter_schema(%Schema{type: "boolean"})
 
           Ash.Type.Integer ->
-            %Schema{type: :integer}
+            build_filter_schema(%Schema{type: "integer"}, ordered: true)
 
           Ash.Type.Float ->
             %Schema{type: :number, format: :float}
 
           Ash.Type.UtcDateTime ->
-            %Schema{type: :string, format: :"date-time"}
+            build_filter_schema(
+              %Schema{type: "string", format: "date-time"},
+              ordered: true
+            )
 
           {:array, _type} ->
             %Schema{
