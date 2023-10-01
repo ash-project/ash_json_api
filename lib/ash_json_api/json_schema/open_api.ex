@@ -277,7 +277,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp with_attribute_description(schema, %{description: description}) do
-      %{schema | description: description}
+      Map.merge(schema, %{description: description})
     end
 
     @spec required_attributes(resource :: module) :: nil | [:atom]
