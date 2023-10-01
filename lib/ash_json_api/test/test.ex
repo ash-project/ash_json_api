@@ -188,6 +188,24 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  defmacro assert_invalid_resource_objects(conn, expected_type, expected_ids) do
+    quote bind_quoted: [conn: conn, expected_type: expected_type, expected_ids: expected_ids] do
+      assert %{
+               "data" => results
+             } = conn.resp_body
+
+      assert not Enum.any?(results, fn
+               %{"type" => ^expected_type, "id" => maybe_known_id} ->
+                 Enum.member?(expected_ids, maybe_known_id)
+
+               _ ->
+                 false
+             end)
+
+      conn
+    end
+  end
+
   defmacro assert_attribute_missing(conn, attribute) do
     quote bind_quoted: [conn: conn, attribute: attribute] do
       assert %{"data" => %{"attributes" => attributes}} = conn.resp_body
