@@ -162,6 +162,30 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
         |> assert_invalid_resource_objects("post", [post.id])
     end
 
+    test "is_nil filter" do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Api.create!()
+
+      post2 =
+        Post
+        |> Ash.Changeset.for_create(:create, %{})
+        |> Api.create!()
+
+      _conn =
+        Api
+        |> get("/posts?filter[name][is_nil]=false", status: 200)
+        |> assert_valid_resource_objects("post", [post.id])
+        |> assert_invalid_resource_objects("post", [post2.id])
+
+      _conn =
+        Api
+        |> get("/posts?filter[name][is_nil]=true", status: 200)
+        |> assert_valid_resource_objects("post", [post2.id])
+        |> assert_invalid_resource_objects("post", [post.id])
+    end
+
     test "ordering filters" do
       author =
         Author
