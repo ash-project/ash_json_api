@@ -199,11 +199,19 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.type == :object
 
       assert schema.properties == %{
-               id: %Schema{format: :uuid, type: :string},
+               id: %Schema{type: :object, additionalProperties: true},
                author: %Schema{type: :string},
-               email: %Schema{type: :string},
-               hidden: %Schema{type: :string, description: "description of attribute :hidden"},
-               name: %Schema{type: :string, description: "description of attribute :name"},
+               email: %Schema{type: :object, additionalProperties: true},
+               hidden: %Schema{
+                 type: :object,
+                 description: "description of attribute :hidden",
+                 additionalProperties: true
+               },
+               name: %Schema{
+                 type: :object,
+                 description: "description of attribute :name",
+                 additionalProperties: true
+               },
                tags: %Schema{type: :string}
              }
 

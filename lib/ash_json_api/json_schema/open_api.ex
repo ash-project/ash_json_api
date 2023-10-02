@@ -275,7 +275,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp with_attribute_description(schema, %{description: description}) do
-      %{schema | description: description}
+      Map.merge(schema, %{description: description})
     end
 
     @spec required_attributes(resource :: module) :: nil | [:atom]
@@ -674,48 +674,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @spec attribute_filter_schema(type :: module) :: Schema.t()
-    defp attribute_filter_schema(type) do
-      if Ash.Type.embedded_type?(type) do
-        %Schema{
-          type: :object,
-          additionalProperties: true
-        }
-      else
-        case type do
-          Ash.Type.UUID ->
-            %Schema{
-              type: :string,
-              format: :uuid
-            }
-
-          Ash.Type.String ->
-            %Schema{type: :string}
-
-          Ash.Type.Boolean ->
-            %Schema{type: :boolean}
-
-          Ash.Type.Integer ->
-            %Schema{type: :integer}
-
-          Ash.Type.Float ->
-            %Schema{type: :number, format: :float}
-
-          Ash.Type.UtcDateTime ->
-            %Schema{type: :string, format: :"date-time"}
-
-          {:array, _type} ->
-            %Schema{
-              type: :object,
-              additionalProperties: true
-            }
-
-          _ ->
-            %Schema{
-              type: :object,
-              additionalProperties: true
-            }
-        end
-      end
+    defp attribute_filter_schema(_type) do
+      %Schema{
+        type: :object,
+        additionalProperties: true
+      }
     end
 
     @spec request_body(Route.t(), resource :: module) :: nil | RequestBody.t()
