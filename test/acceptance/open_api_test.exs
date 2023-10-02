@@ -198,16 +198,22 @@ defmodule Test.Acceptance.OpenApiTest do
       %Schema{} = schema = filter.schema
       assert schema.type == :object
 
-      # We have to find a better way to test the filter schema.
-
-      # assert schema.properties == %{
-      #          id: %Schema{format: :uuid, type: :string},
-      #          author: %Schema{type: :string},
-      #          email: %Schema{type: :string},
-      #          hidden: %Schema{type: :string, description: "description of attribute :hidden"},
-      #          name: %Schema{type: :string, description: "description of attribute :name"},
-      #          tags: %Schema{type: :string}
-      #        }
+      assert schema.properties == %{
+               id: %Schema{type: :object, additionalProperties: true},
+               author: %Schema{type: :string},
+               email: %Schema{type: :object, additionalProperties: true},
+               hidden: %Schema{
+                 type: :object,
+                 description: "description of attribute :hidden",
+                 additionalProperties: true
+               },
+               name: %Schema{
+                 type: :object,
+                 description: "description of attribute :name",
+                 additionalProperties: true
+               },
+               tags: %Schema{type: :string}
+             }
 
       assert schema.required == nil
     end

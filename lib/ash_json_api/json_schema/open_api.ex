@@ -46,8 +46,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
-    import AshJsonApi.JsonSchema.Helpers
-
     @dialyzer {:nowarn_function, {:action_description, 2}}
     @dialyzer {:nowarn_function, {:relationship_resource_identifiers, 1}}
     @dialyzer {:nowarn_function, {:resource_object_schema, 1}}
@@ -676,48 +674,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @spec attribute_filter_schema(type :: module) :: Schema.t()
-    defp attribute_filter_schema(type) do
-      if Ash.Type.embedded_type?(type) do
-        %Schema{
-          type: :object,
-          additionalProperties: true
-        }
-      else
-        case type do
-          Ash.Type.UUID ->
-            build_filter_schema(%Schema{type: "string", format: "uuid"})
-
-          Ash.Type.String ->
-            build_filter_schema(%Schema{type: "string"})
-
-          Ash.Type.Boolean ->
-            build_filter_schema(%Schema{type: "boolean"})
-
-          Ash.Type.Integer ->
-            build_filter_schema(%Schema{type: "integer"}, ordered: true)
-
-          Ash.Type.Float ->
-            %Schema{type: :number, format: :float}
-
-          Ash.Type.UtcDateTime ->
-            build_filter_schema(
-              %Schema{type: "string", format: "date-time"},
-              ordered: true
-            )
-
-          {:array, _type} ->
-            %Schema{
-              type: :object,
-              additionalProperties: true
-            }
-
-          _ ->
-            %Schema{
-              type: :object,
-              additionalProperties: true
-            }
-        end
-      end
+    defp attribute_filter_schema(_type) do
+      %Schema{
+        type: :object,
+        additionalProperties: true
+      }
     end
 
     @spec request_body(Route.t(), resource :: module) :: nil | RequestBody.t()
