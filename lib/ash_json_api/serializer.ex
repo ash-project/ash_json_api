@@ -27,21 +27,18 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
+  @spec serialize_many(
+          AshJsonApi.Request.t(),
+          Ash.Page.page() | list(Ash.Resource.record()),
+          Keyword.t()
+        ) :: String.t()
   def serialize_many(request, paginator, includes) do
-    data =
-      case paginator do
-        %{results: results} ->
-          results
-
-        other when is_list(other) ->
-          other
-      end
-
-    data = Enum.map(data, &serialize_one_record(request, &1))
-    json_api = %{version: "1.0"}
-
     links = many_links(request, paginator)
     meta = add_page_metadata(paginator)
+
+    data = page_data(paginator, request)
+
+    json_api = %{version: "1.0"}
 
     %{data: data, jsonapi: json_api, links: links}
     |> add_includes(request, includes)
@@ -49,13 +46,21 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
-  # Adds page level metadata, like total count of records
-  defp add_page_metadata(%Ash.Page.Offset{} = paginator) do
-    %{page: %{total: paginator.count}}
+  defp page_data(%struct{} = page, request) when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
+    page_data(page.results, request)
   end
 
-  defp add_page_metadata(%Ash.Page.Keyset{} = paginator) do
-    %{page: %{total: paginator.count}}
+  defp page_data(data, request) when is_list(data) do
+    Enum.map(data, &serialize_one_record(request, &1))
+  end
+
+  # Adds page level metadata, like total count of records
+  defp add_page_metadata(%struct{} = page) when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
+    if page.count do
+      %{page: %{total: page.count}}
+    else
+      %{}
+    end
   end
 
   # This is added because some tests on `Test.Acceptance.IndexTest` fail
