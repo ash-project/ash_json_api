@@ -96,6 +96,13 @@ defmodule AshJsonApi.MixProject do
       source_ref: "v#{@version}",
       extras: extras(),
       groups_for_extras: groups_for_extras(),
+      before_closing_head_tag: fn type ->
+        if type == :html do
+          """
+          <script defer data-domain="ashhexdocs" src="https://plausible.io/js/script.js"></script>
+          """
+        end
+      end,
       spark: [
         extensions: [
           %{
