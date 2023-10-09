@@ -386,10 +386,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
       open_api = AshJsonApi.Api.Info.open_api(api)
 
       if open_api && open_api[:group_by] == :api && open_api[:tag] do
-        %Tag{
-          name: to_string(open_api[:tag]),
-          description: "Operations on the #{open_api[:tag]} Api."
-        }
+        [
+          %Tag{
+            name: to_string(open_api[:tag]),
+            description: "Operations on the #{open_api[:tag]} Api."
+          }
+        ]
       else
         api
         |> resources()
