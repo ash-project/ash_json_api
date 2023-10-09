@@ -25,6 +25,20 @@ defmodule AshJsonApi.Api do
         type: :string,
         doc: "The route prefix at which you are serving the JSON:API"
       ],
+      open_api: [
+        type: :map,
+        doc: "OpenAPI configurations",
+        keys: [
+          tag: [
+            type: :string,
+            doc: "Tag to be used when used by :group_by"
+          ],
+          group_by: [
+            type: {:in, [:api, :resource]},
+            doc: "Group by :api or :resource"
+          ]
+        ]
+      ],
       serve_schema?: [
         type: :boolean,
         doc: "Whether or not create a /schema route that serves the JSON schema of your API",
