@@ -1,4 +1,19 @@
 defmodule AshJsonApi.Api do
+  @open_api %Spark.Dsl.Section{
+    name: :open_api,
+    describe: "OpenAPI configurations",
+    schema: [
+      tag: [
+        type: :string,
+        doc: "Tag to be used when used by :group_by"
+      ],
+      group_by: [
+        type: {:in, [:api, :resource]},
+        doc: "Group by :api or :resource"
+      ]
+    ]
+  }
+
   @json_api %Spark.Dsl.Section{
     name: :json_api,
     describe: """
@@ -45,27 +60,13 @@ defmodule AshJsonApi.Api do
         doc: "Whether or not to include properties for values that are nil in the JSON output",
         default: true
       ]
-    ]
-  }
-
-  @open_api %Spark.Dsl.Section{
-    name: :open_api,
-    describe: "OpenAPI configurations",
-    schema: [
-      tag: [
-        type: :string,
-        doc: "Tag to be used when used by :group_by"
-      ],
-      group_by: [
-        type: {:in, [:api, :resource]},
-        doc: "Group by :api or :resource"
-      ]
-    ]
+    ],
+    sections: [@open_api]
   }
 
   @verifiers []
 
-  @sections [@json_api, @open_api]
+  @sections [@json_api]
 
   @moduledoc """
   The entrypoint for adding JSON:API behavior to an Ash API
