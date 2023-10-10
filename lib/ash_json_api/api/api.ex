@@ -25,20 +25,6 @@ defmodule AshJsonApi.Api do
         type: :string,
         doc: "The route prefix at which you are serving the JSON:API"
       ],
-      open_api: [
-        type: :map,
-        doc: "OpenAPI configurations",
-        keys: [
-          tag: [
-            type: :string,
-            doc: "Tag to be used when used by :group_by"
-          ],
-          group_by: [
-            type: {:in, [:api, :resource]},
-            doc: "Group by :api or :resource"
-          ]
-        ]
-      ],
       serve_schema?: [
         type: :boolean,
         doc: "Whether or not create a /schema route that serves the JSON schema of your API",
@@ -62,7 +48,22 @@ defmodule AshJsonApi.Api do
     ]
   }
 
-  @sections [@json_api]
+  @open_api %Spark.Dsl.Section{
+    name: :open_api,
+    describe: "OpenAPI configurations",
+    schema: [
+      tag: [
+        type: :string,
+        doc: "Tag to be used when used by :group_by"
+      ],
+      group_by: [
+        type: {:in, [:api, :resource]},
+        doc: "Group by :api or :resource"
+      ]
+    ],
+  }
+
+  @sections [@json_api, @open_api]
 
   @moduledoc """
   The entrypoint for adding JSON:API behavior to an Ash API
