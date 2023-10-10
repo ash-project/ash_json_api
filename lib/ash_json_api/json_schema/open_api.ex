@@ -383,13 +383,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     def tags(api) do
-      open_api = AshJsonApi.Api.Info.open_api(api)
+      tag = AshJsonApi.Api.Info.tag(api)
+      group_by = AshJsonApi.Api.Info.group_by(api)
 
-      if open_api && open_api[:group_by] == :api && open_api[:tag] do
+      if tag && group_by == :api do
         [
           %Tag{
-            name: to_string(open_api[:tag]),
-            description: "Operations on the #{open_api[:tag]} Api."
+            name: to_string(tag),
+            description: "Operations on the #{tag} Api."
           }
         ]
       else
@@ -431,13 +432,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec route_operation(Route.t(), api :: module, resource :: module) ::
             {Paths.path(), {verb :: atom, Operation.t()}}
     defp route_operation(route, api, resource) do
-      open_api = AshJsonApi.Api.Info.open_api(api)
+      tag = AshJsonApi.Api.Info.tag(api)
+      group_by = AshJsonApi.Api.Info.group_by(api)
+
       {path, path_params} = AshJsonApi.JsonSchema.route_href(route, api)
       operation = operation(route, resource, path_params)
 
       operation =
-        if open_api && open_api[:group_by] == :api && open_api[:tag] do
-          Map.merge(operation, %{tags: [to_string(open_api[:tag])]})
+        if tag && group_by == :api do
+          Map.merge(operation, %{tags: [to_string(tag)]})
         else
           operation
         end

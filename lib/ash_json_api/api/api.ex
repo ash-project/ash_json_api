@@ -60,8 +60,10 @@ defmodule AshJsonApi.Api do
         type: {:in, [:api, :resource]},
         doc: "Group by :api or :resource"
       ]
-    ],
+    ]
   }
+
+  @verifiers []
 
   @sections [@json_api, @open_api]
 
@@ -69,5 +71,5 @@ defmodule AshJsonApi.Api do
   The entrypoint for adding JSON:API behavior to an Ash API
   """
 
-  use Spark.Dsl.Extension, sections: @sections
+  use Spark.Dsl.Extension, sections: @sections, verifiers: @verifiers
 end
