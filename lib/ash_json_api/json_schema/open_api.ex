@@ -439,7 +439,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       operation = operation(route, resource, path_params)
 
       operation =
-        if tag && group_by == :api do
+        if tag && group_by === :api do
           Map.merge(operation, %{tags: [to_string(tag)]})
         else
           operation

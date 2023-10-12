@@ -64,7 +64,7 @@ defmodule AshJsonApi.Api do
     sections: [@open_api]
   }
 
-  @verifiers []
+  @verifiers [AshJsonApi.Api.Verifiers.VerifyOpenApiGrouping]
 
   @sections [@json_api]
 
