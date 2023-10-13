@@ -11,9 +11,16 @@ defmodule AshJsonApi.Api.Verifiers.VerifyOpenApiGrouping do
     unless group_by === :api and tag !== "" do
       raise Spark.Error.DslError.exception(
               module: dsl,
-              path: [:json_api, :open_api],
+              path: [:json_api, :open_api, :tag],
               message: """
               Tag should have a value if group_by has is configured with :api
+
+              ```
+              open_api do
+                tag "Users"
+                group_by :api
+              end
+              ```
               """
             )
     end

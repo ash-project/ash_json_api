@@ -2,6 +2,17 @@ defmodule AshJsonApi.Api do
   @open_api %Spark.Dsl.Section{
     name: :open_api,
     describe: "OpenAPI configurations",
+    examples: [
+      """
+      json_api do
+        ...
+        open_api do
+          tag "Users"
+          group_by :api or :resource
+        end
+      end
+      """
+    ],
     schema: [
       tag: [
         type: :string,
