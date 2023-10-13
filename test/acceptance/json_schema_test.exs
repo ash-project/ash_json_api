@@ -107,10 +107,6 @@ defmodule Test.Acceptance.JsonSchemaTest do
     json_api do
       router(Test.Acceptance.JsonSchemaTest.Router)
       log_errors?(false)
-
-      open_api do
-        group_by :ap
-      end
     end
 
     resources do
