@@ -9,7 +9,8 @@ defmodule AshJsonApi.Api do
       ],
       group_by: [
         type: {:in, [:api, :resource]},
-        doc: "Group by :api or :resource"
+        doc: "Group by :api or :resource",
+        default: :resource
       ]
     ]
   }
