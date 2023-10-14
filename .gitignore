@@ -26,3 +26,6 @@ ash_json_api-*.tar
 .elixir_ls/
 
 .elixir-tools/
+
+# Mac OS stuff
+.DS_Store

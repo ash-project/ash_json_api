@@ -9,6 +9,7 @@ spark_locals_without_parens = [
   delimiter: 1,
   get: 1,
   get: 2,
+  group_by: 1,
   include_nil_values?: 1,
   includes: 1,
   index: 1,
@@ -35,6 +36,7 @@ spark_locals_without_parens = [
   route: 1,
   router: 1,
   serve_schema?: 1,
+  tag: 1,
   type: 1,
   upsert?: 1,
   upsert_identity: 1

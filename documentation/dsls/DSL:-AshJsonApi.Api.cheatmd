@@ -10,6 +10,8 @@ The entrypoint for adding JSON:API behavior to an Ash API
 Global configuration for JSON:API
 
 
+### Nested DSLs
+ * [open_api](#json_api-open_api)
 
 
 ### Examples
@@ -158,6 +160,84 @@ end
 
   </tbody>
 </table>
+
+
+## json_api.open_api
+OpenAPI configurations
+
+
+
+### Examples
+```
+json_api do
+  ...
+  open_api do
+    tag "Users"
+    group_by :api or :resource
+  end
+end
+
+```
+
+
+
+
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+  <td style="text-align: left">
+    <a id="json_api-open_api-tag" href="#json_api-open_api-tag">
+      <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
+        tag
+      </span>
+    </a>
+      
+  </td>
+  <td style="text-align: left">
+    <code class="inline">String.t</code>
+  </td>
+  <td style="text-align: left">
+    
+  </td>
+  <td style="text-align: left" colspan=2>
+    Tag to be used when used by :group_by
+  </td>
+</tr>
+
+<tr>
+  <td style="text-align: left">
+    <a id="json_api-open_api-group_by" href="#json_api-open_api-group_by">
+      <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
+        group_by
+      </span>
+    </a>
+      
+  </td>
+  <td style="text-align: left">
+    <code class="inline">:api | :resource</code>
+  </td>
+  <td style="text-align: left">
+    <code class="inline">:resource</code>
+  </td>
+  <td style="text-align: left" colspan=2>
+    Group by :api or :resource
+  </td>
+</tr>
+
+  </tbody>
+</table>
+
+
 
 
 

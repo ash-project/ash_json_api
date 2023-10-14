@@ -2,6 +2,14 @@ defmodule AshJsonApi.Api.Info do
   @moduledoc "Introspection helpers for AshJsonApi.Api"
   alias Spark.Dsl.Extension
 
+  def tag(api) do
+    Extension.get_opt(api, [:json_api, :open_api], :tag, nil, true)
+  end
+
+  def group_by(api) do
+    Extension.get_opt(api, [:json_api, :open_api], :group_by, nil, true)
+  end
+
   def prefix(api) do
     Extension.get_opt(api, [:json_api], :prefix, nil, true)
   end

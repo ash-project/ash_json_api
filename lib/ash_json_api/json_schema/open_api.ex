@@ -383,16 +383,28 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     def tags(api) do
-      api
-      |> resources()
-      |> Enum.map(fn resource ->
-        name = AshJsonApi.Resource.Info.type(resource)
+      tag = AshJsonApi.Api.Info.tag(api)
+      group_by = AshJsonApi.Api.Info.group_by(api)
 
-        %Tag{
-          name: to_string(name),
-          description: "Operations on the #{name} resource."
-        }
-      end)
+      if tag && group_by == :api do
+        [
+          %Tag{
+            name: to_string(tag),
+            description: "Operations on the #{tag} Api."
+          }
+        ]
+      else
+        api
+        |> resources()
+        |> Enum.map(fn resource ->
+          name = AshJsonApi.Resource.Info.type(resource)
+
+          %Tag{
+            name: to_string(name),
+            description: "Operations on the #{name} resource."
+          }
+        end)
+      end
     end
 
     @doc """
@@ -420,8 +432,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec route_operation(Route.t(), api :: module, resource :: module) ::
             {Paths.path(), {verb :: atom, Operation.t()}}
     defp route_operation(route, api, resource) do
+      tag = AshJsonApi.Api.Info.tag(api)
+      group_by = AshJsonApi.Api.Info.group_by(api)
+
       {path, path_params} = AshJsonApi.JsonSchema.route_href(route, api)
       operation = operation(route, resource, path_params)
+
+      operation =
+        if tag && group_by === :api do
+          Map.merge(operation, %{tags: [to_string(tag)]})
+        else
+          operation
+        end
+
       {path, {route.method, operation}}
     end
 
