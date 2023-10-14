@@ -180,7 +180,13 @@ defmodule AshJsonApi.Serializer do
 
   defp many_links(request, %{results: _} = paginator) do
     uri = URI.parse(request.url)
-    query = Conn.Query.decode(uri.query || "")
+
+    query =
+      if uri.query do
+        Conn.Query.decode(uri.query)
+      else
+        %{}
+      end
 
     %{
       first: first_link(uri, query, paginator),
