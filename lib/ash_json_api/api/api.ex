@@ -8,7 +8,7 @@ defmodule AshJsonApi.Api do
         ...
         open_api do
           tag "Users"
-          group_by :api or :resource
+          group_by :api
         end
       end
       """
