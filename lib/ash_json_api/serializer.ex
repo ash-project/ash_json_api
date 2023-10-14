@@ -59,7 +59,7 @@ defmodule AshJsonApi.Serializer do
     if page.count do
       %{page: %{total: page.count}}
     else
-      %{}
+      %{page: %{}}
     end
   end
 

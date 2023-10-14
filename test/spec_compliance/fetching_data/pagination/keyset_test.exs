@@ -554,7 +554,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       assert meta == %{"page" => %{"total" => 15}}
     end
 
-    test "collection total is nil when count is false" do
+    test "collection total is not present when count is false" do
       page_size = 5
 
       encoded_query_params =
@@ -573,7 +573,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       assert %{"meta" => meta} = conn.resp_body
 
-      assert meta == %{"page" => %{"total" => nil}}
+      refute Map.has_key?(meta["page"], "total")
     end
   end
 
