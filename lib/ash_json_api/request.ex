@@ -6,6 +6,7 @@ defmodule AshJsonApi.Request do
     InvalidBody,
     InvalidField,
     InvalidHeader,
+    InvalidIncludes,
     InvalidQuery,
     InvalidType,
     UnacceptableMediaType,
@@ -473,8 +474,8 @@ defmodule AshJsonApi.Request do
       %{allowed: allowed, disallowed: []} ->
         %{request | includes: includes, includes_keyword: includes_to_keyword(request, allowed)}
 
-      %{allowed: _allowed, disallowed: _disallowed} ->
-        add_error(request, "invalid includes", request.route.type)
+      %{allowed: _allowed, disallowed: disallowed} ->
+        add_error(request, InvalidIncludes.new(includes: disallowed), request.route.type)
     end
   end
 

@@ -223,9 +223,19 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   # If an endpoint does not support the include parameter, it MUST respond with 400 Bad Request to any requests that include it.
   # --------------------------
   describe "400 Bad Request for requests that with include parameter for endpoints without include parameter support" do
-    # We will be supporting the "include" parameter, so this statement is not applicable.
-    # However, I like the idea of keeping this here for explict documentation purposes.
-    # I'm not sure what exactly to do though - do we write a test, or just leave a comment saying "N/A"
+    # GET /posts/1?include=foobar
+    author =
+      Author
+      |> Ash.Changeset.for_create(:create, %{name: "foo"})
+      |> Api.create!()
+
+    post =
+      Post
+      |> Ash.Changeset.for_create(:create, %{name: "foo"})
+      |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
+      |> Api.create!()
+
+    get(Api, "/posts/#{post.id}/?include=foobar", status: 400)
   end
 
   # I put this as "may" because loading is an optional feature
