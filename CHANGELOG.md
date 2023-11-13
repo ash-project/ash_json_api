@@ -5,6 +5,25 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.34.0](https://github.com/ash-project/ash_json_api/compare/v0.33.1...v0.34.0) (2023-11-13)
+
+
+
+
+### Features:
+
+* open_api options in Api (#104)
+
+### Bug Fixes:
+
+* accept any in filter schema issue #101 (#102)
+
+* remove `AshJsonApi.Application` (#99)
+
+### Improvements:
+
+* Allow to include/exclude null values from the JSON output (#100)
+
 ## [v0.33.1](https://github.com/ash-project/ash_json_api/compare/v0.33.0...v0.33.1) (2023-09-26)
 
 
