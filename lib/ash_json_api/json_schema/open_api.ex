@@ -680,7 +680,25 @@ if Code.ensure_loaded?(OpenApiSpex) do
         resource
         |> Ash.Resource.Info.public_aggregates()
         |> Enum.map(fn agg ->
-          {:ok, type} = Aggregate.kind_to_type(agg.kind, nil)
+          field =
+            if agg.field do
+              related = Ash.Resource.Info.related(resource, agg.relationship_path)
+              Ash.Resource.Info.field(related, agg.field)
+            end
+
+          field_type =
+            if field do
+              field.type
+            end
+
+          field_constraints =
+            if field do
+              field.constraints
+            end
+
+          {:ok, type, _constraints} =
+            Aggregate.kind_to_type(agg.kind, field_type, field_constraints)
+
           {agg.name, attribute_filter_schema(type)}
         end)
         |> Enum.into(props)

@@ -642,7 +642,7 @@ defmodule AshJsonApi.Serializer do
       field = Ash.Resource.Info.field(related, agg.field)
 
       if field do
-        field.type
+        {field.type, field.constraints}
       end
     end
   end
@@ -664,10 +664,16 @@ defmodule AshJsonApi.Serializer do
       type =
         case field do
           %Ash.Resource.Aggregate{} = agg ->
-            field_type = field_type_from_aggregate(resource, agg)
+            case field_type_from_aggregate(resource, agg) do
+              {field_type, field_constraints} ->
+                {:ok, type, _constraints} =
+                  Ash.Query.Aggregate.kind_to_type(agg.kind, field_type, field_constraints)
 
-            {:ok, type} = Ash.Query.Aggregate.kind_to_type(agg.kind, field_type)
-            type
+                type
+
+              _ ->
+                nil
+            end
 
           nil ->
             nil
