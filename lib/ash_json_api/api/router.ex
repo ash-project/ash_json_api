@@ -69,9 +69,6 @@ defmodule AshJsonApi.Api.Router do
               ]
               |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 
-            # prefix router
-            route = (prefix || "") <> route
-
             match(route, via: method, to: controller, init_opts: opts)
           end
         end)
