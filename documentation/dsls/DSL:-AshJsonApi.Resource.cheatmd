@@ -226,8 +226,7 @@ get :read
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -241,7 +240,7 @@ get :read
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="action-action" href="#action-action">
+    <a id="json_api-routes-get-action" href="#json_api-routes-get-action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         action
       </span>
@@ -260,9 +259,23 @@ get :read
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="action-route" href="#action-route">
+    <a id="json_api-routes-get-route" href="#json_api-routes-get-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -282,7 +295,7 @@ get :read
 
 <tr>
   <td style="text-align: left">
-    <a id="action-default_fields" href="#action-default_fields">
+    <a id="json_api-routes-get-default_fields" href="#json_api-routes-get-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -302,7 +315,7 @@ get :read
 
 <tr>
   <td style="text-align: left">
-    <a id="action-primary?" href="#action-primary?">
+    <a id="json_api-routes-get-primary?" href="#json_api-routes-get-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -348,8 +361,7 @@ index :read
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -363,7 +375,7 @@ index :read
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="action-action" href="#action-action">
+    <a id="json_api-routes-index-action" href="#json_api-routes-index-action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         action
       </span>
@@ -382,9 +394,23 @@ index :read
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="action-paginate?" href="#action-paginate?">
+    <a id="json_api-routes-index-paginate?" href="#json_api-routes-index-paginate?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         paginate?
       </span>
@@ -404,7 +430,7 @@ index :read
 
 <tr>
   <td style="text-align: left">
-    <a id="action-route" href="#action-route">
+    <a id="json_api-routes-index-route" href="#json_api-routes-index-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -424,7 +450,7 @@ index :read
 
 <tr>
   <td style="text-align: left">
-    <a id="action-default_fields" href="#action-default_fields">
+    <a id="json_api-routes-index-default_fields" href="#json_api-routes-index-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -444,7 +470,7 @@ index :read
 
 <tr>
   <td style="text-align: left">
-    <a id="action-primary?" href="#action-primary?">
+    <a id="json_api-routes-index-primary?" href="#json_api-routes-index-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -490,8 +516,7 @@ post :create
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -505,7 +530,7 @@ post :create
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="action-action" href="#action-action">
+    <a id="json_api-routes-post-action" href="#json_api-routes-post-action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         action
       </span>
@@ -524,9 +549,23 @@ post :create
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="action-route" href="#action-route">
+    <a id="json_api-routes-post-route" href="#json_api-routes-post-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -546,7 +585,7 @@ post :create
 
 <tr>
   <td style="text-align: left">
-    <a id="action-default_fields" href="#action-default_fields">
+    <a id="json_api-routes-post-default_fields" href="#json_api-routes-post-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -566,7 +605,7 @@ post :create
 
 <tr>
   <td style="text-align: left">
-    <a id="action-primary?" href="#action-primary?">
+    <a id="json_api-routes-post-primary?" href="#json_api-routes-post-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -586,7 +625,7 @@ post :create
 
 <tr>
   <td style="text-align: left">
-    <a id="action-relationship_arguments" href="#action-relationship_arguments">
+    <a id="json_api-routes-post-relationship_arguments" href="#json_api-routes-post-relationship_arguments">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         relationship_arguments
       </span>
@@ -606,7 +645,7 @@ post :create
 
 <tr>
   <td style="text-align: left">
-    <a id="action-upsert?" href="#action-upsert?">
+    <a id="json_api-routes-post-upsert?" href="#json_api-routes-post-upsert?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         upsert?
       </span>
@@ -626,7 +665,7 @@ post :create
 
 <tr>
   <td style="text-align: left">
-    <a id="action-upsert_identity" href="#action-upsert_identity">
+    <a id="json_api-routes-post-upsert_identity" href="#json_api-routes-post-upsert_identity">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         upsert_identity
       </span>
@@ -672,8 +711,7 @@ patch :update
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -687,7 +725,7 @@ patch :update
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="action-action" href="#action-action">
+    <a id="json_api-routes-patch-action" href="#json_api-routes-patch-action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         action
       </span>
@@ -706,9 +744,23 @@ patch :update
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="action-relationship_arguments" href="#action-relationship_arguments">
+    <a id="json_api-routes-patch-relationship_arguments" href="#json_api-routes-patch-relationship_arguments">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         relationship_arguments
       </span>
@@ -728,7 +780,7 @@ patch :update
 
 <tr>
   <td style="text-align: left">
-    <a id="action-read_action" href="#action-read_action">
+    <a id="json_api-routes-patch-read_action" href="#json_api-routes-patch-read_action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         read_action
       </span>
@@ -748,7 +800,7 @@ patch :update
 
 <tr>
   <td style="text-align: left">
-    <a id="action-route" href="#action-route">
+    <a id="json_api-routes-patch-route" href="#json_api-routes-patch-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -768,7 +820,7 @@ patch :update
 
 <tr>
   <td style="text-align: left">
-    <a id="action-default_fields" href="#action-default_fields">
+    <a id="json_api-routes-patch-default_fields" href="#json_api-routes-patch-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -788,7 +840,7 @@ patch :update
 
 <tr>
   <td style="text-align: left">
-    <a id="action-primary?" href="#action-primary?">
+    <a id="json_api-routes-patch-primary?" href="#json_api-routes-patch-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -834,8 +886,7 @@ delete :destroy
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -849,7 +900,7 @@ delete :destroy
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="action-action" href="#action-action">
+    <a id="json_api-routes-delete-action" href="#json_api-routes-delete-action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         action
       </span>
@@ -868,9 +919,23 @@ delete :destroy
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="action-read_action" href="#action-read_action">
+    <a id="json_api-routes-delete-read_action" href="#json_api-routes-delete-read_action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         read_action
       </span>
@@ -890,7 +955,7 @@ delete :destroy
 
 <tr>
   <td style="text-align: left">
-    <a id="action-route" href="#action-route">
+    <a id="json_api-routes-delete-route" href="#json_api-routes-delete-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -910,7 +975,7 @@ delete :destroy
 
 <tr>
   <td style="text-align: left">
-    <a id="action-default_fields" href="#action-default_fields">
+    <a id="json_api-routes-delete-default_fields" href="#json_api-routes-delete-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -930,7 +995,7 @@ delete :destroy
 
 <tr>
   <td style="text-align: left">
-    <a id="action-primary?" href="#action-primary?">
+    <a id="json_api-routes-delete-primary?" href="#json_api-routes-delete-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -976,8 +1041,7 @@ related :comments, :read
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -991,7 +1055,7 @@ related :comments, :read
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="relationship-action-relationship" href="#relationship-action-relationship">
+    <a id="json_api-routes-related-relationship" href="#json_api-routes-related-relationship">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         relationship
       </span>
@@ -1012,7 +1076,7 @@ related :comments, :read
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-action-action" href="#relationship-action-action">
+    <a id="json_api-routes-related-action" href="#json_api-routes-related-action">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         action
       </span>
@@ -1031,9 +1095,23 @@ related :comments, :read
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="relationship-action-route" href="#relationship-action-route">
+    <a id="json_api-routes-related-route" href="#json_api-routes-related-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -1053,7 +1131,7 @@ related :comments, :read
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-action-default_fields" href="#relationship-action-default_fields">
+    <a id="json_api-routes-related-default_fields" href="#json_api-routes-related-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -1073,7 +1151,7 @@ related :comments, :read
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-action-primary?" href="#relationship-action-primary?">
+    <a id="json_api-routes-related-primary?" href="#json_api-routes-related-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -1133,7 +1211,7 @@ relationship :comments, :read
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="relationship-action-relationship" href="#relationship-action-relationship">
+    <a id="json_api-routes-relationship-relationship" href="#json_api-routes-relationship-relationship">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         relationship
       </span>
@@ -1149,6 +1227,27 @@ relationship :comments, :read
   </td>
   <td style="text-align: left" colspan=2>
     
+  </td>
+</tr>
+
+<tr>
+  <td style="text-align: left">
+    <a id="json_api-routes-relationship-action" href="#json_api-routes-relationship-action">
+      <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
+        action
+      </span>
+    </a>
+      <sup style="color: red">*</sup>
+
+  </td>
+  <td style="text-align: left">
+    <code class="inline">atom</code>
+  </td>
+  <td style="text-align: left">
+    
+  </td>
+  <td style="text-align: left" colspan=2>
+    The action to call when this route is hit
   </td>
 </tr>
 
@@ -1168,28 +1267,7 @@ relationship :comments, :read
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="relationship-action-action" href="#relationship-action-action">
-      <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
-        action
-      </span>
-    </a>
-      <sup style="color: red">*</sup>
-
-  </td>
-  <td style="text-align: left">
-    <code class="inline">atom</code>
-  </td>
-  <td style="text-align: left">
-    
-  </td>
-  <td style="text-align: left" colspan=2>
-    The action to call when this route is hit
-  </td>
-</tr>
-
-<tr>
-  <td style="text-align: left">
-    <a id="relationship-action-route" href="#relationship-action-route">
+    <a id="json_api-routes-relationship-route" href="#json_api-routes-relationship-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -1209,7 +1287,7 @@ relationship :comments, :read
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-action-default_fields" href="#relationship-action-default_fields">
+    <a id="json_api-routes-relationship-default_fields" href="#json_api-routes-relationship-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -1229,7 +1307,7 @@ relationship :comments, :read
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-action-primary?" href="#relationship-action-primary?">
+    <a id="json_api-routes-relationship-primary?" href="#json_api-routes-relationship-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -1275,8 +1353,7 @@ post_to_relationship :comments
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -1290,7 +1367,7 @@ post_to_relationship :comments
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="relationship-relationship" href="#relationship-relationship">
+    <a id="json_api-routes-post_to_relationship-relationship" href="#json_api-routes-post_to_relationship-relationship">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         relationship
       </span>
@@ -1309,9 +1386,23 @@ post_to_relationship :comments
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="relationship-route" href="#relationship-route">
+    <a id="json_api-routes-post_to_relationship-route" href="#json_api-routes-post_to_relationship-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -1331,7 +1422,7 @@ post_to_relationship :comments
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-default_fields" href="#relationship-default_fields">
+    <a id="json_api-routes-post_to_relationship-default_fields" href="#json_api-routes-post_to_relationship-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -1351,7 +1442,7 @@ post_to_relationship :comments
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-primary?" href="#relationship-primary?">
+    <a id="json_api-routes-post_to_relationship-primary?" href="#json_api-routes-post_to_relationship-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -1397,8 +1488,7 @@ patch_relationship :comments
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -1412,7 +1502,7 @@ patch_relationship :comments
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="relationship-relationship" href="#relationship-relationship">
+    <a id="json_api-routes-patch_relationship-relationship" href="#json_api-routes-patch_relationship-relationship">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         relationship
       </span>
@@ -1431,9 +1521,23 @@ patch_relationship :comments
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="relationship-route" href="#relationship-route">
+    <a id="json_api-routes-patch_relationship-route" href="#json_api-routes-patch_relationship-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -1453,7 +1557,7 @@ patch_relationship :comments
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-default_fields" href="#relationship-default_fields">
+    <a id="json_api-routes-patch_relationship-default_fields" href="#json_api-routes-patch_relationship-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -1473,7 +1577,7 @@ patch_relationship :comments
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-primary?" href="#relationship-primary?">
+    <a id="json_api-routes-patch_relationship-primary?" href="#json_api-routes-patch_relationship-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
@@ -1519,8 +1623,7 @@ delete_from_relationship :comments
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -1534,7 +1637,7 @@ delete_from_relationship :comments
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="relationship-relationship" href="#relationship-relationship">
+    <a id="json_api-routes-delete_from_relationship-relationship" href="#json_api-routes-delete_from_relationship-relationship">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         relationship
       </span>
@@ -1553,9 +1656,23 @@ delete_from_relationship :comments
   </td>
 </tr>
 
-<tr>
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
   <td style="text-align: left">
-    <a id="relationship-route" href="#relationship-route">
+    <a id="json_api-routes-delete_from_relationship-route" href="#json_api-routes-delete_from_relationship-route">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         route
       </span>
@@ -1575,7 +1692,7 @@ delete_from_relationship :comments
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-default_fields" href="#relationship-default_fields">
+    <a id="json_api-routes-delete_from_relationship-default_fields" href="#json_api-routes-delete_from_relationship-default_fields">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         default_fields
       </span>
@@ -1595,7 +1712,7 @@ delete_from_relationship :comments
 
 <tr>
   <td style="text-align: left">
-    <a id="relationship-primary?" href="#relationship-primary?">
+    <a id="json_api-routes-delete_from_relationship-primary?" href="#json_api-routes-delete_from_relationship-primary?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         primary?
       </span>
