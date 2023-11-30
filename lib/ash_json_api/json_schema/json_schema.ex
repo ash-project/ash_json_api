@@ -286,7 +286,8 @@ defmodule AshJsonApi.JsonSchema do
         %{
           "description" => "Identifiers for #{name}",
           "type" => "object",
-          "required" => ["type", "id"],
+          # We need to inspect the options here to see if type & id is required
+          # "required" => ["type", "id"],
           "additionalProperties" => false,
           "properties" => %{
             "type" => %{"type" => "string"},
@@ -311,7 +312,8 @@ defmodule AshJsonApi.JsonSchema do
       "items" => %{
         "description" => "Resource identifiers for #{name}",
         "type" => "object",
-        "required" => ["type", "id"],
+        # We need to inspect the options here to see if type & id is required
+        # "required" => ["type", "id"],
         "properties" => %{
           "type" => %{"type" => "string"},
           "id" => %{"type" => "string"},
