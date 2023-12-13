@@ -248,7 +248,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> Ash.Resource.Info.public_relationships()
     |> Enum.filter(fn relationship ->
-      AshJsonApi.Resource.Info.type(relationship)
+      AshJsonApi.Resource.Info.type(relationship.destination)
     end)
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
