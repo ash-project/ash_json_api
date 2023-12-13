@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.34.1](https://github.com/ash-project/ash_json_api/compare/v0.34.0...v0.34.1) (2023-12-13)
+
+
+
+
+### Bug Fixes:
+
+* properly generate relationships in json schema
+
+* don't double add a prefix to the router
+
+* 400 error on invalid includes instead of 500
+
 ## [v0.34.0](https://github.com/ash-project/ash_json_api/compare/v0.33.1...v0.34.0) (2023-11-13)
 
 
