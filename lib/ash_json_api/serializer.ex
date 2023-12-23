@@ -672,11 +672,14 @@ defmodule AshJsonApi.Serializer do
                 type
 
               _ ->
-                nil
+                {:ok, type, _constraints} =
+                  Ash.Query.Aggregate.kind_to_type(agg.kind, nil, nil)
+
+                type
             end
 
           nil ->
-            nil
+            :string
 
           attribute ->
             attribute.type
