@@ -165,8 +165,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
     end
 
-    @spec resource_object_schema(resource :: Ash.Resource.t(), fields :: nil | list(atom)) ::
-            Schema.t()
     defp resource_object_schema(resource, fields \\ nil) do
       %Schema{
         description:
