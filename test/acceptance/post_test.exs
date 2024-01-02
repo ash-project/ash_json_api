@@ -62,7 +62,6 @@ defmodule Test.Acceptance.PostTest do
         get(:read)
         index(:read)
 
-        # post(:create, relationship_arguments: [:author])
         post(:create,
           relationship_arguments: [:author],
           default_fields: [:name, :email, :hidden, :name_twice]
