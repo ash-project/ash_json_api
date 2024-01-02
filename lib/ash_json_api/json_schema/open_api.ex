@@ -207,6 +207,44 @@ if Code.ensure_loaded?(OpenApiSpex) do
       resource
       |> Ash.Resource.Info.public_attributes()
       |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
+      |> Enum.concat(Ash.Resource.Info.public_aggregates(resource))
+      |> Enum.map(fn
+        %Ash.Resource.Aggregate{} = agg ->
+          field =
+            if agg.field do
+              related = Ash.Resource.Info.related(resource, agg.relationship_path)
+              Ash.Resource.Info.field(related, agg.field)
+            end
+
+          field_type =
+            if field do
+              field.type
+            end
+
+          field_constraints =
+            if field do
+              field.constraints
+            end
+
+          {:ok, type, constraints} =
+            Aggregate.kind_to_type(agg.kind, field_type, field_constraints)
+
+          type = Ash.Type.get_type(type)
+
+          allow_nil? =
+            is_nil(Ash.Query.Aggregate.default_value(agg.kind))
+
+          %{
+            name: agg.name,
+            description: agg.description,
+            type: type,
+            constraints: constraints,
+            allow_nil?: allow_nil?
+          }
+
+        other ->
+          other
+      end)
       |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
       |> Map.new(fn attr ->
         {attr.name,
@@ -731,6 +769,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {:ok, type, _constraints} =
             Aggregate.kind_to_type(agg.kind, field_type, field_constraints)
 
+          type = Ash.Type.get_type(type)
+
           {agg.name, attribute_filter_schema(type)}
         end)
         |> Enum.into(props)
@@ -743,7 +783,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @spec relationship_filter_schema(relationship :: Relationships.relationship()) :: Schema.t()
     defp relationship_filter_schema(_rel) do
-      %Schema{type: :string}
+      %Schema{type: :object, additionalProperties: true}
     end
 
     @spec attribute_filter_schema(type :: module) :: Schema.t()

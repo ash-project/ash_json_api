@@ -91,6 +91,10 @@ defmodule Test.Acceptance.OpenApiTest do
       calculate(:name_twice, :string, concat([:name, :name], "-"))
     end
 
+    aggregates do
+      count(:count_of_tags, :tags)
+    end
+
     relationships do
       belongs_to(:author, Test.Acceptance.OpenApiTest.Author, allow_nil?: false)
       has_many(:tags, Test.Acceptance.OpenApiTest.Tag, destination_attribute: :post_id)
@@ -200,7 +204,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
       assert schema.properties == %{
                id: %Schema{type: :object, additionalProperties: true},
-               author: %Schema{type: :string},
+               author: %Schema{type: :object, additionalProperties: true},
                email: %Schema{type: :object, additionalProperties: true},
                hidden: %Schema{
                  type: :object,
@@ -212,7 +216,8 @@ defmodule Test.Acceptance.OpenApiTest do
                  description: "description of attribute :name",
                  additionalProperties: true
                },
-               tags: %Schema{type: :string}
+               tags: %Schema{type: :object, additionalProperties: true},
+               count_of_tags: %Schema{type: :object, additionalProperties: true}
              }
 
       assert schema.required == nil
@@ -333,7 +338,8 @@ defmodule Test.Acceptance.OpenApiTest do
                          %OpenApiSpex.Schema{type: :string},
                          %OpenApiSpex.Schema{type: :null}
                        ]
-                     }
+                     },
+                     count_of_tags: %OpenApiSpex.Schema{type: :integer}
                    },
                    type: :object
                  },
