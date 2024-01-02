@@ -30,4 +30,8 @@ defmodule AshJsonApi.Resource.Info do
   def include_nil_values?(resource) do
     Extension.get_opt(resource, [:json_api], :include_nil_values?, nil, true)
   end
+
+  def default_fields(resource) do
+    Extension.get_opt(resource, [:json_api], :default_fields, nil, true)
+  end
 end

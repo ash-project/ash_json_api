@@ -403,6 +403,11 @@ defmodule AshJsonApi.Resource do
         type: :any,
         default: nil,
         doc: "Whether or not to include properties for values that are nil in the JSON output"
+      ],
+      default_fields: [
+        type: {:list, :atom},
+        doc:
+          "The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public"
       ]
     ]
   }

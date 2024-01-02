@@ -165,8 +165,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
     end
 
-    @spec resource_object_schema(resource :: Ash.Resource.t()) :: Schema.t()
-    defp resource_object_schema(resource) do
+    @spec resource_object_schema(resource :: Ash.Resource.t(), fields :: nil | list(atom)) ::
+            Schema.t()
+    defp resource_object_schema(resource, fields \\ nil) do
       %Schema{
         description:
           "A \"Resource object\" representing a #{AshJsonApi.Resource.Info.type(resource)}",
@@ -175,7 +176,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         properties: %{
           type: %Schema{type: :string},
           id: %{type: :string},
-          attributes: attributes(resource),
+          attributes: attributes(resource, fields),
           relationships: relationships(resource)
           # "meta" => %{
           #   "$ref" => "#/definitions/meta"
@@ -185,26 +186,67 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    @spec attributes(resource :: Ash.Resource.t()) :: Schema.t()
-    defp attributes(resource) do
+    @spec attributes(resource :: Ash.Resource.t(), fields :: nil | list(atom)) :: Schema.t()
+    defp attributes(resource, fields) do
+      fields =
+        fields || AshJsonApi.Resource.Info.default_fields(resource) ||
+          Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name)
+
       %Schema{
         description: "An attributes object for a #{AshJsonApi.Resource.Info.type(resource)}",
         type: :object,
-        properties: resource_attributes(resource),
-        additionalProperties: false,
-        required: required_attributes(resource)
+        properties: resource_attributes(resource, fields),
+        additionalProperties: false
       }
     end
 
-    @spec resource_attributes(resource :: module) :: %{atom => Schema.t()}
-    defp resource_attributes(resource) do
+    @spec resource_attributes(resource :: module, fields :: nil | list(atom)) :: %{
+            atom => Schema.t()
+          }
+    defp resource_attributes(resource, fields) do
       resource
       |> Ash.Resource.Info.public_attributes()
       |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
       |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
       |> Map.new(fn attr ->
-        {attr.name, resource_attribute_type(attr) |> with_attribute_description(attr)}
+        {attr.name,
+         resource_attribute_type(attr)
+         |> with_attribute_description(attr)
+         |> with_attribute_nullability(attr)
+         |> with_comment_on_included(attr, fields)}
       end)
+    end
+
+    defp with_comment_on_included(schema, attr, fields) do
+      new_description =
+        if attr.name in fields do
+          case schema.description do
+            nil ->
+              "Field included by default."
+
+            description ->
+              if String.ends_with?(description, ["!", "."]) do
+                description <> " Field included by default."
+              else
+                description <> ". Field included by default."
+              end
+          end
+        else
+          schema.description
+        end
+
+      %Schema{schema | description: new_description}
+    end
+
+    defp with_attribute_nullability(schema, attr) do
+      if attr.allow_nil? do
+        %Schema{
+          anyOf: [%{schema | description: nil}, %Schema{type: :null}],
+          description: schema.description
+        }
+      else
+        schema
+      end
     end
 
     @spec resource_attribute_type(Ash.Resource.Attribute.t() | Ash.Resource.Actions.Argument.t()) ::
@@ -276,18 +318,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp with_attribute_description(schema, %{description: description}) do
       Map.merge(schema, %{description: description})
-    end
-
-    @spec required_attributes(resource :: module) :: nil | [:atom]
-    defp required_attributes(resource) do
-      resource
-      |> Ash.Resource.Info.public_attributes()
-      |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
-      |> Enum.map(& &1.name)
-      |> case do
-        [] -> nil
-        attributes -> attributes
-      end
     end
 
     @spec relationships(resource :: Ash.Resource.t()) :: Schema.t()
@@ -665,7 +695,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
         resource
         |> Ash.Resource.Info.public_attributes()
         |> Map.new(fn attr ->
-          {attr.name, attribute_filter_schema(attr.type) |> with_attribute_description(attr)}
+          {attr.name,
+           attribute_filter_schema(attr.type)
+           |> with_attribute_description(attr)}
         end)
 
       props =
@@ -968,9 +1000,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 description:
                   "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
                 type: :array,
-                items: %Reference{
-                  "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
-                },
+                items: item_reference(route, resource),
                 uniqueItems: true
               },
               included: included_resource_schemas(resource)
@@ -989,13 +1019,21 @@ if Code.ensure_loaded?(OpenApiSpex) do
         _ ->
           %Schema{
             properties: %{
-              data: %Reference{
-                "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
-              },
+              data: item_reference(route, resource),
               included: included_resource_schemas(resource)
             }
           }
       end
+    end
+
+    defp item_reference(%{default_fields: nil}, resource) do
+      %Reference{
+        "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
+      }
+    end
+
+    defp item_reference(%{default_fields: default_fields}, resource) do
+      resource_object_schema(resource, default_fields)
     end
 
     @spec relationship_resource_identifiers(relationship :: Relationships.relationship()) ::

@@ -310,18 +310,31 @@ defmodule Test.Acceptance.OpenApiTest do
                    additionalProperties: false,
                    description: "An attributes object for a post",
                    properties: %{
-                     email: %OpenApiSpex.Schema{type: :string},
+                     email: %OpenApiSpex.Schema{
+                       anyOf: [
+                         %OpenApiSpex.Schema{type: :string},
+                         %OpenApiSpex.Schema{type: :null}
+                       ],
+                       description: "Field included by default."
+                     },
                      hidden: %OpenApiSpex.Schema{
-                       description: "description of attribute :hidden",
-                       type: :string
+                       anyOf: [
+                         %OpenApiSpex.Schema{type: :string},
+                         %OpenApiSpex.Schema{type: :null}
+                       ],
+                       description: "description of attribute :hidden. Field included by default."
                      },
                      name: %OpenApiSpex.Schema{
-                       description: "description of attribute :name",
-                       type: :string
+                       type: :string,
+                       description: "description of attribute :name. Field included by default."
                      },
-                     name_twice: %OpenApiSpex.Schema{type: :string}
+                     name_twice: %OpenApiSpex.Schema{
+                       anyOf: [
+                         %OpenApiSpex.Schema{type: :string},
+                         %OpenApiSpex.Schema{type: :null}
+                       ]
+                     }
                    },
-                   required: [:name],
                    type: :object
                  },
                  id: %{type: :string},
