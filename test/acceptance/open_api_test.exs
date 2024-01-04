@@ -203,21 +203,40 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.type == :object
 
       assert schema.properties == %{
-               id: %Schema{type: :object, additionalProperties: true},
+               id: %Schema{
+                 anyOf: [
+                   %Schema{type: :object, additionalProperties: true},
+                   %Schema{type: :string}
+                 ]
+               },
                author: %Schema{type: :object, additionalProperties: true},
-               email: %Schema{type: :object, additionalProperties: true},
+               email: %Schema{
+                 anyOf: [
+                   %Schema{type: :object, additionalProperties: true},
+                   %Schema{type: :string}
+                 ]
+               },
                hidden: %Schema{
-                 type: :object,
-                 description: "description of attribute :hidden",
-                 additionalProperties: true
+                 anyOf: [
+                   %Schema{type: :object, additionalProperties: true},
+                   %Schema{type: :string}
+                 ],
+                 description: "description of attribute :hidden"
                },
                name: %Schema{
-                 type: :object,
-                 description: "description of attribute :name",
-                 additionalProperties: true
+                 anyOf: [
+                   %Schema{type: :object, additionalProperties: true},
+                   %Schema{type: :string}
+                 ],
+                 description: "description of attribute :name"
                },
                tags: %Schema{type: :object, additionalProperties: true},
-               count_of_tags: %Schema{type: :object, additionalProperties: true}
+               count_of_tags: %Schema{
+                 anyOf: [
+                   %Schema{type: :object, additionalProperties: true},
+                   %Schema{type: :string}
+                 ]
+               }
              }
 
       assert schema.required == nil
