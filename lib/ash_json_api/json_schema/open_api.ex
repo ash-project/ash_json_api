@@ -787,8 +787,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec attribute_filter_schema(type :: module) :: Schema.t()
     defp attribute_filter_schema(_type) do
       %Schema{
-        type: :object,
-        additionalProperties: true
+        anyOf: [
+          %Schema{
+            type: :object,
+            additionalProperties: true
+          },
+          %Schema{
+            type: :string
+          }
+        ]
       }
     end
 
