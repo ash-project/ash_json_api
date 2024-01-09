@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.34.2](https://github.com/ash-project/ash_json_api/compare/v0.34.1...v0.34.2) (2024-01-09)
+
+
+
+
+### Bug Fixes:
+
+* set filter schema as string or object
+
+* ensure a type is always determined for aggregate fields
+
+### Improvements:
+
+* add `AshJsonApiError.ToAshError`
+
+* properly represent fields in response
+
 ## [v0.34.1](https://github.com/ash-project/ash_json_api/compare/v0.34.0...v0.34.1) (2023-12-13)
 
 
