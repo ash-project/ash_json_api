@@ -38,43 +38,46 @@ defmodule AshJsonApi.Error do
     [error]
   end
 
-  def to_json_api_errors(resource, %{class: :invalid} = error, type)
-      when type in [:create, :update] do
-    case error do
-      %{fields: fields} = error ->
-        Enum.map(fields, fn field ->
-          %__MODULE__{
-            id: Ash.ErrorKind.id(error),
-            status_code: class_to_status(error.class),
-            code: Ash.ErrorKind.code(error),
-            title: Ash.ErrorKind.code(error),
-            detail: Ash.ErrorKind.message(error),
-            source_pointer: source_pointer(resource, field, type)
-          }
-        end)
+  def to_json_api_errors(resource, %{class: :invalid} = error, type) do
+    if AshJsonApi.ToJsonApiError.impl_for(error) do
+      List.wrap(AshJsonApi.ToJsonApiError.to_json_api_error(error))
+    else
+      case error do
+        %{fields: fields} = error ->
+          Enum.map(fields, fn field ->
+            %__MODULE__{
+              id: Ash.ErrorKind.id(error),
+              status_code: class_to_status(error.class),
+              code: Ash.ErrorKind.code(error),
+              title: Ash.ErrorKind.code(error),
+              detail: Ash.ErrorKind.message(error),
+              source_pointer: source_pointer(resource, field, type)
+            }
+          end)
 
-      %{field: field} = error ->
-        [
-          %__MODULE__{
-            id: Ash.ErrorKind.id(error),
-            status_code: class_to_status(error.class),
-            code: Ash.ErrorKind.code(error),
-            title: Ash.ErrorKind.code(error),
-            detail: Ash.ErrorKind.message(error),
-            source_pointer: source_pointer(resource, field, type)
-          }
-        ]
+        %{field: field} = error ->
+          [
+            %__MODULE__{
+              id: Ash.ErrorKind.id(error),
+              status_code: class_to_status(error.class),
+              code: Ash.ErrorKind.code(error),
+              title: Ash.ErrorKind.code(error),
+              detail: Ash.ErrorKind.message(error),
+              source_pointer: source_pointer(resource, field, type)
+            }
+          ]
 
-      error ->
-        [
-          %__MODULE__{
-            id: Ash.ErrorKind.id(error),
-            status_code: class_to_status(error.class),
-            code: Ash.ErrorKind.code(error),
-            title: Ash.ErrorKind.code(error),
-            detail: Ash.ErrorKind.message(error)
-          }
-        ]
+        error ->
+          [
+            %__MODULE__{
+              id: Ash.ErrorKind.id(error),
+              status_code: class_to_status(error.class),
+              code: Ash.ErrorKind.code(error),
+              title: Ash.ErrorKind.code(error),
+              detail: Ash.ErrorKind.message(error)
+            }
+          ]
+      end
     end
   end
 

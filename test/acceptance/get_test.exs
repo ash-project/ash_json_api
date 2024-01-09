@@ -1,6 +1,30 @@
 defmodule Test.Acceptance.GetTest do
   use ExUnit.Case, async: true
 
+  defmodule CustomError do
+    use Ash.Error.Exception
+
+    def_ash_error([], class: :invalid)
+
+    defimpl AshJsonApi.ToJsonApiError do
+      def to_json_api_error(error) do
+        %AshJsonApi.Error{
+          id: Ash.ErrorKind.id(error),
+          status_code: 409,
+          code: Ash.ErrorKind.code(error),
+          title: Ash.ErrorKind.code(error),
+          detail: Ash.ErrorKind.message(error)
+        }
+      end
+    end
+
+    defimpl Ash.ErrorKind do
+      def id(_), do: Ash.UUID.generate()
+      def code(_), do: "not_available"
+      def message(_error), do: "Not available"
+    end
+  end
+
   defmodule Profile do
     use Ash.Resource,
       data_layer: :embedded
@@ -29,6 +53,7 @@ defmodule Test.Acceptance.GetTest do
 
         get(:read)
         get(:by_name, route: "/by_name/:name")
+        get(:with_error, route: "/with_error/:id")
 
         index(:read)
       end
@@ -36,6 +61,12 @@ defmodule Test.Acceptance.GetTest do
 
     actions do
       defaults([:create, :update, :destroy])
+
+      read :with_error do
+        prepare(fn query, _ ->
+          Ash.Query.add_error(query, CustomError.exception([]))
+        end)
+      end
 
       read :read do
         primary? true
@@ -103,6 +134,20 @@ defmodule Test.Acceptance.GetTest do
         "code" => "NotFound",
         "detail" => "No post record found with `id: #{id}`",
         "title" => "Entity Not Found"
+      })
+    end
+  end
+
+  describe "custom errors" do
+    test "custom errors are rendered according to `ToJsonApiError`" do
+      id = Ecto.UUID.generate()
+
+      Api
+      |> get("/posts/with_error/#{id}", status: 409)
+      |> assert_has_error(%{
+        "code" => "not_available",
+        "detail" => "Not available",
+        "title" => "not_available"
       })
     end
   end
