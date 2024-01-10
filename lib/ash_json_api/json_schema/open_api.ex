@@ -498,6 +498,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec route_operation(Route.t(), api :: module, resource :: module) ::
             {Paths.path(), {verb :: atom, Operation.t()}}
     defp route_operation(route, api, resource) do
+      resource =
+        if route.relationship do
+          Ash.Resource.Info.related(resource, route.relationship)
+        else
+          resource
+        end
+
       tag = AshJsonApi.Api.Info.tag(api)
       group_by = AshJsonApi.Api.Info.group_by(api)
 
