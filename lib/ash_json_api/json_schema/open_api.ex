@@ -519,6 +519,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp operation(route, resource, path_params) do
       action = Ash.Resource.Info.action(resource, route.action)
 
+      if !action do
+        raise """
+        No such action #{inspect(route.action)} for #{inspect(resource)}
+
+        You likely have an incorrectly configured route.
+        """
+      end
+
       %Operation{
         description: action_description(action, resource),
         tags: [to_string(AshJsonApi.Resource.Info.type(resource))],
