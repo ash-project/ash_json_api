@@ -517,10 +517,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec operation(Route.t(), resource :: module, path_params :: [String.t()]) ::
             Operation.t()
     defp operation(route, resource, path_params) do
-      unless path_params == [] or path_params == ["id"] do
-        raise "Haven't figured out more complex route parameters yet."
-      end
-
       action = Ash.Resource.Info.action(resource, route.action)
 
       %Operation{
