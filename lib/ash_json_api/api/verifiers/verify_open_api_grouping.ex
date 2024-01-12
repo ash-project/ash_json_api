@@ -1,7 +1,6 @@
 defmodule AshJsonApi.Api.Verifiers.VerifyOpenApiGrouping do
-  @moduledoc """
-  Ensures that tag is present if group_by is :api
-  """
+  @moduledoc false
+
   use Spark.Dsl.Verifier
 
   def verify(dsl) do

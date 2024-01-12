@@ -61,8 +61,8 @@ end
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`type`](#json_api-type){: #json_api-type .spark-required} | `String.t` |  | The resource identifier type of this resource in JSON:API |
-| [`includes`](#json_api-includes){: #json_api-includes } | ``any`` | `[]` | A keyword list of all paths that are includable from this resource |
-| [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | ``any`` |  | Whether or not to include properties for values that are nil in the JSON output |
+| [`includes`](#json_api-includes){: #json_api-includes } | `any` | `[]` | A keyword list of all paths that are includable from this resource |
+| [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | `any` |  | Whether or not to include properties for values that are nil in the JSON output |
 | [`default_fields`](#json_api-default_fields){: #json_api-default_fields } | `list(atom)` |  | The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public |
 
 
@@ -256,7 +256,7 @@ patch :update
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`relationship_arguments`](#json_api-routes-patch-relationship_arguments){: #json_api-routes-patch-relationship_arguments } | ``any`` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
+| [`relationship_arguments`](#json_api-routes-patch-relationship_arguments){: #json_api-routes-patch-relationship_arguments } | `any` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
 | [`read_action`](#json_api-routes-patch-read_action){: #json_api-routes-patch-read_action } | `atom` |  | The read action to use to look the record up before updating |
 | [`route`](#json_api-routes-patch-route){: #json_api-routes-patch-route } | `String.t` | `"/:id"` | The path of the route |
 | [`default_fields`](#json_api-routes-patch-default_fields){: #json_api-routes-patch-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
@@ -523,7 +523,7 @@ end
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`keys`](#json_api-primary_key-keys){: #json_api-primary_key-keys .spark-required} | ``any`` |  | the list of attributes to encode JSON API primary key |
+| [`keys`](#json_api-primary_key-keys){: #json_api-primary_key-keys .spark-required} | `any` |  | the list of attributes to encode JSON API primary key |
 | [`delimiter`](#json_api-primary_key-delimiter){: #json_api-primary_key-delimiter } | `String.t` | `"-"` | The delimiter to concatenate the primary key values. Default to be '-' |
 
 
