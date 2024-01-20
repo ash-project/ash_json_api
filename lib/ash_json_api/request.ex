@@ -701,10 +701,6 @@ defmodule AshJsonApi.Request do
   end
 
   defp url(conn) do
-    if endpoint = conn.private[:phoenix_endpoint] do
-      endpoint.url()
-    else
-      Conn.request_url(conn)
-    end
+    Conn.request_url(conn)
   end
 end

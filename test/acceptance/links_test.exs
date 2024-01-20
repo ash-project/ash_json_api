@@ -102,11 +102,11 @@ defmodule Test.Acceptance.Links do
       after_cursor = List.last(keyset.results).__metadata__.keyset
 
       assert_equal_links(conn, %{
-        "first" => "#{TestPhoenixEndpoint.url()}?page[limit]=#{page_size}",
+        "first" => "http://www.example.com/posts?page[limit]=#{page_size}",
         "next" =>
-          "#{TestPhoenixEndpoint.url()}?page[after]=#{after_cursor}&page[limit]=#{page_size}",
+          "http://www.example.com/posts?page[after]=#{after_cursor}&page[limit]=#{page_size}",
         "prev" => nil,
-        "self" => "#{TestPhoenixEndpoint.url()}?page[limit]=#{page_size}"
+        "self" => "http://www.example.com/posts?page[limit]=#{page_size}"
       })
     end
   end

@@ -244,7 +244,8 @@ defmodule AshJsonApi.Test do
 
       for {key, value} <- expected_links do
         assert AshJsonApi.Test.uri_with_query(value) ==
-                 AshJsonApi.Test.uri_with_query(resp_links[key])
+                 AshJsonApi.Test.uri_with_query(resp_links[key]),
+               "expected #{key} link to be #{resp_links[key]}, got: #{value}"
       end
     end
   end
