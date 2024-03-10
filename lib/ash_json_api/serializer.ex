@@ -179,7 +179,14 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp many_links(request, %{results: _} = paginator) do
-    uri = URI.parse(request.url)
+    path =
+      if request.json_api_prefix do
+        request.json_api_prefix <> request.route.route
+      else
+        request.route.route
+      end
+
+    uri = %{URI.parse(request.url) | path: path}
 
     query =
       if uri.query do
