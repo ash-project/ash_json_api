@@ -32,7 +32,8 @@ defmodule AshJsonApi.Includes.Parser do
   defp to_nested_map(list) when is_list(list) do
     list
     |> Enum.map(fn
-      {key, value} -> {to_string(key), to_nested_map(value)}
+      {key, value} when is_list(value) -> {to_string(key), to_nested_map(value)}
+      {key, value} when is_atom(value) -> {to_string(key), to_nested_map([value])}
       value -> {to_string(value), to_nested_map(value)}
     end)
     |> Enum.into(%{})
