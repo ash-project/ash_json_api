@@ -4,6 +4,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
   defmodule Author do
     use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.Blogs,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -26,21 +27,26 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.OpenApiTest.Post, destination_attribute: :author_id)
+      has_many(:posts, Test.Acceptance.OpenApiTest.Post,
+        destination_attribute: :author_id,
+        public?: true
+      )
     end
   end
 
   defmodule Post do
     use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.Blogs,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -63,6 +69,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -76,11 +83,18 @@ defmodule Test.Acceptance.OpenApiTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, allow_nil?: false, description: "description of attribute :name")
-      attribute(:hidden, :string, description: "description of attribute :hidden")
+
+      attribute(:name, :string,
+        allow_nil?: false,
+        description: "description of attribute :name",
+        public?: true
+      )
+
+      attribute(:hidden, :string, description: "description of attribute :hidden", public?: true)
 
       attribute(:email, :string,
         allow_nil?: true,
+        public?: true,
         constraints: [
           match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
         ]
@@ -88,21 +102,26 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     calculations do
-      calculate(:name_twice, :string, concat([:name, :name], "-"))
+      calculate(:name_twice, :string, concat([:name, :name], "-"), public?: true)
     end
 
     aggregates do
-      count(:count_of_tags, :tags)
+      count(:count_of_tags, :tags, public?: true)
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.OpenApiTest.Author, allow_nil?: false)
-      has_many(:tags, Test.Acceptance.OpenApiTest.Tag, destination_attribute: :post_id)
+      belongs_to(:author, Test.Acceptance.OpenApiTest.Author, allow_nil?: false, public?: true)
+
+      has_many(:tags, Test.Acceptance.OpenApiTest.Tag,
+        destination_attribute: :post_id,
+        public?: true
+      )
     end
   end
 
   defmodule Tag do
     use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.Blogs,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -113,33 +132,24 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :create, :update, :destroy])
     end
 
     attributes do
-      uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, allow_nil?: false)
+      uuid_primary_key(:id, writable?: true, public?: true)
+      attribute(:name, :string, allow_nil?: false, public?: true, public?: true)
     end
 
     relationships do
-      belongs_to(:post, Test.Acceptance.OpenApiTest.Post, allow_nil?: false)
-    end
-  end
-
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-      entry(Author)
-      entry(Tag)
+      belongs_to(:post, Test.Acceptance.OpenApiTest.Post, allow_nil?: false, public?: true)
     end
   end
 
   defmodule Blogs do
-    use Ash.Api,
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -148,7 +158,9 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
+      resource(Author)
+      resource(Tag)
     end
   end
 
@@ -159,7 +171,7 @@ defmodule Test.Acceptance.OpenApiTest do
   setup do
     api_spec =
       AshJsonApi.Controllers.OpenApi.spec(%{private: %{}},
-        apis: [Blogs],
+        domains: [Blogs],
         modify: {__MODULE__, :modify, []}
       )
 
@@ -231,6 +243,12 @@ defmodule Test.Acceptance.OpenApiTest do
                  description: "description of attribute :name"
                },
                tags: %Schema{type: :object, additionalProperties: true},
+               author_id: %OpenApiSpex.Schema{
+                 anyOf: [
+                   %OpenApiSpex.Schema{type: :object, additionalProperties: true},
+                   %OpenApiSpex.Schema{type: :string}
+                 ]
+               },
                count_of_tags: %Schema{
                  anyOf: [
                    %Schema{type: :object, additionalProperties: true},
@@ -261,7 +279,9 @@ defmodule Test.Acceptance.OpenApiTest do
                "hidden",
                "-hidden",
                "email",
-               "-email"
+               "-email",
+               "author_id",
+               "-author_id"
              ]
     end
 
@@ -357,6 +377,11 @@ defmodule Test.Acceptance.OpenApiTest do
                          %OpenApiSpex.Schema{type: :string},
                          %OpenApiSpex.Schema{type: :null}
                        ]
+                     },
+                     author_id: %OpenApiSpex.Schema{
+                       type: :string,
+                       format: "uuid",
+                       description: "Field included by default."
                      },
                      count_of_tags: %OpenApiSpex.Schema{type: :integer}
                    },

@@ -6,6 +6,7 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
 
   defmodule Author do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.Filtering.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshJsonApi.Resource]
 
@@ -26,25 +27,27 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
-      has_many(:posts, AshJsonApiTest.FetchingData.Filtering.Post)
+      has_many(:posts, AshJsonApiTest.FetchingData.Filtering.Post, public?: true)
     end
 
     aggregates do
-      count(:post_count, :posts)
+      count(:post_count, :posts, public?: true)
     end
   end
 
   defmodule Post do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.Filtering.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -65,6 +68,7 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -74,29 +78,21 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
       belongs_to(:author, Author) do
+        public?(true)
         attribute_writable?(true)
       end
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Author)
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -104,12 +100,13 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
     end
 
     resources do
-      registry(Registry)
+      resource(Author)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -124,15 +121,15 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       post2 =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "bar"})
-        |> Api.create!()
+        |> Ash.create!()
 
       _conn =
-        Api
+        Domain
         |> get("/posts?filter[name]=foo", status: 200)
         |> assert_valid_resource_objects("post", [post.id])
         |> assert_invalid_resource_objects("post", [post2.id])
@@ -142,21 +139,21 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       post2 =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "bar"})
-        |> Api.create!()
+        |> Ash.create!()
 
       _conn =
-        Api
+        Domain
         |> get("/posts?filter[name][equals]=foo", status: 200)
         |> assert_valid_resource_objects("post", [post.id])
         |> assert_invalid_resource_objects("post", [post2.id])
 
       _conn =
-        Api
+        Domain
         |> get("/posts?filter[name][not_equals]=foo", status: 200)
         |> assert_valid_resource_objects("post", [post2.id])
         |> assert_invalid_resource_objects("post", [post.id])
@@ -166,21 +163,21 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       post2 =
         Post
         |> Ash.Changeset.for_create(:create, %{})
-        |> Api.create!()
+        |> Ash.create!()
 
       _conn =
-        Api
+        Domain
         |> get("/posts?filter[name][is_nil]=false", status: 200)
         |> assert_valid_resource_objects("post", [post.id])
         |> assert_invalid_resource_objects("post", [post2.id])
 
       _conn =
-        Api
+        Domain
         |> get("/posts?filter[name][is_nil]=true", status: 200)
         |> assert_valid_resource_objects("post", [post2.id])
         |> assert_invalid_resource_objects("post", [post.id])
@@ -190,43 +187,43 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
       author =
         Author
         |> Ash.Changeset.for_create(:create, %{name: "Tyler Durden"})
-        |> Api.create!()
+        |> Ash.create!()
 
       author2 =
         Author
         |> Ash.Changeset.for_create(:create, %{name: "John Doe"})
-        |> Api.create!()
+        |> Ash.create!()
 
       _post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo", author_id: author.id})
-        |> Api.create!()
+        |> Ash.create!()
 
       _post2 =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "bar", author_id: author.id})
-        |> Api.create!()
+        |> Ash.create!()
 
       _conn =
-        Api
+        Domain
         |> get("/authors?filter[post_count][gt]=1", status: 200)
         |> assert_valid_resource_objects("author", [author.id])
         |> assert_invalid_resource_objects("author", [author2.id])
 
       _conn =
-        Api
+        Domain
         |> get("/authors?filter[post_count][gte]=2", status: 200)
         |> assert_valid_resource_objects("author", [author.id])
         |> assert_invalid_resource_objects("author", [author2.id])
 
       _conn =
-        Api
+        Domain
         |> get("/authors?filter[post_count][lt]=1", status: 200)
         |> assert_valid_resource_objects("author", [author2.id])
         |> assert_invalid_resource_objects("author", [author.id])
 
       _conn =
-        Api
+        Domain
         |> get("/authors?filter[post_count][lte]=0", status: 200)
         |> assert_valid_resource_objects("author", [author2.id])
         |> assert_invalid_resource_objects("author", [author.id])

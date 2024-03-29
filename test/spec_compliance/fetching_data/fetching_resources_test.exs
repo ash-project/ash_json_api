@@ -7,6 +7,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
   defmodule Author do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.FetchingResources.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshJsonApi.Resource]
 
@@ -25,6 +26,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
@@ -36,6 +38,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
 
   defmodule Post do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.FetchingResources.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -56,32 +59,24 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
-      belongs_to(:author, Author)
+      belongs_to(:author, Author, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Author)
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -89,12 +84,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
 
     resources do
-      registry(Registry)
+      resource(Author)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -111,13 +107,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
-      get(Api, "/posts/#{post.id}", status: 200)
+      get(Domain, "/posts/#{post.id}", status: 200)
     end
 
     test "resource collection" do
-      get(Api, "/posts", status: 200)
+      get(Domain, "/posts", status: 200)
     end
   end
 
@@ -132,21 +128,21 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       post2 =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "bar"})
-        |> Api.create!()
+        |> Ash.create!()
 
       _conn =
-        Api
+        Domain
         |> get("/posts", status: 200)
         |> assert_valid_resource_objects("post", [post.id, post2.id])
     end
 
     test "data does NOT exist" do
-      Api
+      Domain
       |> get("/posts", status: 200)
       |> assert_data_equals([])
     end
@@ -163,10 +159,10 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       _conn =
-        Api
+        Domain
         |> get("/posts/#{post.id}", status: 200)
         |> assert_valid_resource_object("post", post.id)
         |> assert_attribute_equals("name", post.name)
@@ -177,9 +173,9 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
-      Api
+      Domain
       |> get("/posts/#{post.id}/author", status: 200)
       |> assert_data_equals(nil)
     end
@@ -192,7 +188,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   # --------------------------
   describe "404 Not Found" do
     test "individual resource without data" do
-      get(Api, "/posts/#{Ecto.UUID.generate()}", status: 404)
+      get(Domain, "/posts/#{Ecto.UUID.generate()}", status: 404)
     end
   end
 
@@ -236,14 +232,14 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
       author =
         Author
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       %{author: author}
     end
 
     test "self link is set", %{author: author} do
       conn =
-        Api
+        Domain
         |> get("/authors/#{author.id}", status: 200)
 
       %{"data" => %{"links" => %{"self" => link_to_self}}} = conn.resp_body

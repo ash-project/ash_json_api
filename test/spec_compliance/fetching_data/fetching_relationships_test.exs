@@ -7,6 +7,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
   defmodule Author do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.FetchingRelationships.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshJsonApi.Resource]
 
@@ -26,15 +27,17 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     relationships do
       has_many(:posts, AshJsonApiTest.FetchingData.FetchingRelationships.Post,
+        public?: true,
         destination_attribute: :author_id
       )
     end
@@ -42,6 +45,7 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
   defmodule Post do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.FetchingRelationships.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshJsonApi.Resource]
 
@@ -61,31 +65,23 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     relationships do
-      belongs_to(:author, Author)
+      belongs_to(:author, Author, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Author)
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -93,12 +89,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
     end
 
     resources do
-      registry(Registry)
+      resource(Author)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -123,43 +120,43 @@ defmodule AshJsonApiTest.FetchingData.FetchingRelationships do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
-      get(Api, "/posts/#{post.id}/relationships/author", status: 200)
+      get(Domain, "/posts/#{post.id}/relationships/author", status: 200)
     end
 
     test "empty to-many relationship" do
       # Create a post without comments
-      {:ok, post} = Api.create(Post, attributes: %{name: "foo"})
+      {:ok, post} = Ash.create(Post, attributes: %{name: "foo"})
 
-      get(Api, "/posts/#{post.id}/relationships/comments", status: 200)
+      get(Domain, "/posts/#{post.id}/relationships/comments", status: 200)
     end
 
     test "non-empty to-one relationship" do
       # Create a post with an author
-      {:ok, author} = Api.create(Author, attributes: %{name: "foo"})
+      {:ok, author} = Ash.create(Author, attributes: %{name: "foo"})
 
       {:ok, post} =
-        Api.create(Post,
+        Ash.create(Post,
           attributes: %{name: "foo"},
           relationships: %{author: author}
         )
 
-      get(Api, "/posts/#{post.id}/relationships/author", status: 200)
+      get(Domain, "/posts/#{post.id}/relationships/author", status: 200)
     end
 
     test "non-empty to-many relationship" do
       # Create a post with an author
-      {:ok, post_1} = Api.create(Post, attributes: %{name: "First Post"})
-      {:ok, post_2} = Api.create(Post, attributes: %{name: "Second Post"})
+      {:ok, post_1} = Ash.create(Post, attributes: %{name: "First Post"})
+      {:ok, post_2} = Ash.create(Post, attributes: %{name: "Second Post"})
 
       {:ok, author} =
-        Api.create(Author,
+        Ash.create(Author,
           attributes: %{name: "foo"},
           relationships: %{posts: [post_1, post_2]}
         )
 
-      get(Api, "/authors/#{author.id}/relationships/posts", status: 200)
+      get(Domain, "/authors/#{author.id}/relationships/posts", status: 200)
     end
   end
 

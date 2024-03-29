@@ -55,7 +55,7 @@ defmodule AshJsonApi.MixProject do
         "documentation/topics/relationships.md",
         "documentation/topics/open-api.md",
         "documentation/dsls/DSL:-AshJsonApi.Resource.md",
-        "documentation/dsls/DSL:-AshJsonApi.Api.md"
+        "documentation/dsls/DSL:-AshJsonApi.Domain.md"
       ],
       groups_for_extras: [
         Tutorials: ~r'documentation/tutorials',
@@ -81,16 +81,16 @@ defmodule AshJsonApi.MixProject do
       groups_for_modules: [
         AshJsonApi: [
           AshJsonApi,
-          AshJsonApi.Api.Router,
+          AshJsonApi.Router,
           AshJsonApi.Resource,
-          AshJsonApi.Api
+          AshJsonApi.Domain
         ],
         Utilities: [
           AshJsonApi.OpenApi
         ],
         Introspection: [
           AshJsonApi.Resource.Info,
-          AshJsonApi.Api.Info,
+          AshJsonApi.Domain.Info,
           AshJsonApi.Resource.Route
         ],
         Errors: [
@@ -121,18 +121,18 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 2.3 and >= 2.9.24")},
+      {:ash, ash_version("~> 3.0.0-rc.0")},
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
-      {:json_xema, "~> 0.4.0"},
+      {:json_xema, "~> 0.4"},
       {:open_api_spex, "~> 3.16", optional: true},
       {:git_ops, "~> 2.4", only: [:dev, :test]},
       {:ex_doc, github: "elixir-lang/ex_doc", only: [:dev, :test], runtime: false},
-      {:ex_check, "~> 0.12.0", only: [:dev, :test]},
+      {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.13.0", only: [:dev, :test]}
+      {:excoveralls, "~> 0.13", only: [:dev, :test]}
     ]
   end
 
@@ -155,10 +155,11 @@ defmodule AshJsonApi.MixProject do
         "spark.replace_doc_links",
         "spark.cheat_sheets_in_search"
       ],
-      "spark.formatter": "spark.formatter --extensions AshJsonApi.Resource,AshJsonApi.Api",
+      "spark.formatter": "spark.formatter --extensions AshJsonApi.Resource,AshJsonApi.Domain",
       "spark.cheat_sheets_in_search":
-        "spark.cheat_sheets_in_search --extensions AshJsonApi.Resource,AshJsonApi.Api",
-      "spark.cheat_sheets": "spark.cheat_sheets --extensions AshJsonApi.Resource,AshJsonApi.Api"
+        "spark.cheat_sheets_in_search --extensions AshJsonApi.Resource,AshJsonApi.Domain",
+      "spark.cheat_sheets":
+        "spark.cheat_sheets --extensions AshJsonApi.Resource,AshJsonApi.Domain"
     ]
   end
 end

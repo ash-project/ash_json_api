@@ -6,6 +6,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
   defmodule Post do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.Pagination.Offset.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -26,6 +27,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :update, :destroy])
 
       read :read do
@@ -41,24 +43,16 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
 
-      timestamps(private?: false)
+      timestamps(public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -66,12 +60,12 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -89,7 +83,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts]
@@ -101,7 +95,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
       # |-------|--------------------------
 
-      conn = get(Api, "/posts", status: 200)
+      conn = get(Domain, "/posts", status: 200)
 
       assert %{"data" => data} = conn.resp_body
 
@@ -116,7 +110,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       page_size = 8
 
-      conn = get(Api, "/posts?page[limit]=#{page_size}", status: 200)
+      conn = get(Domain, "/posts?page[limit]=#{page_size}", status: 200)
 
       assert %{"data" => data} = conn.resp_body
 
@@ -141,7 +135,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts, page_size: 5]
@@ -156,9 +150,9 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       page_size = 5
 
       {:ok, %Ash.Page.Offset{} = offset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
 
-      conn = get(Api, "/posts?sort=-inserted_at", status: 200)
+      conn = get(Domain, "/posts?sort=-inserted_at", status: 200)
 
       next_offset = offset.limit
 
@@ -190,7 +184,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts, page_size: 5]
@@ -205,9 +199,9 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       page_size = 5
 
       {:ok, %Ash.Page.Offset{} = offset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
 
-      conn = get(Api, "/posts?sort=-inserted_at&page[size]=#{page_size}", status: 200)
+      conn = get(Domain, "/posts?sort=-inserted_at&page[size]=#{page_size}", status: 200)
 
       next_offset = offset.limit
 
@@ -228,9 +222,9 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       page_size = 5
 
       {:ok, %Ash.Page.Offset{} = offset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size, offset: 0])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size, offset: 0])
 
-      conn = get(Api, "/posts?sort=-inserted_at&page[offset]=0", status: 200)
+      conn = get(Domain, "/posts?sort=-inserted_at&page[offset]=0", status: 200)
 
       next_offset = offset.limit
 
@@ -252,11 +246,11 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       initial_offset = page_size * 2
 
       {:ok, %Ash.Page.Offset{} = offset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [limit: page_size, offset: initial_offset]
         )
 
-      conn = get(Api, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}", status: 200)
+      conn = get(Domain, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}", status: 200)
 
       next_offset = offset.offset + offset.limit
       prev_offset = offset.offset - offset.limit
@@ -281,12 +275,12 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       initial_offset = page_size * 2
 
       {:ok, %Ash.Page.Offset{} = offset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [limit: page_size, offset: initial_offset, count: true]
         )
 
       conn =
-        get(Api, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}&page[count]=true",
+        get(Domain, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}&page[count]=true",
           status: 200
         )
 
@@ -314,12 +308,12 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       initial_offset = page_size * 2
 
       {:ok, %Ash.Page.Offset{} = offset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [limit: page_size, offset: initial_offset]
         )
 
       conn =
-        get(Api, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}", status: 200)
+        get(Domain, "/posts?sort=-inserted_at&page[offset]=#{initial_offset}", status: 200)
 
       next_offset = offset.offset + offset.limit
       prev_offset = offset.offset - offset.limit
@@ -343,12 +337,12 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
       page_size = 5
 
       {:ok, %Ash.Page.Offset{} = offset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [limit: page_size, offset: page_size, count: true]
         )
 
       conn =
-        get(Api, "/posts?sort=-inserted_at&page[offset]=#{page_size}&page[count]=true",
+        get(Domain, "/posts?sort=-inserted_at&page[offset]=#{page_size}&page[count]=true",
           status: 200
         )
 
@@ -404,7 +398,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts, page_size: 5]
@@ -417,7 +411,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=true",
           status: 200
         )
@@ -432,7 +426,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Offset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?sort=-inserted_at&page[size]=#{page_size}&page[count]=false",
           status: 200
         )

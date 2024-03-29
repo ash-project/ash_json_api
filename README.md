@@ -61,7 +61,7 @@ defmodule Post do
       base "/posts"
       # Add a `GET /posts/:id` route, that calls into the :read action called :read
       get :read
-      # Add a `GET /posts` route, that calls into the :read action called :read 
+      # Add a `GET /posts` route, that calls into the :read action called :read
       index :read
     end
 
@@ -73,8 +73,8 @@ defmodule Post do
 Then, update your API with the API extension and configuration:
 
 ```elixir
-  defmodule MyApp.Api do
-    use Ash.Api, extensions: [AshJsonApi.Api]
+  defmodule MyApp.Domain do
+    use Ash.Domain, extensions: [AshJsonApi.Domain]
 
     json_api do
       ...
@@ -85,4 +85,4 @@ Then, update your API with the API extension and configuration:
 
 See the hex documentation for more.
 
-See `AshJsonApi.Api` and `AshJsonApi.Resource` for the DSL documentation.
+See `AshJsonApi.Domain` and `AshJsonApi.Resource` for the DSL documentation.

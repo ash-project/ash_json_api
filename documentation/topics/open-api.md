@@ -2,19 +2,19 @@
 
 ## Use with Phoenix
 
-To set up the open api endpoints for your application, first include the `:open_api_spex` dependency:
+To set up the Open API endpoints for your application, first include the `:open_api_spex` dependency:
 
 ```elixir
 {:open_api_spex, "~> 3.16"},
 ```
 
-Then in the module where you call `use AshJsonApi.Api.Router` add the following option:
+Then in the module where you call `use AshJsonApi.Router` add the following option:
 
 ```elixir
-use AshJsonApi.Api.Router, apis: [...], open_api: "/open_api"
+use AshJsonApi.Router, domains: [...], open_api: "/open_api"
 ```
 
-Finally, you can use utilities provided by `open_api_spex` to show UIs for your api. Be sure to put your `forward` call last, if you are putting your api at a sub-path.
+Finally, you can use utilities provided by `open_api_spex` to show UIs for your API. Be sure to put your `forward` call last, if you are putting your API at a sub-path.
 
 ```elixir
 forward "/api/swaggerui",
@@ -34,20 +34,20 @@ Now you can go to `/api/swaggerui` and `/api/redoc`!
 
 ## Use with Plug
 
-To set up the open api endpoints for your application, first include the `:open_api_spex` and `:redoc_ui_plug` dependency:
+To set up the open API endpoints for your application, first include the `:open_api_spex` and `:redoc_ui_plug` dependency:
 
 ```elixir
 {:open_api_spex, "~> 3.16"},
 {:redoc_ui_plug, "~> 0.2.1"},
 ```
 
-Then in the module where you call `use AshJsonApi.Api.Router` add the following option:
+Then in the module where you call `use AshJsonApi.Router` add the following option:
 
 ```elixir
-use AshJsonApi.Api.Router, apis: [...], open_api: "/open_api"
+use AshJsonApi.Router, domains: [...], open_api: "/open_api"
 ```
 
-Finally, you can use utilities provided by `open_api_spex` to show UIs for your api. Be sure to put your `forward` call last, if you are putting your api at a sub-path.
+Finally, you can use utilities provided by `open_api_spex` to show UIs for your API. Be sure to put your `forward` call last, if you are putting your API at a sub-path.
 
 ```elixir
 forward "/api/swaggerui",
@@ -74,8 +74,8 @@ Now you can go to `/api/swaggerui` and `/api/redoc`!
 To override any value in the OpenApi documentation you can use the `:modify_open_api` options key:
 
 ```elixir
-  use AshJsonApi.Api.Router,
-    apis: [...],
+  use AshJsonApi.Router,
+    domains: [...],
     open_api: "/open_api",
     modify_open_api: {__MODULE__, :modify_open_api, []}
 
@@ -86,6 +86,3 @@ To override any value in the OpenApi documentation you can use the `:modify_open
     }
   end
 ```
-
-
-

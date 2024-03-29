@@ -8,7 +8,7 @@ The resulting JSON APIs follow the specifications from https://jsonapi.org/.
 To add a JSON API, we need to do the following things:
 
 1. Add the `:ash_json_api` package to your dependencies.
-2. Add the JSON API extension to your `Ash.Resource` and `Ash.Api` modules.
+2. Add the JSON API extension to your `Ash.Resource` and `Ash.Domain` modules.
 3. Tell Ash which Resource actions expose over the API.
 4. Add a custom media type as specified by https://jsonapi.org/.
 5. Create a router module
@@ -27,13 +27,13 @@ In your mix.exs, add the Ash JSON API dependency:
   end
 ```
 
-## Configure your Resources and API and expose actions
+## Configure your Resources and Domain and expose actions
 
-Both your Resource and API need to use the extension for the JSON API.
+Both your Resource and domain need to use the extension for the JSON API.
 
 ```elixir
 defmodule Helpdesk.Support do
-  use Ash.Api, extensions: [AshJsonApi.Api]
+  use Ash.Domain, extensions: [AshJsonApi.Domain]
   ...
 ```
 
@@ -80,27 +80,30 @@ config :mime, :extensions, %{
 This configuration is required to support working with the JSON:API custom mime type.
 
 After adding the configuration above, compiling the project might throw an error:
+
 ```
 ERROR! the application :mime has a different value set for key :types during runtime compared to compile time.
 ```
+
 This can happen if `:mime` was already compiled before the configuration was changed and can be
 fixed by running
+
 ```
 mix deps.compile mime --force
 ```
 
 ## Create a router
 
-Create a separate Router Module to work with your Apis. It will generate the routes for
+Create a separate Router Module to work with your Domains. It will generate the routes for
 your Resources and provide the functions you would usually have in a Controller.
 
 We will later forward requests from your Applications primary (Phoenix) Router to you Ash JSON API Router.
 
 ```elixir
 defmodule HelpdeskWeb.Support.Router do
-  use AshJsonApi.Api.Router,
+  use AshJsonApi.Router,
     # The api modules you want to serve
-    apis: [Helpdesk.Support],
+    domains: [Helpdesk.Support],
     # optionally a json_schema route
     json_schema: "/json_schema",
     # optionally an open_api route
@@ -109,9 +112,9 @@ defmodule HelpdeskWeb.Support.Router do
 end
 ```
 
-## Add the routes from your API module(s)
+## Add the routes from your domain module(s)
 
-To make your Resources accessible to the outside world, forward requests from your Phoenix router to the router you created for your Api.
+To make your Resources accessible to the outside world, forward requests from your Phoenix router to the router you created for your domains.
 
 For example:
 
@@ -140,28 +143,28 @@ Make sure that all requests you make to the API use the `application/vnd.api+jso
 Examples:
 
 1. Create a ticket
-    ```bash
-    curl -X POST 'localhost:4000/api/json/helpdesk/tickets' \
-    --header 'Accept: application/vnd.api+json' \
-    --header 'Content-Type: application/vnd.api+json' \
-    --data-raw '{
-      "data": {
-        "type": "ticket",
-        "attributes": {
-          "subject": "This ticket was created through the JSON API"
-        }
-      }
-    }'
-    ```
+   ```bash
+   curl -X POST 'localhost:4000/api/json/helpdesk/tickets' \
+   --header 'Accept: application/vnd.api+json' \
+   --header 'Content-Type: application/vnd.api+json' \
+   --data-raw '{
+     "data": {
+       "type": "ticket",
+       "attributes": {
+         "subject": "This ticket was created through the JSON API"
+       }
+     }
+   }'
+   ```
 1. Get all tickets
-    ```bash
-    curl 'localhost:4000/api/json/helpdesk/tickets'
-    ```
+   ```bash
+   curl 'localhost:4000/api/json/helpdesk/tickets'
+   ```
 1. Get a specific ticket
-    ```bash
-    # Add the uuid of a Ticket you created earlier
-    curl 'localhost:4000/api/json/helpdesk/tickets/<uuid>'
-    ```
+   ```bash
+   # Add the uuid of a Ticket you created earlier
+   curl 'localhost:4000/api/json/helpdesk/tickets/<uuid>'
+   ```
 
 ## Open API
 

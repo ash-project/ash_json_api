@@ -10,6 +10,7 @@ defmodule Test.Acceptance.IncludeNilValuesTest do
 
   defmodule Include do
     use Ash.Resource,
+      domain: Test.Acceptance.IncludeNilValuesTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -30,18 +31,20 @@ defmodule Test.Acceptance.IncludeNilValuesTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:foo, :string)
-      attribute(:bar, :string)
+      attribute(:foo, :string, public?: true)
+      attribute(:bar, :string, public?: true)
     end
   end
 
   defmodule Exclude do
     use Ash.Resource,
+      domain: Test.Acceptance.IncludeNilValuesTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -64,29 +67,21 @@ defmodule Test.Acceptance.IncludeNilValuesTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:foo, :string)
-      attribute(:bar, :string)
+      attribute(:foo, :string, public?: true)
+      attribute(:bar, :string, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Include)
-      entry(Exclude)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -95,12 +90,13 @@ defmodule Test.Acceptance.IncludeNilValuesTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Include)
+      resource(Exclude)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -110,13 +106,13 @@ defmodule Test.Acceptance.IncludeNilValuesTest do
       include =
         Include
         |> Ash.Changeset.for_create(:create, %{foo: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       %{include: include}
     end
 
     test "returns a list of resources including nil values", %{include: include} do
-      Api
+      Domain
       |> get("/includes", status: 200)
       |> assert_data_equals([
         %{
@@ -139,13 +135,13 @@ defmodule Test.Acceptance.IncludeNilValuesTest do
       exclude =
         Exclude
         |> Ash.Changeset.for_create(:create, %{foo: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       %{exclude: exclude}
     end
 
     test "returns a list of resources excluding nil values", %{exclude: exclude} do
-      Api
+      Domain
       |> get("/excludes", status: 200)
       |> assert_data_equals([
         %{

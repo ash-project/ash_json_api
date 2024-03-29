@@ -699,7 +699,7 @@ defmodule AshJsonApi.Serializer do
         true ->
           value =
             if Ash.Type.embedded_type?(type) do
-              req = %{fields: %{}, route: %{}, api: request.api}
+              req = %{fields: %{}, route: %{}, domain: request.domain}
               serialize_attributes(req, Map.get(record, field.name))
             else
               Map.get(record, field.name)
@@ -719,7 +719,7 @@ defmodule AshJsonApi.Serializer do
     # setting of the resource, or if it isn't set the include_nil_values? setting of
     # the API.
     case AshJsonApi.Resource.Info.include_nil_values?(resource) do
-      nil -> AshJsonApi.Api.Info.include_nil_values?(request.api)
+      nil -> AshJsonApi.Domain.Info.include_nil_values?(request.domain)
       val -> val
     end
   end

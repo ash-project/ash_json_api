@@ -6,10 +6,10 @@ defmodule AshJsonApi.Controllers.Schema do
 
   # sobelow_skip ["XSS.SendResp"]
   def call(conn, opts) do
-    apis = List.wrap(opts[:api] || opts[:apis])
+    domains = List.wrap(opts[:domain] || opts[:domains])
 
     schema =
-      apis
+      domains
       |> AshJsonApi.JsonSchema.generate()
       |> Jason.encode!()
 

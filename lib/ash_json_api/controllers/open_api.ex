@@ -34,7 +34,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @doc false
     def spec(conn, opts) do
-      apis = List.wrap(opts[:api] || opts[:apis])
+      domains = List.wrap(opts[:domain] || opts[:domains])
 
       servers =
         if conn.private[:phoenix_endpoint] do
@@ -51,11 +51,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           version: "1.1"
         },
         servers: servers,
-        paths: AshJsonApi.OpenApi.paths(apis),
-        tags: AshJsonApi.OpenApi.tags(apis),
+        paths: AshJsonApi.OpenApi.paths(domains),
+        tags: AshJsonApi.OpenApi.tags(domains),
         components: %{
           responses: AshJsonApi.OpenApi.responses(),
-          schemas: AshJsonApi.OpenApi.schemas(apis),
+          schemas: AshJsonApi.OpenApi.schemas(domains),
           securitySchemes: %{
             "api_key" => %SecurityScheme{
               type: "apiKey",

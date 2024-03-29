@@ -9,13 +9,15 @@ defmodule AshJsonApi.Test do
   @schema_file "lib/ash_json_api/test/response_schema"
   @external_resource @schema_file
 
-  def get(api, path, opts \\ []) do
+  def get(domain, path, opts \\ []) do
     result =
       :get
       |> conn(path)
       |> maybe_set_endpoint(opts)
       |> set_accept_request_header(opts)
-      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
+      |> AshJsonApi.Domain.Info.router(domain).call(
+        AshJsonApi.Domain.Info.router(domain).init([])
+      )
 
     assert result.state == :sent
 
@@ -36,13 +38,15 @@ defmodule AshJsonApi.Test do
     end
   end
 
-  def post(api, path, body, opts \\ []) do
+  def post(domain, path, body, opts \\ []) do
     result =
       :post
       |> conn(path, Jason.encode!(body))
       |> set_content_type_request_header(opts)
       |> set_accept_request_header(opts)
-      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
+      |> AshJsonApi.Domain.Info.router(domain).call(
+        AshJsonApi.Domain.Info.router(domain).init([])
+      )
 
     assert result.state == :sent
 
@@ -66,13 +70,15 @@ defmodule AshJsonApi.Test do
     end
   end
 
-  def patch(api, path, body, opts \\ []) do
+  def patch(domain, path, body, opts \\ []) do
     result =
       :patch
       |> conn(path, Jason.encode!(body))
       |> set_content_type_request_header(opts)
       |> set_accept_request_header(opts)
-      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
+      |> AshJsonApi.Domain.Info.router(domain).call(
+        AshJsonApi.Domain.Info.router(domain).init([])
+      )
 
     assert result.state == :sent
 
@@ -96,12 +102,14 @@ defmodule AshJsonApi.Test do
     end
   end
 
-  def delete(api, path, opts \\ []) do
+  def delete(domain, path, opts \\ []) do
     result =
       :delete
       |> conn(path)
       |> set_accept_request_header(opts)
-      |> AshJsonApi.Api.Info.router(api).call(AshJsonApi.Api.Info.router(api).init([]))
+      |> AshJsonApi.Domain.Info.router(domain).call(
+        AshJsonApi.Domain.Info.router(domain).init([])
+      )
 
     assert result.state == :sent
 

@@ -219,7 +219,7 @@ post :create
 | [`default_fields`](#json_api-routes-post-default_fields){: #json_api-routes-post-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-post-primary?){: #json_api-routes-post-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`relationship_arguments`](#json_api-routes-post-relationship_arguments){: #json_api-routes-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
-| [`upsert?`](#json_api-routes-post-upsert?){: #json_api-routes-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `YourApi.create/2`. |
+| [`upsert?`](#json_api-routes-post-upsert?){: #json_api-routes-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
 | [`upsert_identity`](#json_api-routes-post-upsert_identity){: #json_api-routes-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
 
 
@@ -523,7 +523,7 @@ end
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`keys`](#json_api-primary_key-keys){: #json_api-primary_key-keys .spark-required} | `any` |  | the list of attributes to encode JSON API primary key |
+| [`keys`](#json_api-primary_key-keys){: #json_api-primary_key-keys .spark-required} | `atom \| list(atom)` |  | the list of attributes to encode JSON API primary key |
 | [`delimiter`](#json_api-primary_key-delimiter){: #json_api-primary_key-delimiter } | `String.t` | `"-"` | The delimiter to concatenate the primary key values. Default to be '-' |
 
 

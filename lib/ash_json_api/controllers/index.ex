@@ -11,11 +11,11 @@ defmodule AshJsonApi.Controllers.Index do
   def call(conn, options) do
     resource = options[:resource]
     action = options[:action]
-    api = options[:api]
+    domain = options[:domain]
     route = options[:route]
 
     conn
-    |> Request.from(resource, action, api, route)
+    |> Request.from(resource, action, domain, route)
     |> Helpers.fetch_pagination_parameters()
     |> Helpers.fetch_records()
     |> Helpers.fetch_includes()

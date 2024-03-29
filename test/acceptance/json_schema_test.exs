@@ -3,6 +3,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
 
   defmodule Author do
     use Ash.Resource,
+      domain: Test.Acceptance.JsonSchemaTest.Blogs,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -24,21 +25,26 @@ defmodule Test.Acceptance.JsonSchemaTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.JsonSchemaTest.Post, destination_attribute: :author_id)
+      has_many(:posts, Test.Acceptance.JsonSchemaTest.Post,
+        destination_attribute: :author_id,
+        public?: true
+      )
     end
   end
 
   defmodule Post do
     use Ash.Resource,
+      domain: Test.Acceptance.JsonSchemaTest.Blogs,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -60,6 +66,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -73,10 +80,11 @@ defmodule Test.Acceptance.JsonSchemaTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, allow_nil?: false)
-      attribute(:hidden, :string)
+      attribute(:name, :string, allow_nil?: false, public?: true)
+      attribute(:hidden, :string, public?: true)
 
       attribute(:email, :string,
+        public?: true,
         allow_nil?: true,
         constraints: [
           match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
@@ -85,23 +93,14 @@ defmodule Test.Acceptance.JsonSchemaTest do
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.JsonSchemaTest.Author, allow_nil?: false)
-    end
-  end
-
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-      entry(Author)
+      belongs_to(:author, Test.Acceptance.JsonSchemaTest.Author, allow_nil?: false, public?: true)
     end
   end
 
   defmodule Blogs do
-    use Ash.Api,
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -110,7 +109,8 @@ defmodule Test.Acceptance.JsonSchemaTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
+      resource(Author)
     end
   end
 

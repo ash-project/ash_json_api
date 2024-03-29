@@ -11,24 +11,20 @@ defprotocol AshJsonApi.ToJsonApiError do
   defmodule NotAvailable do
     use Ash.Error.Exception
 
-    def_ash_error([:reason], class: :invalid)
+    use Splode.Error,
+      fields: [],
+      class: :invalid
 
     defimpl AshJsonApi.ToJsonApiError do
       def to_json_api_error(error) do
         %AshJsonApi.Error{
-          id: Ash.ErrorKind.id(error),
+          id: Ash.UUID.generate(),
           status_code: 409,
-          code: Ash.ErrorKind.code(error),
-          title: Ash.ErrorKind.code(error),
-          detail: Ash.ErrorKind.message(error)
+          code: "not_available",
+          title: "not_available",
+          detail: "Not available"
         }
       end
-    end
-
-    defimpl Ash.ErrorKind do
-      def id(_), do: Ash.UUID.generate()
-      def code(_), do: "not_available"
-      def message(error), do: "Not available: \#{error.reason}"
     end
   end
   ```

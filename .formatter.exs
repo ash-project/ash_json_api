@@ -36,6 +36,7 @@ spark_locals_without_parens = [
   route: 1,
   router: 1,
   serve_schema?: 1,
+  show_raised_errors?: 1,
   tag: 1,
   type: 1,
   upsert?: 1,

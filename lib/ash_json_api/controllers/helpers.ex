@@ -54,7 +54,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.sort(request.sort)
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.for_read(request.action.name, request.arguments, Request.opts(request))
-      |> request.api.read(Request.opts(request))
+      |> Ash.read(Request.opts(request))
       |> case do
         {:ok, result} ->
           Request.assign(request, :result, result)
@@ -66,7 +66,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def create_record(request) do
-    chain(request, fn %{api: api, resource: resource} = request ->
+    chain(request, fn %{resource: resource} = request ->
       opts =
         if request.route.upsert? do
           if request.route.upsert_identity do
@@ -91,7 +91,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       )
       |> Ash.Changeset.set_context(request.context)
       |> Ash.Changeset.load(fields(request, request.resource) ++ (request.includes_keyword || []))
-      |> api.create(opts)
+      |> Ash.create(Request.opts(request, opts))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -103,7 +103,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def update_record(request) do
-    chain(request, fn %{api: api, assigns: %{result: result}} ->
+    chain(request, fn %{assigns: %{result: result}} ->
       result
       |> Ash.Changeset.for_update(
         request.action.name,
@@ -112,7 +112,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       )
       |> Ash.Changeset.set_context(request.context)
       |> Ash.Changeset.load(fields(request, request.resource) ++ (request.includes_keyword || []))
-      |> api.update()
+      |> Ash.update(Request.opts(request))
       |> case do
         {:ok, record} ->
           Request.assign(request, :result, record)
@@ -124,7 +124,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def add_to_relationship(request, relationship_name) do
-    chain(request, fn %{api: api, assigns: %{result: result}} ->
+    chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
 
       result
@@ -135,7 +135,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
       |> Ash.Changeset.load(fields(request, request.resource))
-      |> api.update()
+      |> Ash.update(Request.opts(request))
       |> case do
         {:ok, updated} ->
           request
@@ -149,7 +149,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def replace_relationship(request, relationship_name) do
-    chain(request, fn %{api: api, assigns: %{result: result}} ->
+    chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
 
       result
@@ -160,7 +160,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
       |> Ash.Changeset.load(fields(request, request.resource))
-      |> api.update()
+      |> Ash.update(Request.opts(request))
       |> case do
         {:ok, updated} ->
           request
@@ -174,7 +174,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def delete_from_relationship(request, relationship_name) do
-    chain(request, fn %{api: api, assigns: %{result: result}} ->
+    chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
 
       result
@@ -184,8 +184,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       )
       |> Ash.Changeset.for_update(action, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
-      |> api.update()
-      |> api.load(fields(request, request.resource))
+      |> Ash.update(Request.opts(request))
+      |> Ash.load(fields(request, request.resource), Request.opts(request))
       |> case do
         {:ok, updated} ->
           request
@@ -199,11 +199,11 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def destroy_record(request) do
-    chain(request, fn %{api: api, assigns: %{result: result}} = request ->
+    chain(request, fn %{assigns: %{result: result}} = request ->
       result
       |> Ash.Changeset.for_destroy(request.action.name, %{}, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
-      |> api.destroy()
+      |> Ash.destroy(Request.opts(request))
       |> case do
         :ok ->
           Request.assign(request, :result, nil)
@@ -233,7 +233,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def fetch_record_from_path(request, through_resource \\ nil, load \\ nil) do
-    chain(request, fn %{api: api, resource: request_resource} = request ->
+    chain(request, fn %{resource: request_resource} = request ->
       resource = through_resource || request_resource
 
       action =
@@ -291,7 +291,7 @@ defmodule AshJsonApi.Controllers.Helpers do
             Map.merge(request.arguments, params),
             Keyword.put(Request.opts(request), :page, false)
           )
-          |> api.read_one()
+          |> Ash.read_one(Request.opts(request))
           |> case do
             {:ok, nil} ->
               error = Error.NotFound.new(filter: filter, resource: resource)
@@ -329,13 +329,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
     destination_query =
       relationship.destination
-      |> Ash.Query.new(request.api)
+      |> Ash.Query.new()
       |> Ash.Query.filter(^request.filter)
       |> Ash.Query.sort(sort)
       |> Ash.Query.load(request.includes_keyword)
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.set_context(request.context)
-      |> Ash.Query.put_context(:override_api_params, load_params)
+      |> Ash.Query.put_context(:override_domain_params, load_params)
 
     request
     |> fetch_record_from_path(through_resource, [{relationship.name, destination_query}])

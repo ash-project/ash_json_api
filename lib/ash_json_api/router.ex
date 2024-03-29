@@ -1,4 +1,4 @@
-defmodule AshJsonApi.Api.Router do
+defmodule AshJsonApi.Router do
   @moduledoc """
   Use this module to create a router for your AshJsonApi.
 
@@ -6,8 +6,8 @@ defmodule AshJsonApi.Api.Router do
 
   ```elixir
   defmodule YourRouter do
-    use AshJsonApi.Api.Router,
-      apis: [YourApi, YourOtherApi],
+    use AshJsonApi.Router,
+      domains: [YourDomain, YourOtherDomain],
       # these next two are optional, only add them if you want those endpoints
       open_api: "/open_api",
       json_schema: "/json_schema"
@@ -23,10 +23,10 @@ defmodule AshJsonApi.Api.Router do
   """
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
-      require Ash.Api.Info
+      require Ash.Domain.Info
       use Plug.Router
       require Ash
-      apis = List.wrap(opts[:api] || opts[:apis])
+      domains = List.wrap(opts[:domain] || opts[:domains])
 
       plug(:match)
 
@@ -38,13 +38,13 @@ defmodule AshJsonApi.Api.Router do
 
       plug(:dispatch)
 
-      if apis == [] do
-        raise "At least one api option must be provided"
+      if domains == [] do
+        raise "At least one domain option must be provided"
       end
 
-      for api <- apis do
-        prefix = AshJsonApi.Api.Info.prefix(api)
-        resources = Ash.Api.Info.depend_on_resources(api)
+      for domain <- domains do
+        prefix = AshJsonApi.Domain.Info.prefix(domain)
+        resources = Ash.Domain.Info.resources(domain)
 
         resources
         |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
@@ -57,13 +57,13 @@ defmodule AshJsonApi.Api.Router do
                 action_type: action_type,
                 relationship: relationship_name
               } = route_struct <-
-                AshJsonApi.Api.Router.routes(resource) do
+                AshJsonApi.Router.routes(resource) do
             opts =
               [
                 relationship: Ash.Resource.Info.public_relationship(resource, relationship_name),
                 action: Ash.Resource.Info.action(resource, action_name),
                 resource: resource,
-                api: api,
+                domain: domain,
                 prefix: prefix,
                 route: route_struct
               ]
@@ -74,19 +74,23 @@ defmodule AshJsonApi.Api.Router do
         end)
       end
 
-      schema_apis = Enum.filter(apis, &AshJsonApi.Api.Info.serve_schema?(&1))
+      schema_domains = Enum.filter(domains, &AshJsonApi.Domain.Info.serve_schema?(&1))
 
-      unless Enum.empty?(schema_apis) do
-        match("/schema", via: :get, to: AshJsonApi.Controllers.Schema, init_opts: [apis: apis])
+      unless Enum.empty?(schema_domains) do
+        match("/schema",
+          via: :get,
+          to: AshJsonApi.Controllers.Schema,
+          init_opts: [domains: domains]
+        )
 
         match("/schema.json",
           via: :get,
           to: AshJsonApi.Controllers.Schema,
-          init_opts: [apis: apis]
+          init_opts: [domains: domains]
         )
       end
 
-      open_api_opts = AshJsonApi.Api.Router.open_api_opts(opts)
+      open_api_opts = AshJsonApi.Router.open_api_opts(opts)
 
       case Code.ensure_loaded?(OpenApiSpex) && opts[:open_api] do
         falsy when falsy in [nil, false] ->

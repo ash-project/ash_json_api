@@ -6,6 +6,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
   defmodule Post do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.Pagination.Keyset.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -26,6 +27,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :update, :destroy])
 
       read :read do
@@ -40,24 +42,16 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
 
-      timestamps(private?: false)
+      timestamps(public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -65,12 +59,12 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -88,7 +82,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts]
@@ -100,7 +94,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       # 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
       # |-------|--------------------------
 
-      conn = get(Api, "/posts", status: 200)
+      conn = get(Domain, "/posts", status: 200)
 
       assert %{"data" => data} = conn.resp_body
 
@@ -115,7 +109,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       page_size = 8
 
-      conn = get(Api, "/posts?page[limit]=#{page_size}", status: 200)
+      conn = get(Domain, "/posts?page[limit]=#{page_size}", status: 200)
 
       assert %{"data" => data} = conn.resp_body
 
@@ -140,7 +134,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts]
@@ -156,7 +150,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       page_size = 5
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: initial_page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: initial_page_size])
 
       cursor_at_post_10 = List.last(keyset.results).__metadata__.keyset
 
@@ -167,7 +161,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       # --------|-------|------------------
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [before: cursor_at_post_10, limit: page_size]
         )
 
@@ -177,7 +171,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           "page[before]" => cursor_at_post_10
         })
 
-      conn = get(Api, "/posts?#{encoded_query_params}", status: 200)
+      conn = get(Domain, "/posts?#{encoded_query_params}", status: 200)
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
       before_cursor = List.first(keyset.results).__metadata__.keyset
@@ -212,7 +206,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts, page_size: 5]
@@ -227,7 +221,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       page_size = 5
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
 
       encoded_query_params =
         URI.encode_query(%{
@@ -235,7 +229,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           "page[size]" => page_size
         })
 
-      conn = get(Api, "/posts?#{encoded_query_params}", status: 200)
+      conn = get(Domain, "/posts?#{encoded_query_params}", status: 200)
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
 
@@ -256,7 +250,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       page_size = 5
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
 
       cursor_at_post_5 = List.last(keyset.results).__metadata__.keyset
 
@@ -267,7 +261,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       # |-----|----------------------------
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [before: cursor_at_post_5, limit: page_size]
         )
 
@@ -277,7 +271,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
           "page[before]" => cursor_at_post_5
         })
 
-      conn = get(Api, "/posts?#{encoded_query_params}", status: 200)
+      conn = get(Domain, "/posts?#{encoded_query_params}", status: 200)
 
       after_cursor = List.last(keyset.results).__metadata__.keyset
 
@@ -301,7 +295,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       page_size = 5
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: initial_page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: initial_page_size])
 
       cursor_at_post_10 = List.last(keyset.results).__metadata__.keyset
 
@@ -312,7 +306,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       # --------|-------|------------------
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [before: cursor_at_post_10, limit: page_size]
         )
 
@@ -324,7 +318,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?#{encoded_query_params}",
           status: 200
         )
@@ -353,7 +347,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       page_size = 5
 
       {:ok, %Ash.Page.Keyset{} = keyset_at_5} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: page_size])
 
       after_cursor_at_5 = List.last(keyset_at_5.results).__metadata__.keyset
 
@@ -370,13 +364,13 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?#{encoded_query_params}",
           status: 200
         )
 
       {:ok, %Ash.Page.Keyset{} = keyset_at_10} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [after: after_cursor_at_5, limit: page_size]
         )
 
@@ -404,7 +398,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       page_size = 5
 
       {:ok, %Ash.Page.Keyset{} = keyset_at_10} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: initial_page_size])
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc), page: [limit: initial_page_size])
 
       after_cursor_at_10 = List.last(keyset_at_10.results).__metadata__.keyset
 
@@ -421,13 +415,13 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?#{encoded_query_params}",
           status: 200
         )
 
       {:ok, %Ash.Page.Keyset{} = keyset_at_15} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [after: after_cursor_at_10, limit: page_size]
         )
 
@@ -451,14 +445,14 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
       page_size = 5
 
       {:ok, %Ash.Page.Keyset{} = keyset} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [limit: page_size, count: true]
         )
 
       initial_after_cursor = List.last(keyset.results).__metadata__.keyset
 
       {:ok, %Ash.Page.Keyset{} = keyset_at_10} =
-        Api.read(Ash.Query.sort(Post, inserted_at: :desc),
+        Ash.read(Ash.Query.sort(Post, inserted_at: :desc),
           page: [after: initial_after_cursor, limit: page_size, count: true]
         )
 
@@ -471,7 +465,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?#{encoded_query_params}",
           status: 200
         )
@@ -526,7 +520,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
         for index <- 1..15 do
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo-#{index}"})
-          |> Api.create!()
+          |> Ash.create!()
         end
 
       [posts: posts, page_size: 5]
@@ -544,7 +538,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?#{encoded_query_params}",
           status: 200
         )
@@ -566,7 +560,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       conn =
         get(
-          Api,
+          Domain,
           "/posts?#{encoded_query_params}",
           status: 200
         )

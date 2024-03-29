@@ -6,12 +6,13 @@ defmodule Test.Acceptance.DeleteTest do
       data_layer: :embedded
 
     attributes do
-      attribute(:bio, :string)
+      attribute(:bio, :string, public?: true)
     end
   end
 
   defmodule Post do
     use Ash.Resource,
+      domain: Test.Acceptance.DeleteTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -33,29 +34,22 @@ defmodule Test.Acceptance.DeleteTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :create, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
-      attribute(:hidden, :string, private?: true)
-      attribute(:profile, Profile)
+      attribute(:name, :string, public?: true)
+      attribute(:profile, Profile, public?: true)
+      attribute(:hidden, :string)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -64,12 +58,12 @@ defmodule Test.Acceptance.DeleteTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -78,7 +72,7 @@ defmodule Test.Acceptance.DeleteTest do
     test "returns a 404 error for a non-existent error" do
       id = Ecto.UUID.generate()
 
-      Api
+      Domain
       |> delete("/posts/#{id}", status: 404)
       |> assert_has_error(%{
         "code" => "NotFound",
@@ -94,13 +88,13 @@ defmodule Test.Acceptance.DeleteTest do
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo", profile: %{bio: "Bio"}})
         |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
-        |> Api.create!()
+        |> Ash.create!()
 
       %{post: post}
     end
 
     test "delete responds with 200", %{post: post} do
-      Api
+      Domain
       |> delete("/posts/#{post.id}", status: 200)
     end
   end

@@ -3,6 +3,7 @@ defmodule Test.Acceptance.IndexPaginationTest do
 
   defmodule Post do
     use Ash.Resource,
+      domain: Test.Acceptance.IndexPaginationTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -23,6 +24,7 @@ defmodule Test.Acceptance.IndexPaginationTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :update, :destroy])
 
       read :read do
@@ -33,22 +35,14 @@ defmodule Test.Acceptance.IndexPaginationTest do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -57,12 +51,12 @@ defmodule Test.Acceptance.IndexPaginationTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -73,7 +67,7 @@ defmodule Test.Acceptance.IndexPaginationTest do
         Enum.each(1..10, fn i ->
           Post
           |> Ash.Changeset.for_create(:create, %{name: "foo_#{i}"})
-          |> Api.create!()
+          |> Ash.create!()
         end)
 
       %{posts: posts}
@@ -81,7 +75,7 @@ defmodule Test.Acceptance.IndexPaginationTest do
 
     test "returns a list of posts - default limit" do
       response =
-        Api
+        Domain
         |> get("/posts", status: 200)
 
       data = response.resp_body["data"]
@@ -90,7 +84,7 @@ defmodule Test.Acceptance.IndexPaginationTest do
 
     test "returns a list of posts - pagination limit" do
       response =
-        Api
+        Domain
         |> get("/posts?page[limit]=1", status: 200)
 
       data = response.resp_body["data"]
@@ -99,7 +93,7 @@ defmodule Test.Acceptance.IndexPaginationTest do
 
     test "returns a list of posts - pagination limit + offset" do
       response =
-        Api
+        Domain
         |> get("/posts?page[offset]=5&page[limit]=10", status: 200)
 
       data = response.resp_body["data"]

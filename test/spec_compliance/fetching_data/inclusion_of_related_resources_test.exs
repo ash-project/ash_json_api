@@ -5,6 +5,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
   defmodule Author do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshJsonApi.Resource]
 
@@ -26,15 +27,17 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     relationships do
       has_many(:posts, AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Post,
+        public?: true,
         destination_attribute: :author_id
       )
     end
@@ -42,10 +45,12 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
   defmodule Post do
     use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshJsonApi.Resource]
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
@@ -67,27 +72,18 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
-      belongs_to(:author, Author)
+      belongs_to(:author, Author, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Author)
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -95,12 +91,13 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     end
 
     resources do
-      registry(Registry)
+      resource(Author)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -127,7 +124,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
       author =
         Author
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       author_id = author.id
 
@@ -135,7 +132,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
         |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
-        |> Api.create!()
+        |> Ash.create!()
 
       assert %{
                resp_body: %{
@@ -145,7 +142,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
                    }
                  }
                }
-             } = get(Api, "/posts/#{post.id}/?include=author", status: 200)
+             } = get(Domain, "/posts/#{post.id}/?include=author", status: 200)
     end
 
     test "resource endpoint with include param of to-one relationship (inclusion)" do
@@ -153,7 +150,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
       author =
         Author
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
-        |> Api.create!()
+        |> Ash.create!()
 
       author_id = author.id
 
@@ -161,9 +158,9 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
         |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
-        |> Api.create!()
+        |> Ash.create!()
 
-      Api
+      Domain
       |> get("/posts/#{post.id}/?include=author", status: 200)
       |> assert_has_matching_include(fn
         %{"type" => "author", "id" => ^author_id} ->
@@ -227,15 +224,15 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     author =
       Author
       |> Ash.Changeset.for_create(:create, %{name: "foo"})
-      |> Api.create!()
+      |> Ash.create!()
 
     post =
       Post
       |> Ash.Changeset.for_create(:create, %{name: "foo"})
       |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
-      |> Api.create!()
+      |> Ash.create!()
 
-    get(Api, "/posts/#{post.id}/?include=foobar", status: 400)
+    get(Domain, "/posts/#{post.id}/?include=foobar", status: 400)
   end
 
   # I put this as "may" because loading is an optional feature

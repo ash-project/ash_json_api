@@ -3,6 +3,7 @@ defmodule Test.Acceptance.ResourceTest do
 
   defmodule Author do
     use Ash.Resource,
+      domain: Test.Acceptance.ResourceTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -26,6 +27,7 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -35,15 +37,16 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     attributes do
-      attribute(:first_name, :string, primary_key?: true, allow_nil?: false)
-      attribute(:last_name, :string, primary_key?: true, allow_nil?: false)
-      attribute(:utc_now, :utc_datetime)
-      attribute(:age, :integer)
+      attribute(:first_name, :string, primary_key?: true, allow_nil?: false, public?: true)
+      attribute(:last_name, :string, primary_key?: true, allow_nil?: false, public?: true)
+      attribute(:utc_now, :utc_datetime, public?: true)
+      attribute(:age, :integer, public?: true)
     end
   end
 
   defmodule Book do
     use Ash.Resource,
+      domain: Test.Acceptance.ResourceTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -68,6 +71,7 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -78,13 +82,14 @@ defmodule Test.Acceptance.ResourceTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
-      attribute(:author_name, :string)
+      attribute(:name, :string, public?: true)
+      attribute(:author_name, :string, public?: true)
     end
   end
 
   defmodule Movie do
     use Ash.Resource,
+      domain: Test.Acceptance.ResourceTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -104,6 +109,7 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -114,24 +120,14 @@ defmodule Test.Acceptance.ResourceTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Author)
-      entry(Book)
-      entry(Movie)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -140,12 +136,14 @@ defmodule Test.Acceptance.ResourceTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Author)
+      resource(Book)
+      resource(Movie)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -154,7 +152,7 @@ defmodule Test.Acceptance.ResourceTest do
   describe "json response id created from primary key fields" do
     test "returns correct response id" do
       response =
-        Api
+        Domain
         |> post("/authors", %{
           data: %{
             type: "author",
@@ -176,7 +174,7 @@ defmodule Test.Acceptance.ResourceTest do
   describe "json response id created from non primary key fields" do
     test "returns correct response id" do
       response =
-        Api
+        Domain
         |> post("/books", %{
           data: %{
             type: "book",
@@ -199,7 +197,7 @@ defmodule Test.Acceptance.ResourceTest do
       id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/movies", %{
           data: %{
             type: "movie",
@@ -223,6 +221,7 @@ defmodule Test.Acceptance.ResourceTest do
                    fn ->
                      defmodule BadResource do
                        use Ash.Resource,
+                         domain: nil,
                          data_layer: Ash.DataLayer.Ets,
                          extensions: [
                            AshJsonApi.Resource
@@ -264,6 +263,7 @@ defmodule Test.Acceptance.ResourceTest do
                    fn ->
                      defmodule BadResource do
                        use Ash.Resource,
+                         domain: nil,
                          data_layer: Ash.DataLayer.Ets,
                          extensions: [
                            AshJsonApi.Resource

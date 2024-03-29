@@ -10,13 +10,13 @@ defmodule AshJsonApi.Controllers.PostToRelationship do
 
   def call(conn, options) do
     action = options[:action]
-    api = options[:api]
+    domain = options[:domain]
     route = options[:route]
     relationship = Ash.Resource.Info.public_relationship(options[:resource], route.relationship)
     resource = relationship.destination
 
     conn
-    |> Request.from(resource, action, api, route)
+    |> Request.from(resource, action, domain, route)
     |> Helpers.fetch_record_from_path(options[:resource])
     |> Helpers.add_to_relationship(relationship.name)
     |> Helpers.render_or_render_errors(conn, fn request ->

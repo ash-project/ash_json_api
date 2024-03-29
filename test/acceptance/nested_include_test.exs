@@ -7,6 +7,7 @@ defmodule Test.Acceptance.NestedIncludeTest do
 
   defmodule Include do
     use Ash.Resource,
+      domain: Test.Acceptance.NestedIncludeTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -30,6 +31,7 @@ defmodule Test.Acceptance.NestedIncludeTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
@@ -38,23 +40,15 @@ defmodule Test.Acceptance.NestedIncludeTest do
     end
 
     relationships do
-      belongs_to(:include_a, Include)
-      belongs_to(:include_b, Include)
+      belongs_to(:include_a, Include, public?: true)
+      belongs_to(:include_b, Include, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Include)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -63,12 +57,12 @@ defmodule Test.Acceptance.NestedIncludeTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Include)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -77,7 +71,7 @@ defmodule Test.Acceptance.NestedIncludeTest do
     include =
       Include
       |> Ash.Changeset.for_create(:create, %{})
-      |> Api.create!()
+      |> Ash.create!()
 
     include =
       Include
@@ -89,7 +83,7 @@ defmodule Test.Acceptance.NestedIncludeTest do
   end
 
   test "returns includes successfully", %{include: include} do
-    Api
+    Domain
     |> get("/includes?include=include_a.include_a.include_a,include_b.include_b.include_b",
       status: 200
     )

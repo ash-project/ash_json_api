@@ -3,6 +3,7 @@ defmodule Test.Acceptance.PatchTest do
 
   defmodule Author do
     use Ash.Resource,
+      domain: Test.Acceptance.PatchTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -23,21 +24,26 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
-      uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
+      uuid_primary_key(:id, writable?: true, public?: true)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.PatchTest.Post, destination_attribute: :author_id)
+      has_many(:posts, Test.Acceptance.PatchTest.Post,
+        destination_attribute: :author_id,
+        public?: true
+      )
     end
   end
 
   defmodule Post do
     use Ash.Resource,
+      domain: Test.Acceptance.PatchTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -65,6 +71,7 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :destroy])
 
       create :create do
@@ -91,35 +98,28 @@ defmodule Test.Acceptance.PatchTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
-      attribute(:hidden, :string, private?: true)
+      attribute(:name, :string, public?: true)
 
       attribute(:email, :string,
+        public?: true,
         allow_nil?: true,
         constraints: [
           match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
         ]
       )
+
+      attribute(:hidden, :string)
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.PatchTest.Author)
+      belongs_to(:author, Test.Acceptance.PatchTest.Author, public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Author)
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -128,12 +128,13 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Author)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -145,27 +146,28 @@ defmodule Test.Acceptance.PatchTest do
 
       post =
         Post
-        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", hidden: "hidden", id: id})
-        |> Api.create!()
+        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+        |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
+        |> Ash.create!()
 
       %{post: post}
     end
 
     test "string attributes are rendered properly", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_equals("name", post.name)
     end
 
     test "patch working properly", %{post: post} do
-      Api
+      Domain
       |> patch("/posts/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
       |> assert_attribute_equals("email", "dummy@test.com")
     end
 
     @tag :attributes
     test "private attributes are not rendered in the payload", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_missing("hidden")
     end
@@ -177,15 +179,16 @@ defmodule Test.Acceptance.PatchTest do
 
       post =
         Post
-        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", hidden: "hidden", id: id})
-        |> Api.create!()
+        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+        |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
+        |> Ash.create!()
 
       %{post: post}
     end
 
     test "allows using a different read action", %{post: post} do
       response =
-        Api
+        Domain
         |> patch("/posts/by_name/#{post.name}", %{
           data: %{
             type: "post",
@@ -207,32 +210,27 @@ defmodule Test.Acceptance.PatchTest do
       author =
         Author
         |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
-        |> Api.create!()
+        |> Ash.create!()
 
       post =
         Post
-        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", hidden: "hidden", id: id})
-        |> Api.create!()
+        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+        |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
+        |> Ash.create!()
 
       %{post: post, author: author}
     end
 
-    test "Update attributes in accept list with email along with relationship", %{
-      post: post,
-      author: author
+    test "Update attributes in accept list with email", %{
+      post: post
     } do
       response =
-        Api
+        Domain
         |> patch("/posts/#{post.id}", %{
           data: %{
             type: "post",
             attributes: %{
               email: "dummy@test.com"
-            },
-            relationships: %{
-              author: %{
-                data: %{type: "author", id: author.id}
-              }
             }
           }
         })
@@ -241,21 +239,15 @@ defmodule Test.Acceptance.PatchTest do
       assert email == "dummy@test.com"
     end
 
-    test "Update attributes in accept list without email along with relationship", %{
-      post: post,
-      author: author
+    test "Update attributes in accept list without email", %{
+      post: post
     } do
       response =
-        Api
+        Domain
         |> patch("/posts/#{post.id}", %{
           data: %{
             type: "post",
-            attributes: %{},
-            relationships: %{
-              author: %{
-                data: %{type: "author", id: author.id}
-              }
-            }
+            attributes: %{}
           }
         })
 
@@ -266,7 +258,7 @@ defmodule Test.Acceptance.PatchTest do
     test "Update attributes in accept list without author_id and email_id along with relationship",
          %{post: post} do
       response =
-        Api
+        Domain
         |> patch("/posts/#{post.id}", %{
           data: %{
             type: "post",
@@ -284,7 +276,7 @@ defmodule Test.Acceptance.PatchTest do
       author: author
     } do
       response =
-        Api
+        Domain
         |> patch("/posts/#{post.id}", %{
           data: %{
             type: "post",

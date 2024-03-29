@@ -4,24 +4,22 @@ defmodule Test.Acceptance.GetTest do
   defmodule CustomError do
     use Ash.Error.Exception
 
-    def_ash_error([], class: :invalid)
+    use Splode.Error,
+      fields: [],
+      class: :invalid
+
+    def message(_), do: "ruh roh"
 
     defimpl AshJsonApi.ToJsonApiError do
-      def to_json_api_error(error) do
+      def to_json_api_error(_error) do
         %AshJsonApi.Error{
-          id: Ash.ErrorKind.id(error),
+          id: Ash.UUID.generate(),
           status_code: 409,
-          code: Ash.ErrorKind.code(error),
-          title: Ash.ErrorKind.code(error),
-          detail: Ash.ErrorKind.message(error)
+          code: "not_available",
+          title: "not_available",
+          detail: "Not available"
         }
       end
-    end
-
-    defimpl Ash.ErrorKind do
-      def id(_), do: Ash.UUID.generate()
-      def code(_), do: "not_available"
-      def message(_error), do: "Not available"
     end
   end
 
@@ -30,13 +28,14 @@ defmodule Test.Acceptance.GetTest do
       data_layer: :embedded
 
     attributes do
-      attribute(:bio, :string)
+      attribute(:bio, :string, public?: true)
     end
   end
 
   defmodule Post do
     use Ash.Resource,
       data_layer: Ash.DataLayer.Ets,
+      domain: Test.Acceptance.GetTest.Domain,
       extensions: [
         AshJsonApi.Resource
       ]
@@ -60,6 +59,7 @@ defmodule Test.Acceptance.GetTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :update, :destroy])
 
       read :with_error do
@@ -82,30 +82,22 @@ defmodule Test.Acceptance.GetTest do
 
     attributes do
       uuid_primary_key(:id)
-      attribute(:name, :string)
-      attribute(:tag, :string)
-      attribute(:hidden, :string, private?: true)
-      attribute(:profile, Profile)
+      attribute(:name, :string, public?: true)
+      attribute(:tag, :string, public?: true)
+      attribute(:profile, Profile, public?: true)
+      attribute(:hidden, :string)
     end
 
     calculations do
-      calculate(:name_twice, :string, concat([:name, :name], "-"))
-      calculate(:name_tripled, :string, concat([:name, :name, :name], "-"))
+      calculate(:name_twice, :string, concat([:name, :name], "-"), public?: true)
+      calculate(:name_tripled, :string, concat([:name, :name, :name], "-"), public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -114,12 +106,12 @@ defmodule Test.Acceptance.GetTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -128,7 +120,7 @@ defmodule Test.Acceptance.GetTest do
     test "returns a 404 error for a non-existent error" do
       id = Ecto.UUID.generate()
 
-      Api
+      Domain
       |> get("/posts/#{id}", status: 404)
       |> assert_has_error(%{
         "code" => "NotFound",
@@ -142,7 +134,7 @@ defmodule Test.Acceptance.GetTest do
     test "custom errors are rendered according to `ToJsonApiError`" do
       id = Ecto.UUID.generate()
 
-      Api
+      Domain
       |> get("/posts/with_error/#{id}", status: 409)
       |> assert_has_error(%{
         "code" => "not_available",
@@ -159,13 +151,13 @@ defmodule Test.Acceptance.GetTest do
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo"})
         |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
-        |> Api.create!()
+        |> Ash.create!()
 
       %{post: post}
     end
 
     test "arguments can be used in routes" do
-      Api
+      Domain
       |> get("/posts/by_name/foo", status: 200)
       |> assert_attribute_equals("name", "foo")
     end
@@ -178,49 +170,49 @@ defmodule Test.Acceptance.GetTest do
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo", tag: "ash", profile: %{bio: "Bio"}})
         |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
-        |> Api.create!()
+        |> Ash.create!()
 
       %{post: post}
     end
 
     test "string attributes are rendered properly", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_equals("name", post.name)
     end
 
     test "string attributes accessed with the fields param render properly", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}?fields[post]=tag", status: 200)
       |> assert_attribute_equals("tag", post.tag)
     end
 
     test "calculated fields are rendered properly in a field param", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}?fields[post]=name_twice")
       |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
     end
 
     test "calculated fields are rendered properly by default", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}")
       |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
     end
 
     test "calculated fields can be sorted on", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}?sort=name_twice&fields=name_twice")
       |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
     end
 
     test "calculated fields not loaded are skipped", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}")
       |> assert_attribute_missing("name_tripled")
     end
 
     test "calculated fields unloaded by default are loaded if specified", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}?fields[post]=name_tripled")
       |> assert_attribute_equals(
         "name_tripled",
@@ -230,14 +222,14 @@ defmodule Test.Acceptance.GetTest do
 
     @tag :attributes
     test "private attributes are not rendered in the payload", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_missing("hidden")
     end
 
     @tag :attributes
     test "primary keys are not rendered in attributes object", %{post: post} do
-      Api
+      Domain
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_missing("id")
     end

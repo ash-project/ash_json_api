@@ -70,19 +70,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @doc """
     Resource schemas to include in the API spec.
     """
-    @spec schemas(api :: module | [module]) :: %{String.t() => Schema.t()}
-    def schemas(apis) when is_list(apis) do
-      apis
-      |> Enum.reduce(base_definitions(), fn api, definitions ->
-        api
+    @spec schemas(domain :: module | [module]) :: %{String.t() => Schema.t()}
+    def schemas(domains) when is_list(domains) do
+      domains
+      |> Enum.reduce(base_definitions(), fn domain, definitions ->
+        domain
         |> resources
         |> Enum.map(&{AshJsonApi.Resource.Info.type(&1), resource_object_schema(&1)})
         |> Enum.into(definitions)
       end)
     end
 
-    def schemas(api) do
-      api
+    def schemas(domain) do
+      domain
       |> resources
       |> Enum.map(&{AshJsonApi.Resource.Info.type(&1), resource_object_schema(&1)})
       |> Enum.into(base_definitions())
@@ -159,9 +159,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp resources(api) do
-      api
-      |> Ash.Api.Info.resources()
+    defp resources(domain) do
+      domain
+      |> Ash.Domain.Info.resources()
       |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
     end
 
@@ -443,24 +443,24 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @doc """
     Tags based on resource names to include in the API spec
     """
-    @spec tags(api :: module | [module]) :: [Tag.t()]
-    def tags(apis) when is_list(apis) do
-      Enum.flat_map(apis, &tags/1)
+    @spec tags(domain :: module | [module]) :: [Tag.t()]
+    def tags(domains) when is_list(domains) do
+      Enum.flat_map(domains, &tags/1)
     end
 
-    def tags(api) do
-      tag = AshJsonApi.Api.Info.tag(api)
-      group_by = AshJsonApi.Api.Info.group_by(api)
+    def tags(domain) do
+      tag = AshJsonApi.Domain.Info.tag(domain)
+      group_by = AshJsonApi.Domain.Info.group_by(domain)
 
-      if tag && group_by == :api do
+      if tag && group_by == :domain do
         [
           %Tag{
             name: to_string(tag),
-            description: "Operations on the #{tag} Api."
+            description: "Operations on the #{tag} API."
           }
         ]
       else
-        api
+        domain
         |> resources()
         |> Enum.map(fn resource ->
           name = AshJsonApi.Resource.Info.type(resource)
@@ -474,30 +474,30 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @doc """
-    Paths (routes) from the API.
+    Paths (routes) from the domain.
     """
-    @spec paths(api :: module | [module]) :: Paths.t()
-    def paths(apis) when is_list(apis) do
-      apis
+    @spec paths(domain :: module | [module]) :: Paths.t()
+    def paths(domains) when is_list(domains) do
+      domains
       |> Enum.map(&paths/1)
       |> Enum.reduce(&Map.merge/2)
     end
 
-    def paths(api) do
-      api
+    def paths(domain) do
+      domain
       |> resources()
       |> Enum.flat_map(fn resource ->
         resource
         |> AshJsonApi.Resource.Info.routes()
-        |> Enum.map(&route_operation(&1, api, resource))
+        |> Enum.map(&route_operation(&1, domain, resource))
       end)
       |> Enum.group_by(fn {path, _route_op} -> path end, fn {_path, route_op} -> route_op end)
       |> Map.new(fn {path, route_ops} -> {path, struct!(PathItem, route_ops)} end)
     end
 
-    @spec route_operation(Route.t(), api :: module, resource :: module) ::
+    @spec route_operation(Route.t(), domain :: module, resource :: module) ::
             {Paths.path(), {verb :: atom, Operation.t()}}
-    defp route_operation(route, api, resource) do
+    defp route_operation(route, domain, resource) do
       resource =
         if route.relationship do
           Ash.Resource.Info.related(resource, route.relationship)
@@ -505,14 +505,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
           resource
         end
 
-      tag = AshJsonApi.Api.Info.tag(api)
-      group_by = AshJsonApi.Api.Info.group_by(api)
+      tag = AshJsonApi.Domain.Info.tag(domain)
+      group_by = AshJsonApi.Domain.Info.group_by(domain)
 
-      {path, path_params} = AshJsonApi.JsonSchema.route_href(route, api)
+      {path, path_params} = AshJsonApi.JsonSchema.route_href(route, domain)
       operation = operation(route, resource, path_params)
 
       operation =
-        if tag && group_by === :api do
+        if tag && group_by === :domain do
           Map.merge(operation, %{tags: [to_string(tag)]})
         else
           operation
@@ -717,7 +717,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       action = Ash.Resource.Info.action(resource, route.action)
 
       action.arguments
-      |> Enum.reject(& &1.private?)
+      |> Enum.filter(& &1.public?)
       |> Enum.map(fn argument ->
         schema = resource_attribute_type(argument)
 

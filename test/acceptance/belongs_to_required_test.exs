@@ -3,6 +3,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
 
   defmodule Author do
     use Ash.Resource,
+      domain: Test.Acceptance.BelongsToRequiredTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -23,23 +24,26 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:create, :read, :update, :destroy])
     end
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
       has_many(:posts, Test.Acceptance.BelongsToRequiredTest.Post,
-        destination_attribute: :author_id
+        destination_attribute: :author_id,
+        public?: true
       )
     end
   end
 
   defmodule Post do
     use Ash.Resource,
+      domain: Test.Acceptance.BelongsToRequiredTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -61,6 +65,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -73,12 +78,13 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     attributes do
-      uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, allow_nil?: false)
-      attribute(:hidden, :string)
+      uuid_primary_key(:id, writable?: true, public?: true)
+      attribute(:name, :string, allow_nil?: false, public?: true)
+      attribute(:hidden, :string, public?: true)
 
       attribute(:email, :string,
         allow_nil?: true,
+        public?: true,
         constraints: [
           match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
         ]
@@ -86,23 +92,17 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.BelongsToRequiredTest.Author, allow_nil?: false)
+      belongs_to(:author, Test.Acceptance.BelongsToRequiredTest.Author,
+        allow_nil?: false,
+        public?: true
+      )
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Post)
-      entry(Author)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -111,12 +111,13 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Post)
+      resource(Author)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -127,7 +128,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
       id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/posts", %{
           data: %{
             type: "post",
@@ -153,7 +154,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
       id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/posts", %{
           data: %{
             type: "post",
@@ -174,7 +175,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
       author_id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/posts", %{
           data: %{
             type: "post",
@@ -202,7 +203,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
       author =
         Author
         |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
-        |> Api.create!()
+        |> Ash.create!()
 
       %{author: author}
     end
@@ -210,7 +211,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     test "create with all attributes in accept list", %{author: author} do
       id = Ecto.UUID.generate()
 
-      Api
+      Domain
       |> post(
         "/posts",
         %{

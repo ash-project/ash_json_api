@@ -3,6 +3,7 @@ defmodule Test.Acceptance.PostTest do
 
   defmodule Author do
     use Ash.Resource,
+      domain: Test.Acceptance.PostTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -24,6 +25,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
       create(:create, primary?: true)
 
@@ -35,16 +37,20 @@ defmodule Test.Acceptance.PostTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
-      has_many(:posts, Test.Acceptance.PostTest.Post, destination_attribute: :author_id)
+      has_many(:posts, Test.Acceptance.PostTest.Post,
+        destination_attribute: :author_id,
+        public?: true
+      )
     end
   end
 
   defmodule Post do
     use Ash.Resource,
+      domain: Test.Acceptance.PostTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [
         AshJsonApi.Resource
@@ -76,6 +82,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     actions do
+      default_accept(:*)
       defaults([:read, :update, :destroy])
 
       create :create do
@@ -93,15 +100,16 @@ defmodule Test.Acceptance.PostTest do
     end
 
     identities do
-      identity(:unique_email, [:email], pre_check_with: Test.Acceptance.PostTest.Api)
+      identity(:unique_email, [:email], pre_check_with: Test.Acceptance.PostTest.Domain)
     end
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, allow_nil?: false)
-      attribute(:hidden, :string)
+      attribute(:name, :string, allow_nil?: false, public?: true)
+      attribute(:hidden, :string, public?: true)
 
       attribute(:email, :string,
+        public?: true,
         allow_nil?: true,
         constraints: [
           match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
@@ -110,27 +118,18 @@ defmodule Test.Acceptance.PostTest do
     end
 
     relationships do
-      belongs_to(:author, Test.Acceptance.PostTest.Author, allow_nil?: true)
+      belongs_to(:author, Test.Acceptance.PostTest.Author, allow_nil?: true, public?: true)
     end
 
     calculations do
-      calculate(:name_twice, :string, concat([:name, :name], "-"))
+      calculate(:name_twice, :string, concat([:name, :name], "-"), public?: true)
     end
   end
 
-  defmodule Registry do
-    use Ash.Registry
-
-    entries do
-      entry(Author)
-      entry(Post)
-    end
-  end
-
-  defmodule Api do
-    use Ash.Api,
+  defmodule Domain do
+    use Ash.Domain,
       extensions: [
-        AshJsonApi.Api
+        AshJsonApi.Domain
       ]
 
     json_api do
@@ -139,12 +138,13 @@ defmodule Test.Acceptance.PostTest do
     end
 
     resources do
-      registry(Registry)
+      resource(Author)
+      resource(Post)
     end
   end
 
   defmodule Router do
-    use AshJsonApi.Api.Router, registry: Registry, api: Api
+    use AshJsonApi.Router, domain: Domain
   end
 
   import AshJsonApi.Test
@@ -155,7 +155,7 @@ defmodule Test.Acceptance.PostTest do
       id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/posts", %{
           data: %{
             type: "post",
@@ -176,7 +176,7 @@ defmodule Test.Acceptance.PostTest do
     test "create with all attributes in accept list" do
       id = Ecto.UUID.generate()
 
-      Api
+      Domain
       |> post("/posts", %{
         data: %{
           type: "post",
@@ -194,12 +194,12 @@ defmodule Test.Acceptance.PostTest do
 
   describe "post with upsert" do
     post =
-      Api.create!(
+      Ash.create!(
         Ash.Changeset.for_create(Post, :create, %{name: "Post"})
         |> Ash.Changeset.force_change_attribute(:email, "foo@bar.com")
       )
 
-    Api
+    Domain
     |> post("/posts/upsert_by_email", %{
       data: %{
         type: "post",
@@ -218,7 +218,7 @@ defmodule Test.Acceptance.PostTest do
       id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/posts", %{
           data: %{
             type: "post",
@@ -244,8 +244,8 @@ defmodule Test.Acceptance.PostTest do
     setup do
       author =
         Author
-        |> Ash.Changeset.new(%{id: Ecto.UUID.generate(), name: "John"})
-        |> Api.create!()
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
+        |> Ash.create!()
 
       %{author: author}
     end
@@ -256,7 +256,7 @@ defmodule Test.Acceptance.PostTest do
       id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/posts", %{
           data: %{
             type: "post",
@@ -283,7 +283,7 @@ defmodule Test.Acceptance.PostTest do
       id = Ecto.UUID.generate()
 
       response =
-        Api
+        Domain
         |> post("/posts", %{
           data: %{
             type: "post",
@@ -310,7 +310,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     test "arguments are validated properly" do
-      Api
+      Domain
       |> post(
         "/authors/confirm_name",
         %{
@@ -327,7 +327,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     test "arguments are threaded through properly" do
-      Api
+      Domain
       |> post(
         "/authors/confirm_name",
         %{

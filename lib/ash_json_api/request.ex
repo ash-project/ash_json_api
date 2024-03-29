@@ -21,7 +21,7 @@ defmodule AshJsonApi.Request do
   import Ash.PlugHelpers, only: [get_actor: 1, get_tenant: 1, get_context: 1]
 
   defstruct [
-    :api,
+    :domain,
     :action,
     :resource,
     :path_params,
@@ -59,15 +59,15 @@ defmodule AshJsonApi.Request do
           conn :: Plug.Conn.t(),
           resource :: Ash.Resource.t(),
           action :: atom,
-          Ash.Api.t(),
+          Ash.Domain.t(),
           AshJsonApi.Resource.Route.t()
         ) ::
           t
-  def from(conn, resource, action, api, route) do
+  def from(conn, resource, action, domain, route) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
     %__MODULE__{
-      api: api,
+      domain: domain,
       resource: resource,
       action: action,
       includes: includes.allowed,
@@ -79,10 +79,10 @@ defmodule AshJsonApi.Request do
       tenant: get_tenant(conn),
       context: get_context(conn),
       body: conn.body_params,
-      schema: AshJsonApi.JsonSchema.route_schema(route, api, resource),
+      schema: AshJsonApi.JsonSchema.route_schema(route, domain, resource),
       relationship: route.relationship,
       route: route,
-      json_api_prefix: AshJsonApi.Api.Info.prefix(api)
+      json_api_prefix: AshJsonApi.Domain.Info.prefix(domain)
     }
     |> validate_params()
     |> validate_href_schema()
@@ -102,7 +102,7 @@ defmodule AshJsonApi.Request do
   def load_opts(request) do
     [
       actor: request.actor,
-      authorize?: AshJsonApi.Api.Info.authorize?(request.api),
+      authorize?: AshJsonApi.Domain.Info.authorize?(request.domain),
       tenant: request.tenant
     ]
   end
@@ -112,7 +112,8 @@ defmodule AshJsonApi.Request do
 
     opts = [
       actor: request.actor,
-      authorize?: AshJsonApi.Api.Info.authorize?(request.api),
+      domain: request.domain,
+      authorize?: AshJsonApi.Domain.Info.authorize?(request.domain),
       tenant: request.tenant
     ]
 
@@ -141,7 +142,8 @@ defmodule AshJsonApi.Request do
     |> List.wrap()
     |> Enum.reduce(request, fn error, request ->
       new_errors =
-        AshJsonApi.Error.to_json_api_errors(resource, error, operation) ++ request.errors
+        AshJsonApi.Error.to_json_api_errors(request.domain, resource, error, operation) ++
+          request.errors
 
       %{request | errors: new_errors}
     end)
@@ -344,8 +346,8 @@ defmodule AshJsonApi.Request do
     Enum.reduce(fields, request, fn {type, fields}, request ->
       # Get all relevant resources better here, i.e using the includes keyword
       # this could miss relationships to things in other apis
-      request.api
-      |> Ash.Api.Info.resources()
+      request.domain
+      |> Ash.Domain.Info.resources()
       |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
       |> case do
         nil ->
@@ -562,7 +564,7 @@ defmodule AshJsonApi.Request do
 
   defp parse_read_arguments(%{action: %{type: :read} = action} = request) do
     action.arguments
-    |> Enum.reject(& &1.private?)
+    |> Enum.filter(& &1.public?)
     |> Enum.reduce(request, fn argument, request ->
       name = to_string(argument.name)
 

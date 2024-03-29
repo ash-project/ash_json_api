@@ -11,11 +11,11 @@ defmodule AshJsonApi.Controllers.Patch do
   def call(conn, options) do
     resource = options[:resource]
     action = options[:action]
-    api = options[:api]
+    domain = options[:domain]
     route = options[:route]
 
     conn
-    |> Request.from(resource, action, api, route)
+    |> Request.from(resource, action, domain, route)
     |> Helpers.fetch_record_from_path()
     |> Helpers.update_record()
     |> Helpers.fetch_includes()

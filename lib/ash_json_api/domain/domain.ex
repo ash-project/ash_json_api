@@ -1,4 +1,4 @@
-defmodule AshJsonApi.Api do
+defmodule AshJsonApi.Domain do
   @open_api %Spark.Dsl.Section{
     name: :open_api,
     describe: "OpenAPI configurations",
@@ -19,8 +19,8 @@ defmodule AshJsonApi.Api do
         doc: "Tag to be used when used by :group_by"
       ],
       group_by: [
-        type: {:in, [:api, :resource]},
-        doc: "Group by :api or :resource",
+        type: {:in, [:domain, :resource]},
+        doc: "Group by :domain or :resource",
         default: :resource
       ]
     ]
@@ -41,12 +41,18 @@ defmodule AshJsonApi.Api do
     ],
     modules: [:router],
     deprecations: [
-      serve_schema?: "Use the `json_schema` option to `use AshJsonApi.Api.Router` instead."
+      serve_schema?: "Use the `json_schema` option to `use AshJsonApi.Router` instead."
     ],
     schema: [
       router: [
         type: :atom,
-        doc: "The router that you created for this Api. Use by test helpers to send requests"
+        doc: "The router that you created for this Domain. Use by test helpers to send requests"
+      ],
+      show_raised_errors?: [
+        type: :boolean,
+        default: false,
+        doc:
+          "For security purposes, if an error is *raised* then Ash simply shows a generic error. If you want to show those errors, set this to true."
       ],
       prefix: [
         type: :string,
@@ -59,7 +65,7 @@ defmodule AshJsonApi.Api do
       ],
       authorize?: [
         type: :boolean,
-        doc: "Whether or not to perform authorization for this API",
+        doc: "Whether or not to perform authorization on requests.",
         default: true
       ],
       log_errors?: [
@@ -76,12 +82,12 @@ defmodule AshJsonApi.Api do
     sections: [@open_api]
   }
 
-  @verifiers [AshJsonApi.Api.Verifiers.VerifyOpenApiGrouping]
+  @verifiers [AshJsonApi.Domain.Verifiers.VerifyOpenApiGrouping]
 
   @sections [@json_api]
 
   @moduledoc """
-  The entrypoint for adding JSON:API behavior to an Ash API
+  The entrypoint for adding JSON:API behavior to an Ash domain
   """
 
   use Spark.Dsl.Extension, sections: @sections, verifiers: @verifiers

@@ -32,7 +32,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.set_default!(:route, "/:id"),
+      |> Spark.Options.Helpers.set_default!(:route, "/:id"),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :get,
@@ -51,7 +51,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.set_default!(:route, "/")
+      |> Spark.Options.Helpers.set_default!(:route, "/")
       |> Keyword.put(:paginate?, type: :boolean, default: true),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
@@ -71,7 +71,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.set_default!(:route, "/")
+      |> Spark.Options.Helpers.set_default!(:route, "/")
       |> Keyword.merge(
         relationship_arguments: [
           type: {:list, {:or, [:atom, {:tuple, [{:literal, :id}, :atom]}]}},
@@ -82,7 +82,7 @@ defmodule AshJsonApi.Resource do
         upsert?: [
           type: :boolean,
           default: false,
-          doc: "Whether or not to use the `upsert?: true` option when calling `YourApi.create/2`."
+          doc: "Whether or not to use the `upsert?: true` option when calling `Ash.create/2`."
         ],
         upsert_identity: [
           type: :atom,
@@ -108,7 +108,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.set_default!(:route, "/:id")
+      |> Spark.Options.Helpers.set_default!(:route, "/:id")
       |> Keyword.put(:read_action,
         type: :atom,
         default: nil,
@@ -138,7 +138,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.set_default!(:route, "/:id")
+      |> Spark.Options.Helpers.set_default!(:route, "/:id")
       |> Keyword.put(:read_action,
         type: :atom,
         default: nil,
@@ -162,8 +162,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.make_optional!(:route)
-      |> Spark.OptionsHelpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
+      |> Spark.Options.Helpers.make_optional!(:route)
+      |> Spark.Options.Helpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -186,8 +186,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.make_optional!(:route)
-      |> Spark.OptionsHelpers.append_doc!(
+      |> Spark.Options.Helpers.make_optional!(:route)
+      |> Spark.Options.Helpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -213,8 +213,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.make_optional!(:route)
-      |> Spark.OptionsHelpers.append_doc!(
+      |> Spark.Options.Helpers.make_optional!(:route)
+      |> Spark.Options.Helpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -241,8 +241,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.make_optional!(:route)
-      |> Spark.OptionsHelpers.append_doc!(
+      |> Spark.Options.Helpers.make_optional!(:route)
+      |> Spark.Options.Helpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -269,8 +269,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.OptionsHelpers.make_optional!(:route)
-      |> Spark.OptionsHelpers.append_doc!(
+      |> Spark.Options.Helpers.make_optional!(:route)
+      |> Spark.Options.Helpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
       )
@@ -343,7 +343,7 @@ defmodule AshJsonApi.Resource do
     ],
     schema: [
       keys: [
-        type: {:custom, Spark.OptionsHelpers, :list_of_atoms, []},
+        type: {:wrap_list, :atom},
         doc: "the list of attributes to encode JSON API primary key",
         required: true
       ],
