@@ -54,6 +54,7 @@ defmodule AshJsonApi.MixProject do
         "documentation/tutorials/getting-started-with-json-api.md",
         "documentation/topics/relationships.md",
         "documentation/topics/open-api.md",
+        "documentation/how_to/upgrade.md",
         "documentation/dsls/DSL:-AshJsonApi.Resource.md",
         "documentation/dsls/DSL:-AshJsonApi.Domain.md"
       ],

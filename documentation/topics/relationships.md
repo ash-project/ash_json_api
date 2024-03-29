@@ -33,6 +33,7 @@ end
 ```
 
 You can then send the value for `authors` in the relationships key, e.g
+
 ```json
 {
   data: {
@@ -69,3 +70,27 @@ If you do not include `:authors` in the `relationship_arguments` key, you would 
 Non-map argument types, e.g `argument :author, :integer` (expecting an author id) work with `manage_relationship`, but not with
 JSON:API, because it expects `{"type": _type, "id" => id}` for relationship values. To support non-map arguments in `relationship_arguments`,
 instead of `:author`, use `{:id, :author}`. This works for `{:array, _}` type arguments as well, so the value would be a list of ids.
+
+## Relationship Manipulation Routes
+
+You can also specify routes that are dedicated to manipulating relationships. We generally suggest the above approach, but JSON:API spec also allows for dedicated relationship routes. For example:
+
+```elixir
+routes do
+  ...
+  # use `post_relationship` when the operation is additive
+  post_relationship :add_author, action: :add_author
+  # use `patch_relationship` when the operation is both additive and subtractive
+  # use `delete_from_relationship` when the operation is subtractive
+end
+```
+
+This will use an action on the source resource, (by default the primary update), and expects it to take an argument with the corresponding name. Additionally, it must have a `change manage_relationship` that uses that attribute. For example:
+
+```elixir
+update :add_author do
+  argument :author, :map
+
+  change manage_relationship(:add_author, :author, type: :append)
+end
+```

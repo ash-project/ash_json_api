@@ -82,7 +82,7 @@ defmodule Test.Acceptance.NestedIncludeTest do
     %{include: include}
   end
 
-  test "returns includes successfully", %{include: include} do
+  test "returns includes successfully", %{include: _include} do
     Domain
     |> get("/includes?include=include_a.include_a.include_a,include_b.include_b.include_b",
       status: 200

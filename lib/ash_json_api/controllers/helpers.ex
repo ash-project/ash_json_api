@@ -102,12 +102,12 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  def update_record(request) do
+  def update_record(request, attributes \\ &Map.merge(&1.attributes, &1.arguments)) do
     chain(request, fn %{assigns: %{result: result}} ->
       result
       |> Ash.Changeset.for_update(
         request.action.name,
-        Map.merge(request.attributes, request.arguments),
+        attributes.(request),
         Request.opts(request)
       )
       |> Ash.Changeset.set_context(request.context)
@@ -468,19 +468,30 @@ defmodule AshJsonApi.Controllers.Helpers do
     end
   end
 
-  # @spec with_request(
-  #         Plug.Conn.t(),
-  #         Ash.Resource.t(),
-  #         Ash.action(),
-  #         (AshJsonApi.Request.t() -> Plug.Conn.t())
-  #       ) :: Plug.Conn.t()
-  # def with_request(conn, resource, action, function) do
-  #   case AshJsonApi.Request.from(conn, resource, action) do
-  #     %{errors: []} = request ->
-  #       function.(request)
+  def resource_identifiers(request, argument) do
+    identifiers =
+      if map_type?(argument.type) do
+        request.resource_identifiers
+      else
+        Enum.map(request.resource_identifiers, fn identifier ->
+          identifier["id"]
+        end)
+      end
 
-  #     %{errors: errors} = request ->
-  #       Response.render_errors(conn, request, errors)
-  #   end
-  # end
+    case argument.type do
+      {:array, _} ->
+        %{argument.name => identifiers}
+
+      _ ->
+        %{argument.name => Enum.at(identifiers, 0)}
+    end
+  end
+
+  defp map_type?(type) do
+    case type do
+      :map -> true
+      Ash.Type.Map -> true
+      type -> Ash.Type.embedded_type?(type)
+    end
+  end
 end

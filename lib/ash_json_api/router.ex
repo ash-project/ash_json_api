@@ -58,9 +58,20 @@ defmodule AshJsonApi.Router do
                 relationship: relationship_name
               } = route_struct <-
                 AshJsonApi.Router.routes(resource) do
+            relationship =
+              if route_struct.type in [
+                   :patch_relationship,
+                   :post_to_relationship,
+                   :delete_from_relationship
+                 ] do
+                relationship_name
+              else
+                Ash.Resource.Info.public_relationship(resource, relationship_name)
+              end
+
             opts =
               [
-                relationship: Ash.Resource.Info.public_relationship(resource, relationship_name),
+                relationship: relationship,
                 action: Ash.Resource.Info.action(resource, action_name),
                 resource: resource,
                 domain: domain,

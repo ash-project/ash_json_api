@@ -67,6 +67,9 @@ defmodule Test.Acceptance.PatchTest do
           read_action(:by_name)
           route("/by_name/:name")
         end
+
+        related :author, :read
+        patch_relationship :author
       end
     end
 
@@ -215,6 +218,7 @@ defmodule Test.Acceptance.PatchTest do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+        |> Ash.Changeset.force_change_attribute(:author_id, author.id)
         |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
         |> Ash.create!()
 
@@ -297,6 +301,21 @@ defmodule Test.Acceptance.PatchTest do
 
       assert error["detail"] ==
                "Expected only defined properties, got key [\"data\", \"attributes\", \"hidden\"]."
+    end
+
+    test "patch to relationship works", %{
+      post: post
+    } do
+      Domain
+      |> patch("/posts/#{post.id}/relationships/author", %{data: []})
+
+      related =
+        Domain
+        |> get("/posts/#{post.id}/author")
+        |> Map.get(:resp_body)
+        |> Map.get("data")
+
+      refute related
     end
   end
 end

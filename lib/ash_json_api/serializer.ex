@@ -10,7 +10,11 @@ defmodule AshJsonApi.Serializer do
 
     %{
       links: links,
-      data: Enum.map(records, &serialize_relationship_data(&1, source_record, relationship))
+      data:
+        Enum.map(
+          List.wrap(records),
+          &serialize_relationship_data(&1, source_record, relationship)
+        )
     }
     |> Jason.encode!()
   end
@@ -113,6 +117,10 @@ defmodule AshJsonApi.Serializer do
     |> add_if_defined([:source, :parameter], error.source_parameter)
     |> add_if_defined(:meta, error.meta)
     |> add_about_link(error.about, request)
+  end
+
+  defp add_about_link(payload, _, nil) do
+    payload
   end
 
   defp add_about_link(payload, about, request) when is_bitstring(about) do

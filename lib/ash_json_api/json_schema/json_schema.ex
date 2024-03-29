@@ -677,7 +677,7 @@ defmodule AshJsonApi.JsonSchema do
     case Ash.Resource.Info.public_relationship(resource, relationship) do
       nil ->
         raise ArgumentError, """
-        Expected resource  #{resource} to define relationship #{relationship} of type #{type}
+        Expected resource  #{resource} to define relationship #{relationship}.
 
         Please verify all json_api relationship routes have relationships
         """
