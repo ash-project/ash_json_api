@@ -5,6 +5,31 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0-rc.0](https://github.com/ash-project/ash_json_api/compare/v0.34.2...v1.0.0-rc.0) (2024-03-29)
+### Breaking Changes:
+
+* rewrite relationship route handling
+
+* upgrade error patterns to be similar to AshGraphql
+
+
+
+### Bug Fixes:
+
+* fix nested includes wrapping :hammer: (#114)
+
+* always use current URL as pagination base
+
+* use related resource for introspection on related routes
+
+* allow any path params
+
+### Improvements:
+
+* upgrade ash 3.0
+
+* better error on non existent action
+
 ## [v0.34.2](https://github.com/ash-project/ash_json_api/compare/v0.34.1...v0.34.2) (2024-01-09)
 
 
