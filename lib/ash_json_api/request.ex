@@ -159,7 +159,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, InvalidBody.new(json_xema_error: error), request.route.type)
+        add_error(request, InvalidBody.exception(json_xema_error: error), request.route.type)
     end
   end
 
@@ -181,7 +181,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, InvalidHeader.new(json_xema_error: error), request.route.type)
+        add_error(request, InvalidHeader.exception(json_xema_error: error), request.route.type)
     end
     |> validate_accept_header()
     |> validate_content_type_header()
@@ -224,7 +224,7 @@ defmodule AshJsonApi.Request do
         if any_content_type_supported? || json_api_content_type_supported? do
           request
         else
-          add_error(request, UnacceptableMediaType.new([]), request.route.type)
+          add_error(request, UnacceptableMediaType.exception([]), request.route.type)
         end
     end
   end
@@ -261,7 +261,7 @@ defmodule AshJsonApi.Request do
     if accepts_json_api? do
       request
     else
-      add_error(request, UnsupportedMediaType.new([]), request.route.type)
+      add_error(request, UnsupportedMediaType.exception([]), request.route.type)
     end
   end
 
@@ -313,7 +313,7 @@ defmodule AshJsonApi.Request do
         request
 
       {:error, error} ->
-        add_error(request, InvalidQuery.new(json_xema_error: error), request.route.type)
+        add_error(request, InvalidQuery.exception(json_xema_error: error), request.route.type)
     end
   end
 
@@ -351,7 +351,7 @@ defmodule AshJsonApi.Request do
       |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
       |> case do
         nil ->
-          add_error(request, InvalidType.new(type: type), request.route.type)
+          add_error(request, InvalidType.exception(type: type), request.route.type)
 
         resource ->
           add_fields(request, resource, fields, true)
@@ -406,7 +406,7 @@ defmodule AshJsonApi.Request do
         true ->
           add_error(
             request,
-            InvalidField.new(type: type, parameter?: parameter?, field: key),
+            InvalidField.exception(type: type, parameter?: parameter?, field: key),
             request.route.type
           )
       end
@@ -477,7 +477,7 @@ defmodule AshJsonApi.Request do
         %{request | includes: includes, includes_keyword: includes_to_keyword(request, allowed)}
 
       %{allowed: _allowed, disallowed: disallowed} ->
-        add_error(request, InvalidIncludes.new(includes: disallowed), request.route.type)
+        add_error(request, InvalidIncludes.exception(includes: disallowed), request.route.type)
     end
   end
 

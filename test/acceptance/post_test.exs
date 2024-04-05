@@ -233,7 +233,7 @@ defmodule Test.Acceptance.PostTest do
 
       # response is a Plug.
       assert %{"errors" => [error]} = response.resp_body
-      assert error["code"] == "InvalidBody"
+      assert error["code"] == "invalid_body"
 
       assert error["detail"] ==
                "Expected only defined properties, got key [\"data\", \"attributes\", \"email\"]."
@@ -303,7 +303,7 @@ defmodule Test.Acceptance.PostTest do
 
       # response is a Plug.
       assert %{"errors" => [error]} = response.resp_body
-      assert error["code"] == "InvalidBody"
+      assert error["code"] == "invalid_body"
 
       assert error["detail"] ==
                "Expected only defined properties, got key [\"data\", \"attributes\", \"email\"]."

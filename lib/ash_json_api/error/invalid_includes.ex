@@ -3,28 +3,23 @@ defmodule AshJsonApi.Error.InvalidIncludes do
   Returned when the includes string provided in the query parameter `include`
   is invalid.
   """
-  @detail @moduledoc
+  use Splode.Error, class: :invalid, fields: [:includes]
 
-  @type t :: AshJsonApi.Error.t()
-
-  @title "Invalid Includes"
-
-  @status_code 400
-
-  use AshJsonApi.Error
-
-  def new(opts) do
-    opts
-    |> Keyword.put_new(:source_parameter, "include")
-    |> add_detail()
-    |> super()
+  def message(error) do
+    "Invalid includes: #{inspect(error.includes)}"
   end
 
-  defp add_detail(opts) do
-    if opts[:includes] do
-      Keyword.put_new(opts, :detail, "Invalid includes: #{inspect(opts[:includes])}")
-    else
-      opts
+  defimpl AshJsonApi.ToJsonApiError do
+    def to_json_api_error(error) do
+      %AshJsonApi.Error{
+        id: Ash.UUID.generate(),
+        status_code: 400,
+        code: "invalid_includes",
+        title: "Invalid Includes",
+        detail: "Invalid includes: #{inspect(error.includes)}",
+        source_parameter: "include",
+        meta: %{}
+      }
     end
   end
 end

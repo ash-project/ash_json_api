@@ -2,26 +2,27 @@ defmodule AshJsonApi.Error.InvalidQuery do
   @moduledoc """
   Returned when the query provided is invalid
   """
-  @detail @moduledoc
-  @title "Invalid Query"
-  @status_code 400
+  use Splode.Error, class: :invalid, fields: [:json_xema_error]
 
-  use AshJsonApi.Error
+  def message(exception) do
+    "Invalid body: #{exception.json_xema_error}"
+  end
 
-  alias AshJsonApi.Error.SchemaErrors
-
-  def new(opts) do
-    json_xema_error = opts[:json_xema_error]
-
-    opts_without_error = Keyword.delete(opts, :json_xema_error)
-
-    json_xema_error
-    |> SchemaErrors.all_errors()
-    |> Enum.map(fn %{path: path, message: message} ->
-      opts_without_error
-      |> Keyword.put(:detail, message)
-      |> Keyword.put(:source_parameter, path)
-      |> super()
-    end)
+  defimpl AshJsonApi.ToJsonApiError do
+    def to_json_api_error(error) do
+      error.json_xema_error
+      |> AshJsonApi.Error.SchemaErrors.all_errors(:json_pointer)
+      |> Enum.map(fn %{path: path, message: message} ->
+        %AshJsonApi.Error{
+          id: Ash.UUID.generate(),
+          status_code: 400,
+          source_pointer: path,
+          code: "invalid_query",
+          title: "InvalidQuery",
+          detail: message,
+          meta: %{}
+        }
+      end)
+    end
   end
 end

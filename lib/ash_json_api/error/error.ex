@@ -12,13 +12,9 @@ defmodule AshJsonApi.Error do
             internal_description: nil,
             log_level: :error
 
-  @callback new(Keyword.t()) :: %AshJsonApi.Error{} | list(%AshJsonApi.Error{})
-
   @type t :: %__MODULE__{}
 
   alias Ash.Error.{Forbidden, Framework, Invalid, Unknown}
-
-  alias AshJsonApi.Error.FrameworkError
 
   require Logger
 
@@ -35,9 +31,12 @@ defmodule AshJsonApi.Error do
     [error]
   end
 
-  def to_json_api_errors(domain, _resource, %{class: :invalid} = error, _type) do
+  def to_json_api_errors(domain, resource, %{class: :invalid} = error, type) do
     if AshJsonApi.ToJsonApiError.impl_for(error) do
-      List.wrap(AshJsonApi.ToJsonApiError.to_json_api_error(error))
+      error
+      |> AshJsonApi.ToJsonApiError.to_json_api_error()
+      |> List.wrap()
+      |> Enum.flat_map(&with_source_pointer(&1, error, resource, type))
     else
       uuid = Ash.UUID.generate()
 
@@ -100,7 +99,7 @@ defmodule AshJsonApi.Error do
 
   def to_json_api_errors(_resource, error, _type) do
     [
-      FrameworkError.new(internal_description: "something went wrong. #{inspect(error)}")
+      Ash.Error.Unknown.exception(error: error)
     ]
   end
 
@@ -114,7 +113,7 @@ defmodule AshJsonApi.Error do
   end
 
   def format_log(error) when is_bitstring(error) do
-    format_log(FrameworkError.new([]))
+    format_log(Ash.Error.Framework.exception([]))
   end
 
   def format_log(error) do
@@ -147,45 +146,44 @@ defmodule AshJsonApi.Error do
     [code, title, " | ", description]
   end
 
-  defmacro __using__(opts) do
-    quote bind_quoted: [opts: opts] do
-      @detail Module.get_attribute(__MODULE__, :detail, opts[:detail]) ||
-                raise("Must provide a detail for #{__MODULE__}")
-      @title Module.get_attribute(__MODULE__, :title, opts[:title]) ||
-               raise("Must provide a title for #{__MODULE__}")
-      @status_code Module.get_attribute(__MODULE__, :status_code, opts[:status_code]) ||
-                     raise("Must provide a status_code for #{__MODULE__}")
-      @code Module.get_attribute(__MODULE__, :code, opts[:code]) ||
-              String.trim_leading(inspect(__MODULE__), "AshJsonApi.Error.")
+  def with_source_pointer(%{source_pointer: source_pointer} = built_error, _, _, _) when source_pointer not in [nil, :undefined] do
+    [built_error]
+  end
 
-      @behaviour AshJsonApi.Error
 
-      def new(opts) do
-        [
-          detail: @detail,
-          title: @title,
-          code: @code,
-          status_code: @status_code,
-          id: Ecto.UUID.generate()
-        ]
-        |> Keyword.merge(opts)
-        |> Keyword.update!(:detail, &String.trim/1)
-        |> Keyword.update!(:title, &String.trim/1)
-        |> Keyword.update!(:code, fn code ->
-          case opts[:code_suffix] do
-            suffix when is_bitstring(suffix) ->
-              code <> ":" <> suffix
+  def with_source_pointer(built_error, %{fields: fields}, resource, type) when is_list(fields) and fields != [] do
+    Enum.map(fields, fn field ->
+      %{built_error | source_pointer: source_pointer(resource, field, type)}
+    end)
+  end
 
-            _ ->
-              code
-          end
-        end)
-        |> Keyword.delete(:code_suffix)
-        |> AshJsonApi.Error.new()
-      end
+  def with_source_pointer(built_error, %{field: field}, resource, type) when not is_nil(field) do
+    [
+      %{built_error | source_pointer: source_pointer(resource, field, type)}
 
-      defoverridable new: 1
+    ]
+  end
+
+  def with_source_pointer(built_error, _, _resource, _type) do
+    [built_error]
+  end
+
+
+  defp source_pointer(resource, field, type) when type in [:create, :update] do
+    cond do
+      Ash.Resource.Info.public_attribute(resource, field) ->
+        "/data/attributes/#{field}"
+
+      Ash.Resource.Info.public_relationship(resource, field) ->
+        "/data/relationships/#{field}"
+
+      true ->
+        :undefined
     end
+  end
+
+  defp source_pointer(_resource, _field, _) do
+    :undefined
   end
 end
 
@@ -196,7 +194,6 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Changes.InvalidChanges do
       status_code: AshJsonApi.Error.class_to_status(error.class),
       code: "invalid",
       title: "Invalid",
-      source_parameter: to_string(error.field),
       detail: error.message,
       meta: Map.new(error.vars)
     }
@@ -210,7 +207,6 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.InvalidQuery do
       status_code: AshJsonApi.Error.class_to_status(error.class),
       code: "invalid_query",
       title: "InvalidQuery",
-      source_parameter: to_string(error.field),
       detail: error.message,
       meta: Map.new(error.vars)
     }

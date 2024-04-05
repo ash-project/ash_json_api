@@ -2,38 +2,44 @@ defmodule AshJsonApi.Error.NotFound do
   @moduledoc """
   Returned when a record was explicitly requested, but could not be found.
   """
-  @detail @moduledoc
-  @title "Entity Not Found"
-  @status_code 404
 
-  use AshJsonApi.Error
+  use Splode.Error, class: :invalid, fields: [:filter, :resource]
 
-  def new(opts) do
-    opts
-    |> Keyword.put(:detail, detail(opts))
-    |> Keyword.put(:log_level, :info)
-    |> Keyword.drop([:filter, :resource])
-    |> super()
+  def message(error) do
+    "No #{AshJsonApi.Resource.Info.type(error.resource)} record found with `#{inspect(error.filter)}`"
   end
 
-  defp detail(opts) do
-    filter = Keyword.get(opts, :filter)
-    resource = Keyword.get(opts, :resource)
+  defimpl AshJsonApi.ToJsonApiError do
+    def to_json_api_error(error) do
+      %AshJsonApi.Error{
+        id: Ash.UUID.generate(),
+        status_code: 404,
+        code: "not_found",
+        title: "Entity Not Found",
+        detail: detail(error),
+        meta: Map.new(error.vars)
+      }
+    end
 
-    if is_map(filter) || Keyword.keyword?(filter) do
-      filter =
-        Enum.map_join(filter, ", ", fn {key, value} ->
-          try do
-            "#{key}: #{to_string(value)}"
-          rescue
-            _ ->
-              "#{key}: #{inspect(value)}"
-          end
-        end)
+    defp detail(error) do
+      filter = error.filter
+      resource = error.resource
 
-      "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{filter}`"
-    else
-      "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{inspect(filter)}`"
+      if is_map(filter) || Keyword.keyword?(filter) do
+        filter =
+          Enum.map_join(filter, ", ", fn {key, value} ->
+            try do
+              "#{key}: #{to_string(value)}"
+            rescue
+              _ ->
+                "#{key}: #{inspect(value)}"
+            end
+          end)
+
+        "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{filter}`"
+      else
+        "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{inspect(filter)}`"
+      end
     end
   end
 end

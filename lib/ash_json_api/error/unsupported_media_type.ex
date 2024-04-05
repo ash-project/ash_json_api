@@ -2,9 +2,21 @@ defmodule AshJsonApi.Error.UnsupportedMediaType do
   @moduledoc """
   Returned when the client does not accept (via the `Accept` header) the json API media type: application/vnd.api+json
   """
-  @detail @moduledoc
-  @title "Unsupported Media Type"
-  @status_code 415
+  use Splode.Error, class: :invalid
 
-  use AshJsonApi.Error
+  def message(_) do
+    "unsupported media type"
+  end
+
+  defimpl AshJsonApi.ToJsonApiError do
+    def to_json_api_error(_error) do
+      %AshJsonApi.Error{
+        id: Ash.UUID.generate(),
+        status_code: 415,
+        code: "unsupported_media_type",
+        title: "Unsupported Media Type",
+        meta: %{}
+      }
+    end
+  end
 end

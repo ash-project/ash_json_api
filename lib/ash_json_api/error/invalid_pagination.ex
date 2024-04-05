@@ -2,9 +2,24 @@ defmodule AshJsonApi.Error.InvalidPagination do
   @moduledoc """
   Returned when one of the nested parameters provided in the query parameter `page` is invalid
   """
-  @detail @moduledoc
-  @title "Invalid Pagination Parameter"
-  @status_code 400
 
-  use AshJsonApi.Error
+  use Splode.Error, class: :invalid, fields: [:detail]
+
+  def message(error) do
+    "Invalid pagination: #{error.detail}"
+  end
+
+  defimpl AshJsonApi.ToJsonApiError do
+    def to_json_api_error(error) do
+      %AshJsonApi.Error{
+        id: Ash.UUID.generate(),
+        status_code: 400,
+        code: "invalid_pagination",
+        title: "InvalidPagination",
+        detail: "Invalid pagination: #{error.detail}",
+        source_parameter: "page",
+        meta: %{}
+      }
+    end
+  end
 end

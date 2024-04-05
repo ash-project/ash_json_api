@@ -75,7 +75,7 @@ defmodule Test.Acceptance.DeleteTest do
       Domain
       |> delete("/posts/#{id}", status: 404)
       |> assert_has_error(%{
-        "code" => "NotFound",
+        "code" => "not_found",
         "detail" => "No post record found with `id: #{id}`",
         "title" => "Entity Not Found"
       })

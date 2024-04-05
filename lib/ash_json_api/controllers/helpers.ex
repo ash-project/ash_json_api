@@ -294,7 +294,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           |> Ash.read_one(Request.opts(request))
           |> case do
             {:ok, nil} ->
-              error = Error.NotFound.new(filter: filter, resource: resource)
+              error = Error.NotFound.exception(filter: filter, resource: resource)
               Request.add_error(request, error, :fetch_from_path)
 
               Request.add_error(request, error, :fetch_from_path)
@@ -422,7 +422,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         :error ->
           Request.add_error(
             request,
-            Error.InvalidPagination.new(source_parameter: "page[#{parameter}]"),
+            Error.InvalidPagination.exception(source_parameter: "page[#{parameter}]"),
             :read
           )
       end
