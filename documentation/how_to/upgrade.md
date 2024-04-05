@@ -25,3 +25,14 @@ end
 ## Relationship Routes
 
 Previously, AshJsonApi called `Ash.Changeset.manage_relationship` on the changeset built for the action. Now, _you_ have to define the argument and manage_relationship yourself. See the relationships guide for more.
+
+## `Ash.Api` is now `Ash.Domain` in Ash 3.0
+
+Your Router module file (the module that has `use AshJsonApi.Router` in it) will need all references to `api` updated to be `domain`. eg.
+
+```elixir
+defmodule MyApp.MyApi.Router do
+  use AshJsonApi.Domain.Router,
+    domains: [MyApp.Domain1, MyApp.Domain2],
+    ...
+```
