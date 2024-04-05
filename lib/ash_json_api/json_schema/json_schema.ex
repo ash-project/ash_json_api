@@ -723,7 +723,7 @@ defmodule AshJsonApi.JsonSchema do
     attributes =
       resource
       |> Ash.Resource.Info.public_attributes()
-      |> Enum.filter(&((is_nil(accept) || &1.name in accept) && &1.writable?))
+      |> Enum.filter(&(&1.name in accept && &1.writable?))
       |> Enum.reject(&(&1.allow_nil? || &1.default || &1.generated?))
       |> Enum.map(&to_string(&1.name))
 
@@ -739,7 +739,7 @@ defmodule AshJsonApi.JsonSchema do
     attributes =
       resource
       |> Ash.Resource.Info.public_attributes()
-      |> Enum.filter(&((is_nil(accept) || &1.name in accept) && &1.writable?))
+      |> Enum.filter(&(&1.name in accept && &1.writable?))
       |> Enum.reduce(%{}, fn attribute, acc ->
         Map.put(acc, to_string(attribute.name), resource_attribute_type(attribute))
       end)

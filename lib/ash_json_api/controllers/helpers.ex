@@ -185,15 +185,22 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.for_update(action, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
       |> Ash.update(Request.opts(request))
-      |> Ash.load(fields(request, request.resource), Request.opts(request))
       |> case do
-        {:ok, updated} ->
-          request
-          |> Request.assign(:record_from_path, updated)
-          |> Request.assign(:result, Map.get(updated, relationship_name))
+        {:ok, record} ->
+          record
+          |> Ash.load(fields(request, request.resource), Request.opts(request))
+          |> case do
+            {:ok, updated} ->
+              request
+              |> Request.assign(:record_from_path, updated)
+              |> Request.assign(:result, Map.get(updated, relationship_name))
+
+            {:error, error} ->
+              Request.add_error(request, error, :delete_from_relationship)
+          end
 
         {:error, error} ->
-          Request.add_error(request, error, :delete_from_relationship)
+          {:error, error}
       end
     end)
   end

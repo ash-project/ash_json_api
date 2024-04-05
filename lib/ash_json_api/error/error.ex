@@ -146,12 +146,13 @@ defmodule AshJsonApi.Error do
     [code, title, " | ", description]
   end
 
-  def with_source_pointer(%{source_pointer: source_pointer} = built_error, _, _, _) when source_pointer not in [nil, :undefined] do
+  def with_source_pointer(%{source_pointer: source_pointer} = built_error, _, _, _)
+      when source_pointer not in [nil, :undefined] do
     [built_error]
   end
 
-
-  def with_source_pointer(built_error, %{fields: fields}, resource, type) when is_list(fields) and fields != [] do
+  def with_source_pointer(built_error, %{fields: fields}, resource, type)
+      when is_list(fields) and fields != [] do
     Enum.map(fields, fn field ->
       %{built_error | source_pointer: source_pointer(resource, field, type)}
     end)
@@ -160,14 +161,12 @@ defmodule AshJsonApi.Error do
   def with_source_pointer(built_error, %{field: field}, resource, type) when not is_nil(field) do
     [
       %{built_error | source_pointer: source_pointer(resource, field, type)}
-
     ]
   end
 
   def with_source_pointer(built_error, _, _resource, _type) do
     [built_error]
   end
-
 
   defp source_pointer(resource, field, type) when type in [:create, :update] do
     cond do

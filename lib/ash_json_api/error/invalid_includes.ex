@@ -5,6 +5,8 @@ defmodule AshJsonApi.Error.InvalidIncludes do
   """
   use Splode.Error, class: :invalid, fields: [:includes]
 
+  @type t() :: %__MODULE__{}
+
   def message(error) do
     "Invalid includes: #{inspect(error.includes)}"
   end
