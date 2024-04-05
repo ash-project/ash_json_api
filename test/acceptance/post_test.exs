@@ -1,6 +1,22 @@
 defmodule Test.Acceptance.PostTest do
   use ExUnit.Case, async: true
 
+  defmodule Review do
+    use Ash.Resource,
+      domain: Test.Acceptance.PostTest.Domain,
+      data_layer: :embedded
+
+    actions do
+      default_accept(:*)
+      defaults([:read, :create, :update, :destroy])
+    end
+
+    attributes do
+      attribute(:reviewer, :string, public?: true)
+      attribute(:rating, :integer, public?: true)
+    end
+  end
+
   defmodule Author do
     use Ash.Resource,
       domain: Test.Acceptance.PostTest.Domain,
@@ -87,7 +103,7 @@ defmodule Test.Acceptance.PostTest do
 
       create :create do
         primary? true
-        accept([:id, :name, :hidden])
+        accept([:id, :name, :hidden, :review])
 
         argument(:author, :map)
 
@@ -115,6 +131,8 @@ defmodule Test.Acceptance.PostTest do
           match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
         ]
       )
+
+      attribute(:review, Test.Acceptance.PostTest.Review, public?: true)
     end
 
     relationships do
@@ -189,6 +207,31 @@ defmodule Test.Acceptance.PostTest do
       })
       |> assert_attribute_equals("email", nil)
       |> assert_attribute_equals("name_twice", "Post 1-Post 1")
+    end
+
+    test "nested errors have the correct source pointer" do
+      id = Ecto.UUID.generate()
+
+      response =
+      Domain
+      |> post("/posts", %{
+        data: %{
+          type: "post",
+          attributes: %{
+            id: id,
+            name: "Hello",
+            review: %{
+              reviewer: "foo",
+              rating: "bar"
+            }
+          }
+        }
+      })
+
+      # response is a Plug.
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "invalid_attribute"
+      assert error["source"] == %{"pointer" => "/data/attributes/review/rating"}
     end
   end
 
