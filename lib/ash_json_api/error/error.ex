@@ -151,16 +151,16 @@ defmodule AshJsonApi.Error do
     [built_error]
   end
 
-  def with_source_pointer(built_error, %{fields: fields}, resource, type)
+  def with_source_pointer(built_error, %{fields: fields, path: path}, resource, type)
       when is_list(fields) and fields != [] do
     Enum.map(fields, fn field ->
-      %{built_error | source_pointer: source_pointer(resource, field, type)}
+      %{built_error | source_pointer: source_pointer(resource, field, path, type)}
     end)
   end
 
-  def with_source_pointer(built_error, %{field: field}, resource, type) when not is_nil(field) do
+  def with_source_pointer(built_error, %{field: field, path: path}, resource, type) when not is_nil(field) do
     [
-      %{built_error | source_pointer: source_pointer(resource, field, type)}
+      %{built_error | source_pointer: source_pointer(resource, field, path, type)}
     ]
   end
 
@@ -168,20 +168,16 @@ defmodule AshJsonApi.Error do
     [built_error]
   end
 
-  defp source_pointer(resource, field, type) when type in [:create, :update] do
-    cond do
-      Ash.Resource.Info.public_attribute(resource, field) ->
-        "/data/attributes/#{field}"
-
-      Ash.Resource.Info.public_relationship(resource, field) ->
+  defp source_pointer(resource, field, path, type) when type in [:create, :update] and not is_nil(field) do
+    if  path == [] && Ash.Resource.Info.public_relationship(resource, field) do
         "/data/relationships/#{field}"
 
-      true ->
-        :undefined
+      else
+        "/data/attributes/#{Enum.join(List.wrap(path) ++ [field], "/")}"
     end
   end
 
-  defp source_pointer(_resource, _field, _) do
+  defp source_pointer(_resource, _field, _path, _) do
     :undefined
   end
 end
