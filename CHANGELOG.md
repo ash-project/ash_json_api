@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0-rc.1](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.0...v1.0.0-rc.1) (2024-04-10)
+
+
+
+
+### Bug Fixes:
+
+* continue error refactors, include source pointer
+
+### Improvements:
+
+* honor path when building source pointers
+
 ## [v1.0.0-rc.0](https://github.com/ash-project/ash_json_api/compare/v0.34.2...v1.0.0-rc.0) (2024-03-29)
 ### Breaking Changes:
 
