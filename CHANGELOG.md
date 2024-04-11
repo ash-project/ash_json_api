@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0-rc.2](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2024-04-11)
+
+
+
+
+### Bug Fixes:
+
+* fix error handling pattern match error
+
+* don't pass page parameters unless action supports it
+
 ## [v1.0.0-rc.1](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.0...v1.0.0-rc.1) (2024-04-10)
 
 
