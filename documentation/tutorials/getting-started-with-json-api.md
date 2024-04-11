@@ -100,7 +100,7 @@ your Resources and provide the functions you would usually have in a Controller.
 We will later forward requests from your Applications primary (Phoenix) Router to you Ash JSON API Router.
 
 ```elixir
-defmodule HelpdeskWeb.Support.Router do
+defmodule HelpdeskWeb.JsonApiRouter do
   use AshJsonApi.Router,
     # The api modules you want to serve
     domains: [Helpdesk.Support],
@@ -122,7 +122,7 @@ For example:
 scope "/api/json" do
   pipe_through(:api)
 
-  forward "/helpdesk", HelpdeskWeb.Support.Router
+  forward "/helpdesk", HelpdeskWeb.JsonApiRouter
 end
 ```
 
