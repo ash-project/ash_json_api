@@ -85,10 +85,10 @@ defmodule AshJsonApi.Error do
     end
   end
 
-  def to_json_api_errors(_resource, %{class: :forbidden} = error, _type) do
+  def to_json_api_errors(_domain, _resource, %{class: :forbidden} = error, _type) do
     [
       %__MODULE__{
-        id: Ash.ErrorKind.id(error),
+        id: Ash.UUID.generate(),
         status_code: class_to_status(error.class),
         code: "forbidden",
         title: "Forbidden",
@@ -97,7 +97,7 @@ defmodule AshJsonApi.Error do
     ]
   end
 
-  def to_json_api_errors(_resource, error, _type) do
+  def to_json_api_errors(_domain, _resource, error, _type) do
     [
       Ash.Error.Unknown.exception(error: error)
     ]

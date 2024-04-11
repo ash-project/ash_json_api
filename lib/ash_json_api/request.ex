@@ -118,7 +118,7 @@ defmodule AshJsonApi.Request do
     ]
 
     opts =
-      if page_params do
+      if page_params && page_params != [] && request.action.pagination do
         Keyword.put(opts, :page, page_params)
       else
         opts
