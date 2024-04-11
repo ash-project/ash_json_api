@@ -213,20 +213,20 @@ defmodule Test.Acceptance.PostTest do
       id = Ecto.UUID.generate()
 
       response =
-      Domain
-      |> post("/posts", %{
-        data: %{
-          type: "post",
-          attributes: %{
-            id: id,
-            name: "Hello",
-            review: %{
-              reviewer: "foo",
-              rating: "bar"
+        Domain
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Hello",
+              review: %{
+                reviewer: "foo",
+                rating: "bar"
+              }
             }
           }
-        }
-      })
+        })
 
       # response is a Plug.
       assert %{"errors" => [error]} = response.resp_body

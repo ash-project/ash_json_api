@@ -158,7 +158,8 @@ defmodule AshJsonApi.Error do
     end)
   end
 
-  def with_source_pointer(built_error, %{field: field, path: path}, resource, type) when not is_nil(field) do
+  def with_source_pointer(built_error, %{field: field, path: path}, resource, type)
+      when not is_nil(field) do
     [
       %{built_error | source_pointer: source_pointer(resource, field, path, type)}
     ]
@@ -168,12 +169,12 @@ defmodule AshJsonApi.Error do
     [built_error]
   end
 
-  defp source_pointer(resource, field, path, type) when type in [:create, :update] and not is_nil(field) do
-    if  path == [] && Ash.Resource.Info.public_relationship(resource, field) do
-        "/data/relationships/#{field}"
-
-      else
-        "/data/attributes/#{Enum.join(List.wrap(path) ++ [field], "/")}"
+  defp source_pointer(resource, field, path, type)
+       when type in [:create, :update] and not is_nil(field) do
+    if path == [] && Ash.Resource.Info.public_relationship(resource, field) do
+      "/data/relationships/#{field}"
+    else
+      "/data/attributes/#{Enum.join(List.wrap(path) ++ [field], "/")}"
     end
   end
 
