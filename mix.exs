@@ -15,7 +15,6 @@ defmodule AshJsonApi.MixProject do
       description: @description,
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      test_coverage: [tool: ExCoveralls],
       consolidate_protocols: Mix.env() == :prod,
       docs: docs(),
       preferred_cli_env: [
@@ -132,8 +131,7 @@ defmodule AshJsonApi.MixProject do
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
-      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.13", only: [:dev, :test]}
+      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false}
     ]
   end
 

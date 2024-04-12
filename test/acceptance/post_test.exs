@@ -3,7 +3,6 @@ defmodule Test.Acceptance.PostTest do
 
   defmodule Review do
     use Ash.Resource,
-      domain: Test.Acceptance.PostTest.Domain,
       data_layer: :embedded
 
     actions do
