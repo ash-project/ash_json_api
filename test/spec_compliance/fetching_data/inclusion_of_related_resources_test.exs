@@ -219,7 +219,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   # --------------------------
   # If an endpoint does not support the include parameter, it MUST respond with 400 Bad Request to any requests that include it.
   # --------------------------
-  describe "400 Bad Request for requests that with include parameter for endpoints without include parameter support" do
+  test "400 Bad Request for requests that with include parameter for endpoints without include parameter support" do
     # GET /posts/1?include=foobar
     author =
       Author

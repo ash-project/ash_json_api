@@ -234,7 +234,7 @@ defmodule Test.Acceptance.PostTest do
     end
   end
 
-  describe "post with upsert" do
+  test "post with upsert" do
     post =
       Ash.create!(
         Ash.Changeset.for_create(Post, :create, %{name: "Post"})

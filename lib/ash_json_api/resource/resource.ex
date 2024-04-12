@@ -418,13 +418,20 @@ defmodule AshJsonApi.Resource do
     AshJsonApi.Resource.Transformers.RequirePrimaryKey
   ]
 
+  @persisters [
+    AshJsonApi.Resource.Persisters.DefineRouter
+  ]
+
   @sections [@json_api]
 
   @moduledoc """
   The entrypoint for adding JSON:API behavior to a resource"
   """
 
-  use Spark.Dsl.Extension, sections: @sections, transformers: @transformers
+  use Spark.Dsl.Extension,
+    sections: @sections,
+    transformers: @transformers,
+    persisters: @persisters
 
   @deprecated "See AshJsonApi.Resource.Info.type/1"
   defdelegate type(resource), to: AshJsonApi.Resource.Info

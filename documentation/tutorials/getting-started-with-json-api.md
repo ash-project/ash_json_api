@@ -33,12 +33,15 @@ Both your Resource and domain need to use the extension for the JSON API.
 
 ```elixir
 defmodule Helpdesk.Support do
-  use Ash.Domain, extensions: [AshJsonApi.Domain]
+  use Ash.Domain, extensions: [Module.concat("AshJsonApi.Domain")]
   ...
 ```
 
-Additionally, your Resource requires a type, a base route and a set of allowed HTTP methods
-and what action they will trigger.
+> ### Whats up with `Module.concat/1`? {: .info}
+>
+> This `Module.concat/1` prevents a [compile-time dependency](https://dashbit.co/blog/speeding-up-re-compilation-of-elixir-projects) from this router module to the domain modules. It is an implementation detail of how `forward/2` works that you end up with a compile-time dependency on the schema, but there is no need for this dependency, and that dependency can have *drastic* impacts on your compile times in certain scenarios.
+
+Additionally, your Resource requires a type, a base route and a set of allowed HTTP methods and what action they will trigger.
 
 ```elixir
 defmodule Helpdesk.Support.Ticket do
