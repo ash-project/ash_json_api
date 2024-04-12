@@ -33,7 +33,7 @@ Both your Resource and domain need to use the extension for the JSON API.
 
 ```elixir
 defmodule Helpdesk.Support do
-  use Ash.Domain, extensions: [Module.concat("AshJsonApi.Domain")]
+  use Ash.Domain, extensions: [Module.concat(["AshJsonApi.Domain"])]
   ...
 ```
 
