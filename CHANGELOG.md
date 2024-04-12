@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0-rc.3](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2024-04-12)
+
+
+
+
+### Improvements:
+
+* new, hand-written dynamic router
+
 ## [v1.0.0-rc.2](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2024-04-11)
 
 
