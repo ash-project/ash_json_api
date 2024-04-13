@@ -33,15 +33,9 @@ Both your Resource and domain need to use the extension for the JSON API.
 
 ```elixir
 defmodule Helpdesk.Support do
-  use Ash.Domain, extensions: [Module.concat(["AshJsonApi.Domain"])]
+  use Ash.Domain, extensions: [AshJsonApi.Domain]
   ...
 ```
-
-> ### Whats up with `Module.concat/1`? {: .info}
->
-> This `Module.concat/1` prevents a [compile-time dependency](https://dashbit.co/blog/speeding-up-re-compilation-of-elixir-projects) from this router module to the domain modules. It is an implementation detail of how `forward/2` works that you end up with a compile-time dependency on the schema, but there is no need for this dependency, and that dependency can have *drastic* impacts on your compile times in certain scenarios.
-
-Additionally, your Resource requires a type, a base route and a set of allowed HTTP methods and what action they will trigger.
 
 ```elixir
 defmodule Helpdesk.Support.Ticket do
@@ -106,14 +100,19 @@ We will later forward requests from your Applications primary (Phoenix) Router t
 defmodule HelpdeskWeb.JsonApiRouter do
   use AshJsonApi.Router,
     # The api modules you want to serve
-    domains: [Helpdesk.Support],
+    domains: [Module.concat(["Helpdesk.Support"])],
     # optionally a json_schema route
     json_schema: "/json_schema",
     # optionally an open_api route
     open_api: "/open_api"
-
 end
 ```
+
+> ### Whats up with `Module.concat/1`? {: .info}
+>
+> This `Module.concat/1` prevents a [compile-time dependency](https://dashbit.co/blog/speeding-up-re-compilation-of-elixir-projects) from this router module to the domain modules. It is an implementation detail of how `forward/2` works that you end up with a compile-time dependency on the schema, but there is no need for this dependency, and that dependency can have *drastic* impacts on your compile times in certain scenarios.
+
+Additionally, your Resource requires a type, a base route and a set of allowed HTTP methods and what action they will trigger.
 
 ## Add the routes from your domain module(s)
 
