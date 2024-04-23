@@ -17,10 +17,6 @@ defmodule AshJsonApi.MixProject do
       start_permanent: Mix.env() == :prod,
       consolidate_protocols: Mix.env() == :prod,
       docs: docs(),
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.github": :test
-      ],
       dialyzer: [
         plt_add_apps: [:ex_unit, :open_api_spex]
       ],
@@ -131,7 +127,8 @@ defmodule AshJsonApi.MixProject do
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
-      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false}
+      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:mix_audit, ">= 0.0.0", only: [:dev, :test], runtime: false}
     ]
   end
 
