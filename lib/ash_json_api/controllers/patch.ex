@@ -16,7 +16,6 @@ defmodule AshJsonApi.Controllers.Patch do
 
     conn
     |> Request.from(resource, action, domain, route)
-    |> Helpers.fetch_record_from_path()
     |> Helpers.update_record()
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->

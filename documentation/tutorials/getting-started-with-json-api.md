@@ -1,7 +1,6 @@
 # Getting started with JSON:API
 
-The easiest set up involves using Phoenix, but it should be roughly the same to set up an
-application using only Plug. We are showing examples using Phoenix Routers.
+The easiest set up involves using Phoenix, but it should be roughly the same to set up an application using only Plug. We are showing examples using Phoenix Routers.
 
 The resulting JSON APIs follow the specifications from https://jsonapi.org/.
 
@@ -110,7 +109,7 @@ end
 
 > ### Whats up with `Module.concat/1`? {: .info}
 >
-> This `Module.concat/1` prevents a [compile-time dependency](https://dashbit.co/blog/speeding-up-re-compilation-of-elixir-projects) from this router module to the domain modules. It is an implementation detail of how `forward/2` works that you end up with a compile-time dependency on the schema, but there is no need for this dependency, and that dependency can have *drastic* impacts on your compile times in certain scenarios.
+> This `Module.concat/1` prevents a [compile-time dependency](https://dashbit.co/blog/speeding-up-re-compilation-of-elixir-projects) from this router module to the domain modules. It is an implementation detail of how `forward/2` works that you end up with a compile-time dependency on the schema, but there is no need for this dependency, and that dependency can have _drastic_ impacts on your compile times in certain scenarios.
 
 Additionally, your Resource requires a type, a base route and a set of allowed HTTP methods and what action they will trigger.
 

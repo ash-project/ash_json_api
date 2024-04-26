@@ -103,22 +103,39 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def update_record(request, attributes \\ &Map.merge(&1.attributes, &1.arguments)) do
-    chain(request, fn %{assigns: %{result: result}} ->
-      result
-      |> Ash.Changeset.for_update(
-        request.action.name,
-        attributes.(request),
-        Request.opts(request)
-      )
-      |> Ash.Changeset.set_context(request.context)
-      |> Ash.Changeset.load(fields(request, request.resource) ++ (request.includes_keyword || []))
-      |> Ash.update(Request.opts(request))
+    chain(request, fn request ->
+      request
+      |> fetch_query()
       |> case do
-        {:ok, record} ->
-          Request.assign(request, :result, record)
-
         {:error, error} ->
-          Request.add_error(request, error, :update)
+          Request.add_error(request, error, :fetch_from_path)
+
+        {:ok, filter, query} ->
+          query
+          |> Ash.bulk_update(
+            request.action.name,
+            attributes.(request),
+            Request.opts(request,
+              return_errors?: true,
+              notify?: true,
+              strategy: [:atomic, :stream, :atomic_batches],
+              allow_stream_with: :full_read,
+              return_records?: true,
+              context: request.context || %{},
+              load: fields(request, request.resource) ++ (request.includes_keyword || [])
+            )
+          )
+          |> case do
+            %Ash.BulkResult{status: :success, records: [result | _]} ->
+              request |> Request.assign(:result, result) |> Request.assign(:record_from_path, result)
+
+            %Ash.BulkResult{status: :success, records: []} ->
+              error = Error.NotFound.exception(filter: filter, resource: request.resource)
+              Request.add_error(request, error, :fetch_from_path)
+
+            %Ash.BulkResult{status: :error, errors: errors} ->
+              Request.add_error(request, errors, :update)
+          end
       end
     end)
   end
@@ -139,7 +156,6 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> case do
         {:ok, updated} ->
           request
-          |> Request.assign(:record_from_path, updated)
           |> Request.assign(:result, Map.get(updated, relationship_name))
 
         {:error, error} ->
@@ -164,7 +180,6 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> case do
         {:ok, updated} ->
           request
-          |> Request.assign(:record_from_path, updated)
           |> Request.assign(:result, Map.get(updated, relationship_name))
 
         {:error, error} ->
@@ -192,7 +207,6 @@ defmodule AshJsonApi.Controllers.Helpers do
           |> case do
             {:ok, updated} ->
               request
-              |> Request.assign(:record_from_path, updated)
               |> Request.assign(:result, Map.get(updated, relationship_name))
 
             {:error, error} ->
@@ -206,17 +220,40 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   def destroy_record(request) do
-    chain(request, fn %{assigns: %{result: result}} = request ->
-      result
-      |> Ash.Changeset.for_destroy(request.action.name, %{}, Request.opts(request))
-      |> Ash.Changeset.set_context(request.context)
-      |> Ash.destroy(Request.opts(request))
+    chain(request, fn request ->
+      request
+      |> fetch_query()
       |> case do
-        :ok ->
-          Request.assign(request, :result, nil)
-
         {:error, error} ->
-          Request.add_error(request, error, :destroy)
+          Request.add_error(request, error, :fetch_from_path)
+
+        {:ok, filter, query} ->
+
+        query
+        |> Ash.bulk_destroy(
+          request.action.name,
+          %{},
+          Request.opts(request,
+            return_errors?: true,
+            notify?: true,
+            strategy: [:atomic, :stream, :atomic_batches],
+            allow_stream_with: :full_read,
+            return_records?: true,
+            context: request.context || %{},
+            load: fields(request, request.resource) ++ (request.includes_keyword || [])
+          )
+        )
+        |> case do
+          %Ash.BulkResult{status: :success, records: [result | _]} ->
+            request |> Request.assign(:result, result) |> Request.assign(:record_from_path, result)
+
+          %Ash.BulkResult{status: :success, records: []} ->
+            error = Error.NotFound.exception(filter: filter, resource: request.resource)
+            Request.add_error(request, error, :fetch_from_path)
+
+          %Ash.BulkResult{status: :error, errors: errors} ->
+            Request.add_error(request, errors, :update)
+        end
       end
     end)
   end
@@ -237,6 +274,69 @@ defmodule AshJsonApi.Controllers.Helpers do
           {Map.put(params, argument.name, value), filter}
       end
     end)
+  end
+
+  def fetch_query(%{resource: request_resource} = request, through_resource \\ nil, load \\ nil) do
+    resource = through_resource || request_resource
+
+    action =
+      if through_resource || request.action.type != :read do
+        if request.route.read_action do
+          Ash.Resource.Info.action(request.resource, request.route.read_action)
+        else
+          Ash.Resource.Info.primary_action!(resource, :read)
+        end
+      else
+        request.action
+      end
+
+    {params, filter} = path_args_and_filter(request.path_params, resource, action)
+
+    action = action.name
+
+    fields_to_load =
+      if through_resource do
+        []
+      else
+        fields(request, request.resource)
+      end
+
+    query =
+      if filter do
+        case Ash.Filter.parse_input(resource, filter) do
+          {:ok, parsed} ->
+            {:ok, Ash.Query.filter(resource, ^parsed)}
+
+          {:error, error} ->
+            {:error, error}
+        end
+      else
+        {:ok, resource}
+      end
+
+    case query do
+      {:error, error} ->
+        {:error, Request.add_error(request, error, :filter)}
+
+      {:ok, query} ->
+        query =
+          if load do
+            Ash.Query.load(query, load)
+          else
+            query
+          end
+
+        {:ok, filter,
+         query
+         |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
+         |> Ash.Query.set_context(request.context)
+         |> Ash.Query.for_read(
+           action,
+           Map.merge(request.arguments, params),
+           Keyword.put(Request.opts(request), :page, false)
+         )
+         |> Ash.Query.limit(1)}
+    end
   end
 
   def fetch_record_from_path(request, through_resource \\ nil, load \\ nil) do
@@ -356,7 +456,6 @@ defmodule AshJsonApi.Controllers.Helpers do
         |> paginator_or_list()
 
       request
-      |> Request.assign(:record_from_path, record)
       |> Request.assign(:result, paginated_result)
     end)
   end

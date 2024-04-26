@@ -86,6 +86,7 @@ defmodule Test.Acceptance.PatchTest do
         primary? true
         accept([:id, :email])
         argument(:author, :map)
+        require_atomic?(false)
 
         change(manage_relationship(:author, type: :append_and_remove))
       end
