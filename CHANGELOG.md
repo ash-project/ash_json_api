@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0-rc.4](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2024-04-26)
+
+
+
+
+### Improvements:
+
+* update ash
+
+* update to bulk operations now that we can test them in ets
+
 ## [v1.0.0-rc.3](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2024-04-12)
 
 
