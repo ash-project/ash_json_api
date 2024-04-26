@@ -127,7 +127,9 @@ defmodule AshJsonApi.Controllers.Helpers do
           )
           |> case do
             %Ash.BulkResult{status: :success, records: [result | _]} ->
-              request |> Request.assign(:result, result) |> Request.assign(:record_from_path, result)
+              request
+              |> Request.assign(:result, result)
+              |> Request.assign(:record_from_path, result)
 
             %Ash.BulkResult{status: :success, records: []} ->
               error = Error.NotFound.exception(filter: filter, resource: request.resource)
@@ -228,32 +230,33 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error, :fetch_from_path)
 
         {:ok, filter, query} ->
-
-        query
-        |> Ash.bulk_destroy(
-          request.action.name,
-          %{},
-          Request.opts(request,
-            return_errors?: true,
-            notify?: true,
-            strategy: [:atomic, :stream, :atomic_batches],
-            allow_stream_with: :full_read,
-            return_records?: true,
-            context: request.context || %{},
-            load: fields(request, request.resource) ++ (request.includes_keyword || [])
+          query
+          |> Ash.bulk_destroy(
+            request.action.name,
+            %{},
+            Request.opts(request,
+              return_errors?: true,
+              notify?: true,
+              strategy: [:atomic, :stream, :atomic_batches],
+              allow_stream_with: :full_read,
+              return_records?: true,
+              context: request.context || %{},
+              load: fields(request, request.resource) ++ (request.includes_keyword || [])
+            )
           )
-        )
-        |> case do
-          %Ash.BulkResult{status: :success, records: [result | _]} ->
-            request |> Request.assign(:result, result) |> Request.assign(:record_from_path, result)
+          |> case do
+            %Ash.BulkResult{status: :success, records: [result | _]} ->
+              request
+              |> Request.assign(:result, result)
+              |> Request.assign(:record_from_path, result)
 
-          %Ash.BulkResult{status: :success, records: []} ->
-            error = Error.NotFound.exception(filter: filter, resource: request.resource)
-            Request.add_error(request, error, :fetch_from_path)
+            %Ash.BulkResult{status: :success, records: []} ->
+              error = Error.NotFound.exception(filter: filter, resource: request.resource)
+              Request.add_error(request, error, :fetch_from_path)
 
-          %Ash.BulkResult{status: :error, errors: errors} ->
-            Request.add_error(request, errors, :update)
-        end
+            %Ash.BulkResult{status: :error, errors: errors} ->
+              Request.add_error(request, errors, :update)
+          end
       end
     end)
   end

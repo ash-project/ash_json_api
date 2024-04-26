@@ -117,7 +117,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 3.0.0-rc.0")},
+      {:ash, ash_version("~> 3.0.0-rc and >= 3.0.0-rc.31")},
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4"},
