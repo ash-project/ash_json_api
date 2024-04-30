@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0-rc.5](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2024-04-30)
+
+
+
+
+### Bug Fixes:
+
+* ensure all assertions return conn
+
 ## [v1.0.0-rc.4](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2024-04-26)
 
 
