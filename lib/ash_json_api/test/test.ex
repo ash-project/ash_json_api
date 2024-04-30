@@ -133,11 +133,14 @@ defmodule AshJsonApi.Test do
   defmacro assert_data_equals(conn, expected_data) do
     quote bind_quoted: [conn: conn, expected_data: expected_data] do
       assert %{"data" => ^expected_data} = conn.resp_body
+
+      conn
     end
   end
 
   def assert_response_header_equals(conn, header, value) do
     assert get_resp_header(conn, header) == [value]
+    conn
   end
 
   defmacro assert_attribute_equals(conn, attribute, expected_value) do
@@ -219,6 +222,8 @@ defmodule AshJsonApi.Test do
       assert %{"data" => %{"attributes" => attributes}} = conn.resp_body
 
       refute Map.has_key?(attributes, attribute)
+
+      conn
     end
   end
 
@@ -231,6 +236,8 @@ defmodule AshJsonApi.Test do
                  Map.get(error, key) == val
                end)
              end)
+
+      conn
     end
   end
 
@@ -242,6 +249,8 @@ defmodule AshJsonApi.Test do
       assert Enum.any?(included, fn included ->
                unquote(function).(included)
              end)
+
+      conn
     end
   end
 
@@ -255,6 +264,8 @@ defmodule AshJsonApi.Test do
                  AshJsonApi.Test.uri_with_query(resp_links[key]),
                "expected #{key} link to be #{resp_links[key]}, got: #{value}"
       end
+
+      conn
     end
   end
 
