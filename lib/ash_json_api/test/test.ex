@@ -237,7 +237,7 @@ defmodule AshJsonApi.Test do
                end)
              end)
 
-      conn
+      unquote(conn)
     end
   end
 
@@ -250,7 +250,7 @@ defmodule AshJsonApi.Test do
                unquote(function).(included)
              end)
 
-      conn
+      unquote(conn)
     end
   end
 
