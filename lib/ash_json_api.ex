@@ -6,7 +6,7 @@ defmodule AshJsonApi do
 
   For Resource DSL documentation, see `AshJsonApi.Resource`
 
-  To get started, see the [getting started guide](/documentation/tutorials/getting-started-with-json-api.md)
+  To get started, see the [getting started guide](/documentation/tutorials/getting-started-with-ash-json-api.md)
   """
 
   @deprecated "See `AshJsonApi.Domain.Info.prefix/1`"

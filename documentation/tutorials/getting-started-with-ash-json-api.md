@@ -1,4 +1,4 @@
-# Getting started with JSON:API
+# Getting started with AshJsonApi
 
 The easiest set up involves using Phoenix, but it should be roughly the same to set up an application using only Plug. We are showing examples using Phoenix Routers.
 

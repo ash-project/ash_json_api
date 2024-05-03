@@ -2,7 +2,7 @@ defmodule AshJsonApi.MixProject do
   use Mix.Project
 
   @description """
-  A JSON API front end for the `Ash` resource framework
+  The JSON:API extension for the Ash Framework.
   """
 
   @version "1.0.0-rc.6"
@@ -43,13 +43,15 @@ defmodule AshJsonApi.MixProject do
 
   defp docs do
     [
-      main: "getting-started-with-json-api",
+      main: "readme",
       source_ref: "v#{@version}",
       extras: [
-        "documentation/tutorials/getting-started-with-json-api.md",
-        "documentation/topics/relationships.md",
+        {"README.md", title: "Home"},
+        "documentation/tutorials/getting-started-with-ash-json-api.md",
+        "documentation/topics/what-is-ash-json-api.md",
         "documentation/topics/open-api.md",
-        "documentation/how_to/upgrade.md",
+        "documentation/topics/relationships.md",
+        "documentation/topics/upgrade.md",
         "documentation/dsls/DSL:-AshJsonApi.Resource.md",
         "documentation/dsls/DSL:-AshJsonApi.Domain.md"
       ],
