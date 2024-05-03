@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0-rc.6](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.5...v1.0.0-rc.6) (2024-05-03)
+
+
+
+
+### Bug Fixes:
+
+* bug when multiple domains are used in a router (#134)
+
 ## [v1.0.0-rc.5](https://github.com/ash-project/ash_json_api/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2024-04-30)
 
 
