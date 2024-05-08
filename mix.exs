@@ -60,7 +60,10 @@ defmodule AshJsonApi.MixProject do
         Tutorials: ~r'documentation/tutorials',
         "How To": ~r'documentation/how_to',
         Topics: ~r'documentation/topics',
-        DSLs: ~r'documentation/dsls'
+        DSLs: ~r'documentation/dsls',
+        "About AshJsonApi": [
+          "CHANGELOG.md"
+        ]
       ],
       before_closing_head_tag: fn type ->
         if type == :html do
