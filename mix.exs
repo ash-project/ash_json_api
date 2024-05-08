@@ -53,7 +53,8 @@ defmodule AshJsonApi.MixProject do
         "documentation/topics/relationships.md",
         "documentation/topics/upgrade.md",
         "documentation/dsls/DSL:-AshJsonApi.Resource.md",
-        "documentation/dsls/DSL:-AshJsonApi.Domain.md"
+        "documentation/dsls/DSL:-AshJsonApi.Domain.md",
+        "CHANGELOG.md"
       ],
       groups_for_extras: [
         Tutorials: ~r'documentation/tutorials',
