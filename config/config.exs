@@ -14,6 +14,6 @@ if Mix.env() == :dev do
     manage_mix_version?: true,
     # Instructs the tool to manage the version in your README.md
     # Pass in `true` to use `"README.md"` or a string to customize
-    manage_readme_version: "documentation/tutorials/getting-started-with-json-api.md",
+    manage_readme_version: "documentation/tutorials/getting-started-with-ash-json-api.md",
     version_tag_prefix: "v"
 end
