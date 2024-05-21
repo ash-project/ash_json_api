@@ -32,7 +32,7 @@ Your Router module file (the module that has `use AshJsonApi.Router` in it) will
 
 ```elixir
 defmodule MyApp.MyApi.Router do
-  use AshJsonApi.Domain.Router,
+  use AshJsonApi.Router,
     domains: [MyApp.Domain1, MyApp.Domain2],
     ...
 ```
