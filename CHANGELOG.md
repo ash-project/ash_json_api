@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.1.0](https://github.com/ash-project/ash_json_api/compare/v1.0.0...v1.1.0) (2024-05-24)
+
+
+
+
+### Features:
+
+* support routes on the domain:
+
 ## [v1.0.0](https://github.com/ash-project/ash_json_api/compare/v1.0.0...v0.34.2)
 
 This changelog has been restarted. See `/documentation/0.x-CHANGELOG.md` for previous changelogs.
