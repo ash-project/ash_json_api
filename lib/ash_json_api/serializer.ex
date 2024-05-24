@@ -470,7 +470,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_one_record_self_link(links, request, %resource{} = record) do
     resource
-    |> AshJsonApi.Resource.route(%{type: :get, primary?: true})
+    |> AshJsonApi.Resource.route(request.all_domains, %{type: :get, primary?: true})
     |> case do
       nil ->
         links
@@ -522,7 +522,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_relationship_link(links, request, %resource{} = record, relationship) do
     resource
-    |> AshJsonApi.Resource.route(%{
+    |> AshJsonApi.Resource.route(request.all_domains, %{
       relationship: relationship.name,
       primary?: true,
       action_type: :relationship
@@ -543,7 +543,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_related_link(links, request, %resource{} = record, relationship) do
     resource
-    |> AshJsonApi.Resource.route(%{
+    |> AshJsonApi.Resource.route(request.all_domains, %{
       relationship: relationship.name,
       primary?: true,
       action_type: :get_related

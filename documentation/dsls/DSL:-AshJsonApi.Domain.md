@@ -12,6 +12,17 @@ Global configuration for JSON:API
 
 ### Nested DSLs
  * [open_api](#json_api-open_api)
+ * [routes](#json_api-routes)
+   * get
+   * index
+   * post
+   * patch
+   * delete
+   * related
+   * relationship
+   * post_to_relationship
+   * patch_relationship
+   * delete_from_relationship
 
 
 ### Examples
@@ -30,7 +41,7 @@ end
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`router`](#json_api-router){: #json_api-router } | `atom` |  | The router that you created for this Domain. Use by test helpers to send requests |
+| [`router`](#json_api-router){: #json_api-router } | `atom` |  | The router that you created for this Domain. Used by test helpers to send requests |
 | [`show_raised_errors?`](#json_api-show_raised_errors?){: #json_api-show_raised_errors? } | `boolean` | `false` | For security purposes, if an error is *raised* then Ash simply shows a generic error. If you want to show those errors, set this to true. |
 | [`prefix`](#json_api-prefix){: #json_api-prefix } | `String.t` |  | The route prefix at which you are serving the JSON:API |
 | [`serve_schema?`](#json_api-serve_schema?){: #json_api-serve_schema? } | `boolean` | `false` | Whether or not create a /schema route that serves the JSON schema of your API |
@@ -67,6 +78,444 @@ end
 | [`group_by`](#json_api-open_api-group_by){: #json_api-open_api-group_by } | `:domain \| :resource` | `:resource` | Group by :domain or :resource |
 
 
+
+
+## json_api.routes
+Configure the routes that will be exposed via the JSON:API
+
+### Nested DSLs
+ * [get](#json_api-routes-get)
+ * [index](#json_api-routes-index)
+ * [post](#json_api-routes-post)
+ * [patch](#json_api-routes-patch)
+ * [delete](#json_api-routes-delete)
+ * [related](#json_api-routes-related)
+ * [relationship](#json_api-routes-relationship)
+ * [post_to_relationship](#json_api-routes-post_to_relationship)
+ * [patch_relationship](#json_api-routes-patch_relationship)
+ * [delete_from_relationship](#json_api-routes-delete_from_relationship)
+
+
+### Examples
+```
+routes do
+  base "/posts"
+
+  get :read
+  get :me, route: "/me"
+  index :read
+  post :confirm_name, route: "/confirm_name"
+  patch :update
+  related :comments, :read
+  relationship :comments, :read
+  post_to_relationship :comments
+  patch_relationship :comments
+  delete_from_relationship :comments
+end
+
+```
+
+
+
+
+## json_api.routes.get
+```elixir
+get resource, action
+```
+
+
+A GET route to retrieve a single record
+
+
+
+### Examples
+```
+get :read
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-get-resource){: #json_api-routes-get-resource } | `module` |  | The resource that the route's action is defined on |
+| [`action`](#json_api-routes-get-action){: #json_api-routes-get-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-get-route){: #json_api-routes-get-route } | `String.t` | `"/:id"` | The path of the route |
+| [`default_fields`](#json_api-routes-get-default_fields){: #json_api-routes-get-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-get-primary?){: #json_api-routes-get-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.index
+```elixir
+index resource, action
+```
+
+
+A GET route to retrieve a list of records
+
+
+
+### Examples
+```
+index :read
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-index-resource){: #json_api-routes-index-resource } | `module` |  | The resource that the route's action is defined on |
+| [`action`](#json_api-routes-index-action){: #json_api-routes-index-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`paginate?`](#json_api-routes-index-paginate?){: #json_api-routes-index-paginate? } | `boolean` | `true` |  |
+| [`route`](#json_api-routes-index-route){: #json_api-routes-index-route } | `String.t` | `"/"` | The path of the route |
+| [`default_fields`](#json_api-routes-index-default_fields){: #json_api-routes-index-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-index-primary?){: #json_api-routes-index-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.post
+```elixir
+post resource, action
+```
+
+
+A POST route to create a record
+
+
+
+### Examples
+```
+post :create
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-post-resource){: #json_api-routes-post-resource } | `module` |  | The resource that the route's action is defined on |
+| [`action`](#json_api-routes-post-action){: #json_api-routes-post-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-post-route){: #json_api-routes-post-route } | `String.t` | `"/"` | The path of the route |
+| [`default_fields`](#json_api-routes-post-default_fields){: #json_api-routes-post-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-post-primary?){: #json_api-routes-post-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`relationship_arguments`](#json_api-routes-post-relationship_arguments){: #json_api-routes-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
+| [`upsert?`](#json_api-routes-post-upsert?){: #json_api-routes-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
+| [`upsert_identity`](#json_api-routes-post-upsert_identity){: #json_api-routes-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.patch
+```elixir
+patch resource, action
+```
+
+
+A PATCH route to update a record
+
+
+
+### Examples
+```
+patch :update
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-patch-resource){: #json_api-routes-patch-resource } | `module` |  | The resource that the route's action is defined on |
+| [`action`](#json_api-routes-patch-action){: #json_api-routes-patch-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`relationship_arguments`](#json_api-routes-patch-relationship_arguments){: #json_api-routes-patch-relationship_arguments } | `any` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
+| [`read_action`](#json_api-routes-patch-read_action){: #json_api-routes-patch-read_action } | `atom` |  | The read action to use to look the record up before updating |
+| [`route`](#json_api-routes-patch-route){: #json_api-routes-patch-route } | `String.t` | `"/:id"` | The path of the route |
+| [`default_fields`](#json_api-routes-patch-default_fields){: #json_api-routes-patch-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-patch-primary?){: #json_api-routes-patch-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.delete
+```elixir
+delete resource, action
+```
+
+
+A DELETE route to destroy a record
+
+
+
+### Examples
+```
+delete :destroy
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-delete-resource){: #json_api-routes-delete-resource } | `module` |  | The resource that the route's action is defined on |
+| [`action`](#json_api-routes-delete-action){: #json_api-routes-delete-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`read_action`](#json_api-routes-delete-read_action){: #json_api-routes-delete-read_action } | `atom` |  | The read action to use to look the record up before updating |
+| [`route`](#json_api-routes-delete-route){: #json_api-routes-delete-route } | `String.t` | `"/:id"` | The path of the route |
+| [`default_fields`](#json_api-routes-delete-default_fields){: #json_api-routes-delete-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-delete-primary?){: #json_api-routes-delete-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.related
+```elixir
+related resource, relationship, action
+```
+
+
+A GET route to read the related resources of a relationship
+
+
+
+### Examples
+```
+related :comments, :read
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-related-resource){: #json_api-routes-related-resource } | `module` |  | The resource that the route's action is defined on |
+| [`relationship`](#json_api-routes-related-relationship){: #json_api-routes-related-relationship .spark-required} | `atom` |  |  |
+| [`action`](#json_api-routes-related-action){: #json_api-routes-related-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-related-route){: #json_api-routes-related-route } | `String.t` |  | The path of the route - Defaults to /:id/[relationship_name] |
+| [`default_fields`](#json_api-routes-related-default_fields){: #json_api-routes-related-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-related-primary?){: #json_api-routes-related-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.relationship
+```elixir
+relationship resource, relationship, action
+```
+
+
+A READ route to read the relationship, returns resource identifiers.
+
+
+
+### Examples
+```
+relationship :comments, :read
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-relationship-resource){: #json_api-routes-relationship-resource } | `module` |  | The resource that the route's action is defined on |
+| [`relationship`](#json_api-routes-relationship-relationship){: #json_api-routes-relationship-relationship .spark-required} | `atom` |  |  |
+| [`action`](#json_api-routes-relationship-action){: #json_api-routes-relationship-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-relationship-route){: #json_api-routes-relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
+| [`default_fields`](#json_api-routes-relationship-default_fields){: #json_api-routes-relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-relationship-primary?){: #json_api-routes-relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.post_to_relationship
+```elixir
+post_to_relationship resource, relationship
+```
+
+
+A POST route to create related entities using resource identifiers
+
+
+
+### Examples
+```
+post_to_relationship :comments
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-post_to_relationship-resource){: #json_api-routes-post_to_relationship-resource } | `module` |  | The resource that the route's action is defined on |
+| [`relationship`](#json_api-routes-post_to_relationship-relationship){: #json_api-routes-post_to_relationship-relationship .spark-required} | `atom` |  |  |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-post_to_relationship-route){: #json_api-routes-post_to_relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
+| [`default_fields`](#json_api-routes-post_to_relationship-default_fields){: #json_api-routes-post_to_relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-post_to_relationship-primary?){: #json_api-routes-post_to_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.patch_relationship
+```elixir
+patch_relationship resource, relationship
+```
+
+
+A PATCH route to update a relationship using resource identifiers
+
+
+
+### Examples
+```
+patch_relationship :comments
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-patch_relationship-resource){: #json_api-routes-patch_relationship-resource } | `module` |  | The resource that the route's action is defined on |
+| [`relationship`](#json_api-routes-patch_relationship-relationship){: #json_api-routes-patch_relationship-relationship .spark-required} | `atom` |  |  |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-patch_relationship-route){: #json_api-routes-patch_relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
+| [`default_fields`](#json_api-routes-patch_relationship-default_fields){: #json_api-routes-patch_relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-patch_relationship-primary?){: #json_api-routes-patch_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.delete_from_relationship
+```elixir
+delete_from_relationship resource, relationship
+```
+
+
+A DELETE route to remove related entities using resource identifiers
+
+
+
+### Examples
+```
+delete_from_relationship :comments
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`resource`](#json_api-routes-delete_from_relationship-resource){: #json_api-routes-delete_from_relationship-resource } | `module` |  | The resource that the route's action is defined on |
+| [`relationship`](#json_api-routes-delete_from_relationship-relationship){: #json_api-routes-delete_from_relationship-relationship .spark-required} | `atom` |  |  |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-delete_from_relationship-route){: #json_api-routes-delete_from_relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
+| [`default_fields`](#json_api-routes-delete_from_relationship-default_fields){: #json_api-routes-delete_from_relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-delete_from_relationship-primary?){: #json_api-routes-delete_from_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
 
 
 

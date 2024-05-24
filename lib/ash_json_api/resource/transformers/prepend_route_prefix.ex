@@ -5,7 +5,7 @@ defmodule AshJsonApi.Resource.Transformers.PrependRoutePrefix do
   alias Spark.Dsl.Transformer
 
   def transform(dsl) do
-    prefix = Transformer.get_option(dsl, [:json_api, :routes], :base)
+    prefix = AshJsonApi.Resource.Info.base_route(dsl)
 
     dsl
     |> Transformer.get_entities([:json_api, :routes])

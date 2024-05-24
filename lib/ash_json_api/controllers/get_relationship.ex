@@ -12,11 +12,12 @@ defmodule AshJsonApi.Controllers.GetRelationship do
     action = options[:action]
     domain = options[:domain]
     route = options[:route]
+    all_domains = options[:all_domains]
     relationship = Ash.Resource.Info.public_relationship(options[:resource], route.relationship)
     resource = relationship.destination
 
     conn
-    |> Request.from(resource, action, domain, route)
+    |> Request.from(resource, action, domain, all_domains, route)
     |> Helpers.fetch_related(options[:resource])
     |> Helpers.render_or_render_errors(conn, fn request ->
       case relationship do

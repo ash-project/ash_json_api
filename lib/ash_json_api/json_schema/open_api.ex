@@ -476,19 +476,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @doc """
     Paths (routes) from the domain.
     """
-    @spec paths(domain :: module | [module]) :: Paths.t()
-    def paths(domains) when is_list(domains) do
+    @spec paths(domain :: module | [module], module | [module]) :: Paths.t()
+    def paths(domains, all_domains) when is_list(domains) do
       domains
-      |> Enum.map(&paths/1)
+      |> Enum.map(&paths(&1, all_domains))
       |> Enum.reduce(&Map.merge/2)
     end
 
-    def paths(domain) do
+    def paths(domain, all_domains) do
       domain
       |> resources()
       |> Enum.flat_map(fn resource ->
         resource
-        |> AshJsonApi.Resource.Info.routes()
+        |> AshJsonApi.Resource.Info.routes(all_domains)
         |> Enum.map(&route_operation(&1, domain, resource))
       end)
       |> Enum.group_by(fn {path, _route_op} -> path end, fn {_path, route_op} -> route_op end)

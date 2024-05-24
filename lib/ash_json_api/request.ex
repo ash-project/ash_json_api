@@ -46,6 +46,7 @@ defmodule AshJsonApi.Request do
     sort: [],
     fields: %{},
     errors: [],
+    all_domains: [],
     # assigns is used by controllers to store state while piping
     # the request around
     assigns: %{}
@@ -60,10 +61,11 @@ defmodule AshJsonApi.Request do
           resource :: Ash.Resource.t(),
           action :: atom,
           Ash.Domain.t(),
+          list(Ash.Domain.t()),
           AshJsonApi.Resource.Route.t()
         ) ::
           t
-  def from(conn, resource, action, domain, route) do
+  def from(conn, resource, action, domain, all_domains, route) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
     %__MODULE__{
@@ -79,6 +81,7 @@ defmodule AshJsonApi.Request do
       tenant: get_tenant(conn),
       context: get_context(conn),
       body: conn.body_params,
+      all_domains: all_domains,
       schema: AshJsonApi.JsonSchema.route_schema(route, domain, resource),
       relationship: route.relationship,
       route: route,

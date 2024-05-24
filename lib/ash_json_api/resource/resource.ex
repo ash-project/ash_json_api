@@ -330,6 +330,9 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
+  @doc false
+  def routes, do: @routes
+
   @primary_key %Spark.Dsl.Section{
     name: :primary_key,
     describe: "Encode the id of the JSON API response from selected attributes of a resource",
@@ -449,7 +452,7 @@ defmodule AshJsonApi.Resource do
   defdelegate primary_key_delimiter(resource), to: AshJsonApi.Resource.Info
 
   @deprecated "See AshJsonApi.Resource.Info.routes/1"
-  defdelegate routes(resource), to: AshJsonApi.Resource.Info
+  defdelegate routes(resource, domains), to: AshJsonApi.Resource.Info
 
   def encode_primary_key(%resource{} = record) do
     case primary_key_fields(resource) do
@@ -470,9 +473,9 @@ defmodule AshJsonApi.Resource do
     end
   end
 
-  def route(resource, criteria \\ %{}) do
+  def route(resource, domains, criteria \\ %{}) do
     resource
-    |> routes()
+    |> routes(domains)
     |> Enum.find(fn route ->
       Map.take(route, Map.keys(criteria)) == criteria
     end)

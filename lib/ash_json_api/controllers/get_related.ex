@@ -14,9 +14,10 @@ defmodule AshJsonApi.Controllers.GetRelated do
     route = options[:route]
     relationship = Ash.Resource.Info.public_relationship(options[:resource], route.relationship)
     resource = relationship.destination
+    all_domains = options[:all_domains]
 
     conn
-    |> Request.from(resource, action, domain, route)
+    |> Request.from(resource, action, domain, all_domains, route)
     |> Helpers.fetch_related(options[:resource])
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->

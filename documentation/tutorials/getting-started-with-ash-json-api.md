@@ -36,6 +36,40 @@ defmodule Helpdesk.Support do
   ...
 ```
 
+Routes can be defined on the resource or the domain. If you define them on the resource (which is our default recommendation), the resource in question must still use the `AshJsonApi.Resource` extension, and define its own type.
+
+### Defining routes on the domain
+
+```elixir
+defmodule Helpdesk.Support do
+  use Ash.Domain, extensions: [AshJsonApi.Domain]
+
+  json_api do
+    routes do
+      get Helpdesk.Support.Ticket, :read, route: "/tickets"
+      index Helpdesk.Support.Ticket, :read, route: "/tickets"
+      post Helpdesk.Support.Ticket, :read, route: "/tickets"
+    end
+  end
+end
+```
+
+And then add the extension and type to the resource:
+
+```elixir
+defmodule Helpdesk.Support.Ticket do
+  use Ash.Resource, extensions: [AshJsonApi.Resource]
+  # ...
+  json_api do
+    type "ticket"
+  end
+end
+```
+
+### Defining routes on the resource
+
+Here we show an example of defining routes on the resource. In general, we suggest
+
 ```elixir
 defmodule Helpdesk.Support.Ticket do
   use Ash.Resource, extensions: [AshJsonApi.Resource]
@@ -135,7 +169,7 @@ print all available routes for each Resource:
 
 ```elixir
 Helpdesk.Support.Ticket
-|> AshJsonApi.Resource.Info.routes()
+|> AshJsonApi.Resource.Info.routes(Helpdesk.Support)
 ```
 
 Make sure that all requests you make to the API use the `application/vnd.api+json` type in both the

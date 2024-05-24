@@ -1,11 +1,11 @@
-defmodule AshJsonApi.Resource.Persisters.DefineRouter do
+defmodule AshJsonApi.Domain.Persisters.DefineRouter do
   @moduledoc false
   use Spark.Dsl.Transformer
 
   alias Spark.Dsl.Transformer
 
   def transform(dsl) do
-    routes = AshJsonApi.Resource.Info.routes(dsl)
+    routes = AshJsonApi.Domain.Info.routes(dsl)
 
     route_matchers =
       routes
@@ -65,13 +65,13 @@ defmodule AshJsonApi.Resource.Persisters.DefineRouter do
 
     quote do
       def json_api_match_route(unquote(route.method), [unquote_splicing(args)]) do
-        {:ok, unquote(Macro.escape(route)), unquote(params)}
+        {:ok, unquote(route.resource), unquote(Macro.escape(route)), unquote(params)}
       end
 
       def json_api_match_route(unquote(String.upcase(to_string(route.method))), [
             unquote_splicing(args)
           ]) do
-        {:ok, unquote(Macro.escape(route)), unquote(params)}
+        {:ok, unquote(route.resource), unquote(Macro.escape(route)), unquote(params)}
       end
     end
   end

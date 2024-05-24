@@ -15,7 +15,7 @@ defmodule AshJsonApi.JsonSchema do
         new_route_schemas =
           Enum.flat_map(resources, fn resource ->
             resource
-            |> AshJsonApi.Resource.Info.routes()
+            |> AshJsonApi.Resource.Info.routes(domains)
             |> Enum.map(&route_schema(&1, domain, resource))
           end)
 

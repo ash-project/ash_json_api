@@ -23,8 +23,19 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api, :primary_key], :delimiter, [], false)
   end
 
-  def routes(resource) do
-    Extension.get_entities(resource, [:json_api, :routes])
+  def routes(resource, domain_or_domains \\ []) do
+    module =
+      if is_atom(resource) do
+        resource
+      else
+        Spark.Dsl.Extension.get_persisted(resource, :module)
+      end
+
+    domain_or_domains
+    |> List.wrap()
+    |> Enum.flat_map(&AshJsonApi.Domain.Info.routes/1)
+    |> Enum.filter(&(&1.resource == module))
+    |> Enum.concat(Extension.get_entities(resource, [:json_api, :routes]))
   end
 
   def include_nil_values?(resource) do

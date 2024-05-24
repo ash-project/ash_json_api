@@ -46,18 +46,24 @@ defmodule AshJsonApi.Controllers.Router do
 
       true ->
         Enum.find_value(domains, :error, fn domain ->
-          domain
-          |> Ash.Domain.Info.resources()
-          |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
-          |> Enum.find_value(nil, fn resource ->
-            case resource.json_api_match_route(conn.method, conn.path_info) do
-              {:ok, route, params} ->
-                {:ok, domain, resource, route, params}
+          case domain.json_api_match_route(conn.method, conn.path_info) do
+            {:ok, resource, route, params} ->
+              {:ok, domain, resource, route, params}
 
-              :error ->
-                nil
-            end
-          end)
+            :error ->
+              domain
+              |> Ash.Domain.Info.resources()
+              |> Enum.filter(&(AshJsonApi.Resource in Spark.extensions(&1)))
+              |> Enum.find_value(nil, fn resource ->
+                case resource.json_api_match_route(conn.method, conn.path_info) do
+                  {:ok, route, params} ->
+                    {:ok, domain, resource, route, params}
+
+                  :error ->
+                    nil
+                end
+              end)
+          end
         end)
         |> case do
           :error ->
@@ -73,6 +79,7 @@ defmodule AshJsonApi.Controllers.Router do
             |> route.controller.call(
               domain: domain,
               resource: resource,
+              all_domains: domains,
               action_type: route.action_type,
               route: route,
               relationship: route.relationship,

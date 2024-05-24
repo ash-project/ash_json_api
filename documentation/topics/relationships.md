@@ -10,6 +10,8 @@ in the `attributes` key and ignore the `data.relationships` input.
 
 If the argument's type is `{:array, _}`, a list of data will be expected. Otherwise, it will expect a single item.
 
+Everything in this guide applies to routs defined on the domain as well.
+
 For example:
 
 ```elixir

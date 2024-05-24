@@ -20,7 +20,6 @@ defmodule Test.Acceptance.IndexTest do
         base("/posts")
 
         index(:read)
-        index(:read, route: "/names", default_fields: [:name])
       end
     end
 
@@ -43,8 +42,12 @@ defmodule Test.Acceptance.IndexTest do
       ]
 
     json_api do
-      router(Test.Acceptance.IndexTest.Router)
+      router Test.Acceptance.IndexTest.Router
       log_errors?(false)
+
+      routes do
+        index(Post, :read, route: "/posts/names", default_fields: [:name])
+      end
     end
 
     resources do

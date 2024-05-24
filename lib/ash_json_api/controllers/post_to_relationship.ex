@@ -14,6 +14,7 @@ defmodule AshJsonApi.Controllers.PostToRelationship do
 
     domain = options[:domain]
     route = options[:route]
+    all_domains = options[:all_domains]
 
     argument =
       action.arguments
@@ -40,7 +41,7 @@ defmodule AshJsonApi.Controllers.PostToRelationship do
     end
 
     conn
-    |> Request.from(options[:resource], action, domain, route)
+    |> Request.from(options[:resource], action, domain, all_domains, route)
     |> Helpers.update_record(&Helpers.resource_identifiers(&1, argument))
     |> Helpers.render_or_render_errors(conn, fn request ->
       Response.render_many_relationship(conn, request, 200, relationship)

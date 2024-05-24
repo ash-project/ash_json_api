@@ -26,6 +26,23 @@ defmodule AshJsonApi.Domain do
     ]
   }
 
+  @routes AshJsonApi.Resource.routes()
+          |> Map.update!(:entities, fn entities ->
+            Enum.map(entities, fn entity ->
+              %{
+                entity
+                | args: [:resource | entity.args],
+                  schema:
+                    entity.schema
+                    |> Keyword.put(:resource,
+                      type: {:spark, Ash.Resource},
+                      doc: "The resource that the route's action is defined on"
+                    )
+              }
+            end)
+          end)
+          |> Map.update!(:schema, &Keyword.delete(&1, :base))
+
   @json_api %Spark.Dsl.Section{
     name: :json_api,
     describe: """
@@ -46,7 +63,7 @@ defmodule AshJsonApi.Domain do
     schema: [
       router: [
         type: :atom,
-        doc: "The router that you created for this Domain. Use by test helpers to send requests"
+        doc: "The router that you created for this Domain. Used by test helpers to send requests"
       ],
       show_raised_errors?: [
         type: :boolean,
@@ -79,10 +96,11 @@ defmodule AshJsonApi.Domain do
         default: true
       ]
     ],
-    sections: [@open_api]
+    sections: [@open_api, @routes]
   }
 
   @verifiers [AshJsonApi.Domain.Verifiers.VerifyOpenApiGrouping]
+  @persisters [AshJsonApi.Domain.Persisters.DefineRouter]
 
   @sections [@json_api]
 
@@ -90,5 +108,5 @@ defmodule AshJsonApi.Domain do
   The entrypoint for adding JSON:API behavior to an Ash domain
   """
 
-  use Spark.Dsl.Extension, sections: @sections, verifiers: @verifiers
+  use Spark.Dsl.Extension, sections: @sections, verifiers: @verifiers, persisters: @persisters
 end

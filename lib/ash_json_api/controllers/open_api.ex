@@ -51,7 +51,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           version: "1.1"
         },
         servers: servers,
-        paths: AshJsonApi.OpenApi.paths(domains),
+        paths: AshJsonApi.OpenApi.paths(domains, domains),
         tags: AshJsonApi.OpenApi.tags(domains),
         components: %{
           responses: AshJsonApi.OpenApi.responses(),

@@ -22,6 +22,10 @@ defmodule AshJsonApi.Domain.Info do
     Extension.get_opt(domain, [:json_api], :serve_schema?, false, true)
   end
 
+  def routes(domain) do
+    Extension.get_entities(domain, [:json_api, :routes])
+  end
+
   def authorize?(domain) do
     Extension.get_opt(domain, [:json_api], :authorize?, true, true)
   end

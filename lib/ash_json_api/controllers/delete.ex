@@ -13,9 +13,10 @@ defmodule AshJsonApi.Controllers.Delete do
     action = options[:action]
     domain = options[:domain]
     route = options[:route]
+    all_domains = options[:all_domains]
 
     conn
-    |> Request.from(resource, action, domain, route)
+    |> Request.from(resource, action, domain, all_domains, route)
     |> Helpers.destroy_record()
     |> Helpers.fetch_includes()
     |> Helpers.render_or_render_errors(conn, fn request ->
