@@ -19,6 +19,7 @@ Welcome! This is the extension for building [JSON:API](https://jsonapi.org) spec
 - [What is AshJsonApi?](documentation/topics/what-is-ash-json-api.md)
 - [OpenAPI](documentation/topics/open-api.md)
 - [Relationships](documentation/topics/relationships.md)
+- [Authorize With AshJsonApi](documentation/topics/authorize-with-json-api.md)
 - [Upgrading to 1.0](documentation/topics/upgrade.md)
 
 ## Reference
