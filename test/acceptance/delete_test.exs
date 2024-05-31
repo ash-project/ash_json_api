@@ -28,7 +28,14 @@ defmodule Test.Acceptance.DeleteTest do
       routes do
         base("/posts")
 
-        delete(:destroy)
+        delete :destroy do
+          metadata(fn query, result, request ->
+            %{
+              "baz" => "bar"
+            }
+          end)
+        end
+
         index(:read)
       end
     end
@@ -96,6 +103,9 @@ defmodule Test.Acceptance.DeleteTest do
     test "delete responds with 200", %{post: post} do
       Domain
       |> delete("/posts/#{post.id}", status: 200)
+      |> assert_meta_equals(%{
+        "baz" => "bar"
+      })
     end
   end
 end

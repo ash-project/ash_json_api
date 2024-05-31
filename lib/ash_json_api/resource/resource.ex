@@ -20,6 +20,11 @@ defmodule AshJsonApi.Resource do
       default: false,
       doc:
         "Whether or not this is the route that should be linked to by default when rendering links to this type of route"
+    ],
+    metadata: [
+      type: {:fun, 3},
+      required: false,
+      doc: "A function to generate arbitrary top-level metadata for the JSON:API response"
     ]
   ]
 

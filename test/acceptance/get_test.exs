@@ -50,7 +50,14 @@ defmodule Test.Acceptance.GetTest do
       routes do
         base("/posts")
 
-        get(:read)
+        get :read do
+          metadata(fn query, result, request ->
+            %{
+              "bar" => "baz"
+            }
+          end)
+        end
+
         get(:by_name, route: "/by_name/:name")
         get(:with_error, route: "/with_error/:id")
 
@@ -178,6 +185,9 @@ defmodule Test.Acceptance.GetTest do
     test "string attributes are rendered properly", %{post: post} do
       Domain
       |> get("/posts/#{post.id}", status: 200)
+      |> assert_meta_equals(%{
+        "bar" => "baz"
+      })
       |> assert_attribute_equals("name", post.name)
     end
 

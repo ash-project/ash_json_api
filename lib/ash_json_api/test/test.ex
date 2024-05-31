@@ -138,6 +138,14 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  defmacro assert_meta_equals(conn, expected_meta) do
+    quote bind_quoted: [conn: conn, expected_meta: expected_meta] do
+      assert %{"meta" => ^expected_meta} = conn.resp_body
+
+      conn
+    end
+  end
+
   def assert_response_header_equals(conn, header, value) do
     assert get_resp_header(conn, header) == [value]
     conn

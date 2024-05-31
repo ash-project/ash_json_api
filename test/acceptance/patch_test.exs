@@ -19,6 +19,7 @@ defmodule Test.Acceptance.PatchTest do
       routes do
         base("/authors")
         get :read
+
         index :read
       end
     end
@@ -61,11 +62,22 @@ defmodule Test.Acceptance.PatchTest do
         get :read
         index :read
         post :create
-        patch :update, relationship_arguments: [:author]
+
+        patch :update do
+          relationship_arguments [:author]
+
+          metadata(fn query, result, request ->
+            %{"bar" => "bar"}
+          end)
+        end
 
         patch :update do
           read_action(:by_name)
           route("/by_name/:name")
+
+          metadata(fn query, result, request ->
+            %{"foo" => "foo"}
+          end)
         end
 
         related :author, :read
@@ -166,6 +178,7 @@ defmodule Test.Acceptance.PatchTest do
     test "patch working properly", %{post: post} do
       Domain
       |> patch("/posts/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
+      |> assert_meta_equals(%{"bar" => "bar"})
       |> assert_attribute_equals("email", "dummy@test.com")
     end
 
@@ -201,6 +214,7 @@ defmodule Test.Acceptance.PatchTest do
             }
           }
         })
+        |> assert_meta_equals(%{"foo" => "foo"})
 
       assert %{"data" => %{"attributes" => %{"email" => email}}} = response.resp_body
       assert email == "dummy@test.com"

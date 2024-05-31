@@ -35,7 +35,14 @@ defmodule Test.Acceptance.PostTest do
         base("/authors")
         get(:read)
         index(:read)
-        post :confirm_name, route: "/confirm_name"
+
+        post :confirm_name do
+          route "/confirm_name"
+
+          metadata(fn changeset, result, request ->
+            %{"bar" => "foo"}
+          end)
+        end
       end
     end
 
@@ -377,11 +384,13 @@ defmodule Test.Acceptance.PostTest do
             type: "author",
             attributes: %{
               name: "foo",
-              confirm: "bar"
+              confirm: "foo"
             }
           }
-        }
+        },
+        status: 201
       )
+      |> assert_meta_equals(%{"bar" => "foo"})
     end
   end
 end

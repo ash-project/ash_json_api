@@ -19,7 +19,13 @@ defmodule Test.Acceptance.IndexPaginationTest do
       routes do
         base("/posts")
 
-        index(:read)
+        index :read do
+          metadata(fn query, results, request ->
+            %{
+              "baz" => "baz"
+            }
+          end)
+        end
       end
     end
 
@@ -95,6 +101,7 @@ defmodule Test.Acceptance.IndexPaginationTest do
       response =
         Domain
         |> get("/posts?page[offset]=5&page[limit]=10", status: 200)
+        |> assert_meta_equals(%{"baz" => "baz", "page" => %{}})
 
       data = response.resp_body["data"]
       assert length(data) == 5
