@@ -68,7 +68,7 @@ end
 
 ### Defining routes on the resource
 
-Here we show an example of defining routes on the resource. In general, we suggest
+Here we show an example of defining routes on the resource.
 
 ```elixir
 defmodule Helpdesk.Support.Ticket do

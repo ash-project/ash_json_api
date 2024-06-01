@@ -96,7 +96,7 @@ defmodule AshJsonApi.Controllers.Router do
   end
 
   defp open_api_request?(conn, open_api) do
-    AshJSonApi.OpenApiSpexChecker.has_open_api?() && conn.method == "GET" &&
+    AshJsonApi.OpenApiSpexChecker.has_open_api?() && conn.method == "GET" &&
       Enum.any?(open_api, &(&1 == conn.path_info))
   end
 end
