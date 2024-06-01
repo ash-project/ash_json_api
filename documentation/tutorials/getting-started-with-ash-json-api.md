@@ -161,6 +161,14 @@ scope "/api/json" do
 end
 ```
 
+With the above configuration, the path to "get" your Tickets resource would be: `/api/json/helpdesk/tickets`, where:
+
+- "/api/json", which comes from the `scope` in the router.
+
+- "/helpdesk", which comes from the `forward` in the scope.
+
+- "/tickets", which comes from the Domain or the Resource's `json_api` configuration.
+
 ## Run your API
 
 From here on out its the standard Phoenix behavior. Start your application with `mix phx.server`
