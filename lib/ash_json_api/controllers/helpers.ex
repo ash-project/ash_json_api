@@ -47,13 +47,18 @@ defmodule AshJsonApi.Controllers.Helpers do
             other
         end
 
-      request.resource
-      |> Ash.Query.load(request.includes_keyword)
-      |> Ash.Query.set_context(request.context)
-      |> Ash.Query.do_filter(filter)
-      |> Ash.Query.sort(request.sort)
-      |> Ash.Query.load(fields(request, request.resource))
-      |> Ash.Query.for_read(request.action.name, request.arguments, Request.opts(request))
+      query =
+        request.resource
+        |> Ash.Query.load(request.includes_keyword)
+        |> Ash.Query.set_context(request.context)
+        |> Ash.Query.do_filter(filter)
+        |> Ash.Query.sort(request.sort)
+        |> Ash.Query.load(fields(request, request.resource))
+        |> Ash.Query.for_read(request.action.name, request.arguments, Request.opts(request))
+
+      request = Request.assign(request, :query, query)
+
+      query
       |> Ash.read(Request.opts(request))
       |> case do
         {:ok, result} ->
@@ -61,6 +66,20 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         {:error, error} ->
           Request.add_error(request, error, :read)
+      end
+    end)
+  end
+
+  def fetch_metadata(request) do
+    chain(request, fn request ->
+      if is_function(request.route.metadata, 3) do
+        query_or_changeset =
+          Map.get(request.assigns, :query, Map.get(request.assigns, :changeset))
+
+        metadata = request.route.metadata.(query_or_changeset, request.assigns.result, request)
+        Request.assign(request, :metadata, metadata)
+      else
+        Request.assign(request, :metadata, %{})
       end
     end)
   end
@@ -83,14 +102,21 @@ defmodule AshJsonApi.Controllers.Helpers do
           []
         end
 
-      resource
-      |> Ash.Changeset.for_create(
-        request.action.name,
-        Map.merge(request.attributes, request.arguments),
-        Request.opts(request)
-      )
-      |> Ash.Changeset.set_context(request.context)
-      |> Ash.Changeset.load(fields(request, request.resource) ++ (request.includes_keyword || []))
+      changeset =
+        resource
+        |> Ash.Changeset.for_create(
+          request.action.name,
+          Map.merge(request.attributes, request.arguments),
+          Request.opts(request)
+        )
+        |> Ash.Changeset.set_context(request.context)
+        |> Ash.Changeset.load(
+          fields(request, request.resource) ++ (request.includes_keyword || [])
+        )
+
+      request = Request.assign(request, :changeset, changeset)
+
+      changeset
       |> Ash.create(Request.opts(request, opts))
       |> case do
         {:ok, record} ->
@@ -111,6 +137,8 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error, :fetch_from_path)
 
         {:ok, filter, query} ->
+          request = Request.assign(request, :query, query)
+
           query
           |> Ash.bulk_update(
             request.action.name,
@@ -230,6 +258,8 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.add_error(request, error, :fetch_from_path)
 
         {:ok, filter, query} ->
+          request = Request.assign(request, :query, query)
+
           query
           |> Ash.bulk_destroy(
             request.action.name,
@@ -393,14 +423,19 @@ defmodule AshJsonApi.Controllers.Helpers do
               query
             end
 
+          query =
+            query
+            |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
+            |> Ash.Query.set_context(request.context)
+            |> Ash.Query.for_read(
+              action,
+              Map.merge(request.arguments, params),
+              Keyword.put(Request.opts(request), :page, false)
+            )
+
+          request = Request.assign(request, :query, query)
+
           query
-          |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
-          |> Ash.Query.set_context(request.context)
-          |> Ash.Query.for_read(
-            action,
-            Map.merge(request.arguments, params),
-            Keyword.put(Request.opts(request), :page, false)
-          )
           |> Ash.read_one(Request.opts(request))
           |> case do
             {:ok, nil} ->
@@ -446,6 +481,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.set_context(request.context)
       |> Ash.Query.put_context(:override_domain_params, load_params)
+
+    request = Request.assign(request, :query, destination_query)
 
     request
     |> fetch_record_from_path(through_resource, [{relationship.name, destination_query}])

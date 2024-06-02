@@ -33,7 +33,9 @@ defmodule AshJsonApi.Controllers.Response do
 
   # sobelow_skip ["XSS.SendResp"]
   def render_one(conn, request, status, record, includes) do
-    serialized = AshJsonApi.Serializer.serialize_one(request, record, includes)
+    meta = Map.get(request.assigns, :metadata, %{})
+
+    serialized = AshJsonApi.Serializer.serialize_one(request, record, includes, meta)
 
     send_resp(conn, status, serialized)
   end
@@ -46,11 +48,14 @@ defmodule AshJsonApi.Controllers.Response do
         paginator,
         includes
       ) do
+    meta = Map.get(request.assigns, :metadata, %{})
+
     serialized =
       AshJsonApi.Serializer.serialize_many(
         request,
         paginator,
-        includes
+        includes,
+        meta
       )
 
     send_resp(conn, status, serialized)
@@ -76,7 +81,8 @@ defmodule AshJsonApi.Controllers.Response do
         request,
         request.assigns.record_from_path,
         relationship,
-        request.assigns.result
+        request.assigns.result,
+        request.assigns.metadata
       )
 
     send_resp(conn, status, serialized)

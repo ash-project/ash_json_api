@@ -148,6 +148,7 @@ get :read
 | [`route`](#json_api-routes-get-route){: #json_api-routes-get-route } | `String.t` | `"/:id"` | The path of the route |
 | [`default_fields`](#json_api-routes-get-default_fields){: #json_api-routes-get-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-get-primary?){: #json_api-routes-get-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-get-metadata){: #json_api-routes-get-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -188,6 +189,7 @@ index :read
 | [`route`](#json_api-routes-index-route){: #json_api-routes-index-route } | `String.t` | `"/"` | The path of the route |
 | [`default_fields`](#json_api-routes-index-default_fields){: #json_api-routes-index-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-index-primary?){: #json_api-routes-index-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-index-metadata){: #json_api-routes-index-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -227,6 +229,7 @@ post :create
 | [`route`](#json_api-routes-post-route){: #json_api-routes-post-route } | `String.t` | `"/"` | The path of the route |
 | [`default_fields`](#json_api-routes-post-default_fields){: #json_api-routes-post-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-post-primary?){: #json_api-routes-post-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-post-metadata){: #json_api-routes-post-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`relationship_arguments`](#json_api-routes-post-relationship_arguments){: #json_api-routes-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
 | [`upsert?`](#json_api-routes-post-upsert?){: #json_api-routes-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
 | [`upsert_identity`](#json_api-routes-post-upsert_identity){: #json_api-routes-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
@@ -271,6 +274,7 @@ patch :update
 | [`route`](#json_api-routes-patch-route){: #json_api-routes-patch-route } | `String.t` | `"/:id"` | The path of the route |
 | [`default_fields`](#json_api-routes-patch-default_fields){: #json_api-routes-patch-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-patch-primary?){: #json_api-routes-patch-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-patch-metadata){: #json_api-routes-patch-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -311,6 +315,7 @@ delete :destroy
 | [`route`](#json_api-routes-delete-route){: #json_api-routes-delete-route } | `String.t` | `"/:id"` | The path of the route |
 | [`default_fields`](#json_api-routes-delete-default_fields){: #json_api-routes-delete-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-delete-primary?){: #json_api-routes-delete-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-delete-metadata){: #json_api-routes-delete-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -351,6 +356,7 @@ related :comments, :read
 | [`route`](#json_api-routes-related-route){: #json_api-routes-related-route } | `String.t` |  | The path of the route - Defaults to /:id/[relationship_name] |
 | [`default_fields`](#json_api-routes-related-default_fields){: #json_api-routes-related-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-related-primary?){: #json_api-routes-related-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-related-metadata){: #json_api-routes-related-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -391,6 +397,7 @@ relationship :comments, :read
 | [`route`](#json_api-routes-relationship-route){: #json_api-routes-relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
 | [`default_fields`](#json_api-routes-relationship-default_fields){: #json_api-routes-relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-relationship-primary?){: #json_api-routes-relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-relationship-metadata){: #json_api-routes-relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -430,6 +437,7 @@ post_to_relationship :comments
 | [`route`](#json_api-routes-post_to_relationship-route){: #json_api-routes-post_to_relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
 | [`default_fields`](#json_api-routes-post_to_relationship-default_fields){: #json_api-routes-post_to_relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-post_to_relationship-primary?){: #json_api-routes-post_to_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-post_to_relationship-metadata){: #json_api-routes-post_to_relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -469,6 +477,7 @@ patch_relationship :comments
 | [`route`](#json_api-routes-patch_relationship-route){: #json_api-routes-patch_relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
 | [`default_fields`](#json_api-routes-patch_relationship-default_fields){: #json_api-routes-patch_relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-patch_relationship-primary?){: #json_api-routes-patch_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-patch_relationship-metadata){: #json_api-routes-patch_relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 
@@ -508,6 +517,7 @@ delete_from_relationship :comments
 | [`route`](#json_api-routes-delete_from_relationship-route){: #json_api-routes-delete_from_relationship-route } | `String.t` |  | The path of the route -  Defaults to /:id/relationships/[relationship_name] |
 | [`default_fields`](#json_api-routes-delete_from_relationship-default_fields){: #json_api-routes-delete_from_relationship-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
 | [`primary?`](#json_api-routes-delete_from_relationship-primary?){: #json_api-routes-delete_from_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-delete_from_relationship-metadata){: #json_api-routes-delete_from_relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 
 
 

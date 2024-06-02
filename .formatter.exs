@@ -20,6 +20,7 @@ spark_locals_without_parens = [
   index: 3,
   keys: 1,
   log_errors?: 1,
+  metadata: 1,
   paginate?: 1,
   patch: 1,
   patch: 2,

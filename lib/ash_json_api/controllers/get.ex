@@ -19,6 +19,7 @@ defmodule AshJsonApi.Controllers.Get do
     |> Request.from(resource, action, domain, all_domains, route)
     |> Helpers.fetch_record_from_path()
     |> Helpers.fetch_includes()
+    |> Helpers.fetch_metadata()
     |> Helpers.render_or_render_errors(conn, fn request ->
       Response.render_one(conn, request, 200, request.assigns.result, request.assigns.includes)
     end)

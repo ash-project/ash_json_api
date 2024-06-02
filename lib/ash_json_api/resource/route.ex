@@ -14,7 +14,8 @@ defmodule AshJsonApi.Resource.Route do
     :upsert?,
     :upsert_identity,
     :read_action,
-    relationship_arguments: []
+    relationship_arguments: [],
+    metadata: nil
   ]
 
   @type t :: %__MODULE__{}

@@ -19,7 +19,13 @@ defmodule Test.Acceptance.IndexTest do
       routes do
         base("/posts")
 
-        index(:read)
+        index :read do
+          metadata(fn query, results, request ->
+            %{
+              "foo" => "bar"
+            }
+          end)
+        end
       end
     end
 
@@ -87,6 +93,14 @@ defmodule Test.Acceptance.IndexTest do
           "type" => "post"
         }
       ])
+    end
+
+    test "returns custom metadata for the index endpoint" do
+      Domain
+      |> get("/posts", status: 200)
+      |> assert_meta_equals(%{
+        "foo" => "bar"
+      })
     end
 
     test "returns a list of posts names only", %{post: post} do

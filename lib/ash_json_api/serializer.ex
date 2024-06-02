@@ -3,7 +3,7 @@ defmodule AshJsonApi.Serializer do
 
   alias Plug.Conn
 
-  def serialize_to_many_relationship(request, source_record, relationship, records) do
+  def serialize_to_many_relationship(request, source_record, relationship, records, meta) do
     links =
       %{self: at_host(request, request.url)}
       |> add_related_link(request, source_record, relationship)
@@ -14,7 +14,8 @@ defmodule AshJsonApi.Serializer do
         Enum.map(
           List.wrap(records),
           &serialize_relationship_data(&1, source_record, relationship)
-        )
+        ),
+      meta: meta
     }
     |> Jason.encode!()
   end
@@ -34,12 +35,12 @@ defmodule AshJsonApi.Serializer do
   @spec serialize_many(
           AshJsonApi.Request.t(),
           Ash.Page.page() | list(Ash.Resource.record()),
-          Keyword.t()
+          Keyword.t(),
+          map()
         ) :: String.t()
-  def serialize_many(request, paginator, includes) do
+  def serialize_many(request, paginator, includes, meta) do
     links = many_links(request, paginator)
-    meta = add_page_metadata(paginator)
-
+    meta = add_page_metadata(meta, paginator)
     data = page_data(paginator, request)
 
     json_api = %{version: "1.0"}
@@ -59,17 +60,21 @@ defmodule AshJsonApi.Serializer do
   end
 
   # Adds page level metadata, like total count of records
-  defp add_page_metadata(%struct{} = page) when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
-    if page.count do
-      %{page: %{total: page.count}}
-    else
-      %{page: %{}}
-    end
+  defp add_page_metadata(meta, %struct{} = page)
+       when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
+    page_meta =
+      if page.count do
+        %{page: %{total: page.count}}
+      else
+        %{page: %{}}
+      end
+
+    Map.merge(meta, page_meta)
   end
 
   # This is added because some tests on `Test.Acceptance.IndexTest` fail
   # because its passing in a list of resources instead of a paginator
-  defp add_page_metadata(_), do: %{}
+  defp add_page_metadata(meta, _), do: meta
 
   def serialize_one(request, record, includes, meta \\ nil)
 
