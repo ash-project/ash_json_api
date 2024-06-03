@@ -71,12 +71,37 @@ defmodule AshJsonApi.Includes.Includer do
     end)
   end
 
+  defp merge_linkages(record, to_merge) do
+    linkage_to_merge = Map.get(to_merge, :__linkage__, %{})
+
+    record
+    |> Map.update!(:__linkage__, fn linkage ->
+      Map.merge(linkage, linkage_to_merge, fn _key, a, b ->
+        a ++ b
+      end)
+    end)
+  end
+
   defp flatten_includes_list({related, includes_list}) do
-    {related,
-     includes_list
-     |> List.flatten()
-     |> Enum.uniq_by(
-       &{AshJsonApi.Resource.encode_primary_key(&1), AshJsonApi.Resource.Info.type(&1)}
-     )}
+    includes =
+      includes_list
+      |> List.flatten()
+      |> Enum.reduce(%{}, fn include, map ->
+        type = AshJsonApi.Resource.Info.type(include)
+        id = AshJsonApi.Resource.encode_primary_key(include)
+
+        case Map.fetch(map, {type, id}) do
+          {:ok, _} ->
+            Map.update!(map, {type, id}, fn existing ->
+              merge_linkages(existing, include)
+            end)
+
+          :error ->
+            Map.put(map, {type, id}, include)
+        end
+      end)
+      |> Map.values()
+
+    {related, includes}
   end
 end
