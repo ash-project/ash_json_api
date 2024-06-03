@@ -72,6 +72,11 @@ defmodule AshJsonApi.Includes.Includer do
   end
 
   defp flatten_includes_list({related, includes_list}) do
-    {related, List.flatten(includes_list)}
+    {related,
+     includes_list
+     |> List.flatten()
+     |> Enum.uniq_by(
+       &{AshJsonApi.Resource.encode_primary_key(&1), AshJsonApi.Resource.Info.type(&1)}
+     )}
   end
 end
