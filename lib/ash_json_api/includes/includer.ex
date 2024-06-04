@@ -13,7 +13,8 @@ defmodule AshJsonApi.Includes.Includer do
 
   def get_includes(records, %Request{includes_keyword: includes_keyword})
       when is_list(records) do
-    get_includes_list(records, includes_keyword)
+    {record, includes_map} = get_includes_map(records, includes_keyword)
+    {record, Map.values(includes_map)}
   end
 
   def get_includes(%{results: results} = paginator, request) do
@@ -27,40 +28,58 @@ defmodule AshJsonApi.Includes.Includer do
     {record, includes}
   end
 
-  defp get_includes_list(related, []), do: {related, []}
+  defp get_includes_map(preloaded, include_keyword, includes_map \\ %{})
+  defp get_includes_map(related, [], _), do: {related, %{}}
 
-  defp get_includes_list(preloaded, %Ash.Query{load: load}),
-    do: get_includes_list(preloaded, load)
+  defp get_includes_map(preloaded, %Ash.Query{load: load}, includes_map),
+    do: get_includes_map(preloaded, load, includes_map)
 
-  defp get_includes_list(preloaded, include_keyword) do
+  defp get_includes_map(preloaded, include_keyword, includes_map) do
     include_keyword
-    |> Enum.reduce({preloaded, []}, fn {relationship, further},
-                                       {preloaded_without_linkage, includes_list} ->
-      {related, further_includes} =
-        preloaded
-        |> Enum.flat_map(fn record ->
-          record
-          |> Map.get(relationship, [])
+    |> Enum.reduce({preloaded, includes_map}, fn
+      {relationship, further}, {preloaded_without_linkage, includes_map} ->
+        {related, includes_map} =
+          preloaded
+          |> Enum.flat_map(fn record ->
+            record
+            |> Map.get(relationship, [])
+            |> List.wrap()
+          end)
+          |> get_includes_map(further, includes_map)
+
+        preloaded_with_linkage =
+          Enum.map(
+            preloaded_without_linkage,
+            fn record ->
+              related =
+                record
+                |> Map.get(relationship, [])
+                |> List.wrap()
+
+              add_linkage(record, relationship, related)
+            end
+          )
+
+        includes_map =
+          related
           |> List.wrap()
-        end)
-        |> get_includes_list(further)
+          |> Enum.reduce(includes_map, fn related_item, includes_map ->
+            type = AshJsonApi.Resource.Info.type(related_item)
+            id = AshJsonApi.Resource.encode_primary_key(related_item)
 
-      preloaded_with_linkage =
-        Enum.map(
-          preloaded_without_linkage,
-          fn record ->
-            related =
-              record
-              |> Map.get(relationship, [])
-              |> List.wrap()
+            case Map.fetch(includes_map, {type, id}) do
+              {:ok, _} ->
+                Map.update!(includes_map, {type, id}, fn existing ->
+                  merge_linkages(existing, related_item)
+                end)
 
-            add_linkage(record, relationship, related)
-          end
-        )
+              :error ->
+                Map.put(includes_map, {type, id}, related_item)
+            end
+          end)
 
-      {preloaded_with_linkage, [related, further_includes, includes_list]}
+        {preloaded_with_linkage, includes_map}
     end)
-    |> flatten_includes_list()
   end
 
   defp add_linkage(record, relationship, related) do
@@ -80,28 +99,5 @@ defmodule AshJsonApi.Includes.Includer do
         a ++ b
       end)
     end)
-  end
-
-  defp flatten_includes_list({related, includes_list}) do
-    includes =
-      includes_list
-      |> List.flatten()
-      |> Enum.reduce(%{}, fn include, map ->
-        type = AshJsonApi.Resource.Info.type(include)
-        id = AshJsonApi.Resource.encode_primary_key(include)
-
-        case Map.fetch(map, {type, id}) do
-          {:ok, _} ->
-            Map.update!(map, {type, id}, fn existing ->
-              merge_linkages(existing, include)
-            end)
-
-          :error ->
-            Map.put(map, {type, id}, include)
-        end
-      end)
-      |> Map.values()
-
-    {related, includes}
   end
 end
