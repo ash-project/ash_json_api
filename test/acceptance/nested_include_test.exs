@@ -68,24 +68,32 @@ defmodule Test.Acceptance.NestedIncludeTest do
   import AshJsonApi.Test
 
   setup do
-    include =
+    include_1 =
       Include
       |> Ash.Changeset.for_create(:create, %{})
       |> Ash.create!()
 
-    include =
+    include_2 =
       Include
       |> Ash.Changeset.for_create(:create, %{})
-      |> Ash.Changeset.manage_relationship(:include_a, include, type: :append_and_remove)
-      |> Ash.Changeset.manage_relationship(:include_b, include, type: :append_and_remove)
+      |> Ash.Changeset.manage_relationship(:include_a, include_1, type: :append_and_remove)
+      |> Ash.Changeset.manage_relationship(:include_b, include_1, type: :append_and_remove)
+      |> Ash.create!()
 
-    %{include: include}
+    %{include_1: include_1, include_2: include_2}
   end
 
-  test "returns includes successfully", %{include: _include} do
-    Domain
-    |> get("/includes?include=include_a.include_a.include_a,include_b.include_b.include_b",
-      status: 200
-    )
+  test "returns includes successfully", %{include_1: %{id: include_1_id}} do
+    conn =
+      Domain
+      |> get("/includes?include=include_a.include_a.include_a,include_b.include_b.include_b",
+        status: 200
+      )
+
+    response = conn.resp_body
+
+    assert [
+             %{"id" => ^include_1_id}
+           ] = response["included"]
   end
 end
