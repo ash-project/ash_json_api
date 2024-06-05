@@ -165,7 +165,6 @@ defmodule Test.Acceptance.NestedIncludeTest do
 
   test "returns includes successfully", %{
     include_1: %{id: include_1_id},
-    include_2: %{id: include_2_id},
     children: children,
     grandchild: %{id: grandchild_id}
   } do

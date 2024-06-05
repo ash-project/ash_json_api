@@ -29,7 +29,7 @@ defmodule AshJsonApi.Includes.Includer do
   end
 
   defp get_includes_map(preloaded, include_keyword, includes_map \\ %{})
-  defp get_includes_map(related, [], _), do: {related, %{}}
+  defp get_includes_map(related, [], includes_map), do: {related, includes_map}
 
   defp get_includes_map(preloaded, %Ash.Query{load: load}, includes_map),
     do: get_includes_map(preloaded, load, includes_map)
