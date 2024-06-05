@@ -74,7 +74,7 @@ defmodule AshJsonApi.Includes.Includer do
                 end)
 
               :error ->
-                Map.put(includes_map, {type, id}, related_item)
+                Map.put(includes_map, {type, id}, Map.put_new(related_item, :__linkage__, %{}))
             end
           end)
 
