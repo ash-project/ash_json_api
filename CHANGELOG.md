@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.1.1](https://github.com/ash-project/ash_json_api/compare/v1.1.0...v1.1.1) (2024-06-05)
+
+
+
+
+### Bug Fixes:
+
+* deduplicate includes list while building it
+
+### Improvements:
+
+* add ability to supply custom route metadata (#152)
+
 ## [v1.1.0](https://github.com/ash-project/ash_json_api/compare/v1.0.0...v1.1.0) (2024-05-24)
 
 ### Features:
