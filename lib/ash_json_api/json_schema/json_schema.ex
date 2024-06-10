@@ -738,7 +738,7 @@ defmodule AshJsonApi.JsonSchema do
   defp write_attributes(resource, arguments, accept) do
     attributes =
       resource
-      |> Ash.Resource.Info.public_attributes()
+      |> Ash.Resource.Info.attributes()
       |> Enum.filter(&(&1.name in accept && &1.writable?))
       |> Enum.reduce(%{}, fn attribute, acc ->
         Map.put(acc, to_string(attribute.name), resource_attribute_type(attribute))

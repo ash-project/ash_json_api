@@ -969,7 +969,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp write_attributes(resource, arguments, accept) do
       attributes =
         resource
-        |> Ash.Resource.Info.public_attributes()
+        |> Ash.Resource.Info.attributes()
         |> Enum.filter(&(&1.name in accept && &1.writable?))
         |> Map.new(fn attribute ->
           {attribute.name, resource_attribute_type(attribute)}
