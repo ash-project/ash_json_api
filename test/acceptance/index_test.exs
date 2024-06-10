@@ -15,6 +15,7 @@ defmodule Test.Acceptance.IndexTest do
 
     json_api do
       type("post")
+      default_fields [:name, :content]
 
       routes do
         base("/posts")
@@ -25,6 +26,11 @@ defmodule Test.Acceptance.IndexTest do
               "foo" => "bar"
             }
           end)
+        end
+
+        index :read do
+          route "/read2"
+          default_fields [:not_present_by_default]
         end
       end
     end
@@ -38,6 +44,7 @@ defmodule Test.Acceptance.IndexTest do
       uuid_primary_key(:id)
       attribute(:name, :string, public?: true)
       attribute(:content, :string, public?: true)
+      attribute(:not_present_by_default, :string, public?: true)
     end
   end
 
@@ -53,7 +60,10 @@ defmodule Test.Acceptance.IndexTest do
 
       routes do
         base_route "/posts" do
-          index(Post, :read, route: "/names", default_fields: [:name])
+          index Post, :read do
+            route "/names"
+            default_fields [:name]
+          end
         end
       end
     end
@@ -87,6 +97,23 @@ defmodule Test.Acceptance.IndexTest do
           "attributes" => %{
             "name" => "foo",
             "content" => "bar baz"
+          },
+          "id" => post.id,
+          "links" => %{},
+          "meta" => %{},
+          "relationships" => %{},
+          "type" => "post"
+        }
+      ])
+    end
+
+    test "returns a list of posts honoring route-specific default fields", %{post: post} do
+      Domain
+      |> get("/posts/read2", status: 200)
+      |> assert_data_equals([
+        %{
+          "attributes" => %{
+            "not_present_by_default" => nil
           },
           "id" => post.id,
           "links" => %{},

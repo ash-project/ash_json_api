@@ -738,10 +738,11 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp default_attributes(resource) do
-    resource
-    |> Ash.Resource.Info.public_attributes()
-    |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
-    |> Enum.map(& &1.name)
+    AshJsonApi.Resource.Info.default_fields(resource) ||
+      resource
+      |> Ash.Resource.Info.public_attributes()
+      |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
+      |> Enum.map(& &1.name)
   end
 
   defp encode_link(value) do
