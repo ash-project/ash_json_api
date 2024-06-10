@@ -26,22 +26,61 @@ defmodule AshJsonApi.Domain do
     ]
   }
 
-  @routes AshJsonApi.Resource.routes()
-          |> Map.update!(:entities, fn entities ->
-            Enum.map(entities, fn entity ->
-              %{
-                entity
-                | args: [:resource | entity.args],
-                  schema:
-                    entity.schema
-                    |> Keyword.put(:resource,
-                      type: {:spark, Ash.Resource},
-                      doc: "The resource that the route's action is defined on"
-                    )
-              }
-            end)
-          end)
+  @our_routes AshJsonApi.Resource.routes()
+              |> Map.update!(:entities, fn entities ->
+                Enum.map(entities, fn entity ->
+                  %{
+                    entity
+                    | args: [:resource | entity.args],
+                      schema:
+                        entity.schema
+                        |> Keyword.put(:resource,
+                          type: {:spark, Ash.Resource},
+                          doc: "The resource that the route's action is defined on"
+                        )
+                  }
+                end)
+              end)
+
+  defmodule BaseRoute do
+    @moduledoc "Introspection target for base routes in `AshJsonApi.Domain`"
+    defstruct [:route, :routes]
+  end
+
+  @base_route %Spark.Dsl.Entity{
+    name: :base_route,
+    target: BaseRoute,
+    describe: """
+    Sets a prefix for a list of contained routes
+    """,
+    examples: [
+      """
+      base_route "/posts" do
+        index :read
+        get :read
+      end
+
+      base_route "/comments" do
+        index :read
+      end
+      """
+    ],
+    args: [:route],
+    schema: [
+      route: [
+        type: :string,
+        required: true,
+        doc: "The route prefix to use for contained routes"
+      ]
+    ],
+    entities: [
+      routes: @our_routes.entities
+    ]
+  }
+
+  @routes @our_routes
           |> Map.update!(:schema, &Keyword.delete(&1, :base))
+          |> Map.update!(:entities, &[@base_route | &1])
 
   @json_api %Spark.Dsl.Section{
     name: :json_api,
@@ -101,6 +140,7 @@ defmodule AshJsonApi.Domain do
 
   @verifiers [AshJsonApi.Domain.Verifiers.VerifyOpenApiGrouping]
   @persisters [AshJsonApi.Domain.Persisters.DefineRouter]
+  @transformers [AshJsonApi.Domain.Transformers.SetBaseRoutes]
 
   @sections [@json_api]
 
@@ -108,5 +148,9 @@ defmodule AshJsonApi.Domain do
   The entrypoint for adding JSON:API behavior to an Ash domain
   """
 
-  use Spark.Dsl.Extension, sections: @sections, verifiers: @verifiers, persisters: @persisters
+  use Spark.Dsl.Extension,
+    sections: @sections,
+    verifiers: @verifiers,
+    persisters: @persisters,
+    transformers: @transformers
 end
