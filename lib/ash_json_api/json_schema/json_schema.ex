@@ -722,7 +722,7 @@ defmodule AshJsonApi.JsonSchema do
   defp required_write_attributes(resource, arguments, action) do
     attributes =
       resource
-      |> Ash.Resource.Info.public_attributes()
+      |> Ash.Resource.Info.attributes()
       |> Enum.filter(&(&1.name in action.accept && &1.writable?))
       |> Enum.reject(&(&1.allow_nil? || &1.default || &1.generated?))
       |> Enum.map(&to_string(&1.name))
