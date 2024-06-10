@@ -1,6 +1,8 @@
 spark_locals_without_parens = [
   authorize?: 1,
   base: 1,
+  base_route: 1,
+  base_route: 2,
   default_fields: 1,
   delete: 1,
   delete: 2,

@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Domain.Transformers.SetBaseRoutes do
+  @moduledoc false
   use Spark.Dsl.Transformer
 
   def transform(dsl) do

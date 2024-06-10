@@ -46,9 +46,12 @@ defmodule Helpdesk.Support do
 
   json_api do
     routes do
-      get Helpdesk.Support.Ticket, :read, route: "/tickets"
-      index Helpdesk.Support.Ticket, :read, route: "/tickets"
-      post Helpdesk.Support.Ticket, :read, route: "/tickets"
+      # in the domain `base_route` acts like a scope
+      base_route "/tickets" do
+        get Helpdesk.Support.Ticket, :read
+        index Helpdesk.Support.Ticket, :read
+        post Helpdesk.Support.Ticket, :read
+      end
     end
   end
 end
@@ -78,6 +81,7 @@ defmodule Helpdesk.Support.Ticket do
     type "ticket"
 
     routes do
+      # on the resource, the `base` applies to all routes
       base "/tickets"
 
       get :read
