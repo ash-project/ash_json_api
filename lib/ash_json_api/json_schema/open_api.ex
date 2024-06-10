@@ -866,8 +866,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 type: :object,
                 additionalProperties: false,
                 properties: write_attributes(resource, non_relationship_arguments, action.accept),
-                required:
-                  required_write_attributes(resource, non_relationship_arguments, action.accept)
+                required: required_write_attributes(resource, non_relationship_arguments, action)
               },
               relationships: %Schema{
                 type: :object,
@@ -946,16 +945,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> relationship_resource_identifiers()
     end
 
-    @spec required_write_attributes(
-            resource :: module,
-            [Ash.Resource.Actions.Argument.t()],
-            accept :: [atom()]
-          ) :: [atom()]
-    defp required_write_attributes(resource, arguments, accept) do
+    defp required_write_attributes(resource, arguments, action) do
       attributes =
         resource
         |> Ash.Resource.Info.public_attributes()
-        |> Enum.filter(&(&1.name in accept && &1.writable?))
+        |> Enum.filter(&(&1.name in action.accept && &1.writable?))
         |> Enum.reject(&(&1.allow_nil? || &1.default || &1.generated?))
         |> Enum.map(& &1.name)
 
@@ -964,7 +958,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> Enum.reject(& &1.allow_nil?)
         |> Enum.map(& &1.name)
 
-      attributes ++ arguments
+      Enum.uniq(attributes ++ arguments ++ Map.get(action, :require_attributes, []))
     end
 
     @spec write_attributes(

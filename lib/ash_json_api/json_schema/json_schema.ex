@@ -600,7 +600,7 @@ defmodule AshJsonApi.JsonSchema do
               "type" => "object",
               "additionalProperties" => false,
               "required" =>
-                required_write_attributes(resource, non_relationship_arguments, action.accept),
+                required_write_attributes(resource, non_relationship_arguments, action),
               "properties" =>
                 write_attributes(resource, non_relationship_arguments, action.accept)
             },
@@ -719,11 +719,11 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp required_write_attributes(resource, arguments, accept) do
+  defp required_write_attributes(resource, arguments, action) do
     attributes =
       resource
       |> Ash.Resource.Info.public_attributes()
-      |> Enum.filter(&(&1.name in accept && &1.writable?))
+      |> Enum.filter(&(&1.name in action.accept && &1.writable?))
       |> Enum.reject(&(&1.allow_nil? || &1.default || &1.generated?))
       |> Enum.map(&to_string(&1.name))
 
@@ -732,7 +732,7 @@ defmodule AshJsonApi.JsonSchema do
       |> Enum.reject(& &1.allow_nil?)
       |> Enum.map(&to_string(&1.name))
 
-    attributes ++ arguments
+    Enum.uniq(attributes ++ arguments ++ Map.get(action, :require_attributes, []))
   end
 
   defp write_attributes(resource, arguments, accept) do
