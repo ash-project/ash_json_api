@@ -7,48 +7,39 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ## [v1.2.0](https://github.com/ash-project/ash_json_api/compare/v1.1.2...v1.2.0) (2024-06-11)
 
-
-
-
 ### Features:
 
-* add `base_route` constructor to domain router
+- [AshJsonApi.Domain] add `base_route` constructor to domain router
 
 ### Bug Fixes:
 
-* properly reflect that `default: false` makes a non required attribute
+- [AshJsonApi.Resource] properly reflect that `default: false` makes a non required attribute
 
-* non-public attributes can be accepted and required in 3.0
+- [AshJsonApi.Resource] non-public attributes can be accepted and required in 3.0
 
-* support `require_attributes` in json schema
+- [AshJsonApi.Resource] support `require_attributes` in json schema
 
-* ensure that resource-level default_fields are honored
+- [AshJsonApi.Resource] ensure that resource-level default_fields are honored
 
 ### Improvements:
 
-* non-public attributes can be accepted in 3.0
+- [attributes] non-public attributes can be accepted in 3.0
 
 ## [v1.1.2](https://github.com/ash-project/ash_json_api/compare/v1.1.1...v1.1.2) (2024-06-05)
 
-
-
-
 ### Bug Fixes:
 
-* ensure we don't drop includes
+- [includes] ensure we don't drop includes (as a result of deduplicating them)
 
 ## [v1.1.1](https://github.com/ash-project/ash_json_api/compare/v1.1.0...v1.1.1) (2024-06-05)
 
-
-
-
 ### Bug Fixes:
 
-* deduplicate includes list while building it
+- [includes] deduplicate includes list while building it
 
 ### Improvements:
 
-* add ability to supply custom route metadata (#152)
+- [metadata] add ability to supply custom route metadata (#152)
 
 ## [v1.1.0](https://github.com/ash-project/ash_json_api/compare/v1.0.0...v1.1.0) (2024-05-24)
 
