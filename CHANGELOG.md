@@ -5,6 +5,29 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.2.0](https://github.com/ash-project/ash_json_api/compare/v1.1.2...v1.2.0) (2024-06-11)
+
+
+
+
+### Features:
+
+* add `base_route` constructor to domain router
+
+### Bug Fixes:
+
+* properly reflect that `default: false` makes a non required attribute
+
+* non-public attributes can be accepted and required in 3.0
+
+* support `require_attributes` in json schema
+
+* ensure that resource-level default_fields are honored
+
+### Improvements:
+
+* non-public attributes can be accepted in 3.0
+
 ## [v1.1.2](https://github.com/ash-project/ash_json_api/compare/v1.1.1...v1.1.2) (2024-06-05)
 
 
