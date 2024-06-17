@@ -3,7 +3,9 @@ defmodule AshJsonApi.Error.InvalidField do
   Returned when a field is requested that does not exist or is invalid
   """
 
-  use Splode.Error, class: :invalid, fields: [:type, :field, :parameter?]
+  use Splode.Error,
+    class: :invalid,
+    fields: [:type, :field, :parameter?, :detail, :source_parameter]
 
   def message(error) do
     error.detail
