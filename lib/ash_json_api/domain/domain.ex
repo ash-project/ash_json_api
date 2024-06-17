@@ -42,9 +42,25 @@ defmodule AshJsonApi.Domain do
                 end)
               end)
 
+  @route_entities_with_optional_resource AshJsonApi.Resource.routes()
+                                         |> Map.get(:entities)
+                                         |> Enum.map(fn entity ->
+                                           %{
+                                             entity
+                                             | args: [{:optional, :resource} | entity.args],
+                                               schema:
+                                                 entity.schema
+                                                 |> Keyword.put(:resource,
+                                                   type: {:spark, Ash.Resource},
+                                                   doc:
+                                                     "The resource that the route's action is defined on"
+                                                 )
+                                           }
+                                         end)
+
   defmodule BaseRoute do
     @moduledoc "Introspection target for base routes in `AshJsonApi.Domain`"
-    defstruct [:route, :routes]
+    defstruct [:route, :routes, :resource]
   end
 
   @base_route %Spark.Dsl.Entity{
@@ -65,16 +81,21 @@ defmodule AshJsonApi.Domain do
       end
       """
     ],
-    args: [:route],
+    args: [:route, {:optional, :resource}],
     schema: [
       route: [
         type: :string,
         required: true,
         doc: "The route prefix to use for contained routes"
+      ],
+      resource: [
+        type: {:spark, Ash.Resource},
+        required: false,
+        doc: "The resource that the contained routes will use by default"
       ]
     ],
     entities: [
-      routes: @our_routes.entities
+      routes: @route_entities_with_optional_resource
     ]
   }
 
@@ -138,7 +159,10 @@ defmodule AshJsonApi.Domain do
     sections: [@open_api, @routes]
   }
 
-  @verifiers [AshJsonApi.Domain.Verifiers.VerifyOpenApiGrouping]
+  @verifiers [
+    AshJsonApi.Domain.Verifiers.VerifyOpenApiGrouping,
+    AshJsonApi.Domain.Verifiers.VerifyRelationships
+  ]
   @persisters [AshJsonApi.Domain.Persisters.DefineRouter]
   @transformers [AshJsonApi.Domain.Transformers.SetBaseRoutes]
 

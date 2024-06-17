@@ -59,8 +59,8 @@ defmodule Test.Acceptance.IndexTest do
       log_errors?(false)
 
       routes do
-        base_route "/posts" do
-          index Post, :read do
+        base_route "/posts", Post do
+          index :read do
             route "/names"
             default_fields [:name]
           end

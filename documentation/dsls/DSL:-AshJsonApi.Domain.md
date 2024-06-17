@@ -142,7 +142,7 @@ end
 
 ## json_api.routes.base_route
 ```elixir
-base_route route
+base_route route, resource \\ nil
 ```
 
 
@@ -182,12 +182,13 @@ end
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`route`](#json_api-routes-base_route-route){: #json_api-routes-base_route-route .spark-required} | `String.t` |  | The route prefix to use for contained routes |
+| [`resource`](#json_api-routes-base_route-resource){: #json_api-routes-base_route-resource } | `module` |  | The resource that the contained routes will use by default |
 
 
 
 ## json_api.routes.base_route.get
 ```elixir
-get resource, action
+get resource \\ nil, action
 ```
 
 
@@ -227,7 +228,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.index
 ```elixir
-index resource, action
+index resource \\ nil, action
 ```
 
 
@@ -268,7 +269,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.post
 ```elixir
-post resource, action
+post resource \\ nil, action
 ```
 
 
@@ -311,7 +312,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.patch
 ```elixir
-patch resource, action
+patch resource \\ nil, action
 ```
 
 
@@ -353,7 +354,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.delete
 ```elixir
-delete resource, action
+delete resource \\ nil, action
 ```
 
 
@@ -394,7 +395,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.related
 ```elixir
-related resource, relationship, action
+related resource \\ nil, relationship, action
 ```
 
 
@@ -435,7 +436,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.relationship
 ```elixir
-relationship resource, relationship, action
+relationship resource \\ nil, relationship, action
 ```
 
 
@@ -476,7 +477,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.post_to_relationship
 ```elixir
-post_to_relationship resource, relationship
+post_to_relationship resource \\ nil, relationship
 ```
 
 
@@ -516,7 +517,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.patch_relationship
 ```elixir
-patch_relationship resource, relationship
+patch_relationship resource \\ nil, relationship
 ```
 
 
@@ -556,7 +557,7 @@ Target: `AshJsonApi.Resource.Route`
 
 ## json_api.routes.base_route.delete_from_relationship
 ```elixir
-delete_from_relationship resource, relationship
+delete_from_relationship resource \\ nil, relationship
 ```
 
 

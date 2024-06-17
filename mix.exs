@@ -125,6 +125,7 @@ defmodule AshJsonApi.MixProject do
   defp deps do
     [
       {:ash, ash_version("~> 3.0")},
+      {:spark, "~> 2.0 and >= 2.2.3"},
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4"},

@@ -430,6 +430,10 @@ defmodule AshJsonApi.Resource do
     AshJsonApi.Resource.Persisters.DefineRouter
   ]
 
+  @verifiers [
+    AshJsonApi.Resource.Verifiers.VerifyRelationships
+  ]
+
   @sections [@json_api]
 
   @moduledoc """
@@ -439,7 +443,8 @@ defmodule AshJsonApi.Resource do
   use Spark.Dsl.Extension,
     sections: @sections,
     transformers: @transformers,
-    persisters: @persisters
+    persisters: @persisters,
+    verifiers: @verifiers
 
   @deprecated "See AshJsonApi.Resource.Info.type/1"
   defdelegate type(resource), to: AshJsonApi.Resource.Info

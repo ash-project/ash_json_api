@@ -36,7 +36,7 @@ defmodule Helpdesk.Support do
   ...
 ```
 
-Routes can be defined on the resource or the domain. If you define them on the resource (which is our default recommendation), the resource in question must still use the `AshJsonApi.Resource` extension, and define its own type.
+Routes can be defined on the resource or the domain. If you define them on the domain (which is our default recommendation), the resource in question must still use the `AshJsonApi.Resource` extension, and define its own type.
 
 ### Defining routes on the domain
 
