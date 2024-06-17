@@ -431,7 +431,8 @@ defmodule AshJsonApi.Resource do
   ]
 
   @verifiers [
-    AshJsonApi.Resource.Verifiers.VerifyRelationships
+    AshJsonApi.Resource.Verifiers.VerifyRelationships,
+    AshJsonApi.Resource.Verifiers.VerifyIncludes
   ]
 
   @sections [@json_api]

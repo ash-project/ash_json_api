@@ -495,6 +495,7 @@ defmodule AshJsonApi.Request do
   defp set_include_queries(includes, fields, filters, resource, path \\ []) do
     Enum.map(includes, fn {key, nested} ->
       related = public_related(resource, key)
+
       nested = set_include_queries(nested, fields, filters, related, path ++ [key])
 
       load =
