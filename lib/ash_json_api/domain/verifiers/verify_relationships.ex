@@ -3,11 +3,11 @@ defmodule AshJsonApi.Domain.Verifiers.VerifyRelationships do
   use Spark.Dsl.Verifier
 
   def verify(dsl) do
-    resource = Spark.Dsl.Verifier.get_persisted(dsl, :module)
-
     dsl
     |> AshJsonApi.Resource.Info.routes()
     |> Enum.each(fn route ->
+      resource = route.resource
+
       if route.relationship do
         relationship = Ash.Resource.Info.relationship(resource, route.relationship)
 
