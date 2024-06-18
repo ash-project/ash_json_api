@@ -93,6 +93,8 @@ defmodule AshJsonApi.Controllers.Router do
     opts
     |> Keyword.put(:modify, Keyword.get(opts, :modify_open_api))
     |> Keyword.delete(:modify_open_api)
+    |> Keyword.put(:format, Keyword.get(opts, :open_api_format))
+    |> Keyword.delete(:open_api_format)
   end
 
   defp open_api_request?(conn, open_api) do

@@ -12,11 +12,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
       spec =
         conn
         |> spec(opts)
-        |> Jason.encode!(pretty: true)
+        |> encode(opts)
 
       conn
       |> Plug.Conn.send_resp(200, spec)
       |> Plug.Conn.halt()
+    end
+
+    defp encode(spec, opts) do
+      case Keyword.get(opts, :format, :json) do
+        :json -> spec |> OpenApi.to_map() |> Jason.encode!(pretty: true)
+        :yaml -> spec |> OpenApi.to_map() |> Ymlr.document()
+        format -> raise "Unsupported Open API format: #{format}"
+      end
     end
 
     defp modify(spec, conn, opts) do
