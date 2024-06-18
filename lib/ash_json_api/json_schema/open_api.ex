@@ -46,7 +46,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
-    @dialyzer {:nowarn_function, {:action_description, 2}}
+    @dialyzer {:nowarn_function, {:action_description, 3}}
     @dialyzer {:nowarn_function, {:relationship_resource_identifiers, 1}}
     @dialyzer {:nowarn_function, {:resource_object_schema, 1}}
 
@@ -535,7 +535,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
 
       %Operation{
-        description: action_description(action, resource),
+        description: action_description(action, route, resource),
+        operationId: route.name,
         tags: [to_string(AshJsonApi.Resource.Info.type(resource))],
         parameters: path_parameters(path_params, action) ++ query_parameters(route, resource),
         responses: %{
@@ -548,9 +549,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp action_description(action, resource) do
-      action.description ||
-        "#{action.name} operation on #{AshJsonApi.Resource.Info.type(resource)} resource"
+    defp action_description(action, route, resource) do
+      action.description || default_description(route, resource)
+    end
+
+    defp default_description(route, resource) do
+      if route.name do
+        "#{route.name} operation on #{AshJsonApi.Resource.Info.type(resource)} resource"
+      else
+        "#{route.route} operation on #{AshJsonApi.Resource.Info.type(resource)} resource"
+      end
     end
 
     @spec path_parameters(path_params :: [String.t()], action :: Actions.action()) ::

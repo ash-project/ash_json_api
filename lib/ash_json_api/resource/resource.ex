@@ -25,6 +25,12 @@ defmodule AshJsonApi.Resource do
       type: {:fun, 3},
       required: false,
       doc: "A function to generate arbitrary top-level metadata for the JSON:API response"
+    ],
+    name: [
+      type: :string,
+      required: false,
+      doc:
+        "A globally unique name for this route, to be used when generating docs and open api specifications"
     ]
   ]
 
