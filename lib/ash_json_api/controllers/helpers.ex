@@ -425,7 +425,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
           query =
             query
-            |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
+            |> Ash.Query.load(fields_to_load)
             |> Ash.Query.set_context(request.context)
             |> Ash.Query.for_read(
               action,
