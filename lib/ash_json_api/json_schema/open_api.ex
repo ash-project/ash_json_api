@@ -535,6 +535,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
 
       %Operation{
+        operationId: operation_id(action, resource),
         description: action_description(action, resource),
         tags: [to_string(AshJsonApi.Resource.Info.type(resource))],
         parameters: path_parameters(path_params, action) ++ query_parameters(route, resource),
@@ -551,6 +552,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp action_description(action, resource) do
       action.description ||
         "#{action.name} operation on #{AshJsonApi.Resource.Info.type(resource)} resource"
+    end
+
+    defp operation_id(action, resource) do
+      "#{action.name}_#{to_string(AshJsonApi.Resource.Info.type(resource))}"
     end
 
     @spec path_parameters(path_params :: [String.t()], action :: Actions.action()) ::
