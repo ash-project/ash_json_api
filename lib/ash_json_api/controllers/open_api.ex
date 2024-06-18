@@ -22,7 +22,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp encode(spec, opts) do
       case Keyword.get(opts, :format, :json) do
         :json -> spec |> OpenApi.to_map() |> Jason.encode!(pretty: true)
-        :yaml -> spec |> OpenApi.to_map() |> Ymlr.document()
+        :yaml -> spec |> OpenApi.to_map() |> Ymlr.document!()
         format -> raise "Unsupported Open API format: #{format}"
       end
     end
