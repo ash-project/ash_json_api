@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.2.2](https://github.com/ash-project/ash_json_api/compare/v1.2.1...v1.2.2) (2024-06-19)
+
+
+
+
+### Bug Fixes:
+
+* properly still perform includes on record fetched from path
+
+### Improvements:
+
+* newtype/enum support for json_schema as well
+
+* render enums as enums in open api
+
 ## [v1.2.1](https://github.com/ash-project/ash_json_api/compare/v1.2.0...v1.2.1) (2024-06-18)
 
 
