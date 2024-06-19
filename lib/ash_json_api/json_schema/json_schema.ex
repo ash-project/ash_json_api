@@ -362,6 +362,14 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  defp resource_attribute_type(%{type: Ash.Type.Atom, constraints: constraints}) do
+    if one_of = constraints[:one_of] do
+      %{"type" => "string", "enum" => one_of}
+    else
+      %{"type" => "any"}
+    end
+  end
+
   defp resource_attribute_type(%{type: {:array, type}}) do
     %{
       "type" => "array",
@@ -380,6 +388,27 @@ defmodule AshJsonApi.JsonSchema do
       %{
         "type" => "any"
       }
+    end
+
+    constraints = Map.get(attr, :constraints)
+
+    cond do
+      function_exported?(type, :json_schema, 1) ->
+        type.json_schema(constraints)
+
+      Ash.Type.NewType.new_type?(type) ->
+        new_constraints = Ash.Type.NewType.constraints(type, constraints)
+        new_type = Ash.Type.NewType.subtype_of(type)
+
+        resource_attribute_type(Map.merge(attr, %{type: new_type, constraints: new_constraints}))
+
+      Spark.implements_behaviour?(type, Ash.Type.Enum) ->
+        %{"type" => "string", "enum" => type.values()}
+
+      true ->
+        %{
+          "type" => "any"
+        }
     end
   end
 

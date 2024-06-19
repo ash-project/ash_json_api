@@ -319,18 +319,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp resource_attribute_type(%{type: {:array, type}} = attr) do
-      %Schema{
-        type: :array,
-        items:
-          resource_attribute_type(%{
-            attr
-            | type: type,
-              constraints: attr.constraints[:items] || []
-          })
-      }
-    end
-
     defp resource_attribute_type(%{type: Ash.Type.Atom, constraints: constraints}) do
       if one_of = constraints[:one_of] do
         %Schema{
@@ -342,6 +330,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type: :string
         }
       end
+    end
+
+    defp resource_attribute_type(%{type: {:array, type}} = attr) do
+      %Schema{
+        type: :array,
+        items:
+          resource_attribute_type(%{
+            attr
+            | type: type,
+              constraints: attr.constraints[:items] || []
+          })
+      }
     end
 
     defp resource_attribute_type(%{type: type} = attr) do
