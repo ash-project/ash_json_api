@@ -47,10 +47,10 @@ defmodule Helpdesk.Support do
   json_api do
     routes do
       # in the domain `base_route` acts like a scope
-      base_route "/tickets" do
-        get Helpdesk.Support.Ticket, :read
-        index Helpdesk.Support.Ticket, :read
-        post Helpdesk.Support.Ticket, :read
+      base_route "/tickets", Helpdesk.Support.Ticket do
+        get :read
+        index :read
+        post :create
       end
     end
   end

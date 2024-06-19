@@ -337,10 +337,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type.json_schema([])
         end
       else
-        %Schema{
-          type: :object,
-          additionalProperties: true
-        }
+        %Schema{}
       end
     end
 
