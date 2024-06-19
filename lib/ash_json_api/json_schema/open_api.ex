@@ -274,6 +274,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       %Schema{schema | description: new_description}
     end
 
+    defp with_attribute_nullability(%Schema{type: nil} = schema, _), do: schema
+
     defp with_attribute_nullability(schema, attr) do
       if attr.allow_nil? do
         %Schema{
@@ -329,15 +331,42 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp resource_attribute_type(%{type: type} = attr) do
-      if :erlang.function_exported(type, :json_schema, 1) do
-        if Map.get(attr, :constraints) do
-          type.json_schema(attr.constraints)
-        else
-          type.json_schema([])
-        end
+    defp resource_attribute_type(%{type: Ash.Type.Atom, constraints: constraints}) do
+      if one_of = constraints[:one_of] do
+        %Schema{
+          type: :string,
+          enum: one_of
+        }
       else
-        %Schema{}
+        %Schema{
+          type: :string
+        }
+      end
+    end
+
+    defp resource_attribute_type(%{type: type} = attr) do
+      constraints = Map.get(attr, :constraints)
+
+      cond do
+        function_exported?(type, :json_schema, 1) ->
+          type.json_schema(constraints)
+
+        Ash.Type.NewType.new_type?(type) ->
+          new_constraints = Ash.Type.NewType.constraints(type, constraints)
+          new_type = Ash.Type.NewType.subtype_of(type)
+
+          resource_attribute_type(
+            Map.merge(attr, %{type: new_type, constraints: new_constraints})
+          )
+
+        Spark.implements_behaviour?(type, Ash.Type.Enum) ->
+          %Schema{
+            type: :string,
+            enum: type.values()
+          }
+
+        true ->
+          %Schema{}
       end
     end
 
