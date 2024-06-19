@@ -21,12 +21,25 @@ defmodule Test.Acceptance.PatchTest do
         get :read
 
         index :read
+
+        patch :delete_posts, route: "/:id/posts/delete"
       end
     end
 
     actions do
       default_accept(:*)
       defaults([:create, :read, :update, :destroy])
+
+      update :delete_posts do
+        accept([])
+        require_atomic?(false)
+
+        argument :post_ids, {:array, :uuid} do
+          allow_nil?(false)
+        end
+
+        change(manage_relationship(:post_ids, :posts, type: :remove))
+      end
     end
 
     attributes do
@@ -327,6 +340,44 @@ defmodule Test.Acceptance.PatchTest do
       related =
         Domain
         |> get("/posts/#{post.id}/author")
+        |> Map.get(:resp_body)
+        |> Map.get("data")
+
+      refute related
+    end
+  end
+
+  describe "patch_removing_posts" do
+    setup do
+      id = Ecto.UUID.generate()
+
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
+        |> Ash.create!()
+
+      posts =
+        Enum.map(1..2, fn _ ->
+          Post
+          |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+          |> Ash.Changeset.force_change_attribute(:author_id, author.id)
+          |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
+          |> Ash.create!()
+        end)
+
+      %{posts: posts, author: author}
+    end
+
+    test "patch to remove relationship works", %{author: author, posts: posts} do
+      assert %{status: 200} =
+               Domain
+               |> patch("/authors/#{author.id}/posts/delete", %{
+                 data: %{attributes: %{post_ids: Enum.map(posts, & &1.id)}}
+               })
+
+      related =
+        Domain
+        |> get("/authors/#{author.id}/posts")
         |> Map.get(:resp_body)
         |> Map.get("data")
 

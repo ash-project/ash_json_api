@@ -365,7 +365,7 @@ defmodule AshJsonApi.Controllers.Helpers do
          |> Ash.Query.set_context(request.context)
          |> Ash.Query.for_read(
            action,
-           Map.merge(request.arguments, params),
+           params,
            Keyword.put(Request.opts(request), :page, false)
          )
          |> Ash.Query.limit(1)}
