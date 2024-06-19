@@ -5,6 +5,33 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.2.1](https://github.com/ash-project/ash_json_api/compare/v1.2.0...v1.2.1) (2024-06-18)
+
+
+
+
+### Bug Fixes:
+
+* don't raise error including on get related endpoints
+
+* don't show exceptions if `show_raised_errors?` is `false`
+
+* don't expose `action.name` over api docs
+
+* resource comes from the route on domains
+
+* add missing fields from `InvalidField`
+
+* validate relationships from routes at compile time
+
+### Improvements:
+
+* support `name` on `routes`, use in description and operationId
+
+* verify includes list at compile time
+
+* allow setting a `resource` second option on domain's `base_route` entity
+
 ## [v1.2.0](https://github.com/ash-project/ash_json_api/compare/v1.1.2...v1.2.0) (2024-06-11)
 
 ### Features:

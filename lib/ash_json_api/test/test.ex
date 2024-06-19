@@ -28,7 +28,19 @@ defmodule AshJsonApi.Test do
     end
 
     if opts[:status] do
-      assert result.status == opts[:status]
+      resp_body =
+        try do
+          inspect(Jason.decode!(result.resp_body), pretty: true)
+        rescue
+          _ ->
+            inspect(result.resp_body)
+        end
+
+      assert result.status == opts[:status], """
+      Expected to get status #{opts[:status]} but got #{result.status}.
+
+      Response body: #{resp_body}
+      """
     end
 
     if Keyword.get(opts, :decode?, true) do
@@ -57,7 +69,19 @@ defmodule AshJsonApi.Test do
     end
 
     if opts[:status] do
-      assert result.status == opts[:status]
+      resp_body =
+        try do
+          inspect(Jason.decode!(result.resp_body), pretty: true)
+        rescue
+          _ ->
+            inspect(result.resp_body)
+        end
+
+      assert result.status == opts[:status], """
+      Expected to get status #{opts[:status]} but got #{result.status}.
+
+      Response body: #{resp_body}
+      """
     end
 
     if Keyword.get(opts, :decode?, true) do
@@ -89,7 +113,19 @@ defmodule AshJsonApi.Test do
     end
 
     if opts[:status] do
-      assert result.status == opts[:status]
+      resp_body =
+        try do
+          inspect(Jason.decode!(result.resp_body), pretty: true)
+        rescue
+          _ ->
+            inspect(result.resp_body)
+        end
+
+      assert result.status == opts[:status], """
+      Expected to get status #{opts[:status]} but got #{result.status}.
+
+      Response body: #{resp_body}
+      """
     end
 
     if Keyword.get(opts, :decode?, true) do
@@ -120,7 +156,19 @@ defmodule AshJsonApi.Test do
     end
 
     if opts[:status] do
-      assert result.status == opts[:status]
+      resp_body =
+        try do
+          inspect(Jason.decode!(result.resp_body), pretty: true)
+        rescue
+          _ ->
+            inspect(result.resp_body)
+        end
+
+      assert result.status == opts[:status], """
+      Expected to get status #{opts[:status]} but got #{result.status}.
+
+      Response body: #{resp_body}
+      """
     end
 
     if Keyword.get(opts, :decode?, true) do
@@ -133,6 +181,15 @@ defmodule AshJsonApi.Test do
   defmacro assert_data_equals(conn, expected_data) do
     quote bind_quoted: [conn: conn, expected_data: expected_data] do
       assert %{"data" => ^expected_data} = conn.resp_body
+
+      conn
+    end
+  end
+
+  defmacro assert_data_matches(conn, data_pattern) do
+    quote do
+      conn = unquote(conn)
+      assert %{"data" => unquote(data_pattern)} = conn.resp_body
 
       conn
     end

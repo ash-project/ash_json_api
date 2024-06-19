@@ -8,6 +8,7 @@ defmodule AshJsonApi.Resource.Route do
     :method,
     :controller,
     :relationship,
+    :name,
     :resource,
     :type,
     :primary?,

@@ -74,11 +74,7 @@ defmodule AshJsonApi.Error do
             status_code: class_to_status(error.class),
             code: "something_went_wrong",
             title: "SomethingWentWrong",
-            detail: """
-            Raised error: #{uuid}
-
-            #{Exception.format(:error, error, stacktrace)}"
-            """
+            detail: "Something went wrong. Error id: #{uuid}"
           }
         ]
       end

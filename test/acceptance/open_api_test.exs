@@ -21,7 +21,7 @@ defmodule Test.Acceptance.OpenApiTest do
       routes do
         base("/authors")
         get(:read)
-        index(:read)
+        index(:read, name: "listAuthors")
         patch(:update)
       end
     end
@@ -202,6 +202,23 @@ defmodule Test.Acceptance.OpenApiTest do
     assert %OpenApiSpex.Operation{} = api_spec.paths["/posts/{id}"].get
     assert %OpenApiSpex.Operation{} = api_spec.paths["/posts"].post
     assert nil == api_spec.paths["/posts/{id}"].patch
+  end
+
+  test "API routes use `name` as operationId", %{
+    open_api_spec: %OpenApi{} = api_spec
+  } do
+    assert %OpenApiSpex.Operation{operationId: "listAuthors"} = api_spec.paths["/authors"].get
+    assert %OpenApiSpex.Operation{operationId: nil} = api_spec.paths["/authors/{id}"].get
+  end
+
+  test "API routes use `name` in default descriptions", %{
+    open_api_spec: %OpenApi{} = api_spec
+  } do
+    assert %OpenApiSpex.Operation{description: "listAuthors operation on author resource"} =
+             api_spec.paths["/authors"].get
+
+    assert %OpenApiSpex.Operation{description: "/authors/:id operation on author resource"} =
+             api_spec.paths["/authors/{id}"].get
   end
 
   describe "Index route" do

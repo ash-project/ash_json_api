@@ -1,0 +1,196 @@
+defmodule Test.Acceptance.GetRelatedTest do
+  use ExUnit.Case, async: true
+
+  defmodule Post do
+    use Ash.Resource,
+      domain: Test.Acceptance.GetRelatedTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("post")
+      default_fields [:name, :content]
+
+      routes do
+        base("/posts")
+
+        index :read do
+          metadata(fn query, results, request ->
+            %{
+              "foo" => "bar"
+            }
+          end)
+        end
+
+        index :read do
+          route "/read2"
+          default_fields [:not_present_by_default]
+        end
+      end
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:create, :read, :update, :destroy])
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:name, :string, public?: true)
+      attribute(:content, :string, public?: true)
+      attribute(:not_present_by_default, :string, public?: true)
+    end
+
+    relationships do
+      has_many :comments, Test.Acceptance.GetRelatedTest.Comment do
+        public?(true)
+      end
+    end
+  end
+
+  defmodule Comment do
+    use Ash.Resource,
+      domain: Test.Acceptance.GetRelatedTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("comment")
+
+      includes [:post]
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:create, :read, :update, :destroy])
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:name, :string, public?: true)
+      attribute(:content, :string, public?: true)
+    end
+
+    relationships do
+      belongs_to(:post, Post) do
+        public?(true)
+      end
+    end
+  end
+
+  defmodule Domain do
+    use Ash.Domain,
+      extensions: [
+        AshJsonApi.Domain
+      ]
+
+    json_api do
+      router Test.Acceptance.GetRelatedTest.Router
+      log_errors?(false)
+
+      routes do
+        base_route "/posts", Post do
+          index :read
+          related :comments, :read, primary?: true
+        end
+      end
+    end
+
+    resources do
+      resource(Post)
+      resource(Comment)
+    end
+  end
+
+  defmodule Router do
+    use AshJsonApi.Router, domain: Domain
+  end
+
+  import AshJsonApi.Test
+
+  describe "index endpoint" do
+    setup do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "parent", content: "parent"})
+        |> Ash.create!()
+
+      comments =
+        Enum.map(0..1, fn i ->
+          Comment
+          |> Ash.Changeset.for_create(:create, %{
+            name: "comment#{i}",
+            content: "comment",
+            post_id: post.id
+          })
+          |> Ash.create!()
+        end)
+
+      %{post: post, comments: comments}
+    end
+
+    test "returns a list of posts", %{post: post} do
+      Domain
+      |> get("/posts/#{post.id}/comments", status: 200)
+      |> assert_data_matches([
+        %{
+          "attributes" => %{
+            "name" => "comment" <> _,
+            "content" => "comment"
+          },
+          "type" => "comment"
+        },
+        %{
+          "attributes" => %{
+            "name" => "comment" <> _,
+            "content" => "comment"
+          },
+          "type" => "comment"
+        }
+      ])
+    end
+
+    test "additional relationships can be included", %{post: post} do
+      includes =
+        Domain
+        |> get("/posts/#{post.id}/comments?include=post", status: 200)
+        |> assert_data_matches([
+          %{
+            "attributes" => %{
+              "name" => "comment" <> _,
+              "content" => "comment"
+            },
+            "type" => "comment"
+          },
+          %{
+            "attributes" => %{
+              "name" => "comment" <> _,
+              "content" => "comment"
+            },
+            "type" => "comment"
+          }
+        ])
+        |> Map.get(:resp_body)
+        |> get_in(["included"])
+
+      assert [
+               %{
+                 "attributes" => %{"content" => "parent", "name" => "parent"},
+                 "type" => "post"
+               }
+             ] = includes
+    end
+  end
+end
