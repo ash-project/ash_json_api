@@ -126,6 +126,7 @@
         {Credo.Check.Refactor.Nesting, [max_nesting: 5]},
         {Credo.Check.Refactor.UnlessWithElse, []},
         {Credo.Check.Refactor.WithClauses, []},
+        {Credo.Check.Refactor.Apply, false},
 
         #
         ## Warnings

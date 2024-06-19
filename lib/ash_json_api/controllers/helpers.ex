@@ -395,7 +395,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         if through_resource do
           []
         else
-          fields(request, request.resource)
+          fields(request, request.resource) ++ (request.includes_keyword || [])
         end
 
       query =
