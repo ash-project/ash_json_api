@@ -229,9 +229,33 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> Ash.Resource.Info.public_attributes()
     |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
+    |> Enum.concat(
+      Ash.Resource.Info.public_aggregates(resource)
+      |> set_aggregate_constraints(resource)
+    )
     |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
     |> Enum.reduce(%{}, fn attr, acc ->
       Map.put(acc, to_string(attr.name), resource_attribute_type(attr))
+    end)
+  end
+
+  @doc false
+  def set_aggregate_constraints(aggregates, resource) do
+    Enum.map(aggregates, fn %{field: field, relationship_path: relationship_path} = aggregate ->
+      field_type_and_constraints =
+        with field when not is_nil(field) <- field,
+             related when not is_nil(related) <-
+               Ash.Resource.Info.related(resource, relationship_path),
+             attr when not is_nil(attr) <- Ash.Resource.Info.field(related, field) do
+          {attr.type, attr.constraints}
+        end
+
+      {field_type, field_constraints} = field_type_and_constraints || {nil, []}
+
+      {:ok, aggregate_type, aggregate_constraints} =
+        Ash.Query.Aggregate.kind_to_type(aggregate.kind, field_type, field_constraints)
+
+      Map.merge(aggregate, %{type: aggregate_type, constraints: aggregate_constraints})
     end)
   end
 
@@ -328,6 +352,33 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  defp resource_write_attribute_type(%{type: {:array, type}} = attr, action_type) do
+    %{
+      "type" => "array",
+      "items" =>
+        resource_write_attribute_type(
+          %{
+            attr
+            | type: type,
+              constraints: attr.constraints[:items] || []
+          },
+          action_type
+        )
+    }
+  end
+
+  defp resource_write_attribute_type(%{type: type} = attr, action_type) do
+    if Ash.Type.embedded_type?(type) do
+      embedded_type_input(attr, action_type)
+    else
+      if :erlang.function_exported(type, :json_write_schema, 1) do
+        type.json_write_schema(attr.constraints)
+      else
+        resource_attribute_type(attr)
+      end
+    end
+  end
+
   defp resource_attribute_type(%{type: Ash.Type.String}) do
     %{
       "type" => "string"
@@ -370,31 +421,27 @@ defmodule AshJsonApi.JsonSchema do
     end
   end
 
-  defp resource_attribute_type(%{type: {:array, type}}) do
+  defp resource_attribute_type(%{type: {:array, type}} = attr) do
     %{
       "type" => "array",
-      "items" => resource_attribute_type(%{type: type})
+      "items" =>
+        resource_attribute_type(%{attr | type: type, constraints: attr.constraints[:items] || []})
     }
   end
 
   defp resource_attribute_type(%{type: type} = attr) do
-    if :erlang.function_exported(type, :json_schema, 1) do
-      if Map.get(attr, :constraints) do
-        type.json_schema(attr.constraints)
-      else
-        type.json_schema([])
-      end
-    else
-      %{
-        "type" => "any"
-      }
-    end
-
-    constraints = Map.get(attr, :constraints)
+    constraints = attr.constraints
 
     cond do
       function_exported?(type, :json_schema, 1) ->
         type.json_schema(constraints)
+
+      Ash.Type.embedded_type?(type) ->
+        %{
+          "type" => "object",
+          "properties" => resource_attributes(type),
+          "required" => required_attributes(type)
+        }
 
       Ash.Type.NewType.new_type?(type) ->
         new_constraints = Ash.Type.NewType.constraints(type, constraints)
@@ -409,6 +456,100 @@ defmodule AshJsonApi.JsonSchema do
         %{
           "type" => "any"
         }
+    end
+  end
+
+  defp embedded_type_input(%{type: resource} = attribute, action_type) do
+    attribute = %{
+      attribute
+      | constraints: Ash.Type.NewType.constraints(resource, attribute.constraints)
+    }
+
+    resource = Ash.Type.NewType.subtype_of(resource)
+
+    create_action =
+      case attribute.constraints[:create_action] do
+        nil ->
+          Ash.Resource.Info.primary_action!(resource, :create)
+
+        name ->
+          Ash.Resource.Info.action(resource, name)
+      end
+
+    update_action =
+      case attribute.constraints[:update_action] do
+        nil ->
+          Ash.Resource.Info.primary_action!(resource, :update)
+
+        name ->
+          Ash.Resource.Info.action(resource, name)
+      end
+
+    create_write_attributes =
+      write_attributes(resource, create_action.arguments, create_action.accept, :create)
+
+    update_write_attributes =
+      write_attributes(resource, update_action.arguments, update_action.accept, :update)
+
+    create_required_attributes =
+      required_write_attributes(resource, create_action.arguments, create_action)
+
+    update_required_attributes =
+      required_write_attributes(resource, update_action.arguments, update_action)
+
+    required =
+      if action_type == :create do
+        create_required_attributes
+      else
+        create_required_attributes
+        |> MapSet.new()
+        |> MapSet.intersection(MapSet.new(update_required_attributes))
+        |> Enum.to_list()
+      end
+
+    %{
+      "type" => "object",
+      "required" => required,
+      "properties" =>
+        Map.merge(create_write_attributes, update_write_attributes, fn _k, l, r ->
+          %{
+            "anyOf" => [
+              l,
+              r
+            ]
+          }
+          |> unwrap_any_of()
+        end)
+    }
+  end
+
+  defp unwrap_any_of(%{"anyOf" => options}) do
+    {options_remaining, options_to_add} =
+      Enum.reduce(options, {[], []}, fn schema, {options, to_add} ->
+        case schema do
+          %{"anyOf" => _} = schema ->
+            case unwrap_any_of(schema) do
+              %{"anyOf" => nested_options} ->
+                {options, [nested_options | to_add]}
+
+              schema ->
+                {options, [schema | to_add]}
+            end
+
+          _ ->
+            {[schema | to_add], options}
+        end
+      end)
+
+    case options_remaining ++ options_to_add do
+      [] ->
+        %{"type" => "any"}
+
+      [one] ->
+        one
+
+      many ->
+        %{"anyOf" => many}
     end
   end
 
@@ -459,6 +600,7 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp query_param_properties(route, _domain, resource, properties) do
+    # TODO: improve fields
     props = %{
       "include" => %{
         "type" => "string",
@@ -631,7 +773,7 @@ defmodule AshJsonApi.JsonSchema do
               "required" =>
                 required_write_attributes(resource, non_relationship_arguments, action),
               "properties" =>
-                write_attributes(resource, non_relationship_arguments, action.accept)
+                write_attributes(resource, non_relationship_arguments, action.accept, action.type)
             },
             "relationships" => %{
               "type" => "object",
@@ -682,7 +824,7 @@ defmodule AshJsonApi.JsonSchema do
                 |> Enum.reject(& &1.allow_nil?)
                 |> Enum.map(&to_string(&1.name)),
               "properties" =>
-                write_attributes(resource, non_relationship_arguments, action.accept)
+                write_attributes(resource, non_relationship_arguments, action.accept, action.type)
             },
             "relationships" => %{
               "type" => "object",
@@ -764,17 +906,17 @@ defmodule AshJsonApi.JsonSchema do
     Enum.uniq(attributes ++ arguments ++ Map.get(action, :require_attributes, []))
   end
 
-  defp write_attributes(resource, arguments, accept) do
+  defp write_attributes(resource, arguments, accept, type) do
     attributes =
       resource
       |> Ash.Resource.Info.attributes()
       |> Enum.filter(&(&1.name in accept && &1.writable?))
       |> Enum.reduce(%{}, fn attribute, acc ->
-        Map.put(acc, to_string(attribute.name), resource_attribute_type(attribute))
+        Map.put(acc, to_string(attribute.name), resource_write_attribute_type(attribute, type))
       end)
 
     Enum.reduce(arguments, attributes, fn argument, attributes ->
-      Map.put(attributes, to_string(argument.name), resource_attribute_type(argument))
+      Map.put(attributes, to_string(argument.name), resource_write_attribute_type(argument, type))
     end)
   end
 

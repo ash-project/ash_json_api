@@ -2,6 +2,15 @@ defmodule Test.Acceptance.OpenApiTest do
   use ExUnit.Case, async: true
   alias OpenApiSpex.{OpenApi, Schema}
 
+  defmodule Bio do
+    use Ash.Resource,
+      data_layer: :embedded
+
+    attributes do
+      attribute(:history, :string, public?: true)
+    end
+  end
+
   defmodule Author do
     use Ash.Resource,
       domain: Test.Acceptance.OpenApiTest.Blogs,
@@ -34,6 +43,7 @@ defmodule Test.Acceptance.OpenApiTest do
     attributes do
       uuid_primary_key(:id, writable?: true)
       attribute(:name, :string, public?: true)
+      attribute(:bio, Bio, public?: true)
     end
 
     relationships do
@@ -354,6 +364,49 @@ defmodule Test.Acceptance.OpenApiTest do
       refute operation.requestBody
     end
 
+    test "embedded attribute types are expanded", %{open_api_spec: %OpenApi{} = api_spec} do
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors"].get
+      response = operation.responses[200]
+      schema = response.content["application/vnd.api+json"].schema
+      assert schema.type == :object
+      assert schema.properties.data.type == :array
+      assert schema.properties.data.uniqueItems == true
+      assert schema.properties.data.items."$ref" == "#/components/schemas/author"
+
+      assert %OpenApiSpex.Schema{
+               additionalProperties: false,
+               properties: %{
+                 attributes: %OpenApiSpex.Schema{
+                   properties: %{
+                     bio: %OpenApiSpex.Schema{
+                       description: "Field included by default.",
+                       anyOf: [
+                         %OpenApiSpex.Schema{
+                           type: :object,
+                           required: [],
+                           properties: %{
+                             history: %OpenApiSpex.Schema{
+                               description: "Field included by default.",
+                               anyOf: [
+                                 %OpenApiSpex.Schema{type: :string},
+                                 %OpenApiSpex.Schema{type: :null}
+                               ]
+                             }
+                           }
+                         },
+                         %OpenApiSpex.Schema{type: :null}
+                       ]
+                     }
+                   }
+                 },
+                 id: %{type: :string},
+                 type: %OpenApiSpex.Schema{type: :string}
+               },
+               required: [:type, :id],
+               type: :object
+             } = api_spec.components.schemas["author"]
+    end
+
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       response = operation.responses[200]
@@ -370,6 +423,7 @@ defmodule Test.Acceptance.OpenApiTest do
                  attributes: %OpenApiSpex.Schema{
                    additionalProperties: false,
                    description: "An attributes object for a post",
+                   required: ["name", "author_id"],
                    properties: %{
                      email: %OpenApiSpex.Schema{
                        anyOf: [
