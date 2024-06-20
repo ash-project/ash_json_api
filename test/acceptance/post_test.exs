@@ -215,6 +215,28 @@ defmodule Test.Acceptance.PostTest do
       |> assert_attribute_equals("name_twice", "Post 1-Post 1")
     end
 
+    test "create with unknown input in embed generates correct error code" do
+      id = Ecto.UUID.generate()
+
+      response = Domain
+      |> post("/posts", %{
+        data: %{
+          type: "post",
+          attributes: %{
+            id: id,
+            name: "Post3",
+            review: %{
+              unknown_attr: "Foo"
+            },
+          }
+        }
+      })
+      # Make sure we get correct error code back
+      assert response.status == 422
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "no_such_input"
+    end
+
     test "nested errors have the correct source pointer" do
       id = Ecto.UUID.generate()
 
