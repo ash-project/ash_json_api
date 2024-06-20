@@ -342,3 +342,16 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Invalid.InvalidPrimaryKey do
     }
   end
 end
+
+defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Invalid.NoSuchInput do
+  def to_json_api_error(error) do
+    %AshJsonApi.Error{
+      id: Ash.UUID.generate(),
+      status_code: 422,
+      code: "no_such_input",
+      title: "NoSuchInput",
+      detail: Ash.Error.Invalid.NoSuchInput.message(error),
+      meta: Map.new(error.vars)
+    }
+  end
+end
