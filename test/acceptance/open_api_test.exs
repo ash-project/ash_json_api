@@ -19,6 +19,10 @@ defmodule Test.Acceptance.OpenApiTest do
         AshJsonApi.Resource
       ]
 
+    resource do
+      description("This is an author!")
+    end
+
     ets do
       private?(true)
     end
@@ -195,6 +199,18 @@ defmodule Test.Acceptance.OpenApiTest do
   test "resources without a json_api are not included in the schema", %{open_api_spec: api_spec} do
     schema_keys = api_spec.components.schemas |> Map.keys()
     assert "tags" not in schema_keys
+  end
+
+  test "resource descriptions are used in the generated specification if provided", %{
+    open_api_spec: api_spec
+  } do
+    # The default description
+    post = api_spec.components.schemas["post"]
+    assert post.description == "A \"Resource object\" representing a post"
+
+    # A custom description read from the resource
+    author = api_spec.components.schemas["author"]
+    assert author.description == "This is an author!"
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
