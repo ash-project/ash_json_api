@@ -116,7 +116,8 @@ defmodule AshJsonApi.JsonSchema do
   def resource_object_schema(resource) do
     %{
       "description" =>
-        "A \"Resource object\" representing a #{AshJsonApi.Resource.Info.type(resource)}",
+        Ash.Resource.Info.description(resource) ||
+          "A \"Resource object\" representing a #{AshJsonApi.Resource.Info.type(resource)}",
       "type" => "object",
       "required" => ["type", "id"],
       "properties" => %{

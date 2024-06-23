@@ -168,7 +168,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_object_schema(resource, fields \\ nil) do
       %Schema{
         description:
-          "A \"Resource object\" representing a #{AshJsonApi.Resource.Info.type(resource)}",
+          Ash.Resource.Info.description(resource) ||
+            "A \"Resource object\" representing a #{AshJsonApi.Resource.Info.type(resource)}",
         type: :object,
         required: [:type, :id],
         properties: %{
