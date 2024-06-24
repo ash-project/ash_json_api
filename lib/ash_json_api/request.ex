@@ -45,6 +45,7 @@ defmodule AshJsonApi.Request do
     filter_included: %{},
     sort: [],
     fields: %{},
+    field_inputs: %{},
     errors: [],
     all_domains: [],
     # assigns is used by controllers to store state while piping
@@ -92,6 +93,7 @@ defmodule AshJsonApi.Request do
     |> validate_req_headers()
     |> validate_body()
     |> parse_fields()
+    |> parse_field_inputs()
     |> parse_filter_included()
     |> parse_includes()
     |> parse_filter()
@@ -368,6 +370,15 @@ defmodule AshJsonApi.Request do
 
   defp parse_fields(request), do: request
 
+  defp parse_field_inputs(%{query_params: %{"field_inputs" => field_inputs}} = request)
+       when is_map(field_inputs) do
+    Enum.reduce(field_inputs, request, fn {type, inputs}, request ->
+      add_field_inputs(request, type, inputs)
+    end)
+  end
+
+  defp parse_field_inputs(request), do: request
+
   if function_exported?(Ash.Resource.Info, :public_related, 2) do
     defp public_related(resource, relationship) do
       Ash.Resource.Info.public_related(resource, relationship)
@@ -385,6 +396,62 @@ defmodule AshJsonApi.Request do
         nil -> nil
       end
     end
+  end
+
+  defp add_field_inputs(request, type, field_inputs) do
+    resource =
+      request.domain
+      |> Ash.Domain.Info.resources()
+      |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
+
+    Enum.reduce(field_inputs, request, fn {calculation_name, arguments}, request ->
+      case Ash.Resource.Info.public_calculation(resource, calculation_name) do
+        nil ->
+          add_error(
+            request,
+            InvalidField.exception(type: type, parameter?: true, field: calculation_name),
+            request.route.type
+          )
+
+        calculation ->
+          Enum.reduce(arguments, request, fn {arg_name, arg_value}, request ->
+            calculation_arg =
+              Enum.find(calculation.arguments, fn argument ->
+                to_string(argument.name) == arg_name
+              end)
+
+            case calculation_arg do
+              nil ->
+                add_error(
+                  request,
+                  InvalidField.exception(type: type, parameter?: true, field: arg_name),
+                  request.route.type
+                )
+
+              _ ->
+                cur_resource_field_inputs = Map.get(request.field_inputs, resource, %{})
+
+                cur_calculation_field_inputs =
+                  Map.get(cur_resource_field_inputs, calculation.name, %{})
+
+                updated_calculation_field_inputs =
+                  Map.put(cur_calculation_field_inputs, calculation_arg.name, arg_value)
+
+                updated_resource_field_inputs =
+                  Map.put(
+                    cur_resource_field_inputs,
+                    calculation.name,
+                    updated_calculation_field_inputs
+                  )
+
+                updated_field_inputs =
+                  Map.put(request.field_inputs, resource, updated_resource_field_inputs)
+
+                %{request | field_inputs: updated_field_inputs}
+            end
+          end)
+      end
+    end)
   end
 
   defp add_fields(request, resource, fields, parameter?) do
@@ -509,19 +576,32 @@ defmodule AshJsonApi.Request do
     |> Enum.reduce([], fn path, acc ->
       put_path(acc, path)
     end)
-    |> set_include_queries(request.fields, request.filter_included, request.resource)
+    |> set_include_queries(
+      request.fields,
+      request.field_inputs,
+      request.filter_included,
+      request.resource
+    )
   end
 
-  defp set_include_queries(includes, fields, filters, resource, path \\ []) do
+  defp set_include_queries(includes, fields, field_inputs, filters, resource, path \\ []) do
     Enum.map(includes, fn {key, nested} ->
       related = public_related(resource, key)
 
-      nested = set_include_queries(nested, fields, filters, related, path ++ [key])
+      nested = set_include_queries(nested, fields, field_inputs, filters, related, path ++ [key])
+
+      related_field_inputs = Map.get(field_inputs, related, %{})
 
       load =
         fields
         |> Map.get(related)
         |> Kernel.||([])
+        |> Enum.map(fn field ->
+          case Map.get(related_field_inputs, field) do
+            nil -> field
+            value -> {field, value}
+          end
+        end)
         |> Kernel.++(nested)
 
       new_query =

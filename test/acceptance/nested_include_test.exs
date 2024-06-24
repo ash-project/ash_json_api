@@ -101,10 +101,18 @@ defmodule Test.Acceptance.NestedIncludeTest do
 
     attributes do
       uuid_primary_key(:id)
+      attribute(:name, :string, public?: true)
     end
 
     relationships do
       has_many(:children, Test.Acceptance.NestedIncludeTest.Child, public?: true)
+    end
+
+    calculations do
+      calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
     end
   end
 
@@ -135,7 +143,7 @@ defmodule Test.Acceptance.NestedIncludeTest do
   setup do
     grandchild =
       Grandchild
-      |> Ash.Changeset.for_create(:create, %{})
+      |> Ash.Changeset.for_create(:create, %{name: "grandchild"})
       |> Ash.create!()
 
     children =
@@ -183,5 +191,23 @@ defmodule Test.Acceptance.NestedIncludeTest do
     assert Enum.member?(included_ids, grandchild_id)
     assert Enum.member?(included_ids, include_1_id)
     assert Enum.all?(children, fn child -> Enum.member?(included_ids, child.id) end)
+  end
+
+  test "returns includes with calculations and accepts calculation arguments", %{
+    include_1: %{id: include_1_id},
+    children: children,
+    grandchild: %{id: grandchild_id}
+  } do
+    conn =
+      Domain
+      |> get(
+        "/includes?include=children.grandchild&fields[grandchild]=name_twice&field_inputs[grandchild][name_twice][separator]=foo",
+        status: 200
+      )
+
+    response = conn.resp_body
+
+    grandchild = Enum.find(response["included"], &(&1["type"] == "grandchild"))
+    assert grandchild["attributes"]["name_twice"] == "grandchildfoograndchild"
   end
 end

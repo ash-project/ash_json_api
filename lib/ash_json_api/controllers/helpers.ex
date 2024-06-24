@@ -425,13 +425,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
           query =
             query
-            |> Ash.Query.load(fields_to_load)
-            |> Ash.Query.set_context(request.context)
             |> Ash.Query.for_read(
               action,
               Map.merge(request.arguments, params),
               Keyword.put(Request.opts(request), :page, false)
             )
+            |> Ash.Query.load(fields_to_load)
+            |> Ash.Query.set_context(request.context)
 
           request = Request.assign(request, :query, query)
 
@@ -511,7 +511,15 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   defp fields(request, resource) do
-    Map.get(request.fields, resource) || request.route.default_fields || []
+    fields = Map.get(request.fields, resource) || request.route.default_fields || []
+    field_inputs = request.field_inputs[resource] || %{}
+
+    Enum.map(fields, fn field ->
+      case Map.get(field_inputs, field) do
+        nil -> field
+        value -> {field, value}
+      end
+    end)
   end
 
   defp default_sort(resource) do
