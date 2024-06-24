@@ -52,6 +52,18 @@ defmodule Test.Acceptance.GetRelatedTest do
         public?(true)
       end
     end
+
+    calculations do
+      calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
+
+      calculate :name_tripled, :string, concat([:name, :name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
+    end
   end
 
   defmodule Comment do
@@ -85,6 +97,18 @@ defmodule Test.Acceptance.GetRelatedTest do
 
     relationships do
       belongs_to(:post, Post) do
+        public?(true)
+      end
+    end
+
+    calculations do
+      calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
+
+      calculate :name_tripled, :string, concat([:name, :name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
         public?(true)
       end
     end
@@ -188,6 +212,40 @@ defmodule Test.Acceptance.GetRelatedTest do
       assert [
                %{
                  "attributes" => %{"content" => "parent", "name" => "parent"},
+                 "type" => "post"
+               }
+             ] = includes
+    end
+
+    test "field_inputs can be supplied on includes", %{post: post} do
+      includes =
+        Domain
+        |> get(
+          "/posts/#{post.id}/comments?include=post&fields[post]=name_twice&field_inputs[post][name_twice][separator]=baz",
+          status: 200
+        )
+        |> assert_data_matches([
+          %{
+            "attributes" => %{
+              "name" => "comment" <> _,
+              "content" => "comment"
+            },
+            "type" => "comment"
+          },
+          %{
+            "attributes" => %{
+              "name" => "comment" <> _,
+              "content" => "comment"
+            },
+            "type" => "comment"
+          }
+        ])
+        |> Map.get(:resp_body)
+        |> get_in(["included"])
+
+      assert [
+               %{
+                 "attributes" => %{"name_twice" => "parentbazparent"},
                  "type" => "post"
                }
              ] = includes

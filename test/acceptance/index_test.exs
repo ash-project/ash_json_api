@@ -46,6 +46,18 @@ defmodule Test.Acceptance.IndexTest do
       attribute(:content, :string, public?: true)
       attribute(:not_present_by_default, :string, public?: true)
     end
+
+    calculations do
+      calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
+
+      calculate :name_tripled, :string, concat([:name, :name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
+    end
   end
 
   defmodule Domain do
@@ -139,6 +151,28 @@ defmodule Test.Acceptance.IndexTest do
         %{
           "attributes" => %{
             "name" => "foo"
+          },
+          "id" => post.id,
+          "links" => %{},
+          "meta" => %{},
+          "relationships" => %{},
+          "type" => "post"
+        }
+      ])
+    end
+
+    test "accepts field_inputs as query params", %{post: post} do
+      Domain
+      |> get(
+        "/posts?field_inputs[post][name_twice][separator]=sep&fields=name,name_twice,name_tripled",
+        status: 200
+      )
+      |> assert_data_equals([
+        %{
+          "attributes" => %{
+            "name" => "foo",
+            "name_twice" => "foosepfoo",
+            "name_tripled" => "foo-foo-foo"
           },
           "id" => post.id,
           "links" => %{},

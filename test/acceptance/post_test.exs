@@ -146,7 +146,10 @@ defmodule Test.Acceptance.PostTest do
     end
 
     calculations do
-      calculate(:name_twice, :string, concat([:name, :name], "-"), public?: true)
+      calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
     end
   end
 
@@ -201,7 +204,7 @@ defmodule Test.Acceptance.PostTest do
       id = Ecto.UUID.generate()
 
       Domain
-      |> post("/posts", %{
+      |> post("/posts?field_inputs[post][name_twice][separator]=bar", %{
         data: %{
           type: "post",
           attributes: %{
@@ -212,7 +215,7 @@ defmodule Test.Acceptance.PostTest do
         }
       })
       |> assert_attribute_equals("email", nil)
-      |> assert_attribute_equals("name_twice", "Post 1-Post 1")
+      |> assert_attribute_equals("name_twice", "Post 1barPost 1")
     end
 
     test "create with unknown input in embed generates correct error code" do

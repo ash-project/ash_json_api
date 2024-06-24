@@ -96,8 +96,15 @@ defmodule Test.Acceptance.GetTest do
     end
 
     calculations do
-      calculate(:name_twice, :string, concat([:name, :name], "-"), public?: true)
-      calculate(:name_tripled, :string, concat([:name, :name, :name], "-"), public?: true)
+      calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
+
+      calculate :name_tripled, :string, concat([:name, :name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
     end
   end
 
@@ -167,6 +174,31 @@ defmodule Test.Acceptance.GetTest do
       Domain
       |> get("/posts/by_name/foo", status: 200)
       |> assert_attribute_equals("name", "foo")
+    end
+  end
+
+  describe "calculations" do
+    setup do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
+        |> Ash.create!()
+
+      %{post: post}
+    end
+
+    test "calculation arguments are parsed out of field_inputs", %{post: post} do
+      Domain
+      |> get(
+        "/posts/#{post.id}?fields[post]=name_twice,name_tripled&field_inputs[post][name_twice][separator]=foo&field_inputs[post][name_tripled][separator]=bar",
+        status: 200
+      )
+      |> assert_attribute_equals("name_twice", post.name <> "foo" <> post.name)
+      |> assert_attribute_equals(
+        "name_tripled",
+        post.name <> "bar" <> post.name <> "bar" <> post.name
+      )
     end
   end
 

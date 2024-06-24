@@ -143,6 +143,13 @@ defmodule Test.Acceptance.PatchTest do
     relationships do
       belongs_to(:author, Test.Acceptance.PatchTest.Author, public?: true)
     end
+
+    calculations do
+      calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
+        argument(:separator, :string, default: "-")
+        public?(true)
+      end
+    end
   end
 
   defmodule Domain do
@@ -190,9 +197,15 @@ defmodule Test.Acceptance.PatchTest do
 
     test "patch working properly", %{post: post} do
       Domain
-      |> patch("/posts/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}})
+      |> patch(
+        "/posts/#{post.id}?field_inputs[post][name_twice][separator]=baz&fields[post]=email,name_twice",
+        %{
+          data: %{attributes: %{email: "dummy@test.com"}}
+        }
+      )
       |> assert_meta_equals(%{"bar" => "bar"})
       |> assert_attribute_equals("email", "dummy@test.com")
+      |> assert_attribute_equals("name_twice", "Valid PostbazValid Post")
     end
 
     @tag :attributes
