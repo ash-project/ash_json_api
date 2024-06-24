@@ -193,11 +193,7 @@ defmodule Test.Acceptance.NestedIncludeTest do
     assert Enum.all?(children, fn child -> Enum.member?(included_ids, child.id) end)
   end
 
-  test "returns includes with calculations and accepts calculation arguments", %{
-    include_1: %{id: include_1_id},
-    children: children,
-    grandchild: %{id: grandchild_id}
-  } do
+  test "returns includes with calculations and accepts calculation arguments" do
     conn =
       Domain
       |> get(

@@ -425,13 +425,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
           query =
             query
+            |> Ash.Query.set_context(request.context)
             |> Ash.Query.for_read(
               action,
               Map.merge(request.arguments, params),
               Keyword.put(Request.opts(request), :page, false)
             )
             |> Ash.Query.load(fields_to_load)
-            |> Ash.Query.set_context(request.context)
 
           request = Request.assign(request, :query, query)
 
