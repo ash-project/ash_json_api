@@ -801,11 +801,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp sort_parameter(resource) do
       sorts =
         resource
-        |> Ash.Resource.Info.public_attributes()
-        |> Enum.concat(
-          Ash.Resource.Info.public_calculations(resource)
-          |> Enum.filter(&Ash.Resource.Info.sortable?(resource, &1))
-        )
+        |> AshJsonApi.JsonSchema.sortable_fields()
         |> Enum.flat_map(fn attr -> [to_string(attr.name), "-#{attr.name}"] end)
 
       %Parameter{

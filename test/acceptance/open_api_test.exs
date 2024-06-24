@@ -324,7 +324,11 @@ defmodule Test.Acceptance.OpenApiTest do
                "email",
                "-email",
                "author_id",
-               "-author_id"
+               "-author_id",
+               "name_twice",
+               "-name_twice",
+               "count_of_tags",
+               "-count_of_tags"
              ]
     end
 

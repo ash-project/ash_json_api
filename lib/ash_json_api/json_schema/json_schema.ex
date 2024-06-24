@@ -657,16 +657,9 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp sort_format(resource) do
-    sorts =
-      resource
-      |> Ash.Resource.Info.public_attributes()
-      |> Enum.concat(
-        Ash.Resource.Info.public_calculations(resource)
-        |> Enum.filter(&Ash.Resource.Info.sortable?(resource, &1))
-      )
-      |> Enum.flat_map(fn attr -> [attr.name, "-#{attr.name}"] end)
+    sorts = sortable_fields(resource)
 
-    "(#{Enum.join(sorts, "|")}),*"
+    "(#{Enum.map_join(sorts, "|", & &1.name)}),*"
   end
 
   defp page_props(_domain, _resource) do
@@ -1025,4 +1018,78 @@ defmodule AshJsonApi.JsonSchema do
 
   defp prepend_slash("/" <> _ = path), do: path
   defp prepend_slash(path), do: "/" <> path
+
+  @doc false
+  def sortable_fields(resource) do
+    resource
+    |> Ash.Resource.Info.public_attributes()
+    |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
+    |> Enum.concat(Ash.Resource.Info.public_aggregates(resource))
+    |> Enum.filter(&sortable?(&1, resource))
+  end
+
+  defp sortable?(%Ash.Resource.Aggregate{} = aggregate, resource) do
+    attribute =
+      with field when not is_nil(field) <- aggregate.field,
+           related when not is_nil(related) <-
+             Ash.Resource.Info.related(resource, aggregate.relationship_path),
+           attr when not is_nil(attr) <- Ash.Resource.Info.field(related, aggregate.field) do
+        attr
+      end
+
+    field_type =
+      if attribute do
+        attribute.type
+      end
+
+    field_constraints =
+      if attribute do
+        attribute.constraints
+      end
+
+    {:ok, type, constraints} =
+      Aggregate.kind_to_type(aggregate.kind, field_type, field_constraints)
+
+    sortable?(
+      %Ash.Resource.Attribute{name: aggregate.name, type: type, constraints: constraints},
+      resource
+    )
+  end
+
+  defp sortable?(%{type: {:array, _}}, _), do: false
+  defp sortable?(%{sortable?: false}, _), do: false
+  defp sortable?(%{type: Ash.Type.Union}, _), do: false
+
+  defp sortable?(%Ash.Resource.Calculation{type: type, calculation: {module, _opts}}, _) do
+    !embedded?(type) && function_exported?(module, :expression, 2)
+  end
+
+  defp sortable?(%{type: type} = attribute, resource) do
+    if Ash.Type.NewType.new_type?(type) do
+      sortable?(
+        %{
+          attribute
+          | constraints: Ash.Type.NewType.constraints(type, attribute.constraints),
+            type: Ash.Type.NewType.subtype_of(type)
+        },
+        resource
+      )
+    else
+      !embedded?(type)
+    end
+  end
+
+  defp sortable?(_, _), do: false
+
+  def embedded?({:array, resource_or_type}) do
+    embedded?(resource_or_type)
+  end
+
+  def embedded?(resource_or_type) do
+    if Ash.Resource.Info.resource?(resource_or_type) do
+      Ash.Resource.Info.embedded?(resource_or_type)
+    else
+      Ash.Type.embedded_type?(resource_or_type)
+    end
+  end
 end
