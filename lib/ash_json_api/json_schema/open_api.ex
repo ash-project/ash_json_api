@@ -706,6 +706,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
         """
       end
 
+      response_code =
+        case route.method do
+          :post -> 201
+          _ -> 200
+        end
+
       %Operation{
         description: action_description(action, route, resource),
         operationId: route.name,
@@ -715,7 +721,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           :default => %Reference{
             "$ref": "#/components/responses/errors"
           },
-          200 => response_body(route, resource)
+          response_code => response_body(route, resource)
         },
         requestBody: request_body(route, resource)
       }

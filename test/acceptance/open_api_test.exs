@@ -629,7 +629,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
-      response = operation.responses[200]
+      response = operation.responses[201]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.properties.data."$ref" == "#/components/schemas/post"
     end
