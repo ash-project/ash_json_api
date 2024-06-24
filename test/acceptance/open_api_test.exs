@@ -35,6 +35,7 @@ defmodule Test.Acceptance.OpenApiTest do
         base("/authors")
         get(:read)
         index(:read, name: "listAuthors")
+        index(:read, derive_filter?: false, derive_sort?: false, route: "/no_filter")
         patch(:update)
       end
     end
@@ -214,7 +215,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 4
+    assert map_size(api_spec.paths) == 5
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -301,6 +302,9 @@ defmodule Test.Acceptance.OpenApiTest do
              }
 
       assert schema.required == nil
+
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
+      refute Enum.any?(operation.parameters, &(&1.name == :filter))
     end
 
     test "sort parameter", %{open_api_spec: %OpenApi{} = api_spec} do
@@ -330,6 +334,9 @@ defmodule Test.Acceptance.OpenApiTest do
                "count_of_tags",
                "-count_of_tags"
              ]
+
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
+      refute Enum.any?(operation.parameters, &(&1.name == :sort))
     end
 
     test "page parameter", %{open_api_spec: %OpenApi{} = api_spec} do

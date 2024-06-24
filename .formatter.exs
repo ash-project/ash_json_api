@@ -12,6 +12,8 @@ spark_locals_without_parens = [
   delete_from_relationship: 2,
   delete_from_relationship: 3,
   delimiter: 1,
+  derive_filter?: 1,
+  derive_sort?: 1,
   get: 1,
   get: 2,
   get: 3,

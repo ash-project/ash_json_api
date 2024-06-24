@@ -766,13 +766,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
             resource :: module
           ) :: [Parameter.t()]
     defp query_parameters(%{type: :index} = route, resource) do
-      [
-        filter_parameter(resource),
-        sort_parameter(resource),
-        page_parameter(),
-        include_parameter(),
-        fields_parameter(resource)
-      ] ++
+      Enum.filter(
+        [
+          filter_parameter(resource, route),
+          sort_parameter(resource, route),
+          page_parameter(),
+          include_parameter(),
+          fields_parameter(resource)
+        ],
+        & &1
+      ) ++
         read_argument_parameters(route, resource)
     end
 
@@ -790,41 +793,47 @@ if Code.ensure_loaded?(OpenApiSpex) do
       [include_parameter(), fields_parameter(resource)]
     end
 
-    @spec filter_parameter(resource :: module) :: Parameter.t()
-    defp filter_parameter(resource) do
-      %Parameter{
-        name: :filter,
-        in: :query,
-        description:
-          "Filters the query to results with attributes matching the given filter object",
-        required: false,
-        style: :deepObject,
-        schema: filter_schema(resource)
-      }
+    @spec filter_parameter(resource :: module, route :: AshJsonApi.Resource.Route.t()) ::
+            Parameter.t()
+    defp filter_parameter(resource, route) do
+      if route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(resource) do
+        %Parameter{
+          name: :filter,
+          in: :query,
+          description:
+            "Filters the query to results with attributes matching the given filter object",
+          required: false,
+          style: :deepObject,
+          schema: filter_schema(resource)
+        }
+      end
     end
 
-    @spec sort_parameter(resource :: module) :: Parameter.t()
-    defp sort_parameter(resource) do
-      sorts =
-        resource
-        |> AshJsonApi.JsonSchema.sortable_fields()
-        |> Enum.flat_map(fn attr -> [to_string(attr.name), "-#{attr.name}"] end)
+    @spec sort_parameter(resource :: module, route :: AshJsonApi.Resource.Route.t()) ::
+            Parameter.t()
+    defp sort_parameter(resource, route) do
+      if route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(resource) do
+        sorts =
+          resource
+          |> AshJsonApi.JsonSchema.sortable_fields()
+          |> Enum.flat_map(fn attr -> [to_string(attr.name), "-#{attr.name}"] end)
 
-      %Parameter{
-        name: :sort,
-        in: :query,
-        description: "Sort order to apply to the results",
-        required: false,
-        style: :form,
-        explode: false,
-        schema: %Schema{
-          type: :array,
-          items: %Schema{
-            type: :string,
-            enum: sorts
+        %Parameter{
+          name: :sort,
+          in: :query,
+          description: "Sort order to apply to the results",
+          required: false,
+          style: :form,
+          explode: false,
+          schema: %Schema{
+            type: :array,
+            items: %Schema{
+              type: :string,
+              enum: sorts
+            }
           }
         }
-      }
+      end
     end
 
     @spec page_parameter() :: Parameter.t()

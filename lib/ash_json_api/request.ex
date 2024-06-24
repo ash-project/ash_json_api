@@ -331,9 +331,13 @@ defmodule AshJsonApi.Request do
         nil ->
           add_error(request, "Invalid filter included", request.route.type)
 
-        _ ->
-          path = Enum.map(path, &String.to_existing_atom/1)
-          %{request | filter_included: Map.put(request.filter_included, path, filter_statement)}
+        related ->
+          if AshJsonApi.Resource.Info.derive_filter?(related) do
+            path = Enum.map(path, &String.to_existing_atom/1)
+            %{request | filter_included: Map.put(request.filter_included, path, filter_statement)}
+          else
+            add_error(request, "Invalid filter included", request.route.type)
+          end
       end
     end)
   end
@@ -418,48 +422,64 @@ defmodule AshJsonApi.Request do
 
   defp parse_filter(%{query_params: %{"filter" => filter}} = request)
        when is_map(filter) do
-    %{request | filter: filter}
+    if request.route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(request.resource) do
+      %{request | filter: filter}
+    else
+      %{request | arguments: Map.put(request.arguments, :filter, filter)}
+    end
   end
 
-  defp parse_filter(%{query_params: %{"filter" => _}} = request) do
-    add_error(request, "invalid filter", request.route.type)
+  defp parse_filter(%{query_params: %{"filter" => filter}} = request) do
+    if request.route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(request.resource) do
+      add_error(request, "invalid filter", request.route.type)
+    else
+      %{request | arguments: Map.put(request.arguments, :filter, filter)}
+    end
   end
 
   defp parse_filter(request), do: %{request | filter: %{}}
 
   defp parse_sort(%{query_params: %{"sort" => sort_string}, resource: resource} = request)
        when is_bitstring(sort_string) do
-    sort_string
-    |> String.split(",")
-    |> case do
-      [] ->
-        request
+    if request.route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(request.resource) do
+      sort_string
+      |> String.split(",")
+      |> case do
+        [] ->
+          request
 
-      sort ->
-        sort
-        |> Enum.reverse()
-        |> Enum.reduce(request, fn field, request ->
-          {order, field_name} = trim_sort_order(field)
+        sort ->
+          sort
+          |> Enum.reverse()
+          |> Enum.reduce(request, fn field, request ->
+            {order, field_name} = trim_sort_order(field)
 
-          cond do
-            attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
-              %{request | sort: [{attr.name, order} | request.sort]}
+            cond do
+              attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
+                %{request | sort: [{attr.name, order} | request.sort]}
 
-            agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->
-              %{request | sort: [{agg.name, order} | request.sort]}
+              agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->
+                %{request | sort: [{agg.name, order} | request.sort]}
 
-            calc = Ash.Resource.Info.public_calculation(resource, field_name) ->
-              %{request | sort: [{calc.name, order} | request.sort]}
+              calc = Ash.Resource.Info.public_calculation(resource, field_name) ->
+                %{request | sort: [{calc.name, order} | request.sort]}
 
-            true ->
-              add_error(request, "invalid sort #{field}", request.route.type)
-          end
-        end)
+              true ->
+                add_error(request, "invalid sort #{field}", request.route.type)
+            end
+          end)
+      end
+    else
+      %{request | arguments: Map.put(request.arguments, :sort, sort_string)}
     end
   end
 
-  defp parse_sort(%{query_params: %{"sort" => _sort_string}} = request) do
-    add_error(request, "invalid sort string", request.route.type)
+  defp parse_sort(%{query_params: %{"sort" => sort}} = request) do
+    if request.route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(request.resource) do
+      add_error(request, "invalid sort string", request.route.type)
+    else
+      %{request | arguments: Map.put(request.arguments, :sort, sort)}
+    end
   end
 
   defp parse_sort(request), do: %{request | sort: []}

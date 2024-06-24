@@ -64,6 +64,8 @@ end
 | [`includes`](#json_api-includes){: #json_api-includes } | `any` | `[]` | A keyword list of all paths that are includable from this resource |
 | [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | `any` |  | Whether or not to include properties for values that are nil in the JSON output |
 | [`default_fields`](#json_api-default_fields){: #json_api-default_fields } | `list(atom)` |  | The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public |
+| [`derive_sort?`](#json_api-derive_sort?){: #json_api-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-derive_filter?){: #json_api-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 ## json_api.routes
@@ -143,6 +145,8 @@ get :read
 | [`primary?`](#json_api-routes-get-primary?){: #json_api-routes-get-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-get-metadata){: #json_api-routes-get-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-get-name){: #json_api-routes-get-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-get-derive_sort?){: #json_api-routes-get-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-get-derive_filter?){: #json_api-routes-get-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -184,6 +188,8 @@ index :read
 | [`primary?`](#json_api-routes-index-primary?){: #json_api-routes-index-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-index-metadata){: #json_api-routes-index-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-index-name){: #json_api-routes-index-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-index-derive_sort?){: #json_api-routes-index-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-index-derive_filter?){: #json_api-routes-index-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -224,6 +230,8 @@ post :create
 | [`primary?`](#json_api-routes-post-primary?){: #json_api-routes-post-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-post-metadata){: #json_api-routes-post-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-post-name){: #json_api-routes-post-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-post-derive_sort?){: #json_api-routes-post-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-post-derive_filter?){: #json_api-routes-post-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`relationship_arguments`](#json_api-routes-post-relationship_arguments){: #json_api-routes-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
 | [`upsert?`](#json_api-routes-post-upsert?){: #json_api-routes-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
 | [`upsert_identity`](#json_api-routes-post-upsert_identity){: #json_api-routes-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
@@ -269,6 +277,8 @@ patch :update
 | [`primary?`](#json_api-routes-patch-primary?){: #json_api-routes-patch-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-patch-metadata){: #json_api-routes-patch-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-patch-name){: #json_api-routes-patch-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-patch-derive_sort?){: #json_api-routes-patch-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-patch-derive_filter?){: #json_api-routes-patch-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -310,6 +320,8 @@ delete :destroy
 | [`primary?`](#json_api-routes-delete-primary?){: #json_api-routes-delete-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-delete-metadata){: #json_api-routes-delete-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-delete-name){: #json_api-routes-delete-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-delete-derive_sort?){: #json_api-routes-delete-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-delete-derive_filter?){: #json_api-routes-delete-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -351,6 +363,8 @@ related :comments, :read
 | [`primary?`](#json_api-routes-related-primary?){: #json_api-routes-related-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-related-metadata){: #json_api-routes-related-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-related-name){: #json_api-routes-related-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-related-derive_sort?){: #json_api-routes-related-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-related-derive_filter?){: #json_api-routes-related-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -392,6 +406,8 @@ relationship :comments, :read
 | [`primary?`](#json_api-routes-relationship-primary?){: #json_api-routes-relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-relationship-metadata){: #json_api-routes-relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-relationship-name){: #json_api-routes-relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-relationship-derive_sort?){: #json_api-routes-relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-relationship-derive_filter?){: #json_api-routes-relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -432,6 +448,8 @@ post_to_relationship :comments
 | [`primary?`](#json_api-routes-post_to_relationship-primary?){: #json_api-routes-post_to_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-post_to_relationship-metadata){: #json_api-routes-post_to_relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-post_to_relationship-name){: #json_api-routes-post_to_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-post_to_relationship-derive_sort?){: #json_api-routes-post_to_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-post_to_relationship-derive_filter?){: #json_api-routes-post_to_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -472,6 +490,8 @@ patch_relationship :comments
 | [`primary?`](#json_api-routes-patch_relationship-primary?){: #json_api-routes-patch_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-patch_relationship-metadata){: #json_api-routes-patch_relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-patch_relationship-name){: #json_api-routes-patch_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-patch_relationship-derive_sort?){: #json_api-routes-patch_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-patch_relationship-derive_filter?){: #json_api-routes-patch_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 
@@ -512,6 +532,8 @@ delete_from_relationship :comments
 | [`primary?`](#json_api-routes-delete_from_relationship-primary?){: #json_api-routes-delete_from_relationship-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
 | [`metadata`](#json_api-routes-delete_from_relationship-metadata){: #json_api-routes-delete_from_relationship-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
 | [`name`](#json_api-routes-delete_from_relationship-name){: #json_api-routes-delete_from_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-delete_from_relationship-derive_sort?){: #json_api-routes-delete_from_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-delete_from_relationship-derive_filter?){: #json_api-routes-delete_from_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 

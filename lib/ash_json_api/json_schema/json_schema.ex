@@ -571,23 +571,17 @@ defmodule AshJsonApi.JsonSchema do
 
   defp query_param_properties(%{type: :index} = route, domain, resource, properties) do
     %{
-      "filter" => %{
-        "type" => "object",
-        "properties" => filter_props(resource)
-      },
-      "sort" => %{
-        "type" => "string",
-        "format" => sort_format(resource)
-      },
       "page" => %{
         "type" => "object",
         "properties" => page_props(domain, resource)
       },
       "include" => %{
-        "type" => "string",
-        "format" => include_format(resource)
+        "type" => "string"
+        # "format" => include_format(resource)
       }
     }
+    |> add_filter(route, resource)
+    |> add_sort(route, resource)
     |> Map.merge(Map.new(properties, &{&1, %{"type" => "any"}}))
     |> add_read_arguments(route, resource)
     |> with_keys()
@@ -601,11 +595,10 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp query_param_properties(route, _domain, resource, properties) do
-    # TODO: improve fields
     props = %{
       "include" => %{
-        "type" => "string",
-        "format" => include_format(resource)
+        "type" => "string"
+        # "format" => include_format(resource)
       }
     }
 
@@ -616,6 +609,28 @@ defmodule AshJsonApi.JsonSchema do
       |> with_keys()
     else
       with_keys(props)
+    end
+  end
+
+  defp add_filter(properties, route, resource) do
+    if route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(resource) do
+      Map.put(properties, "filter", %{
+        "type" => "object",
+        "properties" => filter_props(resource)
+      })
+    else
+      properties
+    end
+  end
+
+  defp add_sort(properties, route, resource) do
+    if route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(resource) do
+      Map.put(properties, "sort", %{
+        "type" => "string",
+        "format" => sort_format(resource)
+      })
+    else
+      properties
     end
   end
 
@@ -675,9 +690,9 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp include_format(_resource) do
-    "pending"
-  end
+  # defp include_format(_resource) do
+  #   "pending"
+  # end
 
   defp filter_props(resource) do
     acc =
@@ -1061,6 +1076,7 @@ defmodule AshJsonApi.JsonSchema do
   defp sortable?(%{type: Ash.Type.Union}, _), do: false
 
   defp sortable?(%Ash.Resource.Calculation{type: type, calculation: {module, _opts}}, _) do
+    Code.ensure_compiled!(module)
     !embedded?(type) && function_exported?(module, :expression, 2)
   end
 

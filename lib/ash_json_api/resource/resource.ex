@@ -31,6 +31,18 @@ defmodule AshJsonApi.Resource do
       required: false,
       doc:
         "A globally unique name for this route, to be used when generating docs and open api specifications"
+    ],
+    derive_sort?: [
+      type: :boolean,
+      doc:
+        "Whether or not to derive a sort parameter based on the sortable fields of the resource",
+      default: true
+    ],
+    derive_filter?: [
+      type: :boolean,
+      doc:
+        "Whether or not to derive a filter parameter based on the sortable fields of the resource",
+      default: true
     ]
   ]
 
@@ -422,6 +434,18 @@ defmodule AshJsonApi.Resource do
         type: {:list, :atom},
         doc:
           "The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public"
+      ],
+      derive_sort?: [
+        type: :boolean,
+        doc:
+          "Whether or not to derive a sort parameter based on the sortable fields of the resource",
+        default: true
+      ],
+      derive_filter?: [
+        type: :boolean,
+        doc:
+          "Whether or not to derive a filter parameter based on the sortable fields of the resource",
+        default: true
       ]
     ]
   }
