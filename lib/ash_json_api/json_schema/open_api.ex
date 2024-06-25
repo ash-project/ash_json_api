@@ -182,9 +182,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 }
               }
             }
-            # "meta" => %{
-            #   "$ref" => "#/definitions/meta"
-            # }
           },
           additionalProperties: false
         }
@@ -209,9 +206,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
           id: %{type: :string},
           attributes: attributes(resource, fields),
           relationships: relationships(resource)
-          # "meta" => %{
-          #   "$ref" => "#/definitions/meta"
-          # }
         },
         additionalProperties: false
       }
@@ -1220,7 +1214,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 items: item_reference(route, resource),
                 uniqueItems: true
               },
-              included: included_resource_schemas(resource)
+              included: included_resource_schemas(resource),
+              meta: %Schema{
+                type: :object,
+                additionalProperties: true
+              }
             }
           }
 
@@ -1237,7 +1235,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           %Schema{
             properties: %{
               data: item_reference(route, resource),
-              included: included_resource_schemas(resource)
+              included: included_resource_schemas(resource),
+              meta: %Schema{
+                type: :object,
+                additionalProperties: true
+              }
             }
           }
       end
