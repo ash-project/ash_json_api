@@ -255,53 +255,31 @@ defmodule Test.Acceptance.OpenApiTest do
       assert filter.in == :query
       assert filter.required == false
       assert filter.style == :deepObject
-      %Schema{} = schema = filter.schema
+      assert %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"} = filter.schema
+      assert schema = api_spec.components.schemas["post-filter"]
       assert schema.type == :object
 
-      assert schema.properties == %{
-               id: %Schema{
-                 anyOf: [
-                   %Schema{type: :object, additionalProperties: true},
-                   %Schema{type: :string}
-                 ]
-               },
-               author: %Schema{type: :object, additionalProperties: true},
-               email: %Schema{
-                 anyOf: [
-                   %Schema{type: :object, additionalProperties: true},
-                   %Schema{type: :string}
-                 ]
-               },
-               hidden: %Schema{
-                 anyOf: [
-                   %Schema{type: :object, additionalProperties: true},
-                   %Schema{type: :string}
-                 ],
-                 description: "description of attribute :hidden"
-               },
-               name: %Schema{
-                 anyOf: [
-                   %Schema{type: :object, additionalProperties: true},
-                   %Schema{type: :string}
-                 ],
-                 description: "description of attribute :name"
-               },
-               tags: %Schema{type: :object, additionalProperties: true},
-               author_id: %OpenApiSpex.Schema{
-                 anyOf: [
-                   %OpenApiSpex.Schema{type: :object, additionalProperties: true},
-                   %OpenApiSpex.Schema{type: :string}
-                 ]
-               },
-               count_of_tags: %Schema{
-                 anyOf: [
-                   %Schema{type: :object, additionalProperties: true},
-                   %Schema{type: :string}
-                 ]
+      assert %{
+               properties: %{
+                 author: %OpenApiSpex.Reference{"$ref": "#/components/schemas/author-filter"},
+                 author_id: %OpenApiSpex.Reference{
+                   "$ref": "#/components/schemas/post-filter-author_id"
+                 },
+                 count_of_tags: %OpenApiSpex.Reference{
+                   "$ref": "#/components/schemas/post-filter-count_of_tags"
+                 },
+                 email: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-email"},
+                 hidden: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-hidden"},
+                 id: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-id"},
+                 name: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-name"},
+                 and: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"},
+                 name_twice: %OpenApiSpex.Reference{
+                   "$ref": "#/components/schemas/post-filter-name_twice"
+                 },
+                 not: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"},
+                 or: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"}
                }
-             }
-
-      assert schema.required == nil
+             } = schema
 
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :filter))

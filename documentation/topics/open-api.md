@@ -86,3 +86,13 @@ To override any value in the OpenApi documentation you can use the `:modify_open
     }
   end
 ```
+
+## Known issues/limitations
+
+### Swagger UI
+
+SwaggerUI does not properly render recursive types. This affects the examples and type documentation for the `filter` parameter especially.
+
+### Redoc
+
+Redoc does not show all available schemas in the sidebar. This means that some schemas that are referenced only but have no endpoints that refer to them are effectively un-discoverable without downloading the spec and hunting them down yourself.

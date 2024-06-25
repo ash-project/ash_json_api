@@ -76,16 +76,48 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.reduce(base_definitions(), fn domain, definitions ->
         domain
         |> resources
-        |> Enum.map(&{AshJsonApi.Resource.Info.type(&1), resource_object_schema(&1)})
+        |> Enum.flat_map(fn resource ->
+          [
+            {AshJsonApi.Resource.Info.type(resource), resource_object_schema(resource)}
+          ] ++
+            resource_filter_schemas(domains, resource)
+        end)
         |> Enum.into(definitions)
       end)
     end
 
     def schemas(domain) do
-      domain
-      |> resources
-      |> Enum.map(&{AshJsonApi.Resource.Info.type(&1), resource_object_schema(&1)})
-      |> Enum.into(base_definitions())
+      schemas(List.wrap(domain))
+    end
+
+    defp define_filter?(domains, resource) do
+      if AshJsonApi.Resource.Info.derive_filter?(resource) do
+        resource
+        |> AshJsonApi.Resource.Info.routes(domains)
+        |> Enum.any?(fn route ->
+          route.type == :index && route.derive_filter?
+        end)
+      else
+        false
+      end
+    end
+
+    defp resource_filter_schemas(domains, resource) do
+      if define_filter?(domains, resource) do
+        [
+          {
+            "#{AshJsonApi.Resource.Info.type(resource)}-filter",
+            %Schema{
+              type: :object,
+              properties: resource_filter_fields(resource),
+              additionalProperties: false,
+              description: "Filters the query to results matching the given filter object"
+            }
+          }
+        ] ++ filter_field_types(resource)
+      else
+        []
+      end
     end
 
     @spec base_definitions() :: %{String.t() => Schema.t()}
@@ -804,7 +836,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
             "Filters the query to results with attributes matching the given filter object",
           required: false,
           style: :deepObject,
-          schema: filter_schema(resource)
+          schema: %Reference{
+            "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+          }
         }
       end
     end
@@ -816,7 +850,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
         sorts =
           resource
           |> AshJsonApi.JsonSchema.sortable_fields()
-          |> Enum.flat_map(fn attr -> [to_string(attr.name), "-#{attr.name}"] end)
+          |> Enum.flat_map(fn attr ->
+            name = to_string(attr.name)
+            [name, "-" <> name]
+          end)
 
         %Parameter{
           name: :sort,
@@ -925,80 +962,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
           schema: schema
         }
       end)
-    end
-
-    @spec filter_schema(resource :: module) :: Schema.t()
-    defp filter_schema(resource) do
-      props =
-        resource
-        |> Ash.Resource.Info.public_attributes()
-        |> Map.new(fn attr ->
-          {attr.name,
-           attribute_filter_schema(attr.type)
-           |> with_attribute_description(attr)}
-        end)
-
-      props =
-        resource
-        |> Ash.Resource.Info.public_relationships()
-        |> Enum.map(fn rel ->
-          {rel.name, relationship_filter_schema(rel)}
-        end)
-        |> Enum.into(props)
-
-      props =
-        resource
-        |> Ash.Resource.Info.public_aggregates()
-        |> Enum.map(fn agg ->
-          field =
-            if agg.field do
-              related = Ash.Resource.Info.related(resource, agg.relationship_path)
-              Ash.Resource.Info.field(related, agg.field)
-            end
-
-          field_type =
-            if field do
-              field.type
-            end
-
-          field_constraints =
-            if field do
-              field.constraints
-            end
-
-          {:ok, type, _constraints} =
-            Aggregate.kind_to_type(agg.kind, field_type, field_constraints)
-
-          type = Ash.Type.get_type(type)
-
-          {agg.name, attribute_filter_schema(type)}
-        end)
-        |> Enum.into(props)
-
-      %Schema{
-        type: :object,
-        properties: props
-      }
-    end
-
-    @spec relationship_filter_schema(relationship :: Relationships.relationship()) :: Schema.t()
-    defp relationship_filter_schema(_rel) do
-      %Schema{type: :object, additionalProperties: true}
-    end
-
-    @spec attribute_filter_schema(type :: module) :: Schema.t()
-    defp attribute_filter_schema(_type) do
-      %Schema{
-        anyOf: [
-          %Schema{
-            type: :object,
-            additionalProperties: true
-          },
-          %Schema{
-            type: :string
-          }
-        ]
-      }
     end
 
     @spec request_body(Route.t(), resource :: module) :: nil | RequestBody.t()
@@ -1376,5 +1339,369 @@ if Code.ensure_loaded?(OpenApiSpex) do
         _ -> nil
       end
     end
+
+    defp filter_field_types(resource) do
+      filter_attribute_types(resource) ++
+        filter_aggregate_types(resource) ++
+        filter_calculation_types(resource)
+    end
+
+    defp filter_attribute_types(resource) do
+      resource
+      |> Ash.Resource.Info.public_attributes()
+      |> Enum.filter(&filterable?(&1, resource))
+      |> Enum.flat_map(&filter_type(&1, resource))
+    end
+
+    defp filter_aggregate_types(resource) do
+      resource
+      |> Ash.Resource.Info.public_aggregates()
+      |> Enum.filter(&filterable?(&1, resource))
+      |> Enum.flat_map(&filter_type(&1, resource))
+    end
+
+    defp filter_calculation_types(resource) do
+      resource
+      |> Ash.Resource.Info.public_calculations()
+      |> Enum.filter(&filterable?(&1, resource))
+      |> Enum.flat_map(&filter_type(&1, resource))
+    end
+
+    defp attribute_or_aggregate_type(%Ash.Resource.Attribute{type: type}, _resource),
+      do: type
+
+    defp attribute_or_aggregate_type(%Ash.Resource.Calculation{type: type}, _resource),
+      do: type
+
+    defp attribute_or_aggregate_type(
+           %Ash.Resource.Aggregate{
+             kind: kind,
+             field: field,
+             relationship_path: relationship_path
+           },
+           resource
+         ) do
+      field_type =
+        with field when not is_nil(field) <- field,
+             related when not is_nil(related) <-
+               Ash.Resource.Info.related(resource, relationship_path),
+             attr when not is_nil(attr) <- Ash.Resource.Info.field(related, field) do
+          attr.type
+        end
+
+      {:ok, aggregate_type, _} = Ash.Query.Aggregate.kind_to_type(kind, field_type, [])
+
+      aggregate_type
+    end
+
+    @doc false
+    def filter_type(attribute_or_aggregate, resource) do
+      type = attribute_or_aggregate_type(attribute_or_aggregate, resource)
+
+      array_type? = match?({:array, _}, type)
+
+      fields =
+        Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.DataLayer.functions(resource))
+        |> Enum.filter(& &1.predicate?())
+        |> restrict_for_lists(type)
+        |> Enum.flat_map(fn operator ->
+          filter_fields(operator, type, array_type?, attribute_or_aggregate, resource)
+        end)
+
+      if fields == [] do
+        []
+      else
+        [
+          {attribute_filter_field_type(resource, attribute_or_aggregate),
+           %Schema{
+             type: :object,
+             properties: Map.new(fields),
+             additionalProperties: false
+           }}
+        ]
+      end
+    end
+
+    defp attribute_filter_field_type(resource, attribute) do
+      AshJsonApi.Resource.Info.type(resource) <> "-filter-" <> to_string(attribute.name)
+    end
+
+    defp resource_filter_fields(resource) do
+      Enum.concat([
+        boolean_filter_fields(resource),
+        attribute_filter_fields(resource),
+        relationship_filter_fields(resource),
+        aggregate_filter_fields(resource),
+        calculation_filter_fields(resource)
+      ])
+      |> Map.new()
+    end
+
+    defp relationship_filter_fields(resource) do
+      resource
+      |> Ash.Resource.Info.public_relationships()
+      |> Enum.filter(
+        &(AshJsonApi.Resource.Info.derive_filter?(&1.destination) &&
+            AshJsonApi.Resource in Spark.extensions(&1.destination) &&
+            AshJsonApi.Resource.Info.type(&1.destination))
+      )
+      |> Enum.map(fn relationship ->
+        {relationship.name,
+         %Reference{
+           "$ref":
+             "#/components/schemas/#{AshJsonApi.Resource.Info.type(relationship.destination)}-filter"
+         }}
+      end)
+    end
+
+    defp calculation_filter_fields(resource) do
+      if Ash.DataLayer.data_layer_can?(resource, :expression_calculation) do
+        resource
+        |> Ash.Resource.Info.public_calculations()
+        |> Enum.filter(&filterable?(&1, resource))
+        |> Enum.map(fn calculation ->
+          {calculation.name,
+           %Reference{
+             "$ref": "#/components/schemas/#{attribute_filter_field_type(resource, calculation)}"
+           }}
+        end)
+      else
+        []
+      end
+    end
+
+    defp attribute_filter_fields(resource) do
+      resource
+      |> Ash.Resource.Info.public_attributes()
+      |> Enum.filter(&filterable?(&1, resource))
+      |> Enum.map(fn attribute ->
+        {attribute.name,
+         %Reference{
+           "$ref": "#/components/schemas/#{attribute_filter_field_type(resource, attribute)}"
+         }}
+      end)
+    end
+
+    defp aggregate_filter_fields(resource) do
+      if Ash.DataLayer.data_layer_can?(resource, :aggregate_filter) do
+        resource
+        |> Ash.Resource.Info.public_aggregates()
+        |> Enum.filter(&filterable?(&1, resource))
+        |> Enum.map(fn aggregate ->
+          {aggregate.name,
+           %Reference{
+             "$ref": "#/components/schemas/#{attribute_filter_field_type(resource, aggregate)}"
+           }}
+        end)
+      else
+        []
+      end
+    end
+
+    defp boolean_filter_fields(resource) do
+      if Ash.DataLayer.can?(:boolean_filter, resource) do
+        [
+          and: %Reference{
+            "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+          },
+          or: %Reference{
+            "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+          },
+          not: %Reference{
+            "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+          }
+        ]
+      else
+        []
+      end
+    end
+
+    defp restrict_for_lists(operators, {:array, _}) do
+      list_predicates = [Ash.Query.Operator.IsNil, Ash.Query.Operator.Has]
+      Enum.filter(operators, &(&1 in list_predicates))
+    end
+
+    defp restrict_for_lists(operators, _), do: operators
+
+    defp constraints_to_item_constraints(
+           {:array, _},
+           %Ash.Resource.Attribute{
+             constraints: constraints,
+             allow_nil?: allow_nil?
+           } = attribute
+         ) do
+      %{
+        attribute
+        | constraints: [
+            items: constraints,
+            nil_items?: allow_nil? || AshJsonApi.JsonSchema.embedded?(attribute.type)
+          ]
+      }
+    end
+
+    defp constraints_to_item_constraints(_, attribute_or_aggregate), do: attribute_or_aggregate
+
+    defp get_expressable_types(operator_or_function, field_type, array_type?) do
+      if :attributes
+         |> operator_or_function.__info__()
+         |> Keyword.get_values(:behaviour)
+         |> List.flatten()
+         |> Enum.any?(&(&1 == Ash.Query.Operator)) do
+        do_get_expressable_types(operator_or_function.types(), field_type, array_type?)
+      else
+        do_get_expressable_types(operator_or_function.args(), field_type, array_type?)
+      end
+    end
+
+    defp do_get_expressable_types(operator_types, field_type, array_type?) do
+      field_type_short_name =
+        case Ash.Type.short_names()
+             |> Enum.find(fn {_, type} -> type == field_type end) do
+          nil -> nil
+          {short_name, _} -> short_name
+        end
+
+      operator_types
+      |> Enum.filter(fn
+        [:any, {:array, type}] when is_atom(type) ->
+          true
+
+        [{:array, inner_type}, :same] when is_atom(inner_type) and array_type? ->
+          true
+
+        :same ->
+          true
+
+        :any ->
+          true
+
+        [:any, type] when is_atom(type) ->
+          true
+
+        [^field_type_short_name, type] when is_atom(type) and not is_nil(field_type_short_name) ->
+          true
+
+        _ ->
+          false
+      end)
+    end
+
+    defp filter_fields(
+           operator,
+           type,
+           array_type?,
+           attribute_or_aggregate,
+           _resource
+         ) do
+      expressable_types = get_expressable_types(operator, type, array_type?)
+
+      if Enum.any?(expressable_types, &(&1 == :same)) do
+        [
+          {operator.name(), resource_attribute_type(attribute_or_aggregate)}
+        ]
+      else
+        type =
+          case Enum.at(expressable_types, 0) do
+            [{:array, :any}, :same] ->
+              {:unwrap, type}
+
+            [_, {:array, :same}] ->
+              {:array, type}
+
+            [_, :same] ->
+              type
+
+            [_, :any] ->
+              Ash.Type.String
+
+            [_, type] when is_atom(type) ->
+              Ash.Type.get_type(type)
+
+            _ ->
+              nil
+          end
+
+        if type do
+          {type, attribute_or_aggregate} =
+            case type do
+              {:unwrap, type} ->
+                {:array, type} = type
+                {type, %{attribute_or_aggregate | type: type, constraints: []}}
+
+              type ->
+                {type, %{attribute_or_aggregate | type: type, constraints: []}}
+            end
+
+          if AshJsonApi.JsonSchema.embedded?(type) do
+            []
+          else
+            attribute_or_aggregate = constraints_to_item_constraints(type, attribute_or_aggregate)
+
+            [
+              {operator.name(), resource_attribute_type(attribute_or_aggregate)}
+            ]
+          end
+        else
+          []
+        end
+      end
+    rescue
+      _e ->
+        []
+    end
+
+    defp filterable?(%Ash.Resource.Aggregate{} = aggregate, resource) do
+      attribute =
+        with field when not is_nil(field) <- aggregate.field,
+             related when not is_nil(related) <-
+               Ash.Resource.Info.related(resource, aggregate.relationship_path),
+             attr when not is_nil(attr) <- Ash.Resource.Info.field(related, aggregate.field) do
+          attr
+        end
+
+      field_type =
+        if attribute do
+          attribute.type
+        end
+
+      field_constraints =
+        if attribute do
+          attribute.constraints
+        end
+
+      {:ok, type, constraints} =
+        Aggregate.kind_to_type(aggregate.kind, field_type, field_constraints)
+
+      filterable?(
+        %Ash.Resource.Attribute{name: aggregate.name, type: type, constraints: constraints},
+        resource
+      )
+    end
+
+    defp filterable?(%{type: {:array, _}}, _), do: false
+    defp filterable?(%{filterable?: false}, _), do: false
+    defp filterable?(%{type: Ash.Type.Union}, _), do: false
+
+    defp filterable?(%Ash.Resource.Calculation{type: type, calculation: {module, _opts}}, _) do
+      !AshJsonApi.JsonSchema.embedded?(type) && function_exported?(module, :expression, 2)
+    end
+
+    defp filterable?(%{type: type} = attribute, resource) do
+      if Ash.Type.NewType.new_type?(type) do
+        filterable?(
+          %{
+            attribute
+            | constraints: Ash.Type.NewType.constraints(type, attribute.constraints),
+              type: Ash.Type.NewType.subtype_of(type)
+          },
+          resource
+        )
+      else
+        !AshJsonApi.JsonSchema.embedded?(type)
+      end
+    end
+
+    defp filterable?(_, _), do: false
   end
 end

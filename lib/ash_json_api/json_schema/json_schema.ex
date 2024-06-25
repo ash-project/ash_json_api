@@ -1097,6 +1097,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp sortable?(_, _), do: false
 
+  @doc false
   def embedded?({:array, resource_or_type}) do
     embedded?(resource_or_type)
   end
