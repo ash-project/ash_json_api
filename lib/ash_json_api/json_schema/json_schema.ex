@@ -969,9 +969,25 @@ defmodule AshJsonApi.JsonSchema do
       :route ->
         action = Ash.Resource.Info.action(resource, route.action)
 
+        return_type =
+          resource_attribute_type(%{type: action.returns, constraints: action.constraints})
+
+        full_return_type =
+          if route.wrap_in_result? do
+            %{
+              "type" => "object",
+              "properties" => %{
+                "result" => return_type
+              },
+              "required" => ["result"]
+            }
+          else
+            return_type
+          end
+
         %{
           "oneOf" => [
-            resource_attribute_type(%{type: action.returns, constraints: action.constraints}),
+            full_return_type,
             %{
               "$ref" => "#/definitions/errors"
             }

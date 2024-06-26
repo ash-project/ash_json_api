@@ -843,7 +843,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp query_parameters(%{type: type}, _resource)
-         when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
+         when type in [
+                :post_to_relationship,
+                :patch_relationship,
+                :delete_from_relationship,
+                :route
+              ] do
       []
     end
 
@@ -1070,21 +1075,59 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp request_body(route, resource) do
       body_schema = request_body_schema(route, resource)
 
-      body_required =
-        body_schema.properties.data.properties.attributes.required != [] ||
-          body_schema.properties.data.properties.relationships.required != []
+      if route.type == :route && Enum.empty?(body_schema.properties.data.properties) do
+        nil
+      else
+        body_required =
+          if route.type == :route do
+            body_schema.properties.data.required != []
+          else
+            body_schema.properties.data.properties.attributes.required != [] ||
+              body_schema.properties.data.properties.relationships.required != []
+          end
 
-      %RequestBody{
-        description:
-          "Request body for #{route.action} operation on #{AshJsonApi.Resource.Info.type(resource)} resource",
-        required: body_required,
-        content: %{
-          "application/vnd.api+json" => %MediaType{schema: body_schema}
+        %RequestBody{
+          description:
+            "Request body for the #{route.name || route.route} operation on #{AshJsonApi.Resource.Info.type(resource)} resource",
+          required: body_required,
+          content: %{
+            "application/vnd.api+json" => %MediaType{schema: body_schema}
+          }
+        }
+      end
+    end
+
+    @spec request_body_schema(Route.t(), resource :: module) :: Schema.t()
+    defp request_body_schema(
+           %{
+             type: :route,
+             action: action
+           } = route,
+           resource
+         ) do
+      action = Ash.Resource.Info.action(resource, action)
+
+      %Schema{
+        type: :object,
+        required: [:data],
+        additionalProperties: false,
+        properties: %{
+          data: %Schema{
+            type: :object,
+            additionalProperties: false,
+            properties:
+              write_attributes(
+                resource,
+                action.arguments,
+                action,
+                route
+              ),
+            required: required_write_attributes(resource, action.arguments, action, route)
+          }
         }
       }
     end
 
-    @spec request_body_schema(Route.t(), resource :: module) :: Schema.t()
     defp request_body_schema(
            %{
              type: :post,
@@ -1329,6 +1372,24 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec response_schema(Route.t(), resource :: module) :: Schema.t()
     defp response_schema(route, resource) do
       case route.type do
+        :route ->
+          action = Ash.Resource.Info.action(resource, route.action)
+
+          return_type =
+            resource_attribute_type(%{type: action.returns, constraints: action.constraints})
+
+          if route.wrap_in_result? do
+            %Schema{
+              type: :object,
+              properties: %{
+                result: return_type
+              },
+              required: [:result]
+            }
+          else
+            return_type
+          end
+
         :index ->
           %Schema{
             type: :object,

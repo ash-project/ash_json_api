@@ -37,12 +37,22 @@ defmodule Test.Acceptance.OpenApiTest do
         index(:read, name: "listAuthors")
         index(:read, derive_filter?: false, derive_sort?: false, route: "/no_filter")
         patch(:update)
+        route :post, "/say_hello/:to", :say_hello
       end
     end
 
     actions do
       default_accept(:*)
       defaults([:create, :read, :update, :destroy])
+
+      action :say_hello, :string do
+        argument(:to, :string, allow_nil?: false)
+        argument(:from, :string, allow_nil?: false)
+
+        run(fn input, _ ->
+          {:ok, "Hello, #{input.arguments.to}! From: #{input.arguments.from}"}
+        end)
+      end
     end
 
     attributes do
@@ -215,7 +225,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 5
+    assert map_size(api_spec.paths) == 6
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -229,6 +239,29 @@ defmodule Test.Acceptance.OpenApiTest do
     assert %OpenApiSpex.Operation{} = api_spec.paths["/posts/{id}"].get
     assert %OpenApiSpex.Operation{} = api_spec.paths["/posts"].post
     assert nil == api_spec.paths["/posts/{id}"].patch
+  end
+
+  test "generic routes have properly specified returns", %{open_api_spec: %OpenApi{} = api_spec} do
+    assert generic_action_schema = api_spec.paths["/authors/say_hello/{to}"].post
+
+    assert [
+             %OpenApiSpex.Parameter{
+               name: "to",
+               in: :path,
+               schema: %OpenApiSpex.Schema{type: :string}
+             }
+           ] = generic_action_schema.parameters
+
+    assert %OpenApiSpex.Schema{
+             type: :object,
+             required: [:from],
+             properties: %{from: %OpenApiSpex.Schema{type: :string}},
+             additionalProperties: false
+           } =
+             generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data
+
+    assert %OpenApiSpex.Schema{type: :string} =
+             generic_action_schema.responses[201].content["application/vnd.api+json"].schema
   end
 
   test "API routes use `name` as operationId", %{
