@@ -47,6 +47,18 @@ defmodule Test.Acceptance.PostTest do
         post :create_fake do
           route "/fake"
         end
+
+        post :sign_in do
+          route "/sign_in/:id"
+
+          modify_conn(fn conn, _subject, result, _request ->
+            Plug.Conn.put_resp_header(
+              conn,
+              "authorization",
+              "Bearer: #{result.__metadata__.token}"
+            )
+          end)
+        end
       end
     end
 
@@ -58,6 +70,31 @@ defmodule Test.Acceptance.PostTest do
       create :confirm_name do
         argument(:confirm, :string, allow_nil?: false)
         validate(confirm(:name, :confirm))
+      end
+
+      read :sign_in do
+        argument(:id, :string, allow_nil?: false)
+        # we ignore this, its just here for sake of demonstration
+        argument(:password, :string, allow_nil?: false)
+
+        metadata(:token, :string)
+
+        filter(expr(id == ^arg(:id)))
+
+        prepare(
+          after_action(fn
+            query, [], context ->
+              {:error,
+               Ash.Error.Query.NotFound.exception(
+                 resource: query.resource,
+                 filter: %{id: query.arguments.id}
+               )}
+
+            query, [result], context ->
+              {:ok,
+               Ash.Resource.set_metadata(result, %{token: "super-secret-token-#{result.id}"})}
+          end)
+        )
       end
 
       action :create_fake, :struct do
@@ -208,7 +245,6 @@ defmodule Test.Acceptance.PostTest do
           }
         })
 
-      # response is a Plug.
       assert %{"data" => %{"attributes" => %{"hidden" => nil}}} = response.resp_body
     end
   end
@@ -231,6 +267,33 @@ defmodule Test.Acceptance.PostTest do
       })
       |> assert_attribute_equals("email", nil)
       |> assert_attribute_equals("name_twice", "Post 1barPost 1")
+    end
+
+    test "a read can be called, and it can modify the conn" do
+      %{id: author_id} =
+        Author
+        |> Ash.Changeset.for_create(:create, %{name: "fred"})
+        |> Ash.create!()
+
+      resp =
+        Domain
+        |> post(
+          "/authors/sign_in/#{author_id}",
+          %{
+            data: %{
+              type: "author",
+              attributes: %{
+                password: "password"
+              }
+            }
+          },
+          status: 201
+        )
+
+      assert Plug.Conn.get_resp_header(resp, "authorization") ==
+               ["Bearer: super-secret-token-#{author_id}"]
+
+      assert resp.resp_body["data"]["attributes"]["name"] == "fred"
     end
 
     test "create with generic action" do

@@ -15,6 +15,7 @@ defmodule AshJsonApi.Resource.Route do
     :upsert?,
     :upsert_identity,
     :read_action,
+    modify_conn: nil,
     derive_sort?: true,
     derive_filter?: true,
     wrap_in_result?: false,

@@ -24,7 +24,15 @@ defmodule AshJsonApi.Resource do
     metadata: [
       type: {:fun, 3},
       required: false,
-      doc: "A function to generate arbitrary top-level metadata for the JSON:API response"
+      doc: "A function to generate arbitrary top-level metadata for the JSON:API response",
+      snippet: "fn ${1:subject}, ${2:result}, ${3:request} -> $4 end"
+    ],
+    modify_conn: [
+      type: {:fun, 4},
+      required: false,
+      doc:
+        "A function to modify the conn before responding. Used for things like setting headers based on the response. Takes `conn, subject, result, request`",
+      snippet: "fn ${1:conn}, ${2:subject}, ${3:result}, ${4:request} -> $5 end"
     ],
     name: [
       type: :string,

@@ -18,7 +18,7 @@ defmodule AshJsonApi.Controllers.GenericActionRoute do
     conn
     |> Request.from(resource, action, domain, all_domains, route)
     |> Helpers.run_action()
-    |> Helpers.render_or_render_errors(conn, fn request ->
+    |> Helpers.render_or_render_errors(conn, fn conn, request ->
       status =
         case route.method do
           :post -> 201

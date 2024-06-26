@@ -22,7 +22,7 @@ defmodule AshJsonApi.Controllers.Index do
       |> Helpers.fetch_records()
       |> Helpers.fetch_includes()
       |> Helpers.fetch_metadata()
-      |> Helpers.render_or_render_errors(conn, fn request ->
+      |> Helpers.render_or_render_errors(conn, fn conn, request ->
         Response.render_many(
           conn,
           request,
@@ -37,7 +37,7 @@ defmodule AshJsonApi.Controllers.Index do
       |> Helpers.fetch_records()
       |> Helpers.fetch_includes()
       |> Helpers.fetch_metadata()
-      |> Helpers.render_or_render_errors(conn, fn request ->
+      |> Helpers.render_or_render_errors(conn, fn conn, request ->
         Response.render_many(
           conn,
           request,

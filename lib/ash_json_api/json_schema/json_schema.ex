@@ -872,7 +872,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_write_attributes(resource, arguments, action, route \\ nil) do
     attributes =
-      if action.type == :action do
+      if action.type in [:action, :read] do
         []
       else
         resource
@@ -893,7 +893,7 @@ defmodule AshJsonApi.JsonSchema do
 
   defp write_attributes(resource, arguments, action, route \\ nil) do
     attributes =
-      if action.type == :action do
+      if action.type in [:action, :read] do
         %{}
       else
         resource
@@ -919,7 +919,8 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp without_path_arguments(arguments, %{type: :action}, %{route: route}) do
+  defp without_path_arguments(arguments, %{type: type}, %{route: route, type: route_type})
+       when type == :action or route_type == :post do
     route_params =
       route
       |> Path.split()

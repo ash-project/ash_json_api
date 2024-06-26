@@ -1,17 +1,6 @@
 defmodule AshJsonApi.Controllers.Helpers do
   @moduledoc false
-  # @moduledoc """
-  # When we open up ash json api tooling to allow people to build custom
-  # behavior around it, we can use this documentation
-  # Tools for control flow around a request, and common controller utilities.
-
-  # While we haven't focused on supporting it yet, this will eventually be a set of tools
-  # that can be used to build custom controller actions, without having to write everything
-  # yourself.
-
-  # `chain/2` lets us pipe cleanly, only doing stateful things if no errors
-  # have been generated yet.
-  # """
+  require Logger
   alias AshJsonApi.Controllers.Response
   alias AshJsonApi.{Error, Request}
   alias AshJsonApi.Includes.Includer
@@ -19,9 +8,24 @@ defmodule AshJsonApi.Controllers.Helpers do
   require Ash.Query
 
   def render_or_render_errors(request, conn, function) do
-    chain(request, function,
+    chain(request, fn request ->
+      conn =
+        if request.route.modify_conn do
+          request.route.modify_conn.(
+            conn,
+            AshJsonApi.Controllers.Helpers.subject(request),
+            request.assigns.result,
+            request
+          )
+        else
+          conn
+        end
+
+      Request.assign(request, :conn, conn)
+    end)
+    |> chain(fn request -> function.(request.assigns[:conn], request) end,
       fallback: fn request ->
-        Response.render_errors(conn, request)
+        Response.render_errors(request.assigns[:conn] || conn, request)
       end
     )
   end
@@ -139,69 +143,128 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def create_record(request) do
     chain(request, fn %{resource: resource} = request ->
-      if request.action.type == :action do
-        action_input =
-          request.resource
-          |> Ash.ActionInput.for_action(
-            request.action.name,
-            Map.merge(request.attributes, request.arguments),
-            Request.opts(request)
-          )
+      cond do
+        request.action.type == :read ->
+          {route_params, _filter} =
+            path_args_and_filter(request.path_params, request.resource, request.action)
 
-        request = Request.assign(request, :action_input, action_input)
+          query =
+            request.resource
+            |> Ash.Query.load(
+              fields(request, request.resource) ++ (request.includes_keyword || [])
+            )
+            |> Ash.Query.for_read(
+              request.action.name,
+              Map.merge(Map.merge(request.attributes, request.arguments), route_params),
+              Request.opts(request)
+            )
 
-        with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <- Ash.load(result, fields(request, request.resource), lazy?: true),
-             {:ok, result} <-
-               Ash.load(
-                 result,
-                 fields(request, request.resource) ++ (request.includes_keyword || [])
-               ) do
-          Request.assign(request, :result, result)
-        else
-          {:error, error} ->
-            Request.add_error(request, error, :create)
-        end
-      else
-        opts =
-          if request.route.upsert? do
-            if request.route.upsert_identity do
-              [
-                upsert?: true,
-                upsert_identity: request.route.upsert_identity
-              ]
-            else
-              [
-                upsert?: true
-              ]
-            end
-          else
-            []
+          request = Request.assign(request, :query, query)
+
+          case Ash.read(query) do
+            {:ok, %resource{} = result} when resource == request.resource ->
+              Request.assign(request, :result, result)
+
+            {:ok, [result]} ->
+              Request.assign(request, :result, result)
+
+            {:ok, %page{results: [result]}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
+              Request.assign(request, :result, result)
+
+            {:ok, []} ->
+              Request.add_error(request, Ash.Error.Query.NotFound.exception(), :create)
+
+            {:ok, %page{results: []}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
+              Request.add_error(request, Ash.Error.Query.NotFound.exception(), :create)
+
+            {:ok, [result | _]} ->
+              Logger.warning(
+                "Got multiple results for #{inspect(request.resource)}.#{request.action} in `:post` handler. Expected zero or one. Extra results are being ignored."
+              )
+
+              Request.assign(request, :result, result)
+
+            {:ok, %page{results: [result | _]}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
+              Request.assign(request, :result, result)
+
+              Logger.warning(
+                "Got multiple results for #{inspect(request.resource)}.#{request.action} in `:post` handler. Expected zero or one. Extra results are being ignored."
+              )
+
+            {:error, error} ->
+              Request.add_error(request, error, :create)
           end
 
-        changeset =
-          resource
-          |> Ash.Changeset.for_create(
-            request.action.name,
-            Map.merge(request.attributes, request.arguments),
-            Request.opts(request)
-          )
-          |> Ash.Changeset.set_context(request.context)
-          |> Ash.Changeset.load(
-            fields(request, request.resource) ++ (request.includes_keyword || [])
-          )
+        request.action.type == :action ->
+          {route_params, _filter} =
+            path_args_and_filter(request.path_params, request.resource, request.action)
 
-        request = Request.assign(request, :changeset, changeset)
+          action_input =
+            request.resource
+            |> Ash.ActionInput.for_action(
+              request.action.name,
+              Map.merge(Map.merge(request.attributes, request.arguments), route_params),
+              Request.opts(request)
+            )
 
-        changeset
-        |> Ash.create(Request.opts(request, opts))
-        |> case do
-          {:ok, record} ->
-            Request.assign(request, :result, record)
+          request = Request.assign(request, :action_input, action_input)
 
-          {:error, error} ->
-            Request.add_error(request, error, :create)
-        end
+          with {:ok, result} <- Ash.run_action(action_input),
+               {:ok, result} <- Ash.load(result, fields(request, request.resource), lazy?: true),
+               {:ok, result} <-
+                 Ash.load(
+                   result,
+                   fields(request, request.resource) ++ (request.includes_keyword || [])
+                 ) do
+            Request.assign(request, :result, result)
+          else
+            {:error, error} ->
+              Request.add_error(request, error, :create)
+          end
+
+        true ->
+          opts =
+            if request.route.upsert? do
+              if request.route.upsert_identity do
+                [
+                  upsert?: true,
+                  upsert_identity: request.route.upsert_identity
+                ]
+              else
+                [
+                  upsert?: true
+                ]
+              end
+            else
+              []
+            end
+
+          {route_params, _filter} =
+            path_args_and_filter(request.path_params, request.resource, request.action)
+
+          changeset =
+            resource
+            |> Ash.Changeset.for_create(
+              request.action.name,
+              Map.merge(Map.merge(request.attributes, request.arguments), route_params),
+              Request.opts(request)
+            )
+            |> Ash.Changeset.set_context(request.context)
+            |> Ash.Changeset.load(
+              fields(request, request.resource) ++ (request.includes_keyword || [])
+            )
+
+          request = Request.assign(request, :changeset, changeset)
+
+          changeset
+          |> Ash.create(Request.opts(request, opts))
+          |> case do
+            {:ok, record} ->
+              Request.assign(request, :result, record)
+
+            {:error, error} ->
+              Request.add_error(request, error, :create)
+          end
       end
     end)
   end

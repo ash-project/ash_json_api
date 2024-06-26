@@ -44,7 +44,7 @@ defmodule AshJsonApi.Controllers.PatchRelationship do
     |> Request.from(options[:resource], action, domain, all_domains, route)
     |> Helpers.update_record(&Helpers.resource_identifiers(&1, argument))
     |> Helpers.fetch_metadata()
-    |> Helpers.render_or_render_errors(conn, fn request ->
+    |> Helpers.render_or_render_errors(conn, fn conn, request ->
       Response.render_many_relationship(conn, request, 200, relationship)
     end)
   end

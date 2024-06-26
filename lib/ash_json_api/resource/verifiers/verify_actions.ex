@@ -5,7 +5,7 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyActions do
   @compatible_action_types [
     get: [:read, :action],
     index: [:read, :action],
-    post: [:create, :action],
+    post: [:create, :action, :read],
     patch: [:update, :action],
     delete: [:destroy, :action],
     route: [:action],

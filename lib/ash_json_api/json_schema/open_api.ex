@@ -1067,8 +1067,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @spec request_body(Route.t(), resource :: module) :: nil | RequestBody.t()
-    defp request_body(%{method: method}, _resource)
-         when method in [:get, :delete] do
+    defp request_body(%{type: type}, _resource)
+         when type in [:get, :index, :delete] do
       nil
     end
 
@@ -1252,7 +1252,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp required_write_attributes(resource, arguments, action, route \\ nil) do
       attributes =
-        if action.type == :action do
+        if action.type in [:action, :read] do
           []
         else
           resource
@@ -1278,7 +1278,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           ) :: %{atom => Schema.t()}
     defp write_attributes(resource, arguments, action, route \\ nil) do
       attributes =
-        if action.type == :action do
+        if action.type in [:action, :read] do
           %{}
         else
           resource
@@ -1296,7 +1296,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
     end
 
-    defp without_path_arguments(arguments, %{type: :action}, %{route: route}) do
+    defp without_path_arguments(arguments, %{type: type}, %{route: route, type: route_type})
+         when type == :action or route_type == :post do
       route_params =
         route
         |> Path.split()
@@ -1352,7 +1353,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @spec response_body(Route.t(), resource :: module) :: Response.t()
-    defp response_body(%{method: :delete}, _resource) do
+    defp response_body(%{type: :delete}, _resource) do
       %Response{
         description: "Deleted successfully"
       }
