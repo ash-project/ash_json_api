@@ -43,6 +43,21 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  def route_schema(%{type: :route} = route, domain, resource) do
+    {href, properties} = route_href(route, domain)
+
+    {href_schema, query_param_string} = href_schema(route, domain, resource, properties)
+
+    %{
+      "href" => href <> query_param_string,
+      "hrefSchema" => href_schema,
+      "description" => "pending",
+      "method" => route.method |> to_string() |> String.upcase(),
+      "targetSchema" => target_schema(route, domain, resource),
+      "headerSchema" => header_schema()
+    }
+  end
+
   def route_schema(%{method: method} = route, domain, resource) when method in [:delete, :get] do
     {href, properties} = route_href(route, domain)
 
@@ -488,10 +503,10 @@ defmodule AshJsonApi.JsonSchema do
       end
 
     create_write_attributes =
-      write_attributes(resource, create_action.arguments, create_action.accept, :create)
+      write_attributes(resource, create_action.arguments, create_action)
 
     update_write_attributes =
-      write_attributes(resource, update_action.arguments, update_action.accept, :update)
+      write_attributes(resource, update_action.arguments, update_action)
 
     create_required_attributes =
       required_write_attributes(resource, create_action.arguments, create_action)
@@ -614,7 +629,8 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp add_filter(properties, route, resource) do
-    if route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(resource) do
+    if route.derive_filter? && read_action?(resource, route) &&
+         AshJsonApi.Resource.Info.derive_filter?(resource) do
       Map.put(properties, "filter", %{
         "type" => "object"
       })
@@ -624,7 +640,8 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp add_sort(properties, route, resource) do
-    if route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(resource) do
+    if route.derive_sort? && read_action?(resource, route) &&
+         AshJsonApi.Resource.Info.derive_sort?(resource) do
       Map.put(properties, "sort", %{
         "type" => "string",
         "format" => sort_format(resource)
@@ -632,6 +649,11 @@ defmodule AshJsonApi.JsonSchema do
     else
       properties
     end
+  end
+
+  defp read_action?(resource, route) do
+    action = Ash.Resource.Info.action(resource, route.action)
+    action && action.type == :read
   end
 
   defp add_route_properties(keys, resource, properties) do
@@ -703,7 +725,7 @@ defmodule AshJsonApi.JsonSchema do
            type: type,
            action: action,
            relationship_arguments: relationship_arguments
-         },
+         } = route,
          _domain,
          resource
        )
@@ -729,9 +751,9 @@ defmodule AshJsonApi.JsonSchema do
               "type" => "object",
               "additionalProperties" => false,
               "required" =>
-                required_write_attributes(resource, non_relationship_arguments, action),
+                required_write_attributes(resource, non_relationship_arguments, action, route),
               "properties" =>
-                write_attributes(resource, non_relationship_arguments, action.accept, action.type)
+                write_attributes(resource, non_relationship_arguments, action, route)
             },
             "relationships" => %{
               "type" => "object",
@@ -751,7 +773,7 @@ defmodule AshJsonApi.JsonSchema do
            type: type,
            action: action,
            relationship_arguments: relationship_arguments
-         },
+         } = route,
          _domain,
          resource
        )
@@ -770,7 +792,9 @@ defmodule AshJsonApi.JsonSchema do
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
-            "id" => resource_attribute_type(Ash.Resource.Info.public_attribute(resource, :id)),
+            "id" => %{
+              "type" => "string"
+            },
             "type" => %{
               "const" => AshJsonApi.Resource.Info.type(resource)
             },
@@ -778,11 +802,9 @@ defmodule AshJsonApi.JsonSchema do
               "type" => "object",
               "additionalProperties" => false,
               "required" =>
-                non_relationship_arguments
-                |> Enum.reject(& &1.allow_nil?)
-                |> Enum.map(&to_string(&1.name)),
+                required_write_attributes(resource, non_relationship_arguments, action, route),
               "properties" =>
-                write_attributes(resource, non_relationship_arguments, action.accept, action.type)
+                write_attributes(resource, non_relationship_arguments, action, route)
             },
             "relationships" => %{
               "type" => "object",
@@ -848,35 +870,68 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp required_write_attributes(resource, arguments, action) do
+  defp required_write_attributes(resource, arguments, action, route \\ nil) do
     attributes =
-      resource
-      |> Ash.Resource.Info.attributes()
-      |> Enum.filter(&(&1.name in action.accept && &1.writable?))
-      |> Enum.reject(&(&1.allow_nil? || not is_nil(&1.default) || &1.generated?))
-      |> Enum.map(&to_string(&1.name))
+      if action.type == :action do
+        []
+      else
+        resource
+        |> Ash.Resource.Info.attributes()
+        |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+        |> Enum.reject(&(&1.allow_nil? || not is_nil(&1.default) || &1.generated?))
+        |> Enum.map(&to_string(&1.name))
+      end
 
     arguments =
       arguments
+      |> without_path_arguments(action, route)
       |> Enum.reject(& &1.allow_nil?)
       |> Enum.map(&to_string(&1.name))
 
     Enum.uniq(attributes ++ arguments ++ Map.get(action, :require_attributes, []))
   end
 
-  defp write_attributes(resource, arguments, accept, type) do
+  defp write_attributes(resource, arguments, action, route \\ nil) do
     attributes =
-      resource
-      |> Ash.Resource.Info.attributes()
-      |> Enum.filter(&(&1.name in accept && &1.writable?))
-      |> Enum.reduce(%{}, fn attribute, acc ->
-        Map.put(acc, to_string(attribute.name), resource_write_attribute_type(attribute, type))
-      end)
+      if action.type == :action do
+        %{}
+      else
+        resource
+        |> Ash.Resource.Info.attributes()
+        |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+        |> Enum.reduce(%{}, fn attribute, acc ->
+          Map.put(
+            acc,
+            to_string(attribute.name),
+            resource_write_attribute_type(attribute, action.type)
+          )
+        end)
+      end
 
-    Enum.reduce(arguments, attributes, fn argument, attributes ->
-      Map.put(attributes, to_string(argument.name), resource_write_attribute_type(argument, type))
+    arguments
+    |> without_path_arguments(action, route)
+    |> Enum.reduce(attributes, fn argument, attributes ->
+      Map.put(
+        attributes,
+        to_string(argument.name),
+        resource_write_attribute_type(argument, :create)
+      )
     end)
   end
+
+  defp without_path_arguments(arguments, %{type: :action}, %{route: route}) do
+    route_params =
+      route
+      |> Path.split()
+      |> Enum.filter(&String.starts_with?(&1, ":"))
+      |> Enum.map(&String.trim_leading(&1, ":"))
+
+    Enum.reject(arguments, fn argument ->
+      to_string(argument.name) in route_params
+    end)
+  end
+
+  defp without_path_arguments(arguments, _, _), do: arguments
 
   defp required_relationship_attributes(_resource, relationship_arguments, action) do
     action.arguments
@@ -911,6 +966,18 @@ defmodule AshJsonApi.JsonSchema do
 
   defp target_schema(route, _domain, resource) do
     case route.type do
+      :route ->
+        action = Ash.Resource.Info.action(resource, route.action)
+
+        %{
+          "oneOf" => [
+            resource_attribute_type(%{type: action.returns, constraints: action.constraints}),
+            %{
+              "$ref" => "#/definitions/errors"
+            }
+          ]
+        }
+
       :index ->
         %{
           "oneOf" => [

@@ -93,6 +93,10 @@ defmodule Test.Acceptance.PatchTest do
           end)
         end
 
+        patch :fake_update do
+          route "/fake_update/:id"
+        end
+
         related :author, :read
         patch_relationship :author
       end
@@ -114,6 +118,16 @@ defmodule Test.Acceptance.PatchTest do
         require_atomic?(false)
 
         change(manage_relationship(:author, type: :append_and_remove))
+      end
+
+      action :fake_update, :struct do
+        constraints(instance_of: __MODULE__)
+        argument(:id, :uuid, allow_nil?: false)
+
+        run(fn %{arguments: %{id: id}}, _ ->
+          updating = Ash.get!(__MODULE__, id)
+          {:ok, %{updating | name: updating.name <> "_fake"}}
+        end)
       end
 
       read :by_name do
@@ -206,6 +220,25 @@ defmodule Test.Acceptance.PatchTest do
       |> assert_meta_equals(%{"bar" => "bar"})
       |> assert_attribute_equals("email", "dummy@test.com")
       |> assert_attribute_equals("name_twice", "Valid PostbazValid Post")
+    end
+
+    test "patch works with generic actions", %{post: post} do
+      Domain
+      |> patch(
+        "/posts/fake_update/#{post.id}",
+        %{
+          data: %{attributes: %{}}
+        },
+        status: 200
+      )
+      |> assert_data_equals(%{
+        "attributes" => %{"author_id" => nil, "email" => nil, "name" => "Valid Post_fake"},
+        "id" => post.id,
+        "links" => %{},
+        "meta" => %{},
+        "relationships" => %{"author" => %{"links" => %{}, "meta" => %{}}},
+        "type" => "post"
+      })
     end
 
     @tag :attributes

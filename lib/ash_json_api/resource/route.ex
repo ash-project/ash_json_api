@@ -17,6 +17,7 @@ defmodule AshJsonApi.Resource.Route do
     :read_action,
     derive_sort?: true,
     derive_filter?: true,
+    wrap_in_result?: false,
     relationship_arguments: [],
     metadata: nil
   ]

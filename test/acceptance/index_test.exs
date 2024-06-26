@@ -32,12 +32,32 @@ defmodule Test.Acceptance.IndexTest do
           route "/read2"
           default_fields [:not_present_by_default]
         end
+
+        index :fake_list do
+          route "/fake"
+        end
       end
     end
 
     actions do
       default_accept(:*)
       defaults([:create, :read, :update, :destroy])
+
+      action :fake_list, {:array, :struct} do
+        constraints(items: [instance_of: __MODULE__])
+
+        run(fn _input, _ ->
+          {:ok,
+           [
+             %__MODULE__{
+               name: "foo"
+             },
+             %__MODULE__{
+               name: "bar"
+             }
+           ]}
+        end)
+      end
     end
 
     attributes do
@@ -111,6 +131,29 @@ defmodule Test.Acceptance.IndexTest do
             "content" => "bar baz"
           },
           "id" => post.id,
+          "links" => %{},
+          "meta" => %{},
+          "relationships" => %{},
+          "type" => "post"
+        }
+      ])
+    end
+
+    test "can call a generic action" do
+      Domain
+      |> get("/posts/fake", status: 200)
+      |> assert_data_equals([
+        %{
+          "attributes" => %{"content" => nil, "name" => "foo"},
+          "id" => nil,
+          "links" => %{},
+          "meta" => %{},
+          "relationships" => %{},
+          "type" => "post"
+        },
+        %{
+          "attributes" => %{"content" => nil, "name" => "bar"},
+          "id" => nil,
           "links" => %{},
           "meta" => %{},
           "relationships" => %{},

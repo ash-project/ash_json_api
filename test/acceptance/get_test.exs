@@ -60,6 +60,7 @@ defmodule Test.Acceptance.GetTest do
 
         get(:by_name, route: "/by_name/:name")
         get(:with_error, route: "/with_error/:id")
+        get(:fake, route: "/fake")
 
         index(:read)
       end
@@ -84,6 +85,14 @@ defmodule Test.Acceptance.GetTest do
         argument(:name, :string, allow_nil?: false)
 
         filter(name: arg(:name))
+      end
+
+      action :fake, :struct do
+        constraints(instance_of: __MODULE__)
+
+        run(fn _input, _ ->
+          {:ok, %__MODULE__{name: "fake"}}
+        end)
       end
     end
 
@@ -174,6 +183,26 @@ defmodule Test.Acceptance.GetTest do
       Domain
       |> get("/posts/by_name/foo", status: 200)
       |> assert_attribute_equals("name", "foo")
+    end
+  end
+
+  describe "generic actions" do
+    test "generic actions can be used" do
+      Domain
+      |> get("/posts/fake", status: 200)
+      |> assert_data_equals(%{
+        "attributes" => %{
+          "name" => "fake",
+          "name_twice" => "fake-fake",
+          "profile" => nil,
+          "tag" => nil
+        },
+        "id" => nil,
+        "links" => %{},
+        "meta" => %{},
+        "relationships" => %{},
+        "type" => "post"
+      })
     end
   end
 

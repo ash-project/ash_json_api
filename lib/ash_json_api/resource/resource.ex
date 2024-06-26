@@ -196,7 +196,8 @@ defmodule AshJsonApi.Resource do
     auto_set_fields: [
       method: :get,
       controller: AshJsonApi.Controllers.GetRelated,
-      action_type: :get_related
+      action_type: :get_related,
+      type: :get_related
     ]
   }
 
@@ -223,7 +224,8 @@ defmodule AshJsonApi.Resource do
     auto_set_fields: [
       method: :get,
       controller: AshJsonApi.Controllers.GetRelationship,
-      action_type: :relationship
+      action_type: :relationship,
+      type: :relationship
     ]
   }
 
@@ -251,6 +253,7 @@ defmodule AshJsonApi.Resource do
     auto_set_fields: [
       method: :post,
       type: :post_to_relationship,
+      action_type: :update,
       controller: AshJsonApi.Controllers.PostToRelationship
     ]
   }
@@ -279,6 +282,7 @@ defmodule AshJsonApi.Resource do
     auto_set_fields: [
       method: :patch,
       type: :patch_relationship,
+      action_type: :update,
       controller: AshJsonApi.Controllers.PatchRelationship
     ]
   }
@@ -307,7 +311,34 @@ defmodule AshJsonApi.Resource do
     auto_set_fields: [
       method: :delete,
       type: :delete_from_relationship,
+      action_type: :update,
       controller: AshJsonApi.Controllers.DeleteFromRelationship
+    ]
+  }
+
+  @route %Spark.Dsl.Entity{
+    name: :route,
+    args: [:method, :route, :action],
+    describe: "A route for a generic action.",
+    examples: [
+      ~S{route :get, "say_hi/:name", :say_hello"}
+    ],
+    schema:
+      Keyword.put(@route_schema, :method,
+        type: :atom,
+        required: true,
+        doc: "The HTTP method for the route, e.g `:get`, or `:post`"
+      )
+      |> Keyword.put(:wrap_in_result?,
+        type: :boolean,
+        default: false,
+        doc: "Whether or not the action result should be wrapped in `{result: <result>}`"
+      ),
+    target: AshJsonApi.Resource.Route,
+    auto_set_fields: [
+      type: :route,
+      action_type: :action,
+      controller: AshJsonApi.Controllers.GenericActionRoute
     ]
   }
 
@@ -317,8 +348,7 @@ defmodule AshJsonApi.Resource do
     schema: [
       base: [
         type: :string,
-        required: true,
-        doc: "The base route for the resource, e.g `\"/users\"`"
+        doc: "A base route for the resource, e.g `\"/users\"`"
       ]
     ],
     examples: [
@@ -349,7 +379,8 @@ defmodule AshJsonApi.Resource do
       @relationship,
       @post_to_relationship,
       @patch_relationship,
-      @delete_from_relationship
+      @delete_from_relationship,
+      @route
     ]
   }
 
@@ -417,8 +448,7 @@ defmodule AshJsonApi.Resource do
     schema: [
       type: [
         type: :string,
-        doc: "The resource identifier type of this resource in JSON:API",
-        required: true
+        doc: "The resource identifier type of this resource in JSON:API"
       ],
       includes: [
         type: :any,
@@ -462,7 +492,9 @@ defmodule AshJsonApi.Resource do
 
   @verifiers [
     AshJsonApi.Resource.Verifiers.VerifyRelationships,
-    AshJsonApi.Resource.Verifiers.VerifyIncludes
+    AshJsonApi.Resource.Verifiers.VerifyIncludes,
+    AshJsonApi.Resource.Verifiers.VerifyActions,
+    AshJsonApi.Resource.Verifiers.VerifyHasType
   ]
 
   @sections [@json_api]

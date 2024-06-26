@@ -14,6 +14,23 @@ defmodule AshJsonApi.Controllers.Response do
     send_resp(conn, status, serialized)
   end
 
+  # sobelow_skip ["XSS.SendResp"]
+  def render_generic_action_result(conn, request, status, result) do
+    result
+    |> AshJsonApi.Serializer.serialize_value(
+      request.action.returns,
+      request.action.constraints,
+      request.domain
+    )
+    |> then(fn serialized ->
+      if request.route.wrap_in_result? do
+        send_resp(conn, status, Jason.encode!(%{value: serialized}))
+      else
+        send_resp(conn, status, Jason.encode!(serialized))
+      end
+    end)
+  end
+
   defp log_errors(errors, opts) do
     Enum.each(errors, fn error ->
       if is_bitstring(error) do

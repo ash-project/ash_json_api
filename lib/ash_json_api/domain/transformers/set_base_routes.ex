@@ -23,9 +23,13 @@ defmodule AshJsonApi.Domain.Transformers.SetBaseRoutes do
             end
 
             new_route =
-              "/" <>
-                prefix <>
+              if prefix == "" do
                 "/" <> String.trim_leading(route.route, "/")
+              else
+                "/" <>
+                  prefix <>
+                  "/" <> String.trim_leading(route.route, "/")
+              end
 
             new_route = String.trim_trailing(new_route, "/")
 

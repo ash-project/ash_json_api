@@ -20,7 +20,7 @@ defmodule AshJsonApi.Resource.Info do
   end
 
   def base_route(resource) do
-    Extension.get_opt(resource, [:json_api, :routes], :base, nil, false)
+    Extension.get_opt(resource, [:json_api, :routes], :base, "/", false)
   end
 
   def primary_key_fields(resource) do

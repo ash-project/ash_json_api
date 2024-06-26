@@ -10,6 +10,9 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
           [_only_one_primary_key] ->
             {:ok, dsl}
 
+          [] ->
+            {:ok, dsl}
+
           _ ->
             raise Spark.Error.DslError,
               module: __MODULE__,

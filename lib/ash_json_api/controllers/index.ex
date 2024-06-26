@@ -15,20 +15,37 @@ defmodule AshJsonApi.Controllers.Index do
     route = options[:route]
     all_domains = options[:all_domains]
 
-    conn
-    |> Request.from(resource, action, domain, all_domains, route)
-    |> Helpers.fetch_pagination_parameters()
-    |> Helpers.fetch_records()
-    |> Helpers.fetch_includes()
-    |> Helpers.fetch_metadata()
-    |> Helpers.render_or_render_errors(conn, fn request ->
-      Response.render_many(
-        conn,
-        request,
-        200,
-        request.assigns.result,
-        request.assigns.includes
-      )
-    end)
+    if action.type == :read do
+      conn
+      |> Request.from(resource, action, domain, all_domains, route)
+      |> Helpers.fetch_pagination_parameters()
+      |> Helpers.fetch_records()
+      |> Helpers.fetch_includes()
+      |> Helpers.fetch_metadata()
+      |> Helpers.render_or_render_errors(conn, fn request ->
+        Response.render_many(
+          conn,
+          request,
+          200,
+          request.assigns.result,
+          request.assigns.includes
+        )
+      end)
+    else
+      conn
+      |> Request.from(resource, action, domain, all_domains, route)
+      |> Helpers.fetch_records()
+      |> Helpers.fetch_includes()
+      |> Helpers.fetch_metadata()
+      |> Helpers.render_or_render_errors(conn, fn request ->
+        Response.render_many(
+          conn,
+          request,
+          200,
+          request.assigns.result,
+          request.assigns.includes
+        )
+      end)
+    end
   end
 end

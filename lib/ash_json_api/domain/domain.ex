@@ -161,7 +161,9 @@ defmodule AshJsonApi.Domain do
 
   @verifiers [
     AshJsonApi.Domain.Verifiers.VerifyOpenApiGrouping,
-    AshJsonApi.Domain.Verifiers.VerifyRelationships
+    AshJsonApi.Domain.Verifiers.VerifyRelationships,
+    AshJsonApi.Domain.Verifiers.VerifyActions,
+    AshJsonApi.Domain.Verifiers.VerifyHasType
   ]
   @persisters [AshJsonApi.Domain.Persisters.DefineRouter]
   @transformers [AshJsonApi.Domain.Transformers.SetBaseRoutes]

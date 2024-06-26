@@ -324,11 +324,19 @@ defmodule Test.Acceptance.OpenApiTest do
       assert page.required == false
       assert page.style == :deepObject
       %Schema{} = schema = page.schema
-      assert schema.type == :object
+      assert [keyset, offset] = schema.anyOf
 
-      assert schema.properties == %{
+      assert offset.properties == %{
                limit: %Schema{type: :integer, minimum: 1},
-               offset: %Schema{type: :integer, minimum: 0}
+               offset: %Schema{type: :integer, minimum: 0},
+               count: %Schema{type: :boolean, default: false}
+             }
+
+      assert keyset.properties == %{
+               after: %Schema{type: :string},
+               before: %Schema{type: :string},
+               count: %Schema{type: :boolean, default: false},
+               limit: %Schema{type: :integer, minimum: 1}
              }
     end
 

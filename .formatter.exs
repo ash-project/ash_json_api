@@ -51,13 +51,17 @@ spark_locals_without_parens = [
   relationship: 4,
   relationship_arguments: 1,
   route: 1,
+  route: 3,
+  route: 4,
+  route: 5,
   router: 1,
   serve_schema?: 1,
   show_raised_errors?: 1,
   tag: 1,
   type: 1,
   upsert?: 1,
-  upsert_identity: 1
+  upsert_identity: 1,
+  wrap_in_result?: 1
 ]
 
 [

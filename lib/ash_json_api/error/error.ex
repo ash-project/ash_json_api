@@ -165,6 +165,10 @@ defmodule AshJsonApi.Error do
     [built_error]
   end
 
+  defp source_pointer(_resource, field, path, :action) do
+    "/data/attributes/#{Enum.join(List.wrap(path) ++ [field], "/")}"
+  end
+
   defp source_pointer(resource, field, path, type)
        when type in [:create, :update] and not is_nil(field) do
     if path == [] && Ash.Resource.Info.public_relationship(resource, field) do
@@ -245,6 +249,19 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Changes.InvalidArgument do
 end
 
 defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.InvalidArgument do
+  def to_json_api_error(error) do
+    %AshJsonApi.Error{
+      id: Ash.UUID.generate(),
+      status_code: AshJsonApi.Error.class_to_status(error.class),
+      code: "invalid_argument",
+      title: "InvalidArgument",
+      detail: error.message,
+      meta: Map.new(error.vars)
+    }
+  end
+end
+
+defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Action.InvalidArgument do
   def to_json_api_error(error) do
     %AshJsonApi.Error{
       id: Ash.UUID.generate(),

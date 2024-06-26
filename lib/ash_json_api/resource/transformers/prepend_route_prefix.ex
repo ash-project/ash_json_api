@@ -11,8 +11,14 @@ defmodule AshJsonApi.Resource.Transformers.PrependRoutePrefix do
     |> Transformer.get_entities([:json_api, :routes])
     |> Enum.reduce({:ok, dsl}, fn route, {:ok, dsl} ->
       new_route =
-        "/" <>
-          String.trim_leading(prefix, "/") <> "/" <> String.trim_leading(route.route, "/")
+        case String.trim_leading(prefix, "/") do
+          "" ->
+            "/" <> String.trim_leading(route.route, "/")
+
+          prefix ->
+            "/" <>
+              String.trim_leading(prefix, "/") <> "/" <> String.trim_leading(route.route, "/")
+        end
 
       new_route = String.trim_trailing(new_route, "/")
 

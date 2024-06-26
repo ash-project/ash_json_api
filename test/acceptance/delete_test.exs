@@ -36,6 +36,10 @@ defmodule Test.Acceptance.DeleteTest do
           end)
         end
 
+        delete :fake_delete do
+          route "/delete_fake/:id"
+        end
+
         index(:read)
       end
     end
@@ -43,6 +47,15 @@ defmodule Test.Acceptance.DeleteTest do
     actions do
       default_accept(:*)
       defaults([:read, :create, :update, :destroy])
+
+      action :fake_delete, :struct do
+        constraints(instance_of: __MODULE__)
+        argument(:id, :uuid)
+
+        run(fn input, _ ->
+          Ash.get(__MODULE__, input.arguments.id)
+        end)
+      end
     end
 
     attributes do
@@ -106,6 +119,11 @@ defmodule Test.Acceptance.DeleteTest do
       |> assert_meta_equals(%{
         "baz" => "bar"
       })
+    end
+
+    test "a generic action returns a 200 as well", %{post: post} do
+      Domain
+      |> delete("/posts/delete_fake/#{post.id}", status: 200)
     end
   end
 end

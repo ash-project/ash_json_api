@@ -674,28 +674,28 @@ defmodule AshJsonApi.Serializer do
     Enum.reduce(fields, %{}, fn field_name, acc ->
       field = Ash.Resource.Info.field(resource, field_name)
 
-      type =
+      {type, constraints} =
         case field do
           %Ash.Resource.Aggregate{} = agg ->
             case field_type_from_aggregate(resource, agg) do
               {field_type, field_constraints} ->
-                {:ok, type, _constraints} =
+                {:ok, type, constraints} =
                   Ash.Query.Aggregate.kind_to_type(agg.kind, field_type, field_constraints)
 
-                type
+                {type, constraints}
 
               _ ->
-                {:ok, type, _constraints} =
+                {:ok, type, constraints} =
                   Ash.Query.Aggregate.kind_to_type(agg.kind, nil, nil)
 
-                type
+                {type, constraints}
             end
 
           nil ->
-            :string
+            {:string, []}
 
           attribute ->
-            attribute.type
+            {attribute.type, attribute.constraints}
         end
 
       cond do
@@ -710,13 +710,7 @@ defmodule AshJsonApi.Serializer do
           acc
 
         true ->
-          value =
-            if Ash.Type.embedded_type?(type) do
-              req = %{fields: %{}, route: %{}, domain: request.domain}
-              serialize_attributes(req, Map.get(record, field.name))
-            else
-              Map.get(record, field.name)
-            end
+          value = serialize_value(Map.get(record, field.name), type, constraints, request.domain)
 
           if not is_nil(value) or include_nil_values?(request, record) do
             Map.put(acc, field.name, value)
@@ -725,6 +719,29 @@ defmodule AshJsonApi.Serializer do
           end
       end
     end)
+  end
+
+  @doc false
+  def serialize_value(value, type, constraints, domain) do
+    {type, _constraints} = flatten_new_type(type, constraints || [])
+
+    if Ash.Type.embedded_type?(type) do
+      req = %{fields: %{}, route: %{}, domain: domain}
+      serialize_attributes(req, value)
+    else
+      value
+    end
+  end
+
+  defp flatten_new_type(type, constraints) do
+    if Ash.Type.NewType.new_type?(type) do
+      new_constraints = Ash.Type.NewType.constraints(type, constraints)
+      new_type = Ash.Type.NewType.subtype_of(type)
+
+      {new_type, new_constraints}
+    else
+      {type, constraints}
+    end
   end
 
   defp include_nil_values?(request, %resource{} = _record) do

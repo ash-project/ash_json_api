@@ -21,6 +21,7 @@ Configure the resource's behavior in the JSON:API
    * post_to_relationship
    * patch_relationship
    * delete_from_relationship
+   * route
  * [primary_key](#json_api-primary_key)
 
 
@@ -60,7 +61,7 @@ end
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`type`](#json_api-type){: #json_api-type .spark-required} | `String.t` |  | The resource identifier type of this resource in JSON:API |
+| [`type`](#json_api-type){: #json_api-type } | `String.t` |  | The resource identifier type of this resource in JSON:API |
 | [`includes`](#json_api-includes){: #json_api-includes } | `any` | `[]` | A keyword list of all paths that are includable from this resource |
 | [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | `any` |  | Whether or not to include properties for values that are nil in the JSON output |
 | [`default_fields`](#json_api-default_fields){: #json_api-default_fields } | `list(atom)` |  | The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public |
@@ -82,6 +83,7 @@ Configure the routes that will be exposed via the JSON:API
  * [post_to_relationship](#json_api-routes-post_to_relationship)
  * [patch_relationship](#json_api-routes-patch_relationship)
  * [delete_from_relationship](#json_api-routes-delete_from_relationship)
+ * [route](#json_api-routes-route)
 
 
 ### Examples
@@ -110,7 +112,7 @@ end
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`base`](#json_api-routes-base){: #json_api-routes-base .spark-required} | `String.t` |  | The base route for the resource, e.g `"/users"` |
+| [`base`](#json_api-routes-base){: #json_api-routes-base } | `String.t` |  | A base route for the resource, e.g `"/users"` |
 
 
 
@@ -534,6 +536,50 @@ delete_from_relationship :comments
 | [`name`](#json_api-routes-delete_from_relationship-name){: #json_api-routes-delete_from_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-delete_from_relationship-derive_sort?){: #json_api-routes-delete_from_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-delete_from_relationship-derive_filter?){: #json_api-routes-delete_from_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+## json_api.routes.route
+```elixir
+route method, route, action
+```
+
+
+A route for a generic action.
+
+
+
+### Examples
+```
+route :get, "say_hi/:name", :say_hello"
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`method`](#json_api-routes-route-method){: #json_api-routes-route-method .spark-required} | `atom` |  | The HTTP method for the route, e.g `:get`, or `:post` |
+| [`route`](#json_api-routes-route-route){: #json_api-routes-route-route .spark-required} | `String.t` |  | The path of the route |
+| [`action`](#json_api-routes-route-action){: #json_api-routes-route-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`wrap_in_result?`](#json_api-routes-route-wrap_in_result?){: #json_api-routes-route-wrap_in_result? } | `boolean` | `false` | Whether or not the action result should be wrapped in `{result: <result>}` |
+| [`default_fields`](#json_api-routes-route-default_fields){: #json_api-routes-route-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-route-primary?){: #json_api-routes-route-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-route-metadata){: #json_api-routes-route-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
+| [`name`](#json_api-routes-route-name){: #json_api-routes-route-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`derive_sort?`](#json_api-routes-route-derive_sort?){: #json_api-routes-route-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-route-derive_filter?){: #json_api-routes-route-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 
 
 

@@ -489,7 +489,8 @@ defmodule AshJsonApi.Request do
 
   defp parse_filter(%{query_params: %{"filter" => filter}} = request)
        when is_map(filter) do
-    if request.route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(request.resource) do
+    if request.action.type == :read && request.route.derive_filter? &&
+         AshJsonApi.Resource.Info.derive_filter?(request.resource) do
       %{request | filter: filter}
     else
       %{request | arguments: Map.put(request.arguments, :filter, filter)}
@@ -497,7 +498,8 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_filter(%{query_params: %{"filter" => filter}} = request) do
-    if request.route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(request.resource) do
+    if request.action.type == :read && request.route.derive_filter? &&
+         AshJsonApi.Resource.Info.derive_filter?(request.resource) do
       add_error(request, "invalid filter", request.route.type)
     else
       %{request | arguments: Map.put(request.arguments, :filter, filter)}
@@ -508,7 +510,8 @@ defmodule AshJsonApi.Request do
 
   defp parse_sort(%{query_params: %{"sort" => sort_string}, resource: resource} = request)
        when is_bitstring(sort_string) do
-    if request.route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(request.resource) do
+    if request.action.type == :read && request.route.derive_sort? &&
+         AshJsonApi.Resource.Info.derive_sort?(request.resource) do
       sort_string
       |> String.split(",")
       |> case do
@@ -542,7 +545,8 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_sort(%{query_params: %{"sort" => sort}} = request) do
-    if request.route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(request.resource) do
+    if request.action.type == :read && request.route.derive_sort? &&
+         AshJsonApi.Resource.Info.derive_sort?(request.resource) do
       add_error(request, "invalid sort string", request.route.type)
     else
       %{request | arguments: Map.put(request.arguments, :sort, sort)}

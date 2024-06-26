@@ -43,6 +43,10 @@ defmodule Test.Acceptance.PostTest do
             %{"bar" => "foo"}
           end)
         end
+
+        post :create_fake do
+          route "/fake"
+        end
       end
     end
 
@@ -54,6 +58,17 @@ defmodule Test.Acceptance.PostTest do
       create :confirm_name do
         argument(:confirm, :string, allow_nil?: false)
         validate(confirm(:name, :confirm))
+      end
+
+      action :create_fake, :struct do
+        constraints(instance_of: __MODULE__)
+
+        run(fn _, _ ->
+          {:ok,
+           %__MODULE__{
+             name: "fake"
+           }}
+        end)
       end
     end
 
@@ -216,6 +231,28 @@ defmodule Test.Acceptance.PostTest do
       })
       |> assert_attribute_equals("email", nil)
       |> assert_attribute_equals("name_twice", "Post 1barPost 1")
+    end
+
+    test "create with generic action" do
+      Domain
+      |> post(
+        "/authors/fake",
+        %{
+          data: %{
+            type: "author",
+            attributes: %{}
+          }
+        },
+        status: 201
+      )
+      |> assert_data_equals(%{
+        "attributes" => %{"name" => "fake"},
+        "id" => nil,
+        "links" => %{},
+        "meta" => %{},
+        "relationships" => %{"posts" => %{"links" => %{}, "meta" => %{}}},
+        "type" => "author"
+      })
     end
 
     test "create with unknown input in embed generates correct error code" do

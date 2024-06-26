@@ -95,11 +95,17 @@ if Code.ensure_loaded?(OpenApiSpex) do
         resource
         |> AshJsonApi.Resource.Info.routes(domains)
         |> Enum.any?(fn route ->
-          route.type == :index && route.derive_filter?
+          route.type == :index && read_action?(resource, route) && route.derive_filter?
         end)
       else
         false
       end
+    end
+
+    defp read_action?(resource, route) do
+      action = Ash.Resource.Info.action(resource, route.action)
+
+      action && action.type == :read
     end
 
     defp resource_filter_schemas(domains, resource) do
@@ -341,6 +347,23 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
+    defp resource_write_attribute_type(
+           %{type: Ash.Type.Union, constraints: constraints} = attr,
+           action_type
+         ) do
+      subtypes =
+        Enum.map(constraints[:types], fn {_name, config} ->
+          fake_attr = %{attr | type: config[:type], constraints: config[:constraints]}
+
+          resource_write_attribute_type(fake_attr, action_type)
+        end)
+
+      %{
+        "anyOf" => subtypes
+      }
+      |> unwrap_any_of()
+    end
+
     defp resource_write_attribute_type(%{type: type} = attr, action_type) do
       if Ash.Type.embedded_type?(type) do
         embedded_type_input(attr, action_type)
@@ -401,6 +424,20 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type: :string
         }
       end
+    end
+
+    defp resource_attribute_type(%{type: Ash.Type.Union, constraints: constraints} = attr) do
+      subtypes =
+        Enum.map(constraints[:types], fn {_name, config} ->
+          fake_attr = %{attr | type: config[:type], constraints: config[:constraints]}
+
+          resource_attribute_type(fake_attr)
+        end)
+
+      %{
+        "anyOf" => subtypes
+      }
+      |> unwrap_any_of()
     end
 
     defp resource_attribute_type(%{type: {:array, type}} = attr) do
@@ -475,10 +512,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
         end
 
       create_write_attributes =
-        write_attributes(resource, create_action.arguments, create_action.accept, :create)
+        write_attributes(resource, create_action.arguments, create_action)
 
       update_write_attributes =
-        write_attributes(resource, update_action.arguments, update_action.accept, :update)
+        write_attributes(resource, update_action.arguments, update_action)
 
       create_required_attributes =
         required_write_attributes(resource, create_action.arguments, create_action)
@@ -796,7 +833,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         [
           filter_parameter(resource, route),
           sort_parameter(resource, route),
-          page_parameter(),
+          page_parameter(Ash.Resource.Info.action(resource, route.action)),
           include_parameter(),
           fields_parameter(resource)
         ],
@@ -822,7 +859,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec filter_parameter(resource :: module, route :: AshJsonApi.Resource.Route.t()) ::
             Parameter.t()
     defp filter_parameter(resource, route) do
-      if route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(resource) do
+      if route.derive_filter? && read_action?(resource, route) &&
+           AshJsonApi.Resource.Info.derive_filter?(resource) do
         %Parameter{
           name: :filter,
           in: :query,
@@ -840,7 +878,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec sort_parameter(resource :: module, route :: AshJsonApi.Resource.Route.t()) ::
             Parameter.t()
     defp sort_parameter(resource, route) do
-      if route.derive_sort? && AshJsonApi.Resource.Info.derive_sort?(resource) do
+      if route.derive_sort? && read_action?(resource, route) &&
+           AshJsonApi.Resource.Info.derive_sort?(resource) do
         sorts =
           resource
           |> AshJsonApi.JsonSchema.sortable_fields()
@@ -867,22 +906,86 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    @spec page_parameter() :: Parameter.t()
-    defp page_parameter do
-      %Parameter{
-        name: :page,
-        in: :query,
-        description: "Paginates the response with the limit and offset",
-        required: false,
-        style: :deepObject,
-        schema: %Schema{
-          type: :object,
-          properties: %{
+    @spec page_parameter(term()) :: Parameter.t()
+    defp page_parameter(action) do
+      if action.type == :read && action.pagination &&
+           (action.pagination.keyset? || action.pagination.offset?) do
+        cond do
+          action.pagination.keyset? && action.pagination.offset? ->
+            %Parameter{
+              name: :page,
+              in: :query,
+              description:
+                "Paginates the response with the limit and offset or keyset pagination.",
+              required: action.pagination.required? && !action.pagination.default_limit,
+              style: :deepObject,
+              schema: %Schema{
+                anyOf: [
+                  keyset_pagination_schema(action.pagination),
+                  offset_pagination_schema(action.pagination)
+                ]
+              }
+            }
+
+          action.pagination.keyset? ->
+            %Parameter{
+              name: :page,
+              in: :query,
+              description:
+                "Paginates the response with the limit and offset or keyset pagination.",
+              required: action.pagination.required? && !action.pagination.default_limit,
+              style: :deepObject,
+              schema: keyset_pagination_schema(action.pagination)
+            }
+
+          action.pagination.offset? ->
+            %Parameter{
+              name: :page,
+              in: :query,
+              description:
+                "Paginates the response with the limit and offset or keyset pagination.",
+              required: action.pagination.required? && !action.pagination.default_limit,
+              style: :deepObject,
+              schema: offset_pagination_schema(action.pagination)
+            }
+        end
+      end
+    end
+
+    defp offset_pagination_schema(pagination) do
+      %Schema{
+        type: :object,
+        properties:
+          %{
             limit: %Schema{type: :integer, minimum: 1},
             offset: %Schema{type: :integer, minimum: 0}
           }
-        }
+          |> add_count(pagination)
       }
+    end
+
+    defp keyset_pagination_schema(pagination) do
+      %Schema{
+        type: :object,
+        properties:
+          %{
+            limit: %Schema{type: :integer, minimum: 1},
+            after: %Schema{type: :string},
+            before: %Schema{type: :string}
+          }
+          |> add_count(pagination)
+      }
+    end
+
+    defp add_count(props, pagination) do
+      if pagination.countable do
+        Map.put(props, :count, %Schema{
+          type: :boolean,
+          default: pagination.countable == :by_default
+        })
+      else
+        props
+      end
     end
 
     @spec include_parameter() :: Parameter.t()
@@ -987,7 +1090,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
              type: :post,
              action: action,
              relationship_arguments: relationship_arguments
-           },
+           } = route,
            resource
          ) do
       action = Ash.Resource.Info.action(resource, action)
@@ -1017,10 +1120,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
                   write_attributes(
                     resource,
                     non_relationship_arguments,
-                    action.accept,
-                    action.type
+                    action,
+                    route
                   ),
-                required: required_write_attributes(resource, non_relationship_arguments, action)
+                required:
+                  required_write_attributes(resource, non_relationship_arguments, action, route)
               },
               relationships: %Schema{
                 type: :object,
@@ -1040,7 +1144,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
              type: :patch,
              action: action,
              relationship_arguments: relationship_arguments
-           },
+           } = route,
            resource
          ) do
       action = Ash.Resource.Info.action(resource, action)
@@ -1074,13 +1178,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
                   write_attributes(
                     resource,
                     non_relationship_arguments,
-                    action.accept,
-                    action.type
+                    action,
+                    route
                   ),
                 required:
-                  non_relationship_arguments
-                  |> Enum.reject(& &1.allow_nil?)
-                  |> Enum.map(&to_string(&1.name))
+                  required_write_attributes(resource, non_relationship_arguments, action, route)
               },
               relationships: %Schema{
                 type: :object,
@@ -1105,16 +1207,21 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> relationship_resource_identifiers()
     end
 
-    defp required_write_attributes(resource, arguments, action) do
+    defp required_write_attributes(resource, arguments, action, route \\ nil) do
       attributes =
-        resource
-        |> Ash.Resource.Info.attributes()
-        |> Enum.filter(&(&1.name in action.accept && &1.writable?))
-        |> Enum.reject(&(&1.allow_nil? || not is_nil(&1.default) || &1.generated?))
-        |> Enum.map(& &1.name)
+        if action.type == :action do
+          []
+        else
+          resource
+          |> Ash.Resource.Info.attributes()
+          |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+          |> Enum.reject(&(&1.allow_nil? || not is_nil(&1.default) || &1.generated?))
+          |> Enum.map(& &1.name)
+        end
 
       arguments =
         arguments
+        |> without_path_arguments(action, route)
         |> Enum.reject(& &1.allow_nil?)
         |> Enum.map(& &1.name)
 
@@ -1124,22 +1231,41 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec write_attributes(
             resource :: module,
             [Ash.Resource.Actions.Argument.t()],
-            accept :: [atom()],
-            type :: atom()
+            action :: term()
           ) :: %{atom => Schema.t()}
-    defp write_attributes(resource, arguments, accept, type) do
+    defp write_attributes(resource, arguments, action, route \\ nil) do
       attributes =
-        resource
-        |> Ash.Resource.Info.attributes()
-        |> Enum.filter(&(&1.name in accept && &1.writable?))
-        |> Map.new(fn attribute ->
-          {attribute.name, resource_write_attribute_type(attribute, type)}
-        end)
+        if action.type == :action do
+          %{}
+        else
+          resource
+          |> Ash.Resource.Info.attributes()
+          |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+          |> Map.new(fn attribute ->
+            {attribute.name, resource_write_attribute_type(attribute, action.type)}
+          end)
+        end
 
-      Enum.reduce(arguments, attributes, fn argument, attributes ->
-        Map.put(attributes, argument.name, resource_write_attribute_type(argument, type))
+      arguments
+      |> without_path_arguments(action, route)
+      |> Enum.reduce(attributes, fn argument, attributes ->
+        Map.put(attributes, argument.name, resource_write_attribute_type(argument, :create))
       end)
     end
+
+    defp without_path_arguments(arguments, %{type: :action}, %{route: route}) do
+      route_params =
+        route
+        |> Path.split()
+        |> Enum.filter(&String.starts_with?(&1, ":"))
+        |> Enum.map(&String.trim_leading(&1, ":"))
+
+      Enum.reject(arguments, fn argument ->
+        to_string(argument.name) in route_params
+      end)
+    end
+
+    defp without_path_arguments(arguments, _, _), do: arguments
 
     @spec required_relationship_attributes(
             resource :: module,
