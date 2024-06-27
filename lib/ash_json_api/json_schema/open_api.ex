@@ -1068,7 +1068,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @spec request_body(Route.t(), resource :: module) :: nil | RequestBody.t()
     defp request_body(%{type: type}, _resource)
-         when type in [:get, :index, :delete] do
+         when type not in [
+                :route,
+                :post,
+                :patch,
+                :post_to_relationship,
+                :patch_relationship,
+                :delete_from_relationship
+              ] do
       nil
     end
 
