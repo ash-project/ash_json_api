@@ -348,6 +348,35 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp resource_write_attribute_type(
+           %{type: Ash.Type.Map, constraints: constraints} = attr,
+           action_type
+         ) do
+      if constraints[:fields] && constraints[:fields] != [] do
+        %Schema{
+          type: :object,
+          properties:
+            Map.new(constraints[:fields], fn {key, config} ->
+              {key,
+               resource_write_attribute_type(
+                 %{
+                   attr
+                   | type: config[:type],
+                     constraints: config[:constraints] || []
+                 },
+                 action_type
+               )}
+            end),
+          required:
+            constraints[:fields]
+            |> Enum.filter(fn {_, config} -> !config[:allow_nil?] end)
+            |> Enum.map(&elem(&1, 0))
+        }
+      else
+        %Schema{type: :object}
+      end
+    end
+
+    defp resource_write_attribute_type(
            %{type: Ash.Type.Union, constraints: constraints} = attr,
            action_type
          ) do
@@ -393,6 +422,29 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp resource_attribute_type(%{type: Ash.Type.Integer}) do
       %Schema{type: :integer}
+    end
+
+    defp resource_attribute_type(%{type: Ash.Type.Map, constraints: constraints} = attr) do
+      if constraints[:fields] && constraints[:fields] != [] do
+        %Schema{
+          type: :object,
+          properties:
+            Map.new(constraints[:fields], fn {key, config} ->
+              {key,
+               resource_attribute_type(%{
+                 attr
+                 | type: config[:type],
+                   constraints: config[:constraints] || []
+               })}
+            end),
+          required:
+            constraints[:fields]
+            |> Enum.filter(fn {_, config} -> !config[:allow_nil?] end)
+            |> Enum.map(&elem(&1, 0))
+        }
+      else
+        %Schema{type: :object}
+      end
     end
 
     defp resource_attribute_type(%{type: Ash.Type.Float}) do
