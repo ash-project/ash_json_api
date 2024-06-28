@@ -7,96 +7,77 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ## [v1.3.0](https://github.com/ash-project/ash_json_api/compare/v1.2.2...v1.3.0) (2024-06-28)
 
-
-
-
 ### Features:
 
-* add support for calculation inputs via field_inputs query param (#187)
+- [calculations] add support for calculation inputs via field_inputs query param (#187)
 
-### Bug Fixes:
+- [routes] support generic actions with no returns in routes
 
-* don't try to generate body schemas for routes that don't have them
+- [routes] support `modify_conn/4`
 
-* properly render response body/return types in schemas
+- [routes] support `:read` actions in `:post` request
 
-* properly show 201 status code in open api schema
+- [routes] generic action support for all basic route types
 
-* Don't need to use arguments in fetch query (#178)
+- [routes] new `route/3` type for arbitrary generic actions
+
+- [AshJsonApi.Resource] support `derive_filter?` on both resource and route level
+
+- [AshJsonApi.Resource] support `derive_sort?` on both resource and route level
 
 ### Improvements:
 
-* support generic actions with no returns in routes
+- [OpenApi] implement `Ash.Type.Map` json schema
 
-* implement `Ash.Type.Map` json schema
+- [OpenApi] support unions in schemas
 
-* support `modify_conn/4`
+- [OpenApi] use "any object" type for filter in json schema
 
-* support `:read` actions in `:post` request
+- [OpenApi] fully specify filter in open api schema
 
-* generic action support for all basic route types
+- [OpenApi] show all sortable fields in json schema
 
-* new `route/3` type for arbitrary generic actions
+- [OpenApi] Use resource descriptions in generated schema files if present (#184)
 
-* support unions in schemas
+- [OpenApi] show embeds in json schema and openapi
 
-* use "any object" type for filter in json schema
-
-* fully specify filter in open api schema
-
-* support `derive_filter?` on both resource and route level
-
-* support `derive_sort?` on both resource and route level
-
-* show all sortable fields in json schema
-
-* Use resource descriptions in generated schema files if present (#184)
-
-* show embeds in json schema and openapi
-
-* Add defimpl for NoSuchInput error (#181)
+- [errors] Add defimpl for NoSuchInput error (#181)
 
 ## [v1.2.2](https://github.com/ash-project/ash_json_api/compare/v1.2.1...v1.2.2) (2024-06-19)
 
-
-
-
 ### Bug Fixes:
 
-* properly still perform includes on record fetched from path
+- [include] properly still perform includes on record fetched from path
 
 ### Improvements:
 
-* newtype/enum support for json_schema as well
+- [OpenApi] newtype/enum support for json_schema as well
 
-* render enums as enums in open api
+- [OpenApi] render enums as enums in open api
 
 ## [v1.2.1](https://github.com/ash-project/ash_json_api/compare/v1.2.0...v1.2.1) (2024-06-18)
 
-
-
-
 ### Bug Fixes:
 
-* don't raise error including on get related endpoints
+- [routes] don't raise error including on get related endpoints
 
-* don't show exceptions if `show_raised_errors?` is `false`
+- [routes] validate relationships from routes at compile time
 
-* don't expose `action.name` over api docs
+- [errors] don't show exceptions if `show_raised_errors?` is `false`
 
-* resource comes from the route on domains
+- [errors] add missing fields from `InvalidField`
 
-* add missing fields from `InvalidField`
+- [OpenApi] don't expose `action.name` over api docs
 
-* validate relationships from routes at compile time
+- [AshJsonApi.Domain] resource comes from the route on domains
 
 ### Improvements:
 
-* support `name` on `routes`, use in description and operationId
+- [routes] support `name` on `routes`, use in description and operationId
 
-* verify includes list at compile time
+- [AshJsonApi.Resource] verify includes list at compile time
 
-* allow setting a `resource` second option on domain's `base_route` entity
+- [AshJsonApi.Domain] allow setting a `resource` second option on domain's `base_route` entity
 
 ## [v1.2.0](https://github.com/ash-project/ash_json_api/compare/v1.1.2...v1.2.0) (2024-06-11)
 
