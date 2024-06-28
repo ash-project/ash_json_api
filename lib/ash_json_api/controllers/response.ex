@@ -2,6 +2,8 @@ defmodule AshJsonApi.Controllers.Response do
   @moduledoc false
   require Logger
 
+  @generic_action_no_return_success Jason.encode!(%{success: true})
+
   # sobelow_skip ["XSS.SendResp"]
   def render_errors(conn, request, opts \\ []) do
     if AshJsonApi.Domain.Info.log_errors?(request.domain) do
@@ -15,20 +17,24 @@ defmodule AshJsonApi.Controllers.Response do
   end
 
   # sobelow_skip ["XSS.SendResp"]
-  def render_generic_action_result(conn, request, status, result) do
-    result
-    |> AshJsonApi.Serializer.serialize_value(
-      request.action.returns,
-      request.action.constraints,
-      request.domain
-    )
-    |> then(fn serialized ->
-      if request.route.wrap_in_result? do
-        send_resp(conn, status, Jason.encode!(%{value: serialized}))
-      else
-        send_resp(conn, status, Jason.encode!(serialized))
-      end
-    end)
+  def render_generic_action_result(conn, request, status, result, returns) do
+    if returns do
+      result
+      |> AshJsonApi.Serializer.serialize_value(
+        request.action.returns,
+        request.action.constraints,
+        request.domain
+      )
+      |> then(fn serialized ->
+        if request.route.wrap_in_result? do
+          send_resp(conn, status, Jason.encode!(%{result: serialized}))
+        else
+          send_resp(conn, status, Jason.encode!(serialized))
+        end
+      end)
+    else
+      send_resp(conn, status, @generic_action_no_return_success)
+    end
   end
 
   defp log_errors(errors, opts) do

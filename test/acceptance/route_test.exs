@@ -9,6 +9,7 @@ defmodule Test.Acceptance.RouteTest do
     json_api do
       routes do
         route(:get, "/say_hello/:to", :say_hello)
+        route(:post, "/trigger_job", :trigger_job)
       end
     end
 
@@ -18,6 +19,12 @@ defmodule Test.Acceptance.RouteTest do
 
         run(fn input, _ ->
           {:ok, "Hello, #{input.arguments.to}!"}
+        end)
+      end
+
+      action :trigger_job do
+        run(fn _input, _ ->
+          :ok
         end)
       end
     end
@@ -50,5 +57,12 @@ defmodule Test.Acceptance.RouteTest do
            |> get("/say_hello/fred", status: 200)
            |> Map.get(:resp_body)
            |> Kernel.==("Hello, fred!")
+  end
+
+  test "generic actions with no return can be called" do
+    assert Domain
+           |> post("/trigger_job", %{}, status: 201)
+           |> Map.get(:resp_body)
+           |> Kernel.==(%{"success" => true})
   end
 end

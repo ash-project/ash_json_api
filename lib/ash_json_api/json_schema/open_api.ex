@@ -1435,19 +1435,29 @@ if Code.ensure_loaded?(OpenApiSpex) do
         :route ->
           action = Ash.Resource.Info.action(resource, route.action)
 
-          return_type =
-            resource_attribute_type(%{type: action.returns, constraints: action.constraints})
+          if action.returns do
+            return_type =
+              resource_attribute_type(%{type: action.returns, constraints: action.constraints})
 
-          if route.wrap_in_result? do
+            if route.wrap_in_result? do
+              %Schema{
+                type: :object,
+                properties: %{
+                  result: return_type
+                },
+                required: [:result]
+              }
+            else
+              return_type
+            end
+          else
             %Schema{
               type: :object,
               properties: %{
-                result: return_type
+                success: %Schema{enum: [true]}
               },
-              required: [:result]
+              required: :success
             }
-          else
-            return_type
           end
 
         :index ->

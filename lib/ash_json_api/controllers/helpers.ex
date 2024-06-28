@@ -111,6 +111,9 @@ defmodule AshJsonApi.Controllers.Helpers do
       request = Request.assign(request, :action_input, action_input)
 
       case Ash.run_action(action_input) do
+        :ok ->
+          Request.assign(request, :result, :ok)
+
         {:ok, result} ->
           Request.assign(request, :result, result)
 

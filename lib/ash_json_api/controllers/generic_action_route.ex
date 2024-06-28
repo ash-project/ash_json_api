@@ -29,7 +29,8 @@ defmodule AshJsonApi.Controllers.GenericActionRoute do
         conn,
         request,
         status,
-        request.assigns.result
+        request.assigns.result,
+        action.returns
       )
     end)
   end
