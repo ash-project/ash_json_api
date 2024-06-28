@@ -405,13 +405,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    @spec resource_attribute_type(
-            Ash.Resource.Attribute.t()
-            | Ash.Resource.Actions.Argument.t()
-            | Ash.Resource.Calculation.t()
-            | Ash.Resource.Aggregate.t()
-          ) ::
-            Schema.t()
+    @spec resource_attribute_type(term()) :: Schema.t()
     defp resource_attribute_type(%{type: Ash.Type.String}) do
       %Schema{type: :string}
     end
