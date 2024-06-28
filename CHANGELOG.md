@@ -5,6 +5,57 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.3.0](https://github.com/ash-project/ash_json_api/compare/v1.2.2...v1.3.0) (2024-06-28)
+
+
+
+
+### Features:
+
+* add support for calculation inputs via field_inputs query param (#187)
+
+### Bug Fixes:
+
+* don't try to generate body schemas for routes that don't have them
+
+* properly render response body/return types in schemas
+
+* properly show 201 status code in open api schema
+
+* Don't need to use arguments in fetch query (#178)
+
+### Improvements:
+
+* support generic actions with no returns in routes
+
+* implement `Ash.Type.Map` json schema
+
+* support `modify_conn/4`
+
+* support `:read` actions in `:post` request
+
+* generic action support for all basic route types
+
+* new `route/3` type for arbitrary generic actions
+
+* support unions in schemas
+
+* use "any object" type for filter in json schema
+
+* fully specify filter in open api schema
+
+* support `derive_filter?` on both resource and route level
+
+* support `derive_sort?` on both resource and route level
+
+* show all sortable fields in json schema
+
+* Use resource descriptions in generated schema files if present (#184)
+
+* show embeds in json schema and openapi
+
+* Add defimpl for NoSuchInput error (#181)
+
 ## [v1.2.2](https://github.com/ash-project/ash_json_api/compare/v1.2.1...v1.2.2) (2024-06-19)
 
 
