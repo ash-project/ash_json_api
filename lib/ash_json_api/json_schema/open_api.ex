@@ -880,7 +880,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           filter_parameter(resource, route),
           sort_parameter(resource, route),
           page_parameter(Ash.Resource.Info.action(resource, route.action)),
-          include_parameter(),
+          include_parameter(resource),
           fields_parameter(resource)
         ],
         & &1
@@ -899,12 +899,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp query_parameters(%{type: type} = route, resource) when type in [:get, :related] do
-      [include_parameter(), fields_parameter(resource)] ++
+      Enum.filter([include_parameter(resource), fields_parameter(resource)], & &1) ++
         read_argument_parameters(route, resource)
     end
 
     defp query_parameters(_route, resource) do
-      [include_parameter(), fields_parameter(resource)]
+      [include_parameter(resource), fields_parameter(resource)] |> Enum.filter(& &1)
     end
 
     @spec filter_parameter(resource :: module, route :: AshJsonApi.Resource.Route.t()) ::
@@ -938,7 +938,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
             name = to_string(attr.name)
             [name, "-" <> name]
           end)
-          |> Enum.join("|")
 
         %Parameter{
           name: :sort,
@@ -949,7 +948,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           explode: false,
           schema: %Schema{
             type: :string,
-            pattern: "^#{sorts}(,(#{sorts}))*$"
+            pattern: csv_regex(sorts)
           }
         }
       end
@@ -1037,8 +1036,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    @spec include_parameter() :: Parameter.t()
-    defp include_parameter do
+    @spec include_parameter(resource :: Ash.Resource.t()) :: Parameter.t()
+    defp include_parameter(resource) do
+      all_includes =
+        resource
+        |> AshJsonApi.Resource.Info.includes()
+        |> all_paths()
+        |> Enum.map(&Enum.join(&1, "."))
+
       %Parameter{
         name: :include,
         in: :query,
@@ -1047,7 +1052,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
         style: :form,
         explode: false,
         schema: %Schema{
-          type: :string
+          type: :string,
+          pattern: csv_regex(all_includes)
         }
       }
     end
@@ -1950,5 +1956,28 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp filterable?(_, _), do: false
+
+    defp all_paths(keyword, trail \\ []) do
+      keyword
+      |> List.wrap()
+      |> Enum.flat_map(fn
+        {key, rest} ->
+          further =
+            rest
+            |> List.wrap()
+            |> all_paths(trail ++ [key])
+
+          [trail ++ [key]] ++ further
+
+        key ->
+          [trail ++ [key]]
+      end)
+    end
+
+    defp csv_regex(values) do
+      values = Enum.join(values, "|")
+
+      "^(#{values})(,(#{values}))*$"
+    end
   end
 end
