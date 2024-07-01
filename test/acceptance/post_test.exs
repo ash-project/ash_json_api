@@ -190,6 +190,11 @@ defmodule Test.Acceptance.PostTest do
         ]
       )
 
+      attribute(:some_atom, :atom,
+        public?: true,
+        constraints: [one_of: [:foo, :bar]]
+      )
+
       attribute(:review, Test.Acceptance.PostTest.Review, public?: true)
     end
 
@@ -261,7 +266,8 @@ defmodule Test.Acceptance.PostTest do
           attributes: %{
             id: id,
             name: "Post 1",
-            hidden: "hidden"
+            hidden: "hidden",
+            some_atom: "foo"
           }
         }
       })
