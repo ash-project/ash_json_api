@@ -463,7 +463,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       if one_of = constraints[:one_of] do
         %Schema{
           type: :string,
-          enum: one_of
+          enum: Enum.map(one_of, &to_string/1)
         }
       else
         %Schema{
@@ -523,7 +523,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         Spark.implements_behaviour?(type, Ash.Type.Enum) ->
           %Schema{
             type: :string,
-            enum: type.values()
+            enum: Enum.map(type.values(), &to_string/1)
           }
 
         true ->

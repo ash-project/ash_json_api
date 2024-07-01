@@ -432,9 +432,9 @@ defmodule AshJsonApi.JsonSchema do
 
   defp resource_attribute_type(%{type: Ash.Type.Atom, constraints: constraints}) do
     if one_of = constraints[:one_of] do
-      %{"type" => "string", "enum" => one_of}
+      %{"type" => "string", "enum" => Enum.map(one_of)}
     else
-      %{"type" => "any"}
+      %{"type" => "string"}
     end
   end
 

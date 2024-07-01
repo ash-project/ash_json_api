@@ -161,7 +161,7 @@ defmodule Test.Acceptance.PostTest do
 
       create :create do
         primary? true
-        accept([:id, :name, :hidden, :review])
+        accept([:id, :name, :hidden, :review, :some_atom])
 
         argument(:author, :map)
 
