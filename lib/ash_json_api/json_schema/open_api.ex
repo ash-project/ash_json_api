@@ -938,6 +938,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             name = to_string(attr.name)
             [name, "-" <> name]
           end)
+          |> Enum.join("|")
 
         %Parameter{
           name: :sort,
@@ -947,11 +948,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           style: :form,
           explode: false,
           schema: %Schema{
-            type: :array,
-            items: %Schema{
-              type: :string,
-              enum: sorts
-            }
+            type: :string,
+            pattern: "^#{sorts}(,(#{sorts}))*$"
           }
         }
       end
@@ -1049,11 +1047,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         style: :form,
         explode: false,
         schema: %Schema{
-          type: :array,
-          items: %Schema{
-            type: :string,
-            pattern: ~r/^[a-zA-Z_]\w*(\.[a-zA-Z_]\w*)*$/
-          }
+          type: :string
         }
       }
     end

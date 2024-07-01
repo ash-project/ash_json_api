@@ -349,25 +349,10 @@ defmodule Test.Acceptance.OpenApiTest do
       assert sort.style == :form
       assert !sort.explode
       %Schema{} = schema = sort.schema
-      assert schema.type == :array
-      assert schema.items.type == :string
+      assert schema.type == :string
 
-      assert schema.items.enum == [
-               "id",
-               "-id",
-               "name",
-               "-name",
-               "hidden",
-               "-hidden",
-               "email",
-               "-email",
-               "author_id",
-               "-author_id",
-               "name_twice",
-               "-name_twice",
-               "count_of_tags",
-               "-count_of_tags"
-             ]
+      assert schema.pattern ==
+               "^id|-id|name|-name|hidden|-hidden|email|-email|author_id|-author_id|name_twice|-name_twice|count_of_tags|-count_of_tags(,(id|-id|name|-name|hidden|-hidden|email|-email|author_id|-author_id|name_twice|-name_twice|count_of_tags|-count_of_tags))*$"
 
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :sort))
@@ -407,12 +392,7 @@ defmodule Test.Acceptance.OpenApiTest do
       assert include.style == :form
       assert include.explode == false
       %Schema{} = schema = include.schema
-      assert schema.type == :array
-      assert schema.items.type == :string
-      assert schema.items.pattern |> is_struct(Regex)
-      assert Regex.match?(schema.items.pattern, "author")
-      refute Regex.match?(schema.items.pattern, "000")
-      refute Regex.match?(schema.items.pattern, "a b c")
+      assert schema.type == :string
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
@@ -585,14 +565,8 @@ defmodule Test.Acceptance.OpenApiTest do
       assert include.in == :query
       assert include.required == false
       assert include.style == :form
-      assert include.explode == false
       %Schema{} = schema = include.schema
-      assert schema.type == :array
-      assert schema.items.type == :string
-      assert schema.items.pattern |> is_struct(Regex)
-      assert Regex.match?(schema.items.pattern, "author")
-      refute Regex.match?(schema.items.pattern, "000")
-      refute Regex.match?(schema.items.pattern, "a b c")
+      assert schema.type == :string
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
@@ -646,12 +620,7 @@ defmodule Test.Acceptance.OpenApiTest do
       assert include.style == :form
       assert include.explode == false
       %Schema{} = schema = include.schema
-      assert schema.type == :array
-      assert schema.items.type == :string
-      assert schema.items.pattern |> is_struct(Regex)
-      assert Regex.match?(schema.items.pattern, "author")
-      refute Regex.match?(schema.items.pattern, "000")
-      refute Regex.match?(schema.items.pattern, "a b c")
+      assert schema.type == :string
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
