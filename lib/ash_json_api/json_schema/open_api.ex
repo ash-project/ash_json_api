@@ -936,7 +936,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> AshJsonApi.JsonSchema.sortable_fields()
           |> Enum.flat_map(fn attr ->
             name = to_string(attr.name)
-            [name, "-" <> name]
+            [name, "-" <> name, "++" <> name, "--" <> name]
           end)
 
         %Parameter{

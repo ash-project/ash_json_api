@@ -352,7 +352,7 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.type == :string
 
       assert schema.pattern ==
-               "^(id|-id|name|-name|hidden|-hidden|email|-email|author_id|-author_id|name_twice|-name_twice|count_of_tags|-count_of_tags)(,(id|-id|name|-name|hidden|-hidden|email|-email|author_id|-author_id|name_twice|-name_twice|count_of_tags|-count_of_tags))*$"
+               "^(id|-id|++id|--id|name|-name|++name|--name|hidden|-hidden|++hidden|--hidden|email|-email|++email|--email|author_id|-author_id|++author_id|--author_id|name_twice|-name_twice|++name_twice|--name_twice|count_of_tags|-count_of_tags|++count_of_tags|--count_of_tags)(,(id|-id|++id|--id|name|-name|++name|--name|hidden|-hidden|++hidden|--hidden|email|-email|++email|--email|author_id|-author_id|++author_id|--author_id|name_twice|-name_twice|++name_twice|--name_twice|count_of_tags|-count_of_tags|++count_of_tags|--count_of_tags))*$"
 
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :sort))
