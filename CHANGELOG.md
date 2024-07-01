@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.3.1](https://github.com/ash-project/ash_json_api/compare/v1.3.0...v1.3.1) (2024-07-01)
+
+
+
+
+### Bug Fixes:
+
+* use strings for enum values
+
+* use `strings` for includes/sort properly, add regex for sort
+
 ## [v1.3.0](https://github.com/ash-project/ash_json_api/compare/v1.2.2...v1.3.0) (2024-06-28)
 
 ### Features:
