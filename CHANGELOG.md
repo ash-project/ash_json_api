@@ -5,6 +5,37 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.3.2](https://github.com/ash-project/ash_json_api/compare/v1.3.1...v1.3.2) (2024-07-02)
+
+
+
+
+### Bug Fixes:
+
+* properly require `success` in return-less actions
+
+* typo when checking for resource's derive_filter? flag
+
+* ensure that context is threaded through for all actions
+
+* not all accepted attributes have to be public
+
+* fix sort regex to be a valid regex
+
+* don't use `anyOf` for nullability
+
+* don't generate bodies for delete requests
+
+* use `Enum.uniq` when uwnrapping any_of types
+
+* detect all cases where a filter must be generated
+
+### Improvements:
+
+* use empty example for filter
+
+* support for query parameters using `query_params` route option
+
 ## [v1.3.1](https://github.com/ash-project/ash_json_api/compare/v1.3.0...v1.3.1) (2024-07-01)
 
 
