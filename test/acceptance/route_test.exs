@@ -9,6 +9,7 @@ defmodule Test.Acceptance.RouteTest do
     json_api do
       routes do
         route(:get, "/say_hello/:to", :say_hello)
+        route(:get, "/say_hello", :say_hello, query_params: [:to])
         route(:post, "/trigger_job", :trigger_job)
       end
     end
@@ -55,6 +56,13 @@ defmodule Test.Acceptance.RouteTest do
   test "generic actions can be called" do
     assert Domain
            |> get("/say_hello/fred", status: 200)
+           |> Map.get(:resp_body)
+           |> Kernel.==("Hello, fred!")
+  end
+
+  test "generic actions can be called with query params" do
+    assert Domain
+           |> get("/say_hello?to=fred", status: 200)
            |> Map.get(:resp_body)
            |> Kernel.==("Hello, fred!")
   end

@@ -908,12 +908,57 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp query_parameters(%{type: type} = route, resource) when type in [:get, :related] do
-      Enum.filter([include_parameter(resource), fields_parameter(resource)], & &1) ++
-        read_argument_parameters(route, resource)
+      [include_parameter(resource), fields_parameter(resource)]
+      |> Enum.filter(& &1)
+      |> Enum.concat(read_argument_parameters(route, resource))
+      |> Enum.reverse()
+      |> Enum.uniq_by(& &1.name)
+      |> Enum.reverse()
     end
 
-    defp query_parameters(_route, resource) do
-      [include_parameter(resource), fields_parameter(resource)] |> Enum.filter(& &1)
+    defp query_parameters(route, resource) do
+      action = Ash.Resource.Info.action(resource, route.action)
+
+      query_params =
+        route.query_params
+        |> Enum.map(fn name ->
+          argument = Enum.find(action.arguments, &(&1.name == name))
+
+          if argument do
+            argument
+          else
+            if name in action.accept do
+              Ash.Resource.Info.attribute(resource, name)
+            else
+              nil
+            end
+          end
+        end)
+        |> Enum.filter(& &1)
+        |> Enum.map(fn argument_or_attribute ->
+          schema = resource_write_attribute_type(argument_or_attribute, action.type)
+
+          %Parameter{
+            name: argument_or_attribute.name,
+            in: :query,
+            description:
+              argument_or_attribute.description || to_string(argument_or_attribute.name),
+            required: !argument_or_attribute.allow_nil?,
+            style:
+              case schema.type do
+                :object -> :deepObject
+                _ -> :form
+              end,
+            schema: schema
+          }
+        end)
+
+      [include_parameter(resource), fields_parameter(resource)]
+      |> Enum.filter(& &1)
+      |> Enum.concat(query_params)
+      |> Enum.reverse()
+      |> Enum.uniq_by(& &1.name)
+      |> Enum.reverse()
     end
 
     @spec filter_parameter(resource :: module, route :: AshJsonApi.Resource.Route.t()) ::
@@ -1103,6 +1148,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       action.arguments
       |> Enum.filter(& &1.public?)
+      |> without_path_arguments(action, route)
       |> Enum.map(fn argument ->
         schema = resource_attribute_type(argument)
 
@@ -1328,6 +1374,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       arguments =
         arguments
         |> without_path_arguments(action, route)
+        |> without_query_params(route)
         |> Enum.reject(& &1.allow_nil?)
         |> Enum.map(& &1.name)
 
@@ -1354,6 +1401,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       arguments
       |> without_path_arguments(action, route)
+      |> without_query_params(route)
       |> Enum.reduce(attributes, fn argument, attributes ->
         Map.put(attributes, argument.name, resource_write_attribute_type(argument, :create))
       end)
@@ -1373,6 +1421,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp without_path_arguments(arguments, _, _), do: arguments
+
+    defp without_query_params(inputs, %{query_params: query_params}) do
+      query_params = List.wrap(query_params)
+      Enum.reject(inputs, &(&1.name in query_params))
+    end
+
+    defp without_query_params(inputs, _), do: inputs
 
     @spec required_relationship_attributes(
             resource :: module,

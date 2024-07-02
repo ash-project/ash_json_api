@@ -99,6 +99,7 @@ defmodule AshJsonApi.Request do
     |> parse_filter()
     |> parse_sort()
     |> parse_attributes()
+    |> parse_query_params()
     |> parse_read_arguments()
     |> parse_relationships()
     |> parse_resource_identifiers()
@@ -645,6 +646,17 @@ defmodule AshJsonApi.Request do
     String.to_existing_atom(string)
   end
 
+  defp parse_query_params(%{route: route} = request) do
+    route.query_params
+    |> List.wrap()
+    |> Enum.reduce(request, fn query_param, request ->
+      case Map.fetch(request.query_params, to_string(query_param)) do
+        {:ok, value} -> %{request | arguments: Map.put(request.arguments, query_param, value)}
+        :error -> request
+      end
+    end)
+  end
+
   defp parse_attributes(
          %{resource: resource, action: action, body: %{"data" => %{"attributes" => attributes}}} =
            request
@@ -659,10 +671,13 @@ defmodule AshJsonApi.Request do
           %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
 
         attr = Ash.Resource.Info.public_attribute(resource, key) ->
-          %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
+          if action.type == :action do
+            request
+          else
+            %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
+          end
 
         true ->
-          # The json_schema will have an error here
           request
       end
     end)

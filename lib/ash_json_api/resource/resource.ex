@@ -34,6 +34,11 @@ defmodule AshJsonApi.Resource do
         "A function to modify the conn before responding. Used for things like setting headers based on the response. Takes `conn, subject, result, request`",
       snippet: "fn ${1:conn}, ${2:subject}, ${3:result}, ${4:request} -> $5 end"
     ],
+    query_params: [
+      type: {:list, :atom},
+      doc: "A list of action inputs to accept as query parameters.",
+      default: []
+    ],
     name: [
       type: :string,
       required: false,
@@ -63,7 +68,8 @@ defmodule AshJsonApi.Resource do
     ],
     schema:
       @route_schema
-      |> Spark.Options.Helpers.set_default!(:route, "/:id"),
+      |> Spark.Options.Helpers.set_default!(:route, "/:id")
+      |> Keyword.delete(:query_params),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :get,
@@ -83,7 +89,8 @@ defmodule AshJsonApi.Resource do
     schema:
       @route_schema
       |> Spark.Options.Helpers.set_default!(:route, "/")
-      |> Keyword.put(:paginate?, type: :boolean, default: true),
+      |> Keyword.put(:paginate?, type: :boolean, default: true)
+      |> Keyword.delete(:query_params),
     target: AshJsonApi.Resource.Route,
     auto_set_fields: [
       method: :get,
@@ -502,7 +509,8 @@ defmodule AshJsonApi.Resource do
     AshJsonApi.Resource.Verifiers.VerifyRelationships,
     AshJsonApi.Resource.Verifiers.VerifyIncludes,
     AshJsonApi.Resource.Verifiers.VerifyActions,
-    AshJsonApi.Resource.Verifiers.VerifyHasType
+    AshJsonApi.Resource.Verifiers.VerifyHasType,
+    AshJsonApi.Resource.Verifiers.VerifyQueryParams
   ]
 
   @sections [@json_api]

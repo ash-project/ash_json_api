@@ -163,8 +163,10 @@ defmodule AshJsonApi.Domain do
     AshJsonApi.Domain.Verifiers.VerifyOpenApiGrouping,
     AshJsonApi.Domain.Verifiers.VerifyRelationships,
     AshJsonApi.Domain.Verifiers.VerifyActions,
-    AshJsonApi.Domain.Verifiers.VerifyHasType
+    AshJsonApi.Domain.Verifiers.VerifyHasType,
+    AshJsonApi.Domain.Verifiers.VerifyQueryParams
   ]
+
   @persisters [AshJsonApi.Domain.Persisters.DefineRouter]
   @transformers [AshJsonApi.Domain.Transformers.SetBaseRoutes]
 
