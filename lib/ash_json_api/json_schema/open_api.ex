@@ -90,17 +90,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
       schemas(List.wrap(domain))
     end
 
-    defp define_filter?(domains, resource) do
+    def define_filter?(domains, resource) do
       if AshJsonApi.Resource.Info.derive_filter?(resource) do
-        something_relates_to(domains, resource) || has_index_route?(domains, resource)
+        something_relates_to?(domains, resource) || has_index_route?(domains, resource)
       else
         false
       end
     end
 
-    defp something_relates_to(domains, resource) do
+    defp something_relates_to?(domains, resource) do
       domains
       |> Stream.flat_map(&Ash.Domain.Info.resources/1)
+      |> Stream.reject(&Enum.empty?(AshJsonApi.Resource.Info.routes(&1, domains)))
       |> Stream.flat_map(&Ash.Resource.Info.relationships/1)
       |> Stream.filter(& &1.public?)
       |> Enum.any?(&(&1.destination == resource))
@@ -127,7 +128,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
             "#{AshJsonApi.Resource.Info.type(resource)}-filter",
             %Schema{
               type: :object,
-              properties: resource_filter_fields(resource),
+              properties: resource_filter_fields(resource, domains),
+              example: "",
               additionalProperties: false,
               description: "Filters the query to results matching the given filter object"
             }
@@ -1745,22 +1747,28 @@ if Code.ensure_loaded?(OpenApiSpex) do
       AshJsonApi.Resource.Info.type(resource) <> "-filter-" <> to_string(attribute.name)
     end
 
-    defp resource_filter_fields(resource) do
+    defp resource_filter_fields(resource, domains) do
       Enum.concat([
         boolean_filter_fields(resource),
         attribute_filter_fields(resource),
-        relationship_filter_fields(resource),
+        relationship_filter_fields(resource, domains),
         aggregate_filter_fields(resource),
         calculation_filter_fields(resource)
       ])
       |> Map.new()
     end
 
-    defp relationship_filter_fields(resource) do
+    defp relationship_filter_fields(resource, domains) do
+      all_resources =
+        domains
+        |> Enum.flat_map(&Ash.Domain.Info.resources/1)
+        |> Enum.filter(&AshJsonApi.Resource.Info.type/1)
+
       resource
       |> Ash.Resource.Info.public_relationships()
       |> Enum.filter(
-        &(AshJsonApi.Resource.Info.derive_filter?(&1.destination) &&
+        &(&1.destination in all_resources &&
+            AshJsonApi.Resource.Info.derive_filter?(&1.destination) &&
             AshJsonApi.Resource in Spark.extensions(&1.destination) &&
             AshJsonApi.Resource.Info.type(&1.destination))
       )
