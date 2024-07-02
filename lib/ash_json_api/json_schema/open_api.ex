@@ -1517,7 +1517,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
               properties: %{
                 success: %Schema{enum: [true]}
               },
-              required: :success
+              required: [:success]
             }
           end
 
