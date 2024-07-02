@@ -1,4 +1,5 @@
 defmodule AshJsonApi.Resource.Verifiers.VerifyQueryParams do
+  @moduledoc "Verify query params are not reserved or shadowed by the route"
   use Spark.Dsl.Verifier
 
   @reserved_query_param_names [

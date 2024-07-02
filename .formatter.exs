@@ -43,6 +43,7 @@ spark_locals_without_parens = [
   post_to_relationship: 3,
   prefix: 1,
   primary?: 1,
+  query_params: 1,
   read_action: 1,
   related: 2,
   related: 3,

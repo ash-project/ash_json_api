@@ -8,7 +8,7 @@ defmodule AshJsonApi.Resource.Info do
   end
 
   def derive_filter?(resource) do
-    Extension.get_opt(resource, [:json_api], :derive_filter, true, false)
+    Extension.get_opt(resource, [:json_api], :derive_filter?, true, false)
   end
 
   def derive_sort?(resource) do

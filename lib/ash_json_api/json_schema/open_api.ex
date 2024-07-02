@@ -111,8 +111,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       resource
       |> AshJsonApi.Resource.Info.routes(domains)
       |> Enum.any?(fn route ->
-        route.type == :index && read_action?(resource, route) &&
-          (route.derive_filter? && AshJsonApi.Resource.Info.derive_filter?(resource))
+        route.type == :index && read_action?(resource, route) && route.derive_filter?
       end)
     end
 

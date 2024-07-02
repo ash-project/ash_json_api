@@ -76,6 +76,39 @@ defmodule Test.Acceptance.OpenApiTest do
     end
   end
 
+  defmodule AuthorNoFilter do
+    use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.Blogs,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("author-no-filter")
+      derive_filter? false
+
+      routes do
+        base("/authors_no_filter")
+        index(:read, name: "listAuthorsNoFilter")
+      end
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:create, :read, :update, :destroy])
+    end
+
+    attributes do
+      uuid_primary_key(:id, writable?: true)
+      attribute(:name, :string, public?: true)
+    end
+  end
+
   defmodule Post do
     use Ash.Resource,
       domain: Test.Acceptance.OpenApiTest.Blogs,
@@ -193,6 +226,7 @@ defmodule Test.Acceptance.OpenApiTest do
       resource(Post)
       resource(Author)
       resource(Tag)
+      resource(AuthorNoFilter)
     end
   end
 
@@ -232,7 +266,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 7
+    assert map_size(api_spec.paths) == 8
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -338,6 +372,9 @@ defmodule Test.Acceptance.OpenApiTest do
              } = schema
 
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
+      refute Enum.any?(operation.parameters, &(&1.name == :filter))
+
+      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors_no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :filter))
     end
 
