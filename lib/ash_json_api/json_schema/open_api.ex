@@ -1127,7 +1127,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 :route,
                 :post,
                 :patch,
-                :delete,
                 :post_to_relationship,
                 :patch_relationship,
                 :delete_from_relationship
@@ -1138,7 +1137,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp request_body(route, resource) do
       body_schema = request_body_schema(route, resource)
 
-      if route.type == :route && Enum.empty?(body_schema.properties.data.properties) do
+      if route.type == :route &&
+           (route.method == :delete || Enum.empty?(body_schema.properties.data.properties)) do
         nil
       else
         body_required =
