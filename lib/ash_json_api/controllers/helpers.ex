@@ -45,6 +45,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       if request.action.type == :action do
         action_input =
           request.resource
+          |> Ash.ActionInput.new()
+          |> Ash.ActionInput.set_context(request.context || %{})
           |> Ash.ActionInput.for_action(
             request.action.name,
             request.arguments,
@@ -102,6 +104,8 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       action_input =
         request.resource
+        |> Ash.ActionInput.new()
+        |> Ash.ActionInput.set_context(request.context || %{})
         |> Ash.ActionInput.for_action(
           request.action.name,
           Map.merge(request.arguments, route_params),
@@ -156,6 +160,7 @@ defmodule AshJsonApi.Controllers.Helpers do
             |> Ash.Query.load(
               fields(request, request.resource) ++ (request.includes_keyword || [])
             )
+            |> Ash.Query.set_context(request.context || %{})
             |> Ash.Query.for_read(
               request.action.name,
               Map.merge(Map.merge(request.attributes, request.arguments), route_params),
@@ -204,6 +209,8 @@ defmodule AshJsonApi.Controllers.Helpers do
 
           action_input =
             request.resource
+            |> Ash.ActionInput.new()
+            |> Ash.ActionInput.set_context(request.context || %{})
             |> Ash.ActionInput.for_action(
               request.action.name,
               Map.merge(Map.merge(request.attributes, request.arguments), route_params),
@@ -247,12 +254,13 @@ defmodule AshJsonApi.Controllers.Helpers do
 
           changeset =
             resource
+            |> Ash.Changeset.new()
+            |> Ash.Changeset.set_context(request.context)
             |> Ash.Changeset.for_create(
               request.action.name,
               Map.merge(Map.merge(request.attributes, request.arguments), route_params),
               Request.opts(request)
             )
-            |> Ash.Changeset.set_context(request.context)
             |> Ash.Changeset.load(
               fields(request, request.resource) ++ (request.includes_keyword || [])
             )
@@ -280,6 +288,8 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         action_input =
           request.resource
+          |> Ash.ActionInput.new()
+          |> Ash.ActionInput.set_context(request.context || %{})
           |> Ash.ActionInput.for_action(
             request.action.name,
             Map.merge(attributes.(request), route_params),
@@ -351,8 +361,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
         type: :append
       )
-      |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
+      |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.load(fields(request, request.resource))
       |> Ash.update(Request.opts(request))
       |> case do
@@ -375,8 +385,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
         type: :append_and_remove
       )
-      |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
+      |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.load(fields(request, request.resource))
       |> Ash.update(Request.opts(request))
       |> case do
@@ -399,8 +409,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
         type: :remove
       )
-      |> Ash.Changeset.for_update(action, Request.opts(request))
       |> Ash.Changeset.set_context(request.context)
+      |> Ash.Changeset.for_update(action, Request.opts(request))
       |> Ash.update(Request.opts(request))
       |> case do
         {:ok, record} ->
@@ -429,6 +439,8 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         action_input =
           request.resource
+          |> Ash.ActionInput.new()
+          |> Ash.ActionInput.set_context(request.context || %{})
           |> Ash.ActionInput.for_action(
             request.action.name,
             route_params,
@@ -590,6 +602,8 @@ defmodule AshJsonApi.Controllers.Helpers do
       if action.type == :action do
         action_input =
           request.resource
+          |> Ash.ActionInput.new()
+          |> Ash.ActionInput.set_context(request.context || %{})
           |> Ash.ActionInput.for_action(
             request.action.name,
             request.arguments,

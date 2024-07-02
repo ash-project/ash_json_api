@@ -658,7 +658,7 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_attributes(
-         %{resource: resource, action: action, body: %{"data" => %{"attributes" => attributes}}} =
+         %{action: action, body: %{"data" => %{"attributes" => attributes}}} =
            request
        )
        when is_map(attributes) do
@@ -670,11 +670,11 @@ defmodule AshJsonApi.Request do
             end) ->
           %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
 
-        attr = Ash.Resource.Info.public_attribute(resource, key) ->
+        name = Enum.find(action.accept, &(to_string(&1) == key)) ->
           if action.type == :action do
             request
           else
-            %{request | attributes: Map.put(request.attributes || %{}, attr.name, value)}
+            %{request | attributes: Map.put(request.attributes || %{}, name, value)}
           end
 
         true ->
