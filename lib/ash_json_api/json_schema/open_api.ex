@@ -92,14 +92,26 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp define_filter?(domains, resource) do
       if AshJsonApi.Resource.Info.derive_filter?(resource) do
-        resource
-        |> AshJsonApi.Resource.Info.routes(domains)
-        |> Enum.any?(fn route ->
-          route.type == :index && read_action?(resource, route) && route.derive_filter?
-        end)
+        something_relates_to(domains, resource) || has_index_route?(domains, resource)
       else
         false
       end
+    end
+
+    defp something_relates_to(domains, resource) do
+      domains
+      |> Stream.flat_map(&Ash.Domain.Info.resources/1)
+      |> Stream.flat_map(&Ash.Resource.Info.relationships/1)
+      |> Stream.filter(& &1.public?)
+      |> Enum.any?(&(&1.destination == resource))
+    end
+
+    defp has_index_route?(domains, resource) do
+      resource
+      |> AshJsonApi.Resource.Info.routes(domains)
+      |> Enum.any?(fn route ->
+        route.type == :index && read_action?(resource, route) && route.derive_filter?
+      end)
     end
 
     defp read_action?(resource, route) do
@@ -322,10 +334,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp with_attribute_nullability(schema, attr) do
       if attr.allow_nil? do
-        %Schema{
-          anyOf: [%{schema | description: nil}, %Schema{type: :null}],
-          description: schema.description
-        }
+        %{schema | nullable: true}
       else
         schema
       end
@@ -613,7 +622,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
         end)
 
-      case options_remaining ++ options_to_add do
+      case Enum.uniq(options_remaining ++ options_to_add) do
         [] ->
           %{"type" => "any"}
 
@@ -936,7 +945,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> AshJsonApi.JsonSchema.sortable_fields()
           |> Enum.flat_map(fn attr ->
             name = to_string(attr.name)
-            [name, "-" <> name, "++" <> name, "--" <> name]
+            [name, "-" <> name, "\\+\\+" <> name, "--" <> name]
           end)
 
         %Parameter{
@@ -1118,6 +1127,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 :route,
                 :post,
                 :patch,
+                :delete,
                 :post_to_relationship,
                 :patch_relationship,
                 :delete_from_relationship
