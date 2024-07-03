@@ -888,7 +888,9 @@ defmodule AshJsonApi.JsonSchema do
       |> Enum.reject(& &1.allow_nil?)
       |> Enum.map(&to_string(&1.name))
 
-    Enum.uniq(attributes ++ arguments ++ Map.get(action, :require_attributes, []))
+    Enum.uniq(
+      attributes ++ arguments ++ Enum.map(Map.get(action, :require_attributes, []), &to_string/1)
+    )
   end
 
   defp write_attributes(resource, arguments, action, route \\ nil) do
