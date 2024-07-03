@@ -15,7 +15,7 @@ defmodule Test.Acceptance.IndexTest do
 
     json_api do
       type("post")
-      default_fields [:name, :content]
+      default_fields [:name, :content, :literal_calc, :self_name]
 
       routes do
         base("/posts")
@@ -67,6 +67,17 @@ defmodule Test.Acceptance.IndexTest do
       attribute(:not_present_by_default, :string, public?: true)
     end
 
+    aggregates do
+      first(:self_name, [:self], :name)
+    end
+
+    relationships do
+      has_one :self, __MODULE__ do
+        source_attribute(:id)
+        destination_attribute(:id)
+      end
+    end
+
     calculations do
       calculate :name_twice, :string, concat([:name, :name], arg(:separator)) do
         argument(:separator, :string, default: "-")
@@ -77,6 +88,8 @@ defmodule Test.Acceptance.IndexTest do
         argument(:separator, :string, default: "-")
         public?(true)
       end
+
+      calculate(:literal_calc, :string, expr("calc"))
     end
   end
 
@@ -128,7 +141,9 @@ defmodule Test.Acceptance.IndexTest do
         %{
           "attributes" => %{
             "name" => "foo",
-            "content" => "bar baz"
+            "content" => "bar baz",
+            "literal_calc" => "calc",
+            "self_name" => "foo"
           },
           "id" => post.id,
           "links" => %{},
@@ -144,7 +159,7 @@ defmodule Test.Acceptance.IndexTest do
       |> get("/posts/fake", status: 200)
       |> assert_data_equals([
         %{
-          "attributes" => %{"content" => nil, "name" => "foo"},
+          "attributes" => %{"content" => nil, "name" => "foo", "literal_calc" => "calc"},
           "id" => nil,
           "links" => %{},
           "meta" => %{},
@@ -152,7 +167,7 @@ defmodule Test.Acceptance.IndexTest do
           "type" => "post"
         },
         %{
-          "attributes" => %{"content" => nil, "name" => "bar"},
+          "attributes" => %{"content" => nil, "name" => "bar", "literal_calc" => "calc"},
           "id" => nil,
           "links" => %{},
           "meta" => %{},

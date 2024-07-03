@@ -709,6 +709,10 @@ defmodule AshJsonApi.Serializer do
             match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
           acc
 
+        match?(%Ash.Resource.Aggregate{}, field) &&
+            match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
+          acc
+
         true ->
           value = serialize_value(Map.get(record, field.name), type, constraints, request.domain)
 
