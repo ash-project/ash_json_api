@@ -726,6 +726,8 @@ defmodule AshJsonApi.Serializer do
   end
 
   @doc false
+  def serialize_value(nil, _, _, _), do: nil
+
   def serialize_value(value, {:array, type}, constraints, domain) when is_list(value) do
     Enum.map(value, &serialize_value(&1, type, constraints[:items] || [], domain))
   end
