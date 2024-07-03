@@ -754,7 +754,10 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   defp fields(request, resource) do
-    fields = Map.get(request.fields, resource) || request.route.default_fields || []
+    fields =
+      Map.get(request.fields, resource) || request.route.default_fields ||
+        AshJsonApi.Resource.Info.default_fields(resource) || []
+
     field_inputs = request.field_inputs[resource] || %{}
 
     Enum.map(fields, fn field ->
