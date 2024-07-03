@@ -416,6 +416,21 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
+    defp resource_write_attribute_type(
+           %{type: Ash.Type.Struct, constraints: constraints} = attr,
+           action_type
+         ) do
+      if type = constraints[:instance_of] do
+        if Ash.Type.embedded_type?(type) do
+          embedded_type_input(attr, action_type)
+        else
+          %Schema{}
+        end
+      else
+        %Schema{}
+      end
+    end
+
     @spec resource_attribute_type(term()) :: Schema.t()
     defp resource_attribute_type(%{type: Ash.Type.String}) do
       %Schema{type: :string}
@@ -507,6 +522,22 @@ if Code.ensure_loaded?(OpenApiSpex) do
               constraints: attr.constraints[:items] || []
           })
       }
+    end
+
+    defp resource_attribute_type(%{type: Ash.Type.Struct, constraints: constraints}) do
+      if type = constraints[:instance_of] do
+        if Ash.Type.embedded_type?(type) do
+          %Schema{
+            type: :object,
+            properties: resource_attributes(type),
+            required: required_attributes(type)
+          }
+        else
+          %Schema{}
+        end
+      else
+        %Schema{}
+      end
     end
 
     defp resource_attribute_type(%{type: type} = attr) do
