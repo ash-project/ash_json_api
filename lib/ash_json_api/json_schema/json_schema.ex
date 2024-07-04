@@ -1005,7 +1005,7 @@ defmodule AshJsonApi.JsonSchema do
                 properties: %{
                   success: %{enum: [true]}
                 },
-                required: [:success]
+                required: ["success"]
               },
               %{
                 "$ref" => "#/definitions/errors"

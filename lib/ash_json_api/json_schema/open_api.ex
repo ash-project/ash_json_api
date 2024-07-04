@@ -393,7 +393,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
          ) do
       subtypes =
         Enum.map(constraints[:types], fn {_name, config} ->
-          fake_attr = %{attr | type: config[:type], constraints: config[:constraints]}
+          fake_attr = %{
+            attr
+            | type: Ash.Type.get_type(config[:type]),
+              constraints: config[:constraints]
+          }
 
           resource_write_attribute_type(fake_attr, action_type)
         end)
@@ -453,7 +457,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
               {key,
                resource_attribute_type(%{
                  attr
-                 | type: config[:type],
+                 | type: Ash.Type.get_type(config[:type]),
                    constraints: config[:constraints] || []
                })}
             end),
@@ -501,7 +505,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_attribute_type(%{type: Ash.Type.Union, constraints: constraints} = attr) do
       subtypes =
         Enum.map(constraints[:types], fn {_name, config} ->
-          fake_attr = %{attr | type: config[:type], constraints: config[:constraints]}
+          fake_attr = %{
+            attr
+            | type: Ash.Type.get_type(config[:type]),
+              constraints: config[:constraints]
+          }
 
           resource_attribute_type(fake_attr)
         end)

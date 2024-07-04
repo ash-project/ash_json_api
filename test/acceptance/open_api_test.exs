@@ -39,6 +39,7 @@ defmodule Test.Acceptance.OpenApiTest do
         patch(:update)
         route :post, "/say_hello/:to", :say_hello
         route :post, "/trigger_job", :trigger_job
+        route(:get, "returns_map", :returns_map)
       end
     end
 
@@ -58,6 +59,14 @@ defmodule Test.Acceptance.OpenApiTest do
       action :trigger_job do
         run(fn _input, _ ->
           :ok
+        end)
+      end
+
+      action :returns_map, :map do
+        constraints(fields: [a: [type: :integer], b: [type: :string, allow_nil?: false]])
+
+        run(fn _input, _ ->
+          {:ok, %{b: "foo"}}
         end)
       end
     end
@@ -266,7 +275,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 8
+    assert map_size(api_spec.paths) == 9
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -303,6 +312,25 @@ defmodule Test.Acceptance.OpenApiTest do
 
     assert %OpenApiSpex.Schema{type: :string} =
              generic_action_schema.responses[201].content["application/vnd.api+json"].schema
+  end
+
+  test "generic routes have properly specified returns in the case of maps", %{
+    open_api_spec: %OpenApi{} = api_spec
+  } do
+    assert generic_action_schema = api_spec.paths["/authors/returns_map"].get
+
+    assert [] = generic_action_schema.parameters
+
+    refute generic_action_schema.requestBody
+
+    assert %OpenApiSpex.Schema{
+             type: :object,
+             required: [:b],
+             properties: %{
+               a: %OpenApiSpex.Schema{type: :integer},
+               b: %OpenApiSpex.Schema{type: :string}
+             }
+           } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
   end
 
   test "generic routes can omit returns, getting a `success/failure` response", %{
