@@ -10,6 +10,7 @@ defmodule Test.Acceptance.RouteTest do
       routes do
         route(:get, "/say_hello/:to", :say_hello)
         route(:get, "/say_hello", :say_hello, query_params: [:to])
+        route(:post, "/required_say_hello/:to", :with_required)
         route(:post, "/trigger_job", :trigger_job)
       end
     end
@@ -20,6 +21,15 @@ defmodule Test.Acceptance.RouteTest do
 
         run(fn input, _ ->
           {:ok, "Hello, #{input.arguments.to}!"}
+        end)
+      end
+
+      action :with_required, :string do
+        argument(:to, :string, allow_nil?: false)
+        argument(:from, :string, allow_nil?: false)
+
+        run(fn input, _ ->
+          {:ok, "Hello, #{input.arguments.to}, from: #{input.arguments.from}!"}
         end)
       end
 
@@ -72,5 +82,19 @@ defmodule Test.Acceptance.RouteTest do
            |> post("/trigger_job", %{}, status: 201)
            |> Map.get(:resp_body)
            |> Kernel.==(%{"success" => true})
+  end
+
+  test "generic actions with required inputs" do
+    assert Domain
+           |> post(
+             "/required_say_hello/fred",
+             %{
+               data: %{
+                 from: "joe"
+               }
+             },
+             status: 201
+           )
+           |> Map.get(:resp_body)
   end
 end

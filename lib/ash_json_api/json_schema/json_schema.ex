@@ -43,21 +43,6 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  def route_schema(%{type: :route} = route, domain, resource) do
-    {href, properties} = route_href(route, domain)
-
-    {href_schema, query_param_string} = href_schema(route, domain, resource, properties)
-
-    %{
-      "href" => href <> query_param_string,
-      "hrefSchema" => href_schema,
-      "description" => "pending",
-      "method" => route.method |> to_string() |> String.upcase(),
-      "targetSchema" => target_schema(route, domain, resource),
-      "headerSchema" => header_schema()
-    }
-  end
-
   def route_schema(%{method: method} = route, domain, resource) when method in [:delete, :get] do
     {href, properties} = route_href(route, domain)
 
@@ -712,6 +697,32 @@ defmodule AshJsonApi.JsonSchema do
       "offset" => %{
         "type" => "string",
         "pattern" => "^[0-9]*$"
+      }
+    }
+  end
+
+  defp route_in_schema(%{type: :route, action: action} = route, _domain, resource) do
+    action = Ash.Resource.Info.action(resource, action)
+    required_write_props = required_write_attributes(resource, action.arguments, action, route)
+
+    required_outer_props =
+      if Enum.empty?(required_write_props) do
+        []
+      else
+        ["data"]
+      end
+
+    %{
+      "type" => "object",
+      "required" => required_outer_props,
+      "additionalProperties" => false,
+      "properties" => %{
+        "data" => %{
+          "type" => "object",
+          "additionalProperties" => false,
+          "properties" => write_attributes(resource, action.arguments, action, route),
+          "required" => required_write_props
+        }
       }
     }
   end

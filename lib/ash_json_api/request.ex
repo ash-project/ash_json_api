@@ -658,6 +658,22 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_attributes(
+         %{route: %{type: :route}, action: action, body: %{"data" => attributes}} = request
+       )
+       when is_map(attributes) do
+    Enum.reduce(attributes, request, fn {key, value}, request ->
+      if arg =
+           Enum.find(action.arguments, fn argument ->
+             to_string(argument.name) == key
+           end) do
+        %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
+      else
+        request
+      end
+    end)
+  end
+
+  defp parse_attributes(
          %{action: action, body: %{"data" => %{"attributes" => attributes}}} =
            request
        )
