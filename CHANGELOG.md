@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.3.3](https://github.com/ash-project/ash_json_api/compare/v1.3.2...v1.3.3) (2024-07-04)
+
+
+
+
+### Bug Fixes:
+
+* ensure generic action bodies, both in & out are serialized properly
+
+* properly fetch nested types
+
+* show embedded types when used with `:struct`
+
+* ensure `action.require_attributes` is stringified in json schema
+
+* honor resource-level default_fields
+
 ## [v1.3.2](https://github.com/ash-project/ash_json_api/compare/v1.3.1...v1.3.2) (2024-07-02)
 
 
