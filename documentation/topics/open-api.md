@@ -20,7 +20,6 @@ Finally, you can use utilities provided by `open_api_spex` to show UIs for your 
 forward "/api/swaggerui",
   OpenApiSpex.Plug.SwaggerUI,
   path: "/api/open_api",
-  title: "Myapp's JSON-API - Swagger UI",
   default_model_expand_depth: 4
 
 forward "/api/redoc",
@@ -54,7 +53,6 @@ forward "/api/swaggerui",
   to: OpenApiSpex.Plug.SwaggerUI,
   init_opts: [
     path: "/api/open_api",
-    title: "Myapp's JSON-API - Swagger UI",
     default_model_expand_depth: 4
   ]
 
