@@ -19,7 +19,7 @@ defmodule AshJsonApi.Error.SchemaErrors do
   defp format_path_name(:parameter, []), do: ""
 
   defp format_path_name(:json_pointer, path) do
-    Enum.join(path, "/")
+    "/" <> Enum.join(path, "/")
   end
 
   defp error_messages(reason, path, acc \\ [])
