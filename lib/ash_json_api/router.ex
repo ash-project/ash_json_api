@@ -43,6 +43,12 @@ defmodule AshJsonApi.Router do
       end
 
       match(_, to: AshJsonApi.Controllers.Router, init_opts: Keyword.put(opts, :domains, domains))
+
+      if Code.ensure_loaded?(OpenApiSpex) do
+        def spec do
+          AshJsonApi.OpenApi.spec(unquote(opts))
+        end
+      end
     end
   end
 end
