@@ -34,7 +34,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
     alias Ash.Resource.{Actions, Relationships}
 
     alias OpenApiSpex.{
+      Info,
       MediaType,
+      OpenApi,
       Operation,
       Parameter,
       PathItem,
@@ -43,12 +45,74 @@ if Code.ensure_loaded?(OpenApiSpex) do
       RequestBody,
       Response,
       Schema,
+      SecurityScheme,
+      Server,
       Tag
     }
 
     @dialyzer {:nowarn_function, {:action_description, 3}}
     @dialyzer {:nowarn_function, {:relationship_resource_identifiers, 1}}
     @dialyzer {:nowarn_function, {:resource_object_schema, 1}}
+
+    def spec(opts \\ [], conn \\ nil) do
+      domains = List.wrap(opts[:domain] || opts[:domains])
+      title = opts[:open_api_title] || "Open API Specification"
+      version = opts[:open_api_version] || "1.1"
+
+      servers =
+        cond do
+          is_list(opts[:open_api_servers]) ->
+            Enum.map(opts[:open_api_servers], &%OpenApiSpex.Server{url: &1})
+
+          opts[:phoenix_endpoint] != nil ->
+            [Server.from_endpoint(opts[:phoenix_endpoint])]
+
+          true ->
+            []
+        end
+
+      %OpenApi{
+        info: %Info{
+          title: title,
+          version: version
+        },
+        servers: servers,
+        paths: AshJsonApi.OpenApi.paths(domains, domains),
+        tags: AshJsonApi.OpenApi.tags(domains),
+        components: %{
+          responses: AshJsonApi.OpenApi.responses(),
+          schemas: AshJsonApi.OpenApi.schemas(domains),
+          securitySchemes: %{
+            "api_key" => %SecurityScheme{
+              type: "apiKey",
+              description: "API Key provided in the Authorization header",
+              name: "api_key",
+              in: "header"
+            }
+          }
+        },
+        security: [
+          %{
+            # API Key security applies to all operations
+            "api_key" => []
+          }
+        ]
+      }
+      |> modify(conn, opts)
+    end
+
+    defp modify(spec, conn, opts) do
+      case opts[:modify_open_api] do
+        modify when is_function(modify) ->
+          modify.(spec, conn, opts)
+
+        {m, f, a} ->
+          apply(m, f, [spec, conn, opts | a])
+
+        _ ->
+          spec
+      end
+    end
 
     @doc """
     Common responses to include in the API Spec.

@@ -239,7 +239,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
   end
 
-  def modify(spec, _conn, _opts) do
+  def modify_open_api(spec, _conn, _opts) do
     %{spec | info: %{spec.info | title: "foobar"}}
   end
 
@@ -247,7 +247,7 @@ defmodule Test.Acceptance.OpenApiTest do
     api_spec =
       AshJsonApi.Controllers.OpenApi.spec(%{private: %{}},
         domains: [Blogs],
-        modify: {__MODULE__, :modify, []}
+        modify_open_api: {__MODULE__, :modify_open_api, []}
       )
 
     %{open_api_spec: api_spec}

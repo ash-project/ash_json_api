@@ -37,9 +37,7 @@ defmodule AshJsonApi.Controllers.Router do
         AshJsonApi.Controllers.Schema.call(conn, domains: domains)
 
       open_api_request?(conn, open_api) ->
-        open_api_opts = open_api_opts(opts)
-
-        apply(AshJsonApi.Controllers.OpenApi, :call, [conn, open_api_opts])
+        apply(AshJsonApi.Controllers.OpenApi, :call, [conn, opts])
 
       conn.method == "GET" && Enum.any?(json_schema, &(&1 == conn.path_info)) ->
         AshJsonApi.Controllers.Schema.call(conn, opts)
@@ -87,12 +85,6 @@ defmodule AshJsonApi.Controllers.Router do
             )
         end
     end
-  end
-
-  defp open_api_opts(opts) do
-    opts
-    |> Keyword.put(:modify, Keyword.get(opts, :modify_open_api))
-    |> Keyword.delete(:modify_open_api)
   end
 
   defp open_api_request?(conn, open_api) do
