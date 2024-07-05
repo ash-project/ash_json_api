@@ -71,6 +71,28 @@ Now you can go to `/api/swaggerui` and `/api/redoc`!
 
 ## Customize values in the OpenAPI documentation
 
+To customize the main values of the OpenAPI spec, a few options are available:
+
+```elixir
+  use AshJsonApi.Router,
+    domains: [...],
+    open_api: "/open_api",
+    open_api_title: "Title",
+    open_api_version: "1.0.0",
+    open_api_servers: ["http://domain.com/api/v1"]
+```
+
+If `:open_api_servers` is not specified, a default server is automatically derived from your app's Phoenix endpoint, as retrieved from inbound connections on the `open_api` HTTP route.
+
+In case an active connection is not available, for example when generating the OpenAPI spec via CLI, you can explicitely specify a reference to the Phoenix endpoint:
+
+```elixir
+  use AshJsonApi.Router,
+    domains: [...],
+    open_api: "/open_api",
+    phoenix_endpoint: MyAppWeb.Endpoint
+```
+
 To override any value in the OpenApi documentation you can use the `:modify_open_api` options key:
 
 ```elixir
@@ -85,6 +107,35 @@ To override any value in the OpenApi documentation you can use the `:modify_open
       | info: %{spec.info | title: "MyApp Title JSON API", version: Application.spec(:my_app, :vsn) |> to_string()}
     }
   end
+```
+
+## Generate spec files via CLI
+
+You can write the OpenAPI spec file to disk using the Mix tasks provided by [OpenApiSpex](https://github.com/open-api-spex/open_api_spex).
+
+Supposing you have setup AshJsonApi as:
+
+```elixir
+defmodule MyAppWeb.AshJsonApi
+  use AshJsonApi.Router, domains: [...], open_api: "/open_api"
+end
+```
+
+you can generate the files with:
+
+```sh
+mix openapi.spec.json --spec MyAppWeb.AshJsonApi
+mix openapi.spec.yaml --spec MyAppWeb.AshJsonApi
+```
+
+To generate the YAML file you need to add the ymlr dependency.
+
+```elixir
+def deps do
+  [
+    {:ymlr, "~> 2.0"}
+  ]
+end
 ```
 
 ## Known issues/limitations
