@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.3.4](https://github.com/ash-project/ash_json_api/compare/v1.3.3...v1.3.4) (2024-07-05)
+
+
+
+
+### Bug Fixes:
+
+* add leading slash to JSON pointer in schema errors (#199)
+
+* avoid failing openapi generation for non existing resource actions (#198)
+
 ## [v1.3.3](https://github.com/ash-project/ash_json_api/compare/v1.3.2...v1.3.3) (2024-07-04)
 
 
