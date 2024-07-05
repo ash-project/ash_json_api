@@ -472,7 +472,7 @@ defmodule AshJsonApi.JsonSchema do
     create_action =
       case attribute.constraints[:create_action] do
         nil ->
-          Ash.Resource.Info.primary_action!(resource, :create)
+          Ash.Resource.Info.primary_action(resource, :create)
 
         name ->
           Ash.Resource.Info.action(resource, name)
@@ -481,23 +481,39 @@ defmodule AshJsonApi.JsonSchema do
     update_action =
       case attribute.constraints[:update_action] do
         nil ->
-          Ash.Resource.Info.primary_action!(resource, :update)
+          Ash.Resource.Info.primary_action(resource, :update)
 
         name ->
           Ash.Resource.Info.action(resource, name)
       end
 
     create_write_attributes =
-      write_attributes(resource, create_action.arguments, create_action)
+      if create_action do
+        write_attributes(resource, create_action.arguments, create_action)
+      else
+        %{}
+      end
 
     update_write_attributes =
-      write_attributes(resource, update_action.arguments, update_action)
+      if update_action do
+        write_attributes(resource, update_action.arguments, update_action)
+      else
+        %{}
+      end
 
     create_required_attributes =
-      required_write_attributes(resource, create_action.arguments, create_action)
+      if create_action do
+        required_write_attributes(resource, create_action.arguments, create_action)
+      else
+        []
+      end
 
     update_required_attributes =
-      required_write_attributes(resource, update_action.arguments, update_action)
+      if update_action do
+        required_write_attributes(resource, update_action.arguments, update_action)
+      else
+        []
+      end
 
     required =
       if action_type == :create do
