@@ -120,7 +120,7 @@ defmodule AshJsonApi.Serializer do
     |> add_if_defined(:detail, error.detail)
     |> add_if_defined([:source, :pointer], error.source_pointer)
     |> add_if_defined([:source, :parameter], error.source_parameter)
-    |> add_if_defined(:meta, error.meta)
+    |> add_if_defined(:meta, parse_error(error.meta))
     |> add_about_link(error.about, request)
   end
 
@@ -781,4 +781,10 @@ defmodule AshJsonApi.Serializer do
     # end)
     # |> URI.to_string()
   end
+
+  defp parse_error(%{match: %Regex{} = match} = error) do
+    %{error | match: Regex.source(match)}
+  end
+
+  defp parse_error(error), do: error
 end
