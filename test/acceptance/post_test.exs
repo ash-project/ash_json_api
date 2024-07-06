@@ -210,6 +210,46 @@ defmodule Test.Acceptance.PostTest do
     end
   end
 
+  defmodule Pin do
+    use Ash.Resource,
+      domain: Test.Acceptance.PostTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("pin")
+
+      routes do
+        base("/pins")
+
+        post(:create)
+      end
+    end
+
+    actions do
+      create :create do
+        primary? true
+        accept([:pin])
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:pin, :string)
+    end
+
+    validations do
+      validate match(:pin, ~r/^[0-9]{4}$/)
+      validate string_length(:pin, exact: 4)
+    end
+  end
+
   defmodule Domain do
     use Ash.Domain,
       extensions: [
@@ -224,6 +264,7 @@ defmodule Test.Acceptance.PostTest do
     resources do
       resource(Author)
       resource(Post)
+      resource(Pin)
     end
   end
 
@@ -371,6 +412,34 @@ defmodule Test.Acceptance.PostTest do
       assert %{"errors" => [error]} = response.resp_body
       assert error["code"] == "invalid_attribute"
       assert error["source"] == %{"pointer" => "/data/attributes/review/rating"}
+    end
+
+    test "error validation using match with a regex" do
+      response =
+        Domain
+        |> post(
+          "/pins",
+          %{
+            data: %{
+              type: "pin",
+              attributes: %{pin: "12a"}
+            }
+          },
+          status: 400
+        )
+
+       # response is a Plug.
+      assert %{"errors" => [error_regex, error_length]} = response.resp_body
+
+      assert error_regex["code"] == "invalid_attribute"
+      assert error_regex["detail"] == "must match ~r/^[0-9]{4}$/"
+      assert error_regex["meta"] == %{"match" => "^[0-9]{4}$"}
+      assert error_regex["source"] == %{"pointer" => "/data/attributes/pin"}
+
+      assert error_length["code"] == "invalid_attribute"
+      assert error_length["detail"] == "must have length of exactly %{exact}"
+      assert error_length["meta"] == %{"exact" => 4}
+      assert error_length["source"] == %{"pointer" => "/data/attributes/pin"}
     end
   end
 
