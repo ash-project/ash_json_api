@@ -1,5 +1,6 @@
 defmodule Test.Acceptance.OpenApiTest do
   use ExUnit.Case, async: true
+  use Plug.Test
   alias OpenApiSpex.{OpenApi, Schema}
 
   defmodule Bio do
@@ -251,6 +252,19 @@ defmodule Test.Acceptance.OpenApiTest do
       )
 
     %{open_api_spec: api_spec}
+  end
+
+  test "spec can be fetched from the controller", %{open_api_spec: api_spec} do
+    assert :get
+           |> conn("/open_api")
+           |> AshJsonApi.Controllers.OpenApi.call(
+             domains: [Blogs],
+             modify_open_api: {__MODULE__, :modify_open_api, []}
+           )
+           |> sent_resp()
+           |> elem(2)
+           |> Jason.decode!()
+           |> Kernel.==(Jason.decode!(Jason.encode!(api_spec)))
   end
 
   test "modify option is honored", %{open_api_spec: api_spec} do

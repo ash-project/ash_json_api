@@ -19,7 +19,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @doc false
     def spec(conn, opts) do
-      phoenix_endpoint = opts[:phoenix_endpoint] || conn[:private][:phoenix_endpoint]
+      phoenix_endpoint = opts[:phoenix_endpoint] || conn.private[:phoenix_endpoint]
 
       opts
       |> Keyword.put(:phoenix_endpoint, phoenix_endpoint)
