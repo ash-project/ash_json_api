@@ -452,7 +452,7 @@ defmodule AshJsonApi.JsonSchema do
         resource_attribute_type(Map.merge(attr, %{type: new_type, constraints: new_constraints}))
 
       Spark.implements_behaviour?(type, Ash.Type.Enum) ->
-        %{"type" => "string", "enum" => type.values()}
+        %{"type" => "string", "enum" => Enum.map(type.values(), &to_string/1)}
 
       true ->
         %{
