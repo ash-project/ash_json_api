@@ -548,7 +548,11 @@ defmodule AshJsonApi.Resource do
       [] ->
         # Expect resource to have only 1 primary key if :primary_key section is not used
         [key] = Ash.Resource.Info.primary_key(resource)
-        Map.get(record, key)
+
+        case Map.get(record, key) do
+          nil -> nil
+          value -> to_string(value)
+        end
 
       keys ->
         delimiter = primary_key_delimiter(resource)

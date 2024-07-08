@@ -151,7 +151,7 @@ defmodule AshJsonApi.Serializer do
 
   defp serialize_relationship_data(record, source_record, relationship) do
     %{
-      id: record.id,
+      id: AshJsonApi.Resource.encode_primary_key(record),
       type: AshJsonApi.Resource.Info.type(relationship.destination)
     }
     |> add_relationship_meta(record, source_record, relationship)
@@ -569,8 +569,11 @@ defmodule AshJsonApi.Serializer do
 
   defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
     case record do
-      %{__linkage__: %{^name => [%{id: id}]}} ->
-        Map.put(payload, :data, %{id: id, type: AshJsonApi.Resource.Info.type(destination)})
+      %{__linkage__: %{^name => [record]}} ->
+        Map.put(payload, :data, %{
+          id: AshJsonApi.Resource.encode_primary_key(record),
+          type: AshJsonApi.Resource.Info.type(destination)
+        })
 
       # There could be another case here if a bug in the system gave us a list
       # of more than one shouldn't happen though
@@ -594,7 +597,8 @@ defmodule AshJsonApi.Serializer do
           :data,
           Enum.map(
             linkage,
-            &(%{id: &1.id, type: type} |> add_relationship_meta(&1, record, relationship))
+            &(%{id: AshJsonApi.Resource.encode_primary_key(record), type: type}
+              |> add_relationship_meta(&1, record, relationship))
           )
         )
 
