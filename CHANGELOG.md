@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.3.6](https://github.com/ash-project/ash_json_api/compare/v1.3.5...v1.3.6) (2024-07-08)
+
+
+
+
+### Bug Fixes:
+
+* properly match enum types on input/output
+
+* Avoid raising the condition converting the regex to string. (#204)
+
+### Improvements:
+
+* honor `allow_all_media_type_params?` in `content-type` as well
+
 ## [v1.3.5](https://github.com/ash-project/ash_json_api/compare/v1.3.4...v1.3.5) (2024-07-06)
 
 
