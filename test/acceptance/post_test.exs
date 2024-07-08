@@ -245,8 +245,8 @@ defmodule Test.Acceptance.PostTest do
     end
 
     validations do
-      validate match(:pin, ~r/^[0-9]{4}$/)
-      validate string_length(:pin, exact: 4)
+      validate(match(:pin, ~r/^[0-9]{4}$/))
+      validate(string_length(:pin, exact: 4))
     end
   end
 
@@ -428,7 +428,7 @@ defmodule Test.Acceptance.PostTest do
           status: 400
         )
 
-       # response is a Plug.
+      # response is a Plug.
       assert %{"errors" => [error_regex, error_length]} = response.resp_body
 
       assert error_regex["code"] == "invalid_attribute"
