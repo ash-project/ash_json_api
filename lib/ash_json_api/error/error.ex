@@ -94,8 +94,29 @@ defmodule AshJsonApi.Error do
   end
 
   def to_json_api_errors(_domain, _resource, error, _type) do
+    uuid = Ash.UUID.generate()
+
+    stacktrace =
+      case error do
+        %{stacktrace: %{stacktrace: v}} ->
+          v
+
+        _ ->
+          nil
+      end
+
+    Logger.warning(
+      "`#{uuid}`: AshJsonApi.Error not implemented for error:\n\n#{Exception.format(:error, error, stacktrace)}"
+    )
+
     [
-      Ash.Error.Unknown.UnknownError.exception(error: error)
+      %__MODULE__{
+        id: uuid,
+        status_code: class_to_status(error.class),
+        code: "something_went_wrong",
+        title: "SomethingWentWrong",
+        detail: "Something went wrong. Error id: #{uuid}"
+      }
     ]
   end
 
