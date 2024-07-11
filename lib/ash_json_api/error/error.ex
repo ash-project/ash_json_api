@@ -95,7 +95,7 @@ defmodule AshJsonApi.Error do
 
   def to_json_api_errors(_domain, _resource, error, _type) do
     [
-      Ash.Error.Unknown.exception(error: error)
+      Ash.Error.Unknown.UnknownError.exception(error: error)
     ]
   end
 

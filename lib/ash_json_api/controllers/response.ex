@@ -45,11 +45,25 @@ defmodule AshJsonApi.Controllers.Response do
           opts[:logger_metadata] || []
         )
       else
-        Logger.log(
-          error.log_level,
-          fn -> AshJsonApi.Error.format_log(error) end,
-          opts[:logger_metadata] || []
-        )
+        case error do
+          %AshJsonApi.Error{} ->
+            Logger.log(
+              error.log_level,
+              fn -> AshJsonApi.Error.format_log(error) end,
+              opts[:logger_metadata] || []
+            )
+
+          other ->
+            Logger.log(:error, fn ->
+              case other do
+                %{stacktrace: %{stacktrace: stacktrace}} ->
+                  Exception.format(:error, other, stacktrace)
+
+                _ ->
+                  Exception.format(:error, other)
+              end
+            end)
+        end
       end
     end)
   end
