@@ -597,7 +597,7 @@ defmodule AshJsonApi.Serializer do
           :data,
           Enum.map(
             linkage,
-            &(%{id: AshJsonApi.Resource.encode_primary_key(record), type: type}
+            &(%{id: AshJsonApi.Resource.encode_primary_key(&1), type: type}
               |> add_relationship_meta(&1, record, relationship))
           )
         )
