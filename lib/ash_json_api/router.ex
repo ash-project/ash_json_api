@@ -23,8 +23,8 @@ defmodule AshJsonApi.Router do
   """
   defmacro __using__(opts) do
     opts =
-      if Keyword.keyword?(opts) && opts[:modify_open_api_schema] do
-        Keyword.update!(opts, :modify_open_api_schema, &Macro.escape/1)
+      if Keyword.keyword?(opts) && opts[:modify_open_api] do
+        Keyword.update!(opts, :modify_open_api, &Macro.escape/1)
       else
         opts
       end
