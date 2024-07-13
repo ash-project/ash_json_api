@@ -217,7 +217,7 @@ defmodule Test.Acceptance.ResourceTest do
   describe "module has composite key but does not define json primary key" do
     test "raises requires json primary key error" do
       assert_raise Spark.Error.DslError,
-                   ~r/AshJsonApi requires primary key when a resource has a composite key/,
+                   ~r/AshJsonApi requires primary key keys when a resource has a composite key/,
                    fn ->
                      defmodule BadResource do
                        use Ash.Resource,
@@ -259,7 +259,7 @@ defmodule Test.Acceptance.ResourceTest do
   describe "json primary contains keys which are not the resource's attribute" do
     test "raises invalid primary keys error" do
       assert_raise Spark.Error.DslError,
-                   ~r/AshJsonApi primary key must be from the resource's attributes/,
+                   ~r/AshJsonApi primary key keys must be from the resource's attributes/,
                    fn ->
                      defmodule BadResource do
                        use Ash.Resource,

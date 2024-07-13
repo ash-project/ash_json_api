@@ -17,7 +17,7 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
             raise Spark.Error.DslError,
               module: __MODULE__,
               path: [:json_api, :primary_key],
-              message: "AshJsonApi requires primary key when a resource has a composite key"
+              message: "AshJsonApi requires primary key keys when a resource has a composite key"
         end
 
       keys ->
@@ -31,8 +31,8 @@ defmodule AshJsonApi.Resource.Transformers.RequirePrimaryKey do
           false ->
             raise Spark.Error.DslError,
               module: __MODULE__,
-              path: [:json_api, :primary_key],
-              message: "AshJsonApi primary key must be from the resource's attributes"
+              path: [:json_api, :primary_key, :keys],
+              message: "AshJsonApi primary key keys must be from the resource's attributes"
         end
     end
   end

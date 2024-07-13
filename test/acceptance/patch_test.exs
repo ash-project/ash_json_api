@@ -23,6 +23,9 @@ defmodule Test.Acceptance.PatchTest do
         index :read
 
         patch :delete_posts, route: "/:id/posts/delete"
+        patch :delete_bios, route: "/:id/bios/delete"
+        related :posts, :read
+        related :bios, :read
       end
     end
 
@@ -40,6 +43,17 @@ defmodule Test.Acceptance.PatchTest do
 
         change(manage_relationship(:post_ids, :posts, type: :remove))
       end
+
+      update :delete_bios do
+        accept([])
+        require_atomic?(false)
+
+        argument :bios, {:array, :map} do
+          allow_nil?(false)
+        end
+
+        change(manage_relationship(:bios, type: :remove))
+      end
     end
 
     attributes do
@@ -49,6 +63,11 @@ defmodule Test.Acceptance.PatchTest do
 
     relationships do
       has_many(:posts, Test.Acceptance.PatchTest.Post,
+        destination_attribute: :author_id,
+        public?: true
+      )
+
+      has_many(:bios, Test.Acceptance.PatchTest.Bio,
         destination_attribute: :author_id,
         public?: true
       )
@@ -166,6 +185,41 @@ defmodule Test.Acceptance.PatchTest do
     end
   end
 
+  defmodule Bio do
+    use Ash.Resource,
+      domain: Test.Acceptance.PatchTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("bio")
+
+      primary_key do
+        keys [:pkey_a, :pkey_b]
+      end
+    end
+
+    actions do
+      defaults([:read, :destroy, create: :*, update: :*])
+    end
+
+    attributes do
+      attribute(:pkey_a, :string, primary_key?: true, allow_nil?: false, public?: true)
+      attribute(:pkey_b, :string, primary_key?: true, allow_nil?: false, public?: true)
+      attribute(:bio, :string, public?: true)
+    end
+
+    relationships do
+      belongs_to(:author, Author)
+    end
+  end
+
   defmodule Domain do
     use Ash.Domain,
       extensions: [
@@ -180,6 +234,7 @@ defmodule Test.Acceptance.PatchTest do
     resources do
       resource(Author)
       resource(Post)
+      resource(Bio)
     end
   end
 
@@ -394,7 +449,7 @@ defmodule Test.Acceptance.PatchTest do
     end
   end
 
-  describe "patch_removing_posts" do
+  describe "patch removing posts" do
     setup do
       id = Ecto.UUID.generate()
 
@@ -424,11 +479,51 @@ defmodule Test.Acceptance.PatchTest do
 
       related =
         Domain
-        |> get("/authors/#{author.id}/posts")
+        |> get("/authors/#{author.id}/posts", status: 200)
         |> Map.get(:resp_body)
         |> Map.get("data")
 
-      refute related
+      assert related == []
+    end
+  end
+
+  describe "patch removing bios" do
+    setup do
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
+        |> Ash.create!()
+
+      bios =
+        Enum.map(1..2, fn i ->
+          Bio
+          |> Ash.Changeset.for_create(:create, %{pkey_a: "a#{i}", pkey_b: "b#{i}"})
+          |> Ash.Changeset.force_change_attribute(:author_id, author.id)
+          |> Ash.create!()
+        end)
+
+      %{bios: bios, author: author}
+    end
+
+    test "patch to remove relationship with composite primary key", %{
+      author: author,
+      bios: bios
+    } do
+      assert %{status: 200} =
+               Domain
+               |> patch("/authors/#{author.id}/bios/delete", %{
+                 data: %{
+                   attributes: %{bios: Enum.map(bios, &%{pkey_a: &1.pkey_a, pkey_b: &1.pkey_b})}
+                 }
+               })
+
+      # related =
+      #   Domain
+      #   |> get("/authors/#{author.id}/bios", status: 200)
+      #   |> Map.get(:resp_body)
+      #   |> Map.get("data")
+
+      # refute related
     end
   end
 end
