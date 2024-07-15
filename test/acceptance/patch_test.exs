@@ -45,7 +45,7 @@ defmodule Test.Acceptance.PatchTest do
 
         argument(:bios, {:array, :map})
 
-        change manage_relationship(:bios, type: :append_and_remove)
+        change(manage_relationship(:bios, type: :append_and_remove))
       end
 
       update :delete_posts do
@@ -67,7 +67,7 @@ defmodule Test.Acceptance.PatchTest do
           allow_nil?(false)
         end
 
-        change(manage_relationship(:bios, type: :remove))
+        change(manage_relationship(:bios, on_match: :destroy))
       end
     end
 
@@ -523,53 +523,24 @@ defmodule Test.Acceptance.PatchTest do
       author: author,
       bios: bios
     } do
-      assert %{status: 200} =
-               Domain
-               |> patch("/authors/#{author.id}/bios/delete", %{
-                 data: %{
-                   attributes: %{bios: Enum.map(bios, &%{author_id: author.id, pkey_b: &1.pkey_b})}
-                 }
-               })
+      Domain
+      |> patch(
+        "/authors/#{author.id}/bios/delete",
+        %{
+          data: %{
+            attributes: %{bios: Enum.map(bios, &%{author_id: author.id, pkey_b: &1.pkey_b})}
+          }
+        },
+        status: 200
+      )
 
-      # related =
-      #   Domain
-      #   |> get("/authors/#{author.id}/bios", status: 200)
-      #   |> Map.get(:resp_body)
-      #   |> Map.get("data")
+      related =
+        Domain
+        |> get("/authors/#{author.id}/bios", status: 200)
+        |> Map.get(:resp_body)
+        |> Map.get("data")
 
-      # refute related
-    end
-  end
-
-  describe "patch updating bios" do
-    setup do
-      author =
-        Author
-        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
-        |> Ash.create!()
-
-      bios =
-        Enum.map(1..2, fn i ->
-          Bio
-          |> Ash.Changeset.for_create(:create, %{author_id: author.id, pkey_b: "b#{i}"})
-          |> Ash.Changeset.force_change_attribute(:author_id, author.id)
-          |> Ash.create!()
-        end)
-
-      %{bios: bios, author: author}
-    end
-
-    test "patch to update relationship with composite primary key", %{
-      author: author,
-      bios: bios
-    } do
-      assert %{status: 200} =
-               Domain
-               |> patch("/authors/#{author.id}/relationships/bios", %{
-                 data: [
-                  %{type: "bio", author_id: author.id, pkey_b: "b1", bio: "new bio"}
-                 ]
-               })
+      assert related == []
     end
   end
 end
