@@ -24,14 +24,29 @@ defmodule Test.Acceptance.PatchTest do
 
         patch :delete_posts, route: "/:id/posts/delete"
         patch :delete_bios, route: "/:id/bios/delete"
+
+        patch :update do
+          relationship_arguments([:bios])
+        end
+
         related :posts, :read
         related :bios, :read
+        patch_relationship :bios
       end
     end
 
     actions do
       default_accept(:*)
-      defaults([:create, :read, :update, :destroy])
+      defaults([:create, :read, :destroy])
+
+      update :update do
+        primary? true
+        require_atomic?(false)
+
+        argument(:bios, {:array, :map})
+
+        change manage_relationship(:bios, type: :append_and_remove)
+      end
 
       update :delete_posts do
         accept([])
@@ -201,7 +216,7 @@ defmodule Test.Acceptance.PatchTest do
       type("bio")
 
       primary_key do
-        keys [:pkey_a, :pkey_b]
+        keys [:author_id, :pkey_b]
       end
     end
 
@@ -210,13 +225,12 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     attributes do
-      attribute(:pkey_a, :string, primary_key?: true, allow_nil?: false, public?: true)
       attribute(:pkey_b, :string, primary_key?: true, allow_nil?: false, public?: true)
       attribute(:bio, :string, public?: true)
     end
 
     relationships do
-      belongs_to(:author, Author)
+      belongs_to(:author, Author, primary_key?: true, public?: true, allow_nil?: false)
     end
   end
 
@@ -497,7 +511,7 @@ defmodule Test.Acceptance.PatchTest do
       bios =
         Enum.map(1..2, fn i ->
           Bio
-          |> Ash.Changeset.for_create(:create, %{pkey_a: "a#{i}", pkey_b: "b#{i}"})
+          |> Ash.Changeset.for_create(:create, %{author_id: author.id, pkey_b: "b#{i}"})
           |> Ash.Changeset.force_change_attribute(:author_id, author.id)
           |> Ash.create!()
         end)
@@ -513,7 +527,7 @@ defmodule Test.Acceptance.PatchTest do
                Domain
                |> patch("/authors/#{author.id}/bios/delete", %{
                  data: %{
-                   attributes: %{bios: Enum.map(bios, &%{pkey_a: &1.pkey_a, pkey_b: &1.pkey_b})}
+                   attributes: %{bios: Enum.map(bios, &%{author_id: author.id, pkey_b: &1.pkey_b})}
                  }
                })
 
@@ -524,6 +538,38 @@ defmodule Test.Acceptance.PatchTest do
       #   |> Map.get("data")
 
       # refute related
+    end
+  end
+
+  describe "patch updating bios" do
+    setup do
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
+        |> Ash.create!()
+
+      bios =
+        Enum.map(1..2, fn i ->
+          Bio
+          |> Ash.Changeset.for_create(:create, %{author_id: author.id, pkey_b: "b#{i}"})
+          |> Ash.Changeset.force_change_attribute(:author_id, author.id)
+          |> Ash.create!()
+        end)
+
+      %{bios: bios, author: author}
+    end
+
+    test "patch to update relationship with composite primary key", %{
+      author: author,
+      bios: bios
+    } do
+      assert %{status: 200} =
+               Domain
+               |> patch("/authors/#{author.id}/relationships/bios", %{
+                 data: [
+                  %{type: "bio", author_id: author.id, pkey_b: "b1", bio: "new bio"}
+                 ]
+               })
     end
   end
 end
