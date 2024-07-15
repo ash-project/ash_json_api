@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.3.7](https://github.com/ash-project/ash_json_api/compare/v1.3.6...v1.3.7) (2024-07-15)
+
+
+
+
+### Bug Fixes:
+
+* relationship resource identifiers don't need to check the `id` type
+
+* properly reference related record in linkage
+
+* escape `modify_open_api_schema` option since it can be a 3/tuple
+
+* handle unknown errors in `log_errors/2`
+
+* ensure id is always coming back as a string
+
 ## [v1.3.6](https://github.com/ash-project/ash_json_api/compare/v1.3.5...v1.3.6) (2024-07-08)
 
 
