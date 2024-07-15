@@ -878,10 +878,9 @@ defmodule AshJsonApi.JsonSchema do
             "required" => ["id", "type"],
             "additionalProperties" => false,
             "properties" => %{
-              "id" =>
-                resource_attribute_type(
-                  Ash.Resource.Info.public_attribute(relationship.destination, :id)
-                ),
+              "id" => %{
+                "type" => "string"
+              },
               "type" => %{
                 "const" => AshJsonApi.Resource.Info.type(relationship.destination)
               },
