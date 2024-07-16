@@ -2,7 +2,7 @@
 
 AshJsonApi allows you to expose your resource actions over a (JSON:API)[https://jsonapi.org]. This API supports all of the features of JSON:API and Ash, like sorting, filtering, pagination, and side loading.
 
-The kings of thing this extension handles:
+The kinds of thing this extension handles:
 
 1. Route Creation: AshJsonApi defines routes and actions in your app based on resource configurations
 2. Deserialization: When an incoming HTTP request hits a AshJsonApi defined route/action, AshJsonApi will parse it from `/api/users?filter[admin]=true` into a call to ash
