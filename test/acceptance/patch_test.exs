@@ -258,8 +258,8 @@ defmodule Test.Acceptance.PatchTest do
 
   import AshJsonApi.Test
 
-  @tag :attributes
   describe "attributes" do
+    @describetag :attributes
     setup do
       id = Ecto.UUID.generate()
 

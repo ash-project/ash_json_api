@@ -126,6 +126,11 @@ mix openapi.spec.json --spec MyAppWeb.AshJsonApi
 mix openapi.spec.yaml --spec MyAppWeb.AshJsonApi
 ```
 
+> ### Setting a route prefix for generated files {: .warning}
+>
+> The route prefix in normal usage is automatically inferred, but when generating files
+> we will use the `prefix` option set in the `json_api` section of the relevant `Ash.Domain` module.
+
 To generate the YAML file you need to add the ymlr dependency.
 
 ```elixir
@@ -134,6 +139,13 @@ def deps do
     {:ymlr, "~> 2.0"}
   ]
 end
+```
+
+You can also use the `--check` option to confirm that your checked in spec file(s) match.
+
+```sh
+mix openapi.spec.json --spec MyAppWeb.AshJsonApi --check
+mix openapi.spec.yaml --spec MyAppWeb.AshJsonApi --check
 ```
 
 ## Known issues/limitations

@@ -16,7 +16,7 @@ defmodule AshJsonApi.Controllers.GenericActionRoute do
     all_domains = options[:all_domains]
 
     conn
-    |> Request.from(resource, action, domain, all_domains, route)
+    |> Request.from(resource, action, domain, all_domains, route, options[:prefix])
     |> Helpers.run_action()
     |> Helpers.render_or_render_errors(conn, fn conn, request ->
       status =

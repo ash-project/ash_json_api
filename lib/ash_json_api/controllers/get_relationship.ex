@@ -17,7 +17,7 @@ defmodule AshJsonApi.Controllers.GetRelationship do
     resource = relationship.destination
 
     conn
-    |> Request.from(resource, action, domain, all_domains, route)
+    |> Request.from(resource, action, domain, all_domains, route, options[:prefix])
     |> Helpers.fetch_related(options[:resource])
     |> Helpers.fetch_metadata()
     |> Helpers.render_or_render_errors(conn, fn conn, request ->

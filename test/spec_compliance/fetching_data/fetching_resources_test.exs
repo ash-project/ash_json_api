@@ -96,12 +96,12 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
   import AshJsonApi.Test
 
   # 200 OK
-  @tag :spec_must
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MUST respond to a successful request to fetch an individual resource or resource collection with a 200 OK response.
   # --------------------------
   describe "200 OK response" do
+    @describetag :spec_must
     test "individual resource" do
       # Create a post
       post =
@@ -117,12 +117,12 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
   end
 
-  @tag :spec_must
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MUST respond to a successful request to fetch a resource collection with an array of resource objects or an empty array ([]) as the response document’s primary data.
   # --------------------------
   describe "resource collection primary data." do
+    @describetag :spec_must
     test "data exists" do
       # Create a post
       post =
@@ -148,12 +148,13 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
   end
 
-  @tag :spec_must
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MUST respond to a successful request to fetch an individual resource with a resource object or null provided as the response document’s primary data.
   # --------------------------
   describe "individual resource primary data." do
+    @describetag :spec_must
+
     test "data exists" do
       # Create a post
       post =
@@ -181,53 +182,53 @@ defmodule AshJsonApiTest.FetchingData.FetchingResources do
     end
   end
 
-  @tag :spec_must
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MUST respond with 404 Not Found when processing a request to fetch a single resource that does not exist, except when the request warrants a 200 OK response with null as the primary data (as described above).
   # --------------------------
   describe "404 Not Found" do
+    @describetag :spec_must
     test "individual resource without data" do
       get(Domain, "/posts/#{Ecto.UUID.generate()}", status: 404)
     end
   end
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MAY respond with other HTTP status codes.
   # --------------------------
   describe "other responses" do
+    @describetag :spec_may
     # Do we want to implement this?
     # I'm not sure how to test this...
   end
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MAY include error details with error responses.
   # --------------------------
   describe "error responses" do
+    @describetag :spec_may
     # Do we want to implement this?
     # Need to come up with error scenarios if so
   end
 
-  @tag :spec_must
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MUST prepare responses in accordance with HTTP semantics.
   # --------------------------
   describe "HTTP semantics" do
+    @describetag :spec_must
     # I'm not sure how to test this...
   end
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # The optional links member within each resource object contains links related to the resource.
   # If present, this links object MAY contain a self link that identifies the resource represented by the resource object.
   # --------------------------
   describe "5.2.7 Resource Links" do
+    @describetag :spec_may
     setup do
       author =
         Author

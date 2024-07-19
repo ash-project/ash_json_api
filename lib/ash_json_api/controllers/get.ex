@@ -16,7 +16,7 @@ defmodule AshJsonApi.Controllers.Get do
     all_domains = options[:all_domains]
 
     conn
-    |> Request.from(resource, action, domain, all_domains, route)
+    |> Request.from(resource, action, domain, all_domains, route, options[:prefix])
     |> Helpers.fetch_record_from_path()
     |> Helpers.fetch_includes()
     |> Helpers.fetch_metadata()

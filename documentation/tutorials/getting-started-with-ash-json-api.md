@@ -105,10 +105,6 @@ Add the following to your `config/config.exs`.
 config :mime, :types, %{
   "application/vnd.api+json" => ["json"]
 }
-
-config :mime, :extensions, %{
-  "json" => "application/vnd.api+json"
-}
 ```
 
 This configuration is required to support working with the JSON:API custom mime type.

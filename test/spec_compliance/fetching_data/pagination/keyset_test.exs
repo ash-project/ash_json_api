@@ -69,12 +69,12 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
   import AshJsonApi.Test
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MAY choose to limit the number of resources returned in a response to a subset (“page”) of the whole set available.
   # --------------------------
   describe "[Keyset] limit" do
+    @describetag :spec_may
     setup do
       # Create 10 posts
 
@@ -117,7 +117,6 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
     end
   end
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MAY provide links to traverse a paginated data set (“pagination links”).
@@ -129,6 +128,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
   # To paginate an included collection returned in a compound document, supply pagination links in the corresponding links object.
 
   describe "[Keyset] pagination links location" do
+    @describetag :spec_may
     setup do
       posts =
         for index <- 1..15 do
@@ -188,7 +188,6 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
     end
   end
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # The following keys MUST be used for pagination links:
@@ -201,6 +200,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
   # Keys MUST either be omitted or have a null value to indicate that a particular link is unavailable.
   # --------------------------
   describe "[Keyset] pagination keys" do
+    @describetag :spec_may
     setup do
       posts =
         for index <- 1..15 do
@@ -507,7 +507,6 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
   # end
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # The pagination metadata MAY contain a `total` member containing an integer indicating the total number of items
@@ -515,6 +514,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
   # --------------------------
   # Using examples from https://jsonapi.org/profiles/ethanresnick/cursor-pagination/#auto-id-collection-sizes
   describe "[Keyset] Pagination meta" do
+    @describetag :spec_may
     setup do
       posts =
         for index <- 1..15 do

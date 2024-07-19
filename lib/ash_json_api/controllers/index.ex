@@ -17,7 +17,7 @@ defmodule AshJsonApi.Controllers.Index do
 
     if action.type == :read do
       conn
-      |> Request.from(resource, action, domain, all_domains, route)
+      |> Request.from(resource, action, domain, all_domains, route, options[:prefix])
       |> Helpers.fetch_pagination_parameters()
       |> Helpers.fetch_records()
       |> Helpers.fetch_includes()
@@ -33,7 +33,7 @@ defmodule AshJsonApi.Controllers.Index do
       end)
     else
       conn
-      |> Request.from(resource, action, domain, all_domains, route)
+      |> Request.from(resource, action, domain, all_domains, route, options[:prefix])
       |> Helpers.fetch_records()
       |> Helpers.fetch_includes()
       |> Helpers.fetch_metadata()

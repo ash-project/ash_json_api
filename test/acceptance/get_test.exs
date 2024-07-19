@@ -167,8 +167,8 @@ defmodule Test.Acceptance.GetTest do
     end
   end
 
-  @tag :arguments
   describe "arguments" do
+    @describetag :arguments
     setup do
       post =
         Post
@@ -231,8 +231,8 @@ defmodule Test.Acceptance.GetTest do
     end
   end
 
-  @tag :attributes
   describe "attributes" do
+    @describetag :attributes
     setup do
       post =
         Post

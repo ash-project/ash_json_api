@@ -63,10 +63,11 @@ defmodule AshJsonApi.Request do
           action :: atom,
           Ash.Domain.t(),
           list(Ash.Domain.t()),
-          AshJsonApi.Resource.Route.t()
+          AshJsonApi.Resource.Route.t(),
+          String.t() | nil
         ) ::
           t
-  def from(conn, resource, action, domain, all_domains, route) do
+  def from(conn, resource, action, domain, all_domains, route, prefix) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
     %__MODULE__{
@@ -83,10 +84,10 @@ defmodule AshJsonApi.Request do
       context: get_context(conn),
       body: conn.body_params,
       all_domains: all_domains,
-      schema: AshJsonApi.JsonSchema.route_schema(route, domain, resource),
+      schema: AshJsonApi.JsonSchema.route_schema(route, domain, resource, prefix: prefix),
       relationship: route.relationship,
       route: route,
-      json_api_prefix: AshJsonApi.Domain.Info.prefix(domain)
+      json_api_prefix: prefix || AshJsonApi.Domain.Info.prefix(domain)
     }
     |> validate_params()
     |> validate_href_schema()

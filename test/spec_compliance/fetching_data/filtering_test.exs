@@ -111,12 +111,12 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
 
   import AshJsonApi.Test
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # The filter query parameter is reserved for filtering data. Servers and clients SHOULD use this key for filtering operations.
   # --------------------------
   describe "filter query param" do
+    @describetag :spec_may
     test "key-value filter" do
       post =
         Post

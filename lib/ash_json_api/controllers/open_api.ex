@@ -7,9 +7,20 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     # sobelow_skip ["XSS.SendResp"]
     def call(conn, opts) do
+      prefix =
+        conn.request_path
+        |> Path.split()
+        |> Enum.reverse()
+        |> Enum.drop(Enum.count(conn.path_info))
+        |> Enum.reverse()
+        |> case do
+          [] -> "/"
+          paths -> Path.join(paths)
+        end
+
       spec =
         conn
-        |> spec(opts)
+        |> spec(Keyword.put(opts, :prefix, prefix))
         |> Jason.encode!(pretty: true)
 
       conn

@@ -10,7 +10,7 @@ defmodule AshJsonApi.Controllers.Schema do
 
     schema =
       domains
-      |> AshJsonApi.JsonSchema.generate()
+      |> AshJsonApi.JsonSchema.generate(prefix: opts[:prefix] || "")
       |> Jason.encode!()
 
     conn

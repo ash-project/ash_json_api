@@ -30,17 +30,28 @@ defmodule AshJsonApi.Controllers.Router do
   end
 
   def call(conn, %{domains: domains, open_api: open_api, json_schema: json_schema, original: opts}) do
+    prefix =
+      conn.request_path
+      |> Path.split()
+      |> Enum.reverse()
+      |> Enum.drop(Enum.count(conn.path_info))
+      |> Enum.reverse()
+      |> case do
+        [] -> "/"
+        paths -> Path.join(paths)
+      end
+
     cond do
       conn.method in ["GET", :get] &&
         Enum.any?(domains, &AshJsonApi.Domain.Info.serve_schema?/1) &&
           conn.path_info in [["schema"], ["schema.json"]] ->
-        AshJsonApi.Controllers.Schema.call(conn, domains: domains)
+        AshJsonApi.Controllers.Schema.call(conn, domains: domains, prefix: prefix)
 
       open_api_request?(conn, open_api) ->
         apply(AshJsonApi.Controllers.OpenApi, :call, [conn, opts])
 
       conn.method == "GET" && Enum.any?(json_schema, &(&1 == conn.path_info)) ->
-        AshJsonApi.Controllers.Schema.call(conn, opts)
+        AshJsonApi.Controllers.Schema.call(conn, Keyword.put(opts, :prefix, prefix))
 
       true ->
         Enum.find_value(domains, :error, fn domain ->
@@ -78,6 +89,7 @@ defmodule AshJsonApi.Controllers.Router do
               domain: domain,
               resource: resource,
               all_domains: domains,
+              prefix: prefix,
               action_type: route.action_type,
               route: route,
               relationship: route.relationship,

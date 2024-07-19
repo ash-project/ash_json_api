@@ -181,4 +181,56 @@ defmodule AshJsonApi.Domain do
     verifiers: @verifiers,
     persisters: @persisters,
     transformers: @transformers
+
+  def install(igniter, module, Ash.Domain, _path, _argv) do
+    igniter
+    |> Spark.Igniter.add_extension(
+      module,
+      Ash.Domain,
+      :extensions,
+      AshJsonApi.Domain
+    )
+    |> add_to_ash_json_api_router(module)
+  end
+
+  defp add_to_ash_json_api_router(igniter, domain) do
+    case AshJsonApi.Igniter.find_ash_json_api_router(igniter, domain) do
+      {:ok, igniter, _} ->
+        igniter
+
+      {:error, igniter, []} ->
+        AshJsonApi.Igniter.setup_ash_json_api_router(igniter)
+
+      {:error, igniter, all_ash_json_api_routers} ->
+        ash_json_api_router =
+          case all_ash_json_api_routers do
+            [ash_json_api_router] ->
+              ash_json_api_router
+
+            ash_json_api_routers ->
+              Owl.IO.select(
+                ash_json_api_routers,
+                label: "Multiple AshJsonApi.Router modules found. Please select one to use:",
+                render_as: &inspect/1
+              )
+          end
+
+        Igniter.Code.Module.find_and_update_module!(igniter, ash_json_api_router, fn zipper ->
+          with {:ok, zipper} <- Igniter.Code.Module.move_to_use(zipper, AshJsonApi.Router),
+               {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 1),
+               {:ok, zipper} <- Igniter.Code.Keyword.get_key(zipper, :domains),
+               {:ok, zipper} <- Igniter.Code.List.append_to_list(zipper, domain) do
+            {:ok, zipper}
+          else
+            _ ->
+              {:warning,
+               """
+               Could not add #{inspect(domain)} to the list of domains in #{inspect(ash_json_api_router)}.
+
+               Please make that change manually.
+               """}
+          end
+        end)
+    end
+  end
 end

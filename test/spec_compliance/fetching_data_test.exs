@@ -3,7 +3,6 @@ defmodule AshJsonApiTest.FetchingData do
   use Plug.Test
   @moduletag :json_api_spec_1_0
 
-  @tag :spec_must
   # JSON:API 1.0 Specification
   # --------------------------
   # A server MUST support fetching resource data for every URL provided as:
@@ -12,6 +11,7 @@ defmodule AshJsonApiTest.FetchingData do
   # a related link as part of a relationship-level links object
   # --------------------------
   describe "fetching resource data" do
+    @describetag :spec_must
     # What does this mean - that all the URLS contained in a response are valid API urls?
   end
 end

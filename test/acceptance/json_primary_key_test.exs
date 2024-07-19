@@ -148,8 +148,8 @@ defmodule Test.Acceptance.ResourceTest do
 
   import AshJsonApi.Test
 
-  @tag :section
   describe "json response id created from primary key fields" do
+    @describetag :section
     test "returns correct response id" do
       response =
         Domain
@@ -170,8 +170,8 @@ defmodule Test.Acceptance.ResourceTest do
     end
   end
 
-  @tag :section
   describe "json response id created from non primary key fields" do
+    @describetag :section
     test "returns correct response id" do
       response =
         Domain
@@ -191,8 +191,8 @@ defmodule Test.Acceptance.ResourceTest do
     end
   end
 
-  @tag :section
   describe "json primary_key is not defined" do
+    @describetag :section
     test "returns default id" do
       id = Ecto.UUID.generate()
 
@@ -213,8 +213,8 @@ defmodule Test.Acceptance.ResourceTest do
     end
   end
 
-  @tag :transformer
   describe "module has composite key but does not define json primary key" do
+    @describetag :transformer
     test "raises requires json primary key error" do
       assert_raise Spark.Error.DslError,
                    ~r/AshJsonApi requires primary key keys when a resource has a composite key/,
@@ -255,8 +255,8 @@ defmodule Test.Acceptance.ResourceTest do
     end
   end
 
-  @tag :transformer
   describe "json primary contains keys which are not the resource's attribute" do
+    @describetag :transformer
     test "raises invalid primary keys error" do
       assert_raise Spark.Error.DslError,
                    ~r/AshJsonApi primary key keys must be from the resource's attributes/,

@@ -122,8 +122,8 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
 
   import AshJsonApi.Test
 
-  @tag :attributes
   describe "invalid_post" do
+    @describetag :attributes
     test "create without an author_id in relationship" do
       id = Ecto.UUID.generate()
 
@@ -197,8 +197,8 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
     end
   end
 
-  @tag :attributes
   describe "post" do
+    @describetag :attributes
     setup do
       author =
         Author

@@ -274,8 +274,8 @@ defmodule Test.Acceptance.PostTest do
 
   import AshJsonApi.Test
 
-  @tag :attributes
   describe "invalid_post" do
+    @describetag :attributes
     test "create without all attributes in accept list" do
       id = Ecto.UUID.generate()
 
@@ -295,8 +295,8 @@ defmodule Test.Acceptance.PostTest do
     end
   end
 
-  @tag :attributes
   describe "post" do
+    @describetag :attributes
     test "create with all attributes in accept list" do
       id = Ecto.UUID.generate()
 

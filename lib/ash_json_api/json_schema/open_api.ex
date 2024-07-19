@@ -77,7 +77,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           version: version
         },
         servers: servers,
-        paths: AshJsonApi.OpenApi.paths(domains, domains),
+        paths: AshJsonApi.OpenApi.paths(domains, domains, opts),
         tags: AshJsonApi.OpenApi.tags(domains),
         components: %{
           responses: AshJsonApi.OpenApi.responses(),
@@ -887,28 +887,28 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @doc """
     Paths (routes) from the domain.
     """
-    @spec paths(domain :: module | [module], module | [module]) :: Paths.t()
-    def paths(domains, all_domains) when is_list(domains) do
+    @spec paths(domain :: module | [module], module | [module], opts :: Keyword.t()) :: Paths.t()
+    def paths(domains, all_domains, opts) when is_list(domains) do
       domains
-      |> Enum.map(&paths(&1, all_domains))
-      |> Enum.reduce(&Map.merge/2)
+      |> Enum.map(&paths(&1, all_domains, opts))
+      |> Enum.reduce(%{}, &Map.merge/2)
     end
 
-    def paths(domain, all_domains) do
+    def paths(domain, all_domains, opts) do
       domain
       |> resources()
       |> Enum.flat_map(fn resource ->
         resource
         |> AshJsonApi.Resource.Info.routes(all_domains)
-        |> Enum.map(&route_operation(&1, domain, resource))
+        |> Enum.map(&route_operation(&1, domain, resource, opts))
       end)
       |> Enum.group_by(fn {path, _route_op} -> path end, fn {_path, route_op} -> route_op end)
       |> Map.new(fn {path, route_ops} -> {path, struct!(PathItem, route_ops)} end)
     end
 
-    @spec route_operation(Route.t(), domain :: module, resource :: module) ::
+    @spec route_operation(Route.t(), domain :: module, resource :: module, opts :: Keyword.t()) ::
             {Paths.path(), {verb :: atom, Operation.t()}}
-    defp route_operation(route, domain, resource) do
+    defp route_operation(route, domain, resource, opts) do
       resource =
         if route.relationship do
           Ash.Resource.Info.related(resource, route.relationship)
@@ -919,7 +919,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       tag = AshJsonApi.Domain.Info.tag(domain)
       group_by = AshJsonApi.Domain.Info.group_by(domain)
 
-      {path, path_params} = AshJsonApi.JsonSchema.route_href(route, domain)
+      {path, path_params} = AshJsonApi.JsonSchema.route_href(route, domain, opts)
       operation = operation(route, resource, path_params)
 
       operation =

@@ -645,7 +645,7 @@ defmodule AshJsonApi.Serializer do
     |> Path.split()
     |> Enum.map(fn path_element ->
       if String.starts_with?(path_element, ":") do
-        Map.get(request.path_params, String.slice(path_element, 1..-1//-1)) || ""
+        Map.get(request.path_params, String.slice(path_element, 1..-1//1)) || ""
       else
         path_element
       end

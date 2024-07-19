@@ -10,7 +10,9 @@ defmodule AshJsonApi.Router do
       domains: [YourDomain, YourOtherDomain],
       # these next two are optional, only add them if you want those endpoints
       open_api: "/open_api",
-      json_schema: "/json_schema"
+      json_schema: "/json_schema",
+      # tell us where it is mounted in your router
+      prefix: "/api/json"
   end
   ```
 
@@ -44,10 +46,6 @@ defmodule AshJsonApi.Router do
       )
 
       plug(:dispatch)
-
-      if domains == [] do
-        raise "At least one domain option must be provided"
-      end
 
       match(_, to: AshJsonApi.Controllers.Router, init_opts: Keyword.put(opts, :domains, domains))
 

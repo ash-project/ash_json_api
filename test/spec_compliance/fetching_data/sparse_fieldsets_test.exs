@@ -5,33 +5,33 @@ defmodule AshJsonApiTest.FetchingData.SparseFieldsets do
 
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
 
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # A client MAY request that an endpoint return only specific fields in the response on a per-type basis by including a fields[TYPE] parameter.
   # --------------------------
   describe "fields[TYPE] parameter request" do
+    @describetag :spec_may
     # N/A
   end
 
   # I put this as "may" because sparse fieldsets is an optional feature
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # The value of the fields parameter MUST be a comma-separated (U+002C COMMA, “,”) list that refers to the name(s) of the fields to be returned.
   # --------------------------
   describe "fields[TYPE] parameter value" do
+    @describetag :spec_may
     # Do we want to implement this?
     # GET /articles?include=author&fields[articles]=title,body&fields[people]=name
   end
 
   # I put this as "may" because sparse fieldsets is an optional feature
-  @tag :spec_may
   # JSON:API 1.0 Specification
   # --------------------------
   # If a client requests a restricted set of fields for a given resource type, an endpoint MUST NOT include additional fields in resource objects of that type in its response.
   # --------------------------
   describe "No additional fields returned beyond the fields specified in the fields[TYPE] parameter" do
+    @describetag :spec_may
     # This is testing a negative, which is hard to do.
     # Perhaps this test is better done as part of a higher level test suite validation that runs every single time a request in the test suite is made (and validates against the JSON:API schema as one step)?
     # GET /articles?include=author&fields[articles]=title,body&fields[people]=name
