@@ -5,116 +5,109 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
-## [v1.3.7](https://github.com/ash-project/ash_json_api/compare/v1.3.6...v1.3.7) (2024-07-15)
-
-
-
+## [v1.3.8](https://github.com/ash-project/ash_json_api/compare/v1.3.7...v1.3.8) (2024-07-22)
 
 ### Bug Fixes:
 
-* relationship resource identifiers don't need to check the `id` type
+- [`AshJsonApi.Router`] don't double escape `modify_open_api`
 
-* properly reference related record in linkage
+### Improvements:
 
-* escape `modify_open_api_schema` option since it can be a 3/tuple
+- [`AshJsonApi.Router`] automatically infer the `prefix` instead of relying on configuration
 
-* handle unknown errors in `log_errors/2`
+- [`mix ash.patch.extend`] add `AshJsonApi` extender
 
-* ensure id is always coming back as a string
+- [`mix ash_json_api.install`] add installer for AshJsonApi
+
+## [v1.3.7](https://github.com/ash-project/ash_json_api/compare/v1.3.6...v1.3.7) (2024-07-15)
+
+### Bug Fixes:
+
+- [open api] escape `modify_open_api_schema` option since it can be a 3/tuple
+
+- [errors] handle unknown errors in `log_errors/2`
+
+- [serialization] relationship resource identifiers don't need to check the `id` type
+
+- [serialization] properly reference related record in linkage
+
+- [serialization] ensure id is always coming back as a string
 
 ## [v1.3.6](https://github.com/ash-project/ash_json_api/compare/v1.3.5...v1.3.6) (2024-07-08)
 
-
-
-
 ### Bug Fixes:
 
-* properly match enum types on input/output
+- [open api] properly match enum types on input/output
 
-* Avoid raising the condition converting the regex to string. (#204)
+- [errors] Avoid raising the condition converting the regex to string. (#204)
 
 ### Improvements:
 
-* honor `allow_all_media_type_params?` in `content-type` as well
+- [content type negotation] honor `allow_all_media_type_params?` in `content-type` as well
 
 ## [v1.3.5](https://github.com/ash-project/ash_json_api/compare/v1.3.4...v1.3.5) (2024-07-06)
 
-
-
-
 ### Bug Fixes:
 
-* use `conn.private`, not `conn[:private]`
+- [bugfix] use `conn.private`, not `conn[:private]`
 
 ## [v1.3.4](https://github.com/ash-project/ash_json_api/compare/v1.3.3...v1.3.4) (2024-07-05)
 
-
-
-
 ### Bug Fixes:
 
-* add leading slash to JSON pointer in schema errors (#199)
+- [errors] add leading slash to JSON pointer in schema errors (#199)
 
-* avoid failing openapi generation for non existing resource actions (#198)
+- [open api] avoid failing openapi generation for non existing resource actions (#198)
 
 ## [v1.3.3](https://github.com/ash-project/ash_json_api/compare/v1.3.2...v1.3.3) (2024-07-04)
 
-
-
-
 ### Bug Fixes:
 
-* ensure generic action bodies, both in & out are serialized properly
+- [serialization] ensure generic action bodies, both in & out are serialized properly
 
-* properly fetch nested types
+- [open api] properly fetch nested types
 
-* show embedded types when used with `:struct`
+- [open api] show embedded types when used with `:struct`
 
-* ensure `action.require_attributes` is stringified in json schema
+- [open api] ensure `action.require_attributes` is stringified in json schema
 
-* honor resource-level default_fields
+- [fields parameter] honor resource-level default_fields
 
 ## [v1.3.2](https://github.com/ash-project/ash_json_api/compare/v1.3.1...v1.3.2) (2024-07-02)
 
-
-
-
 ### Bug Fixes:
 
-* properly require `success` in return-less actions
+- [routes] ensure that context is threaded through for all actions
 
-* typo when checking for resource's derive_filter? flag
+- [open api] properly require `success` in return-less actions
 
-* ensure that context is threaded through for all actions
+- [open api] typo when checking for resource's derive_filter? flag
 
-* not all accepted attributes have to be public
+- [open api] not all accepted attributes have to be public
 
-* fix sort regex to be a valid regex
+- [open api] fix sort regex to be a valid regex
 
-* don't use `anyOf` for nullability
+- [open api] don't use `anyOf` for nullability
 
-* don't generate bodies for delete requests
+- [open api] don't generate bodies for delete requests
 
-* use `Enum.uniq` when uwnrapping any_of types
+- [open api] use `Enum.uniq` when uwnrapping any_of types
 
-* detect all cases where a filter must be generated
+- [open api] detect all cases where a filter must be generated
 
 ### Improvements:
 
-* use empty example for filter
+- [open api] use empty example for filter
 
-* support for query parameters using `query_params` route option
+- [routes] support for query parameters using `query_params` route option
 
 ## [v1.3.1](https://github.com/ash-project/ash_json_api/compare/v1.3.0...v1.3.1) (2024-07-01)
 
-
-
-
 ### Bug Fixes:
 
-* use strings for enum values
+- [open api] use strings for enum values
 
-* use `strings` for includes/sort properly, add regex for sort
+- [open api] use `strings` for includes/sort properly, add regex for sort
 
 ## [v1.3.0](https://github.com/ash-project/ash_json_api/compare/v1.2.2...v1.3.0) (2024-06-28)
 
