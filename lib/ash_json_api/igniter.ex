@@ -136,10 +136,6 @@ defmodule AshJsonApi.Igniter do
             path: "/api/json/open_api",
             default_model_expand_depth: 4
 
-          forward "/redoc",
-            Redoc.Plug.RedocUI,
-            spec_url: "/api/json/open_api"
-
           forward "/", #{inspect(ash_phoenix_router_name)}
           """,
           router: router
