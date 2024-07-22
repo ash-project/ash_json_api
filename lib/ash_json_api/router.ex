@@ -47,7 +47,7 @@ defmodule AshJsonApi.Router do
         init_opts: @opts
       )
 
-      if Code.ensure_loaded?(OpenApiSpex) do
+      if Code.ensure_loaded?(AshJsonApi.OpenApi) do
         def spec do
           AshJsonApi.OpenApi.spec(@opts)
         end
