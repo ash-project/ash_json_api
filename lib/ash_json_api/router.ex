@@ -24,18 +24,13 @@ defmodule AshJsonApi.Router do
   ```
   """
   defmacro __using__(opts) do
-    opts =
-      if Keyword.keyword?(opts) && opts[:modify_open_api] do
-        Keyword.update!(opts, :modify_open_api, &Macro.escape/1)
-      else
-        opts
-      end
-
-    quote bind_quoted: [opts: Spark.Dsl.Extension.expand_alias_no_require(opts, __CALLER__)] do
+    quote bind_quoted: [opts: opts] do
       require Ash.Domain.Info
       use Plug.Router
       require Ash
-      domains = List.wrap(opts[:domain] || opts[:domains])
+      @opts opts
+      domains = List.wrap(@opts[:domain] || @opts[:domains])
+      @opts Keyword.put(@opts, :domains, domains)
 
       plug(:match)
 
@@ -47,11 +42,14 @@ defmodule AshJsonApi.Router do
 
       plug(:dispatch)
 
-      match(_, to: AshJsonApi.Controllers.Router, init_opts: Keyword.put(opts, :domains, domains))
+      match(_,
+        to: AshJsonApi.Controllers.Router,
+        init_opts: @opts
+      )
 
       if Code.ensure_loaded?(OpenApiSpex) do
         def spec do
-          AshJsonApi.OpenApi.spec(unquote(opts))
+          AshJsonApi.OpenApi.spec(@opts)
         end
       end
     end
