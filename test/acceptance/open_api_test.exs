@@ -12,6 +12,18 @@ defmodule Test.Acceptance.OpenApiTest do
     end
   end
 
+  defmodule Foo do
+    use Ash.Resource, domain: nil
+
+    resource do
+      require_primary_key?(false)
+    end
+
+    attributes do
+      attribute(:foo, :string, public?: true)
+    end
+  end
+
   defmodule Author do
     use Ash.Resource,
       domain: Test.Acceptance.OpenApiTest.Blogs,
@@ -41,6 +53,7 @@ defmodule Test.Acceptance.OpenApiTest do
         route :post, "/say_hello/:to", :say_hello
         route :post, "/trigger_job", :trigger_job
         route(:get, "returns_map", :returns_map)
+        route(:get, "/get_foo", :get_foo)
       end
     end
 
@@ -54,6 +67,14 @@ defmodule Test.Acceptance.OpenApiTest do
 
         run(fn input, _ ->
           {:ok, "Hello, #{input.arguments.to}! From: #{input.arguments.from}"}
+        end)
+      end
+
+      action :get_foo, :struct do
+        constraints(instance_of: Foo)
+
+        run(fn input, _ ->
+          {:ok, %Foo{foo: "bar"}}
         end)
       end
 
@@ -289,7 +310,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 9
+    assert map_size(api_spec.paths) == 10
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -343,6 +364,28 @@ defmodule Test.Acceptance.OpenApiTest do
              properties: %{
                a: %OpenApiSpex.Schema{type: :integer},
                b: %OpenApiSpex.Schema{type: :string}
+             }
+           } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
+  end
+
+  test "generic routes have properly specified returns in the case of structs", %{
+    open_api_spec: %OpenApi{} = api_spec
+  } do
+    assert generic_action_schema = api_spec.paths["/authors/get_foo"].get
+
+    assert [] = generic_action_schema.parameters
+
+    refute generic_action_schema.requestBody
+
+    assert %OpenApiSpex.Schema{
+             type: :object,
+             required: [],
+             properties: %{
+               foo: %OpenApiSpex.Schema{
+                 type: :string,
+                 description: "Field included by default.",
+                 nullable: true
+               }
              }
            } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
   end

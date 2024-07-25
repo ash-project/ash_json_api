@@ -1196,7 +1196,7 @@ defmodule AshJsonApi.JsonSchema do
 
   def embedded?(resource_or_type) do
     if Ash.Resource.Info.resource?(resource_or_type) do
-      Ash.Resource.Info.embedded?(resource_or_type)
+      true
     else
       Ash.Type.embedded_type?(resource_or_type)
     end
