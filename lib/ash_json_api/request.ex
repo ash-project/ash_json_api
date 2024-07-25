@@ -70,6 +70,9 @@ defmodule AshJsonApi.Request do
   def from(conn, resource, action, domain, all_domains, route, prefix) do
     includes = Includes.Parser.parse_and_validate_includes(resource, conn.query_params)
 
+    {_, route_schema} =
+      AshJsonApi.JsonSchema.route_schema(route, domain, resource, prefix: prefix)
+
     %__MODULE__{
       domain: domain,
       resource: resource,
@@ -84,7 +87,7 @@ defmodule AshJsonApi.Request do
       context: get_context(conn),
       body: conn.body_params,
       all_domains: all_domains,
-      schema: AshJsonApi.JsonSchema.route_schema(route, domain, resource, prefix: prefix),
+      schema: route_schema,
       relationship: route.relationship,
       route: route,
       json_api_prefix: prefix || AshJsonApi.Domain.Info.prefix(domain)

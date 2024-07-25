@@ -16,20 +16,38 @@ defmodule AshJsonApi.JsonSchema do
           |> Ash.Domain.Info.resources()
           |> Enum.filter(&AshJsonApi.Resource.Info.type(&1))
 
-        new_route_schemas =
-          Enum.flat_map(resources, fn resource ->
-            resource
-            |> AshJsonApi.Resource.Info.routes(domains)
-            |> Enum.map(&route_schema(&1, domain, resource, opts))
+        {refs, new_route_schemas} =
+          Enum.reduce(resources, {[], []}, fn resource, {refs, schemas} ->
+            {new_refs, route_schemas} =
+              resource
+              |> AshJsonApi.Resource.Info.routes(domains)
+              |> Enum.reduce({[], []}, fn route, {refs, route_schemas} ->
+                {new_refs, new_route_schema} =
+                  route_schema(route, domain, resource, opts)
+
+                {refs ++ new_refs, [new_route_schema | route_schemas]}
+              end)
+
+            {refs ++ new_refs,  schemas ++ Enum.reverse(route_schemas)}
           end)
+
+        refs = Enum.uniq(refs)
 
         definitions =
           Enum.reduce(resources, definitions, fn resource, acc ->
-            Map.put(
-              acc,
-              AshJsonApi.Resource.Info.type(resource),
-              resource_object_schema(resource)
-            )
+            # for now, we only hide resource definitions if they are in refs
+            # in the future we should hide any that aren't used
+            type = AshJsonApi.Resource.Info.type(resource)
+
+            if "#/definitions/#{type}" in refs do
+              Map.put(
+                acc,
+                type,
+                resource_object_schema(resource)
+              )
+            else
+              acc
+            end
           end)
 
         {definitions, new_route_schemas ++ schemas}
@@ -48,33 +66,37 @@ defmodule AshJsonApi.JsonSchema do
     {href, properties} = route_href(route, domain, opts)
 
     {href_schema, query_param_string} = href_schema(route, domain, resource, properties)
+    {renders, target_schema} = target_schema(route, domain, resource)
 
-    %{
-      "href" => href <> query_param_string,
-      "hrefSchema" => href_schema,
-      "description" => "pending",
-      "method" => route.method |> to_string() |> String.upcase(),
-      "rel" => to_string(route.type),
-      "targetSchema" => target_schema(route, domain, resource),
-      "headerSchema" => header_schema()
-    }
+    {renders,
+     %{
+       "href" => href <> query_param_string,
+       "hrefSchema" => href_schema,
+       "description" => "pending",
+       "method" => route.method |> to_string() |> String.upcase(),
+       "rel" => to_string(route.type),
+       "targetSchema" => target_schema,
+       "headerSchema" => header_schema()
+     }}
   end
 
   def route_schema(route, domain, resource, opts) do
     {href, properties} = route_href(route, domain, opts)
 
     {href_schema, query_param_string} = href_schema(route, domain, resource, properties)
+    {renders, target_schema} = target_schema(route, domain, resource)
 
-    %{
-      "href" => href <> query_param_string,
-      "hrefSchema" => href_schema,
-      "description" => "pending",
-      "method" => route.method |> to_string() |> String.upcase(),
-      "rel" => to_string(route.type),
-      "schema" => route_in_schema(route, domain, resource),
-      "targetSchema" => target_schema(route, domain, resource),
-      "headerSchema" => header_schema()
-    }
+    {renders,
+     %{
+       "href" => href <> query_param_string,
+       "hrefSchema" => href_schema,
+       "description" => "pending",
+       "method" => route.method |> to_string() |> String.upcase(),
+       "rel" => to_string(route.type),
+       "schema" => route_in_schema(route, domain, resource),
+       "targetSchema" => target_schema,
+       "headerSchema" => header_schema()
+     }}
   end
 
   defp header_schema do
@@ -1016,85 +1038,95 @@ defmodule AshJsonApi.JsonSchema do
               return_type
             end
 
-          %{
-            "oneOf" => [
-              full_return_type,
-              %{
-                "$ref" => "#/definitions/errors"
-              }
-            ]
-          }
+          {[],
+           %{
+             "oneOf" => [
+               full_return_type,
+               %{
+                 "$ref" => "#/definitions/errors"
+               }
+             ]
+           }}
         else
-          %{
-            "oneOf" => [
-              %{
-                type: :object,
-                properties: %{
-                  success: %{enum: [true]}
-                },
-                required: ["success"]
-              },
-              %{
-                "$ref" => "#/definitions/errors"
-              }
-            ]
-          }
+          {[],
+           %{
+             "oneOf" => [
+               %{
+                 type: :object,
+                 properties: %{
+                   success: %{enum: [true]}
+                 },
+                 required: ["success"]
+               },
+               %{
+                 "$ref" => "#/definitions/errors"
+               }
+             ]
+           }}
         end
 
       :index ->
-        %{
-          "oneOf" => [
-            %{
-              "data" => %{
-                "description" =>
-                  "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
-                "type" => "array",
-                "items" => %{
-                  "$ref" => "#/definitions/#{AshJsonApi.Resource.Info.type(resource)}"
-                },
-                "uniqueItems" => true
-              },
-              "meta" => %{
-                "type" => "object"
-              }
-            },
-            %{
-              "$ref" => "#/definitions/errors"
-            }
-          ]
-        }
+        ref = "#/definitions/#{AshJsonApi.Resource.Info.type(resource)}"
+
+        {[ref],
+         %{
+           "oneOf" => [
+             %{
+               "data" => %{
+                 "description" =>
+                   "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
+                 "type" => "array",
+                 "items" => %{
+                   "$ref" => ref
+                 },
+                 "uniqueItems" => true
+               },
+               "meta" => %{
+                 "type" => "object"
+               }
+             },
+             %{
+               "$ref" => "#/definitions/errors"
+             }
+           ]
+         }}
 
       :delete ->
-        %{
-          "oneOf" => [
-            nil,
-            %{
-              "$ref" => "#/definitions/errors"
-            }
-          ]
-        }
+        {[],
+         %{
+           "oneOf" => [
+             nil,
+             %{
+               "$ref" => "#/definitions/errors"
+             }
+           ]
+         }}
 
       type when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] ->
-        resource
-        |> Ash.Resource.Info.public_relationship(route.relationship)
-        |> relationship_resource_identifiers()
+        {[],
+         resource
+         |> Ash.Resource.Info.public_relationship(route.relationship)
+         |> relationship_resource_identifiers()}
 
       _ ->
-        %{
-          "oneOf" => [
-            %{
-              "data" => %{
-                "$ref" => "#/definitions/#{AshJsonApi.Resource.Info.type(resource)}"
-              },
-              "meta" => %{
-                "type" => "object"
-              }
-            },
-            %{
-              "$ref" => "#/definitions/errors"
-            }
-          ]
-        }
+        ref = "#/definitions/#{AshJsonApi.Resource.Info.type(resource)}"
+
+        {[ref],
+         %{
+           "oneOf" => [
+             %{
+               "data" => %{
+                 "$ref" => ref
+               },
+               "meta" => %{
+                 "type" => "object"
+               }
+             },
+             %{
+               "$ref" => "#/definitions/errors"
+             }
+           ]
+         }}
     end
   end
 
