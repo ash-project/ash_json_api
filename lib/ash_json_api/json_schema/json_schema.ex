@@ -371,7 +371,7 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp resource_write_attribute_type(%{type: type} = attr, action_type) do
-    if Ash.Type.embedded_type?(type) do
+    if embedded?(type) do
       embedded_type_input(attr, action_type)
     else
       if :erlang.function_exported(type, :json_write_schema, 1) do
@@ -439,7 +439,7 @@ defmodule AshJsonApi.JsonSchema do
       function_exported?(type, :json_schema, 1) ->
         type.json_schema(constraints)
 
-      Ash.Type.embedded_type?(type) ->
+      embedded?(type) ->
         %{
           "type" => "object",
           "properties" => resource_attributes(type),

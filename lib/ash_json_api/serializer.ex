@@ -737,13 +737,21 @@ defmodule AshJsonApi.Serializer do
   end
 
   def serialize_value(value, type, constraints, domain) do
-    {type, _constraints} = flatten_new_type(type, constraints || [])
+    {type, constraints} = flatten_new_type(type, constraints || [])
 
-    if Ash.Type.embedded_type?(type) do
+    with Ash.Type.Struct <- type,
+         instance_of when not is_nil(instance_of) <- constraints[:instance_of],
+         true <- Ash.Resource.Info.resource?(instance_of) do
       req = %{fields: %{}, route: %{}, domain: domain}
       serialize_attributes(req, value)
     else
-      value
+      _ ->
+        if Ash.Type.embedded_type?(type) do
+          req = %{fields: %{}, route: %{}, domain: domain}
+          serialize_attributes(req, value)
+        else
+          value
+        end
     end
   end
 
