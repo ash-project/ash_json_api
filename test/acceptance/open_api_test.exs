@@ -13,7 +13,11 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   defmodule Foo do
-    use Ash.Resource, domain: nil
+    use Ash.Resource, domain: nil, extensions: AshJsonApi.Resource
+
+    json_api do
+      type "foo"
+    end
 
     resource do
       require_primary_key?(false)

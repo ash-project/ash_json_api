@@ -125,16 +125,15 @@ defmodule AshJsonApi.JsonSchema do
           "A \"Resource object\" representing a #{AshJsonApi.Resource.Info.type(resource)}",
       "type" => "object",
       "required" => ["type", "id"],
-      "properties" => %{
-        "type" => %{
-          "additionalProperties" => false
-        },
-        "id" => %{
-          "type" => "string"
-        },
-        "attributes" => attributes(resource),
-        "relationships" => relationships(resource)
-      },
+      "properties" =>
+        %{
+          "type" => %{
+            "additionalProperties" => false
+          },
+          "attributes" => attributes(resource),
+          "relationships" => relationships(resource)
+        }
+        |> add_id_field(resource),
       "additionalProperties" => false
     }
   end
@@ -300,6 +299,13 @@ defmodule AshJsonApi.JsonSchema do
     nil
   end
 
+  defp add_id_field(map, resource) do
+    case Ash.Resource.Info.primary_key(resource) do
+      [] -> map
+      _ -> Map.put(map, "id", %{"type" => "string"})
+    end
+  end
+
   defp resource_relationship_field_data(_resource, %{
          type: {:array, _},
          name: name
@@ -313,8 +319,6 @@ defmodule AshJsonApi.JsonSchema do
         %{
           "description" => "Identifiers for #{name}",
           "type" => "object",
-          # We need to inspect the options here to see if type & id is required
-          # "required" => ["type", "id"],
           "additionalProperties" => false,
           "properties" => %{
             "type" => %{"type" => "string"},
@@ -330,9 +334,7 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
-  defp resource_relationship_field_data(_resource, %{
-         name: name
-       }) do
+  defp resource_relationship_field_data(_resource, %{name: name}) do
     %{
       "description" => "An array of inputs for #{name}",
       "type" => "array",
@@ -819,29 +821,28 @@ defmodule AshJsonApi.JsonSchema do
         "data" => %{
           "type" => "object",
           "additionalProperties" => false,
-          "properties" => %{
-            "id" => %{
-              "type" => "string"
-            },
-            "type" => %{
-              "const" => AshJsonApi.Resource.Info.type(resource)
-            },
-            "attributes" => %{
-              "type" => "object",
-              "additionalProperties" => false,
-              "required" =>
-                required_write_attributes(resource, non_relationship_arguments, action, route),
-              "properties" =>
-                write_attributes(resource, non_relationship_arguments, action, route)
-            },
-            "relationships" => %{
-              "type" => "object",
-              "additionalProperties" => false,
-              "required" =>
-                required_relationship_attributes(resource, relationship_arguments, action),
-              "properties" => write_relationships(resource, relationship_arguments, action)
+          "properties" =>
+            %{
+              "type" => %{
+                "const" => AshJsonApi.Resource.Info.type(resource)
+              },
+              "attributes" => %{
+                "type" => "object",
+                "additionalProperties" => false,
+                "required" =>
+                  required_write_attributes(resource, non_relationship_arguments, action, route),
+                "properties" =>
+                  write_attributes(resource, non_relationship_arguments, action, route)
+              },
+              "relationships" => %{
+                "type" => "object",
+                "additionalProperties" => false,
+                "required" =>
+                  required_relationship_attributes(resource, relationship_arguments, action),
+                "properties" => write_relationships(resource, relationship_arguments, action)
+              }
             }
-          }
+            |> add_id_field(resource)
         }
       }
     }
@@ -878,19 +879,18 @@ defmodule AshJsonApi.JsonSchema do
             "type" => "object",
             "required" => ["id", "type"],
             "additionalProperties" => false,
-            "properties" => %{
-              "id" => %{
-                "type" => "string"
-              },
-              "type" => %{
-                "const" => AshJsonApi.Resource.Info.type(relationship.destination)
-              },
-              "meta" => %{
-                "type" => "object"
-                #   "properties" => join_attribute_properties(relationship),
-                #   "additionalProperties" => false
+            "properties" =>
+              %{
+                "type" => %{
+                  "const" => AshJsonApi.Resource.Info.type(relationship.destination)
+                },
+                "meta" => %{
+                  "type" => "object"
+                  #   "properties" => join_attribute_properties(relationship),
+                  #   "additionalProperties" => false
+                }
               }
-            }
+              |> add_id_field(relationship.destination)
           }
         }
       }
