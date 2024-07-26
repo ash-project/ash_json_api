@@ -94,6 +94,57 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  def multipart_post(domain, path, body, opts \\ []) do
+    parser_opts =
+      Plug.Parsers.init(parsers: [AshJsonApi.Plug.Parser], pass: ["*/*"], json_decoder: Jason)
+
+    result =
+      :post
+      |> conn(path, Multipart.body_binary(body))
+      |> put_req_header(
+        "content-type",
+        Multipart.content_type(body, "multipart/x.ash+form-data")
+      )
+      |> set_accept_request_header(opts)
+      |> Plug.Parsers.call(parser_opts)
+      |> AshJsonApi.Domain.Info.router(domain).call(
+        AshJsonApi.Domain.Info.router(domain).init([])
+      )
+
+    assert result.state == :sent
+
+    unless opts[:skip_resp_header_check] do
+      if 200 <= result.status and result.status <= 300 do
+        assert_response_header_equals(result, "content-type", "application/vnd.api+json")
+      end
+    end
+
+    if opts[:status] do
+      resp_body =
+        try do
+          inspect(Jason.decode!(result.resp_body), pretty: true)
+        rescue
+          _ ->
+            inspect(result.resp_body)
+        end
+
+      assert result.status == opts[:status], """
+      Expected to get status #{opts[:status]} but got #{result.status}.
+
+      Response body: #{resp_body}
+      """
+    end
+
+    if Keyword.get(opts, :decode?, true) do
+      resp_body = Jason.decode!(result.resp_body)
+
+      # JsonXema.validate!(@schema, resp_body)
+      %{result | resp_body: resp_body}
+    else
+      result
+    end
+  end
+
   def patch(domain, path, body, opts \\ []) do
     result =
       :patch
