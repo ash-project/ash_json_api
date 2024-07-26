@@ -55,7 +55,7 @@ defmodule Test.Acceptance.OpenApiTest do
         index(:read, derive_filter?: false, derive_sort?: false, route: "/no_filter")
         patch(:update)
         route :post, "/say_hello/:to", :say_hello
-        route :post, "/trigger_job", :trigger_job
+        route :post, "/trigger_job", :trigger_job, query_params: [:job_id]
         route(:get, "returns_map", :returns_map)
         route(:get, "/get_foo", :get_foo)
       end
@@ -83,6 +83,8 @@ defmodule Test.Acceptance.OpenApiTest do
       end
 
       action :trigger_job do
+        argument(:job_id, :string)
+
         run(fn _input, _ ->
           :ok
         end)
@@ -399,7 +401,15 @@ defmodule Test.Acceptance.OpenApiTest do
   } do
     assert generic_action_schema = api_spec.paths["/authors/trigger_job"].post
 
-    assert [] = generic_action_schema.parameters
+    assert [
+             %OpenApiSpex.Parameter{
+               name: :job_id,
+               in: :query,
+               description: "job_id",
+               required: false,
+               schema: %OpenApiSpex.Schema{type: :string}
+             }
+           ] = generic_action_schema.parameters
 
     refute generic_action_schema.requestBody
 

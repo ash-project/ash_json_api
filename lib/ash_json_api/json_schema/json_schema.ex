@@ -28,7 +28,7 @@ defmodule AshJsonApi.JsonSchema do
                 {refs ++ new_refs, [new_route_schema | route_schemas]}
               end)
 
-            {refs ++ new_refs,  schemas ++ Enum.reverse(route_schemas)}
+            {refs ++ new_refs, schemas ++ Enum.reverse(route_schemas)}
           end)
 
         refs = Enum.uniq(refs)

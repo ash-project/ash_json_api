@@ -1022,8 +1022,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
          when type in [
                 :post_to_relationship,
                 :patch_relationship,
-                :delete_from_relationship,
-                :route
+                :delete_from_relationship
               ] do
       []
     end
@@ -1074,7 +1073,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           }
         end)
 
-      [include_parameter(resource), fields_parameter(resource)]
+      if route.type == :route do
+        []
+      else
+        [include_parameter(resource), fields_parameter(resource)]
+      end
       |> Enum.filter(& &1)
       |> Enum.concat(query_params)
       |> Enum.reverse()
