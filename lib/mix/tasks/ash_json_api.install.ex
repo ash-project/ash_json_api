@@ -1,5 +1,5 @@
 defmodule Mix.Tasks.AshJsonApi.Install do
-  @moduledoc "Installs AshJsonApi. Should be run with `mix igniter.install ash_postgres`"
+  @moduledoc "Installs AshJsonApi. Should be run with `mix igniter.install ash_json_api`"
   @shortdoc @moduledoc
   require Igniter.Code.Common
   use Igniter.Mix.Task
