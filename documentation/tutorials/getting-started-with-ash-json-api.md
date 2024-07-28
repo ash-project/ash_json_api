@@ -10,6 +10,18 @@
 mix igniter.install ash_json_api
 ```
 
+After running the command above, you might encounter an error:
+
+```
+** (UndefinedFunctionError) function Igniter.Libs.Phoenix.web_module_name/1 is undefined (module Igniter.Libs.Phoenix is not available)
+```
+
+This can be fixed by running:
+
+```
+mix deps.compile
+```
+
 ### Manually
 
 This manual setup branches off from the [Getting Started with Ash](https://hexdocs.pm/ash/get-started.html) guide.
@@ -35,9 +47,9 @@ Add the following to your `config/config.exs`.
 
 ```elixir
 # config/config.exs
-config :mime, :types, %{
-  "application/vnd.api+json" => ["json"]
-}
+config :mime,
+  extensions: %{"json" => "application/vnd.api+json"},
+  types: %{"application/vnd.api+json" => ["json"]}
 ```
 
 This configuration is required to support working with the JSON:API custom mime type.
@@ -68,7 +80,8 @@ defmodule HelpdeskWeb.JsonApiRouter do
     # The api modules you want to serve
     domains: [Module.concat(["Helpdesk.Support"])],
     # optionally an open_api route
-    open_api: "/open_api"
+    open_api: "/open_api",
+    prefix: "/api/json"
 end
 ```
 
