@@ -59,6 +59,10 @@ defmodule Test.Acceptance.PostTest do
             )
           end)
         end
+
+        post :import do
+          route "/import"
+        end
       end
     end
 
@@ -70,6 +74,16 @@ defmodule Test.Acceptance.PostTest do
       create :confirm_name do
         argument(:confirm, :string, allow_nil?: false)
         validate(confirm(:name, :confirm))
+      end
+
+      create :import do
+        argument(:file, :file, allow_nil?: false)
+
+        change(fn changeset, _context ->
+          {:ok, device} = Ash.Type.File.open(changeset.arguments.file)
+
+          Ash.Changeset.change_attribute(changeset, :name, IO.read(device, :eof))
+        end)
       end
 
       read :sign_in do
@@ -363,6 +377,83 @@ defmodule Test.Acceptance.PostTest do
         "relationships" => %{"posts" => %{"links" => %{}, "meta" => %{}}},
         "type" => "author"
       })
+    end
+
+    test "create with base64 import file" do
+      resp =
+        post(
+          Domain,
+          "/authors/import",
+          %{
+            data: %{
+              type: "author",
+              attributes: %{
+                file: Base.encode64("imported name")
+              }
+            }
+          },
+          status: 201
+        )
+
+      assert resp.resp_body["data"]["attributes"]["name"] == "imported name"
+    end
+
+    test "create with invalid base64 import file" do
+      response =
+        post(
+          Domain,
+          "/authors/import",
+          %{
+            data: %{
+              type: "author",
+              attributes: %{
+                file: "not base64"
+              }
+            }
+          },
+          status: 400
+        )
+
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "invalid_field"
+    end
+
+    test "create with multipart import file" do
+      import_file_ref = "~~import~~"
+
+      resp =
+        multipart_post(
+          Domain,
+          "/authors/import",
+          Multipart.new()
+          |> Multipart.add_part(
+            Multipart.Part.file_content_field(
+              import_file_ref,
+              "imported name",
+              import_file_ref,
+              [],
+              filename: "import.txt",
+              content_type: "text/plain"
+            )
+          )
+          |> Multipart.add_part(
+            Multipart.Part.file_content_field(
+              "data",
+              Jason.encode!(%{
+                type: "author",
+                attributes: %{
+                  file: import_file_ref
+                }
+              }),
+              "data",
+              [],
+              content_type: "application/vnd.api+json"
+            )
+          ),
+          status: 201
+        )
+
+      assert resp.resp_body["data"]["attributes"]["name"] == "imported name"
     end
 
     test "create with unknown input in embed generates correct error code" do

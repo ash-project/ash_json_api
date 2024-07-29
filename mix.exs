@@ -126,12 +126,13 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 3.0 and >= 3.2.3")},
+      {:ash, ash_version("~> 3.0 and >= 3.3.0")},
       {:spark, "~> 2.2 and >= 2.2.10"},
       {:igniter, "~> 0.3 and >= 0.3.9"},
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4"},
+      {:multipart, "~> 0.4.0", only: [:dev, :test]},
       {:open_api_spex, "~> 3.16", optional: true},
       {:git_ops, "~> 2.4", only: [:dev, :test]},
       {:ex_doc, github: "elixir-lang/ex_doc", only: [:dev, :test], runtime: false},

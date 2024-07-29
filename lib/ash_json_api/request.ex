@@ -226,7 +226,11 @@ defmodule AshJsonApi.Request do
 
             {:ok, "application", "vnd.api+json", params} ->
               Application.get_env(:ash_json_api, :allow_all_media_type_params?, false) ||
-                valid_header_params?(params)
+                valid_header_params?(params, :json)
+
+            {:ok, "multipart", "x.ash+form-data", params} ->
+              Application.get_env(:ash_json_api, :allow_all_media_type_params?, false) ||
+                valid_header_params?(params, :multipart)
 
             _ ->
               false
@@ -265,7 +269,7 @@ defmodule AshJsonApi.Request do
         headers ->
           Enum.any?(headers, fn {:ok, "application", "vnd.api+json", params} ->
             Application.get_env(:ash_json_api, :allow_all_media_type_params?, false) ||
-              valid_header_params?(params)
+              valid_header_params?(params, :json)
           end)
       end
 
@@ -276,10 +280,18 @@ defmodule AshJsonApi.Request do
     end
   end
 
-  defp valid_header_params?(params) do
+  @spec valid_header_params?(params :: Plug.Conn.Utils.params(), format :: :json | :multipart) ::
+          boolean
+  defp valid_header_params?(params, format) do
     params
     |> Map.keys()
     |> Enum.sort()
+    |> then(
+      case format do
+        :json -> & &1
+        :multipart -> &List.delete(&1, "boundary")
+      end
+    )
     |> case do
       [] ->
         true
@@ -684,21 +696,36 @@ defmodule AshJsonApi.Request do
        )
        when is_map(attributes) do
     Enum.reduce(attributes, request, fn {key, value}, request ->
-      cond do
-        arg =
-            Enum.find(action.arguments, fn argument ->
-              to_string(argument.name) == key
-            end) ->
-          %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
+      matching_argument = Enum.find(action.arguments, &(to_string(&1.name) == key))
+      matching_accept = action |> Map.get(:accept, []) |> Enum.find(&(to_string(&1) == key))
 
-        name = Enum.find(action.accept, &(to_string(&1) == key)) ->
-          if action.type == :action do
-            request
+      case {matching_argument || matching_accept, value} do
+        {%Ash.Resource.Actions.Argument{name: name, type: Ash.Type.File}, value}
+        when is_binary(value) ->
+          with {:ok, decoded} <- Base.decode64(value),
+               {:ok, device} <- StringIO.open(decoded) do
+            file = Ash.Type.File.from_io(device)
+            %{request | arguments: Map.put(request.arguments || %{}, name, file)}
           else
-            %{request | attributes: Map.put(request.attributes || %{}, name, value)}
+            :error ->
+              add_error(
+                request,
+                AshJsonApi.Error.InvalidField.exception(
+                  type: Ash.Type.File,
+                  field: name,
+                  detail: "valid base64 expected"
+                ),
+                request.route.type
+              )
           end
 
-        true ->
+        {%Ash.Resource.Actions.Argument{name: name}, value} ->
+          %{request | arguments: Map.put(request.arguments || %{}, name, value)}
+
+        {accept, value} when is_atom(accept) ->
+          %{request | attributes: Map.put(request.attributes || %{}, accept, value)}
+
+        {nil, _value} ->
           request
       end
     end)
