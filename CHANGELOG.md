@@ -5,6 +5,24 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.0](https://github.com/ash-project/ash_json_api/compare/v1.3.8...v1.4.0) (2024-07-30)
+
+### Features:
+
+- [`Ash.Type.File`] Ash.Type.File support (#214)
+
+See `AshJsonApi.Plug.Parser` for usage information.
+
+### Bug Fixes:
+
+- [attributes] reject allow_nil_input fields in required_write_attributes (#219)
+
+- [Open API] properly document query_params from generic routes in open api spec
+
+- [Open API] only include referenced resource types in definitions
+
+- [Open API] properly spec (and test the spec) for actions that return resources
+
 ## [v1.3.8](https://github.com/ash-project/ash_json_api/compare/v1.3.7...v1.3.8) (2024-07-22)
 
 ### Bug Fixes:
