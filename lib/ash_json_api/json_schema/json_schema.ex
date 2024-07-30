@@ -929,7 +929,7 @@ defmodule AshJsonApi.JsonSchema do
         |> Enum.filter(&(&1.name in action.accept && &1.writable?))
         |> Enum.reject(
           &(&1.allow_nil? || not is_nil(&1.default) || &1.generated? ||
-             &1.name in Map.get(action, :allow_nil_input, []))
+              &1.name in Map.get(action, :allow_nil_input, []))
         )
         |> Enum.map(&to_string(&1.name))
       end

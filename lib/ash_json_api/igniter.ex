@@ -84,6 +84,7 @@ defmodule AshJsonApi.Igniter do
 
       {igniter, router} ->
         igniter
+        |> update_endpoints(router)
         |> Igniter.Project.Config.configure(
           "config.exs",
           :mime,
@@ -140,6 +141,68 @@ defmodule AshJsonApi.Igniter do
           """,
           router: router
         )
+    end
+  end
+
+  defp update_endpoints(igniter, router) do
+    {igniter, endpoints_that_need_parser} =
+      Igniter.Libs.Phoenix.endpoints_for_router(igniter, router)
+
+    Enum.reduce(endpoints_that_need_parser, igniter, fn endpoint, igniter ->
+      Igniter.Code.Module.find_and_update_module!(igniter, endpoint, fn zipper ->
+        case Igniter.Code.Function.move_to_function_call_in_current_scope(
+               zipper,
+               :plug,
+               2,
+               &Igniter.Code.Function.argument_equals?(&1, 0, Plug.Parsers)
+             ) do
+          {:ok, zipper} ->
+            with {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 1),
+                 {:ok, zipper} <- Igniter.Code.Keyword.get_key(zipper, :parsers),
+                 {:ok, zipper} <-
+                   Igniter.Code.List.append_new_to_list(zipper, AshJsonApi.Plug.Parser) do
+              {:ok, zipper}
+            else
+              _ ->
+                {:warning,
+                 "Could not add `AshJsonApi.Plug.Parser` to parsers in endpoint #{endpoint}. Please make this change manually."}
+            end
+
+          :error ->
+            with {:ok, zipper} <- parser_location(zipper) do
+              {:ok,
+               Igniter.Code.Common.add_code(zipper, """
+               plug Plug.Parsers,
+                 parsers: [:urlencoded, :multipart, :json, AshJsonApi.Plug.Parser],
+                 pass: ["*/*"],
+                 json_decoder: Jason
+               """)}
+            else
+              _ ->
+                {:warning,
+                 "Could not add `AshJsonApi.Plug.Parser` to parsers in endpoint #{endpoint}. Please make this change manually."}
+            end
+        end
+      end)
+    end)
+  end
+
+  defp parser_location(zipper) do
+    with :error <-
+           Igniter.Code.Function.move_to_function_call_in_current_scope(
+             zipper,
+             :plug,
+             [1, 2],
+             &Igniter.Code.Function.argument_equals?(&1, 0, Plug.Telemetry)
+           ),
+         :error <-
+           Igniter.Code.Function.move_to_function_call_in_current_scope(
+             zipper,
+             :plug,
+             [1, 2]
+           ),
+         :error <- Igniter.Code.Module.move_to_use(zipper, Phoenix.Endpoint) do
+      :error
     end
   end
 
