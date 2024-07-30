@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.1](https://github.com/ash-project/ash_json_api/compare/v1.4.0...v1.4.1) (2024-07-30)
+
+
+
+
+### Improvements:
+
+* properly install domain with `Module.concat` in AshJsonApi router
+
+* include multipart parser in installer
+
 ## [v1.4.0](https://github.com/ash-project/ash_json_api/compare/v1.3.8...v1.4.0) (2024-07-30)
 
 ### Features:
