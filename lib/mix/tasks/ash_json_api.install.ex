@@ -6,7 +6,7 @@ defmodule Mix.Tasks.AshJsonApi.Install do
 
   def info(_argv, _parent) do
     %Igniter.Mix.Task.Info{
-      installs: [{:open_api_spex, "~> 3.0"}]
+      adds_deps: [{:open_api_spex, "~> 3.0"}]
     }
   end
 

@@ -133,6 +133,7 @@ defmodule AshJsonApi.Plug.Parser do
         ) :: {:cont, part_acc()} | {:halt, {:error, term()}}
   defp reduce_part(part, acc, json_opts, force_generic \\ false)
 
+  # sobelow_skip ["Traversal.FileModule"]
   defp reduce_part(
          {"data", part_headers, %Plug.Upload{path: path} = body},
          {:ok, data, acc, conn},

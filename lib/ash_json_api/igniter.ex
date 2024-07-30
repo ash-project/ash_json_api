@@ -52,12 +52,17 @@ defmodule AshJsonApi.Igniter do
         end
       end)
 
+    domains =
+      Enum.map_join(domains, ", ", fn domain ->
+        "Module.concat(\"#{inspect(domain)}\")"
+      end)
+
     igniter
     |> Igniter.Code.Module.find_and_update_or_create_module(
       ash_phoenix_router_name,
       """
       use AshJsonApi.Router,
-        domains: #{inspect(domains)},
+        domains: [#{domains}],
         open_api: "/open_api"
       """,
       fn zipper ->
@@ -169,15 +174,16 @@ defmodule AshJsonApi.Igniter do
             end
 
           :error ->
-            with {:ok, zipper} <- parser_location(zipper) do
-              {:ok,
-               Igniter.Code.Common.add_code(zipper, """
-               plug Plug.Parsers,
-                 parsers: [:urlencoded, :multipart, :json, AshJsonApi.Plug.Parser],
-                 pass: ["*/*"],
-                 json_decoder: Jason
-               """)}
-            else
+            case parser_location(zipper) do
+              {:ok, zipper} ->
+                {:ok,
+                 Igniter.Code.Common.add_code(zipper, """
+                 plug Plug.Parsers,
+                   parsers: [:urlencoded, :multipart, :json, AshJsonApi.Plug.Parser],
+                   pass: ["*/*"],
+                   json_decoder: Jason
+                 """)}
+
               _ ->
                 {:warning,
                  "Could not add `AshJsonApi.Plug.Parser` to parsers in endpoint #{endpoint}. Please make this change manually."}
@@ -200,8 +206,8 @@ defmodule AshJsonApi.Igniter do
              zipper,
              :plug,
              [1, 2]
-           ),
-         :error <- Igniter.Code.Module.move_to_use(zipper, Phoenix.Endpoint) do
+           ) do
+      Igniter.Code.Module.move_to_use(zipper, Phoenix.Endpoint)
       :error
     end
   end

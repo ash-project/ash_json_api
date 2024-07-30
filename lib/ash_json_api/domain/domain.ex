@@ -219,9 +219,19 @@ defmodule AshJsonApi.Domain do
           with {:ok, zipper} <- Igniter.Code.Module.move_to_use(zipper, AshJsonApi.Router),
                {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 1),
                {:ok, zipper} <- Igniter.Code.Keyword.get_key(zipper, :domains),
-               {:ok, zipper} <- Igniter.Code.List.append_to_list(zipper, domain) do
+               {:has_domain?, false} <- {:has_domain?, list_has_domain?(zipper, domain)},
+               {:ok, zipper} <-
+                 Igniter.Code.List.append_to_list(
+                   zipper,
+                   Sourceror.parse_string!("""
+                    Module.concat("#{inspect(domain)}")
+                   """)
+                 ) do
             {:ok, zipper}
           else
+            {:has_domain?, true} ->
+              {:ok, zipper}
+
             _ ->
               {:warning,
                """
@@ -232,5 +242,22 @@ defmodule AshJsonApi.Domain do
           end
         end)
     end
+  end
+
+  defp list_has_domain?(zipper, domain) do
+    list_has_literal_domain?(zipper, domain) || list_has_concat_domain?(zipper, domain)
+  end
+
+  defp list_has_literal_domain?(zipper, domain) do
+    !!Igniter.Code.List.find_list_item_index(zipper, fn zipper ->
+      Igniter.Code.Common.nodes_equal?(zipper, domain)
+    end)
+  end
+
+  defp list_has_concat_domain?(zipper, domain) do
+    !!Igniter.Code.List.find_list_item_index(zipper, fn zipper ->
+      Igniter.Code.Function.function_call?(zipper, {Module, :concat}, 1) &&
+        Igniter.Code.Function.argument_equals?(zipper, 0, inspect(domain))
+    end)
   end
 end
