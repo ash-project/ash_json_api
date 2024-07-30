@@ -147,10 +147,10 @@ defmodule Test.Acceptance.PatchTest do
 
       update :update do
         primary? true
-        accept([:id, :email])
+        accept([:id, :email, :name])
         argument(:author, :map)
         require_atomic?(false)
-
+        allow_nil_input([:name])
         change(manage_relationship(:author, type: :append_and_remove))
       end
 
@@ -175,7 +175,7 @@ defmodule Test.Acceptance.PatchTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, public?: true)
+      attribute(:name, :string, public?: true, allow_nil?: false)
 
       attribute(:email, :string,
         public?: true,
