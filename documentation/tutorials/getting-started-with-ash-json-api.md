@@ -78,6 +78,20 @@ end
 
 Additionally, your Resource requires a type, a base route and a set of allowed HTTP methods and what action they will trigger.
 
+#### Add `AshJsonApi.Plug.Parser` to your endpoint
+
+This handles any file uploads, if you have resource actions with the `:file` type.
+
+```elixir
+plug Plug.Parsers,
+  parsers: [:urlencoded, :multipart, :json, AshJsonApi.Plug.Parser], # <- add it to this list.
+  pass: ["*/*"],
+  json_decoder: Jason
+```
+
+You don't have to add this if you don't plan on doing any file uploads, but
+there is no cost to adding it, even if you don't use it.
+
 #### Add the routes from your domain module(s)
 
 To make your Resources accessible to the outside world, forward requests from your Phoenix router to the router you created for your domains.
