@@ -381,7 +381,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
     end
 
-    defp with_comment_on_included(schema, attr, fields) do
+    defp with_comment_on_included(%Schema{} = schema, attr, fields) do
       new_description =
         if is_nil(fields) || attr.name in fields do
           case schema.description do
@@ -399,16 +399,53 @@ if Code.ensure_loaded?(OpenApiSpex) do
           schema.description
         end
 
-      %Schema{schema | description: new_description}
+      %{schema | description: new_description}
+    end
+
+    defp with_comment_on_included(schema, attr, fields) do
+      key = if Map.has_key?(schema, :description), do: :description, else: "description"
+
+      new_description =
+        if is_nil(fields) || attr.name in fields do
+          case Map.get(schema, key) do
+            nil ->
+              "Field included by default."
+
+            description ->
+              if String.ends_with?(description, ["!", "."]) do
+                description <> " Field included by default."
+              else
+                description <> ". Field included by default."
+              end
+          end
+        else
+          Map.get(schema, key) || ""
+        end
+
+      Map.put(schema, key, new_description)
     end
 
     defp with_attribute_nullability(%Schema{type: nil} = schema, _), do: schema
 
-    defp with_attribute_nullability(schema, attr) do
+    defp with_attribute_nullability(%Schema{} = schema, attr) do
       if attr.allow_nil? do
         %{schema | nullable: true}
       else
         schema
+      end
+    end
+
+    defp with_attribute_nullability(schema, attr) do
+      if schema["type"] == "any" || schema[:type] == :any do
+        schema
+      else
+        if attr.allow_nil? do
+          schema
+          |> Map.put("nullable", true)
+          |> Map.delete(:nullable)
+        else
+          schema
+        end
       end
     end
 
@@ -516,7 +553,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    @spec resource_attribute_type(term(), format :: content_type_format()) :: Schema.t()
+    @spec resource_attribute_type(term(), format :: content_type_format()) :: Schema.t() | map()
     defp resource_attribute_type(type, format \\ :json)
 
     defp resource_attribute_type(%{type: Ash.Type.String}, _format) do
@@ -788,15 +825,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @spec with_attribute_description(
-            Schema.t(),
+            Schema.t() | map(),
             Ash.Resource.Attribute.t() | Ash.Resource.Actions.Argument.t()
-          ) :: Schema.t()
+          ) :: Schema.t() | map()
     defp with_attribute_description(schema, %{description: nil}) do
       schema
     end
 
     defp with_attribute_description(schema, %{description: description}) do
       Map.merge(schema, %{description: description})
+    end
+
+    defp with_attribute_description(schema, %{"description" => description}) do
+      Map.merge(schema, %{"description" => description})
     end
 
     @spec relationships(resource :: Ash.Resource.t()) :: Schema.t()
