@@ -54,7 +54,7 @@ defmodule AshJsonApi.Igniter do
 
     domains =
       Enum.map_join(domains, ", ", fn domain ->
-        "Module.concat(\"#{inspect(domain)}\")"
+        "Module.concat([\"#{inspect(domain)}\"])"
       end)
 
     igniter
