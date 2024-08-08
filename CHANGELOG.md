@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.3](https://github.com/ash-project/ash_json_api/compare/v1.4.2...v1.4.3) (2024-08-08)
+
+
+
+
+### Improvements:
+
+* new `AshJsonApi.Type` behaviour, and support returning regular maps
+
 ## [v1.4.2](https://github.com/ash-project/ash_json_api/compare/v1.4.1...v1.4.2) (2024-08-08)
 
 
