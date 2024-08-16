@@ -138,22 +138,55 @@ if Code.ensure_loaded?(OpenApiSpex) do
     """
     @spec schemas(domain :: module | [module]) :: %{String.t() => Schema.t()}
     def schemas(domains) when is_list(domains) do
+      all_resources_requiring_filter_schemas =
+        all_resources_requiring_filter_schemas(domains)
+
       domains
       |> Enum.reduce(base_definitions(), fn domain, definitions ->
         domain
-        |> resources
+        |> resources()
         |> Enum.flat_map(fn resource ->
           [
             {AshJsonApi.Resource.Info.type(resource), resource_object_schema(resource)}
-          ] ++
-            resource_filter_schemas(domains, resource)
+          ]
         end)
+        |> Enum.concat(
+          Enum.flat_map(all_resources_requiring_filter_schemas, fn resource ->
+            resource_filter_schemas(domains, resource)
+          end)
+        )
         |> Enum.into(definitions)
       end)
     end
 
     def schemas(domain) do
       schemas(List.wrap(domain))
+    end
+
+    defp all_resources_requiring_filter_schemas(domains) do
+      domains
+      |> Enum.flat_map(&Ash.Domain.Info.resources/1)
+      |> Enum.reject(&Enum.empty?(AshJsonApi.Resource.Info.routes(&1, domains)))
+      |> with_all_related_resources()
+      |> Enum.filter(fn resource ->
+        AshJsonApi.Resource.Info.type(resource) &&
+          AshJsonApi.Resource.Info.derive_filter?(resource)
+      end)
+    end
+
+    defp with_all_related_resources(resources, checked \\ []) do
+      resources
+      |> Enum.reject(&(&1 in checked))
+      |> Enum.flat_map(&Ash.Resource.Info.public_relationships/1)
+      |> Enum.map(& &1.destination)
+      |> Enum.reject(&(&1 in resources))
+      |> case do
+        [] ->
+          resources
+
+        new_destinations ->
+          with_all_related_resources(resources ++ new_destinations, checked ++ resources)
+      end
     end
 
     def define_filter?(domains, resource) do
@@ -188,22 +221,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp resource_filter_schemas(domains, resource) do
-      if define_filter?(domains, resource) do
-        [
-          {
-            "#{AshJsonApi.Resource.Info.type(resource)}-filter",
-            %Schema{
-              type: :object,
-              properties: resource_filter_fields(resource, domains),
-              example: "",
-              additionalProperties: false,
-              description: "Filters the query to results matching the given filter object"
-            }
+      [
+        {
+          "#{AshJsonApi.Resource.Info.type(resource)}-filter",
+          %Schema{
+            type: :object,
+            properties: resource_filter_fields(resource, domains),
+            example: "",
+            additionalProperties: false,
+            description: "Filters the query to results matching the given filter object"
           }
-        ] ++ filter_field_types(resource)
-      else
-        []
-      end
+        }
+      ] ++ filter_field_types(resource)
     end
 
     @spec base_definitions() :: %{String.t() => Schema.t()}
@@ -929,10 +958,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
     """
     @spec tags(domain :: module | [module]) :: [Tag.t()]
     def tags(domains) when is_list(domains) do
-      Enum.flat_map(domains, &tags/1)
+      Enum.flat_map(domains, &tags(&1, domains))
     end
 
-    def tags(domain) do
+    def tags(domain, domains) do
       tag = AshJsonApi.Domain.Info.tag(domain)
       group_by = AshJsonApi.Domain.Info.group_by(domain)
 
@@ -946,6 +975,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       else
         domain
         |> resources()
+        |> Enum.reject(&AshJsonApi.Resource.Info.routes(&1, domains))
         |> Enum.map(fn resource ->
           name = AshJsonApi.Resource.Info.type(resource)
 
