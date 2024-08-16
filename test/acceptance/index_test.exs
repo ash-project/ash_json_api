@@ -105,9 +105,11 @@ defmodule Test.Acceptance.IndexTest do
 
       routes do
         base_route "/posts", Post do
-          index :read do
-            route "/names"
-            default_fields [:name]
+          base_route "/names" do
+            index :read do
+              route "/"
+              default_fields [:name]
+            end
           end
         end
       end

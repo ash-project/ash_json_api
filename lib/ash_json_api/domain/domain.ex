@@ -94,6 +94,7 @@ defmodule AshJsonApi.Domain do
         doc: "The resource that the contained routes will use by default"
       ]
     ],
+    recursive_as: :routes,
     entities: [
       routes: @route_entities_with_optional_resource
     ]

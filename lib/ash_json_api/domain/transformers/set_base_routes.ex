@@ -5,17 +5,35 @@ defmodule AshJsonApi.Domain.Transformers.SetBaseRoutes do
   def transform(dsl) do
     dsl
     |> AshJsonApi.Domain.Info.routes()
-    |> Enum.flat_map(fn
-      %AshJsonApi.Domain.BaseRoute{route: prefix, routes: routes} = base ->
-        prefix = String.trim_leading(prefix, "/")
+    |> flatten_base_routes(Spark.Dsl.Transformer.get_persisted(dsl, :module))
+    |> case do
+      [] ->
+        {:ok, dsl}
 
-        Enum.map(routes, fn
-          route ->
-            resource = route.resource || base.resource
+      routes ->
+        {:ok, put_in(dsl, [[:json_api, :routes], :entities], routes)}
+    end
+  end
+
+  def before?(_), do: true
+
+  defp flatten_base_routes(routes, module, root \\ nil, resource \\ nil) do
+    Enum.flat_map(routes, fn
+      %AshJsonApi.Domain.BaseRoute{route: prefix, routes: more_routes} = base ->
+        prefix =
+          case root do
+            nil -> prefix
+            root -> Path.join(root, String.trim_leading(prefix, "/"))
+          end
+
+        more_routes
+        |> Enum.map(fn
+          %AshJsonApi.Resource.Route{} = route ->
+            resource = route.resource || base.resource || resource
 
             if !resource do
               raise Spark.Error.DslError,
-                module: Spark.Dsl.Transformer.get_persisted(dsl, :module),
+                module: module,
                 path: [:routes, :base_route, prefix, route.type],
                 message: """
                 Could not determine resource for route. It must be specified on the base route or the route itself.
@@ -34,19 +52,14 @@ defmodule AshJsonApi.Domain.Transformers.SetBaseRoutes do
             new_route = String.trim_trailing(new_route, "/")
 
             %{route | route: new_route, resource: resource}
+
+          %AshJsonApi.Domain.BaseRoute{} = base ->
+            base
         end)
+        |> flatten_base_routes(module, prefix, base.resource)
 
       route ->
         [route]
     end)
-    |> case do
-      [] ->
-        {:ok, dsl}
-
-      routes ->
-        {:ok, put_in(dsl, [[:json_api, :routes], :entities], routes)}
-    end
   end
-
-  def before?(_), do: true
 end
