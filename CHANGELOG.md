@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.4](https://github.com/ash-project/ash_json_api/compare/v1.4.3...v1.4.4) (2024-08-16)
+
+
+
+
+### Improvements:
+
+* support nested `base_route`s
+
 ## [v1.4.3](https://github.com/ash-project/ash_json_api/compare/v1.4.2...v1.4.3) (2024-08-08)
 
 
