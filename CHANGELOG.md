@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.5](https://github.com/ash-project/ash_json_api/compare/v1.4.4...v1.4.5) (2024-08-20)
+
+
+
+
+### Bug Fixes:
+
+* properly discover all necessary filter schemas
+
+### Improvements:
+
+* optimize post-operation field loading logic
+
+* don't show tags for resources w/o routes in schema
+
 ## [v1.4.4](https://github.com/ash-project/ash_json_api/compare/v1.4.3...v1.4.4) (2024-08-16)
 
 
