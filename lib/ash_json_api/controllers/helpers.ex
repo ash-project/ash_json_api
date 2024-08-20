@@ -56,7 +56,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         request = Request.assign(request, :action_input, action_input)
 
         with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <- Ash.load(result, fields(request, request.resource), lazy?: true),
+             {:ok, result} <-
+               Ash.load(result, fields(request, request.resource), reuse_values?: true),
              {:ok, result} <- Ash.load(result, request.includes_keyword) do
           Request.assign(request, :result, result)
         else
@@ -220,11 +221,12 @@ defmodule AshJsonApi.Controllers.Helpers do
           request = Request.assign(request, :action_input, action_input)
 
           with {:ok, result} <- Ash.run_action(action_input),
-               {:ok, result} <- Ash.load(result, fields(request, request.resource), lazy?: true),
+               {:ok, result} <-
+                 Ash.load(result, fields(request, request.resource), reuse_values?: true),
                {:ok, result} <-
                  Ash.load(
                    result,
-                   fields(request, request.resource) ++ (request.includes_keyword || [])
+                   request.includes_keyword || []
                  ) do
             Request.assign(request, :result, result)
           else
@@ -299,11 +301,12 @@ defmodule AshJsonApi.Controllers.Helpers do
         request = Request.assign(request, :action_input, action_input)
 
         with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <- Ash.load(result, fields(request, request.resource), lazy?: true),
+             {:ok, result} <-
+               Ash.load(result, fields(request, request.resource), reuse_values?: true),
              {:ok, result} <-
                Ash.load(
                  result,
-                 fields(request, request.resource) ++ (request.includes_keyword || [])
+                 request.includes_keyword || []
                ) do
           Request.assign(request, :result, result)
         else
@@ -450,11 +453,12 @@ defmodule AshJsonApi.Controllers.Helpers do
         request = Request.assign(request, :action_input, action_input)
 
         with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <- Ash.load(result, fields(request, request.resource), lazy?: true),
+             {:ok, result} <-
+               Ash.load(result, fields(request, request.resource), reuse_values?: true),
              {:ok, result} <-
                Ash.load(
                  result,
-                 fields(request, request.resource) ++ (request.includes_keyword || [])
+                 request.includes_keyword || []
                ) do
           Request.assign(request, :result, result)
         else
@@ -612,15 +616,16 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         request = Request.assign(request, :action_input, action_input)
 
-        fields_to_load =
+        {load_lazy, load} =
           if through_resource do
-            []
+            {[], []}
           else
-            fields(request, request.resource) ++ (request.includes_keyword || [])
+            {fields(request, request.resource), request.includes_keyword || []}
           end
 
         with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <- Ash.load(result, fields_to_load) do
+             {:ok, result} <- Ash.load(result, load_lazy, reuse_values?: true),
+             {:ok, result} <- Ash.load(result, load) do
           request
           |> Request.assign(:result, result)
           |> Request.assign(:record_from_path, result)
@@ -756,7 +761,8 @@ defmodule AshJsonApi.Controllers.Helpers do
   defp fields(request, resource) do
     fields =
       Map.get(request.fields, resource) || request.route.default_fields ||
-        AshJsonApi.Resource.Info.default_fields(resource) || []
+        AshJsonApi.Resource.Info.default_fields(resource) ||
+        Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name)
 
     field_inputs = request.field_inputs[resource] || %{}
 
