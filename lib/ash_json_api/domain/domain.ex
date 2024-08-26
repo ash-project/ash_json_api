@@ -257,8 +257,17 @@ defmodule AshJsonApi.Domain do
 
   defp list_has_concat_domain?(zipper, domain) do
     !!Igniter.Code.List.find_list_item_index(zipper, fn zipper ->
-      Igniter.Code.Function.function_call?(zipper, {Module, :concat}, 1) &&
-        Igniter.Code.Function.argument_equals?(zipper, 0, inspect(domain))
+      with true <- Igniter.Code.Function.function_call?(zipper, {Module, :concat}, 1),
+           {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 0),
+           true <- Igniter.Code.List.list?(zipper) do
+        Igniter.Code.Common.nodes_equal?(
+          zipper,
+          [inspect(domain)]
+        )
+      else
+        _ ->
+          false
+      end
     end)
   end
 end
