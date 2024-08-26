@@ -502,10 +502,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp resource_write_attribute_type(
-           %{type: Ash.Type.Map, constraints: constraints} = attr,
+           %{type: type, constraints: constraints} = attr,
            action_type,
            format
-         ) do
+         )
+         when type in [Ash.Type.Map, Ash.Type.Struct] do
       if constraints[:fields] && constraints[:fields] != [] do
         %Schema{
           type: :object,
@@ -597,7 +598,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       %Schema{type: :integer}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Map, constraints: constraints} = attr, format) do
+    defp resource_attribute_type(%{type: type, constraints: constraints} = attr, format)
+         when type in [Ash.Type.Map, Ash.Type.Struct] do
       if constraints[:fields] && constraints[:fields] != [] do
         %Schema{
           type: :object,

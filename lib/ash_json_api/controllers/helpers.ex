@@ -901,6 +901,8 @@ defmodule AshJsonApi.Controllers.Helpers do
     case type do
       :map -> true
       Ash.Type.Map -> true
+      Ash.Type.Struct -> true
+      :struct -> true
       type -> Ash.Type.embedded_type?(type)
     end
   end
