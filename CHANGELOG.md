@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.6](https://github.com/ash-project/ash_json_api/compare/v1.4.5...v1.4.6) (2024-08-26)
+
+
+
+
+### Bug Fixes:
+
+* don't intercept typed structs
+
+* properly check for domain inclusion in json api router when installing
+
+### Improvements:
+
+* support new struct types w/ constraints
+
 ## [v1.4.5](https://github.com/ash-project/ash_json_api/compare/v1.4.4...v1.4.5) (2024-08-20)
 
 
