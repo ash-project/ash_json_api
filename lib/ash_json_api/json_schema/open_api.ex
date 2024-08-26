@@ -502,11 +502,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp resource_write_attribute_type(
-           %{type: type, constraints: constraints} = attr,
+           %{type: Ash.Type.Map, constraints: constraints} = attr,
            action_type,
            format
-         )
-         when type in [Ash.Type.Map, Ash.Type.Struct] do
+         ) do
       if constraints[:fields] && constraints[:fields] != [] do
         %Schema{
           type: :object,
@@ -576,7 +575,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         if AshJsonApi.JsonSchema.embedded?(type) do
           embedded_type_input(attr, action_type, format)
         else
-          %Schema{}
+          resource_write_attribute_type(%{attr | type: Ash.Type.Map}, action_type, format)
         end
       else
         %Schema{}
@@ -598,8 +597,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       %Schema{type: :integer}
     end
 
-    defp resource_attribute_type(%{type: type, constraints: constraints} = attr, format)
-         when type in [Ash.Type.Map, Ash.Type.Struct] do
+    defp resource_attribute_type(%{type: Ash.Type.Map, constraints: constraints} = attr, format) do
       if constraints[:fields] && constraints[:fields] != [] do
         %Schema{
           type: :object,
@@ -695,7 +693,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Struct, constraints: constraints}, format) do
+    defp resource_attribute_type(
+           %{type: Ash.Type.Struct, constraints: constraints} = attr,
+           format
+         ) do
       if type = constraints[:instance_of] do
         if AshJsonApi.JsonSchema.embedded?(type) do
           %Schema{
@@ -704,7 +705,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             required: required_attributes(type)
           }
         else
-          %Schema{}
+          resource_attribute_type(%{attr | type: Ash.Type.Map}, format)
         end
       else
         %Schema{}
