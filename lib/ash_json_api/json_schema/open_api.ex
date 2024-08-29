@@ -1646,7 +1646,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             route :: term(),
             format :: content_type_format()
           ) :: %{atom => Schema.t()}
-    defp write_attributes(resource, arguments, action, route, format) do
+    def write_attributes(resource, arguments, action, route, format) do
       attributes =
         if action.type in [:action, :read] do
           %{}
@@ -2005,6 +2005,31 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
+    def raw_filter_type(attribute_or_aggregate, resource) do
+      type = attribute_or_aggregate_type(attribute_or_aggregate, resource)
+
+      array_type? = match?({:array, _}, type)
+
+      fields =
+        Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.DataLayer.functions(resource))
+        |> Enum.filter(& &1.predicate?())
+        |> restrict_for_lists(type)
+        |> Enum.flat_map(fn operator ->
+          filter_fields(operator, type, array_type?, attribute_or_aggregate, resource)
+        end)
+
+      if fields == [] do
+        nil
+      else
+        %Schema{
+          type: :object,
+          properties: Map.new(fields),
+          additionalProperties: false
+        }
+      end
+    end
+
     defp attribute_filter_field_type(resource, attribute) do
       AshJsonApi.Resource.Info.type(resource) <> "-filter-" <> to_string(attribute.name)
     end
@@ -2014,6 +2039,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
         boolean_filter_fields(resource),
         attribute_filter_fields(resource),
         relationship_filter_fields(resource, domains),
+        aggregate_filter_fields(resource),
+        calculation_filter_fields(resource)
+      ])
+      |> Map.new()
+    end
+
+    def resource_filter_fields_fields_only(resource) do
+      Enum.concat([
+        attribute_filter_fields(resource),
         aggregate_filter_fields(resource),
         calculation_filter_fields(resource)
       ])
