@@ -79,7 +79,14 @@ defmodule AshJsonApi.Request do
       action: action,
       includes: includes.allowed,
       url: url(conn),
-      path_params: conn.path_params,
+      path_params:
+        Map.new(conn.path_params || %{}, fn
+          {k, v} when is_binary(v) ->
+            {k, URI.decode(v)}
+
+          {k, v} ->
+            {k, v}
+        end),
       query_params: conn.query_params,
       req_headers: conn.req_headers,
       actor: get_actor(conn),
