@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.7](https://github.com/ash-project/ash_json_api/compare/v1.4.6...v1.4.7) (2024-09-04)
+
+
+
+
+### Bug Fixes:
+
+* decode path parameters automatically
+
 ## [v1.4.6](https://github.com/ash-project/ash_json_api/compare/v1.4.5...v1.4.6) (2024-08-26)
 
 
