@@ -34,7 +34,7 @@ defmodule AshJsonApi.Igniter do
   @doc "Sets up an `AshJsonApi.Router` for AshJsonApi"
   def setup_ash_json_api_router(igniter, ash_phoenix_router_name \\ nil) do
     ash_phoenix_router_name =
-      ash_phoenix_router_name || Igniter.Libs.Phoenix.web_module_name("AshJsonApiRouter")
+      ash_phoenix_router_name || Igniter.Libs.Phoenix.web_module_name(igniter, "AshJsonApiRouter")
 
     {igniter, domains} = Ash.Domain.Igniter.list_domains(igniter)
 
@@ -75,7 +75,7 @@ defmodule AshJsonApi.Igniter do
   @doc "Sets up the phoenix module for AshJsonApi"
   def setup_phoenix(igniter, ash_phoenix_router_name \\ nil) do
     ash_phoenix_router_name =
-      ash_phoenix_router_name || Igniter.Libs.Phoenix.web_module_name("AshJsonApiRouter")
+      ash_phoenix_router_name || Igniter.Libs.Phoenix.web_module_name(igniter, "AshJsonApiRouter")
 
     case Igniter.Libs.Phoenix.select_router(igniter) do
       {igniter, nil} ->

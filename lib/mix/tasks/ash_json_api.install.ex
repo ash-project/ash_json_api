@@ -11,7 +11,7 @@ defmodule Mix.Tasks.AshJsonApi.Install do
   end
 
   def igniter(igniter, _argv) do
-    ash_phoenix_router_name = Igniter.Libs.Phoenix.web_module_name("AshJsonApiRouter")
+    ash_phoenix_router_name = Igniter.Libs.Phoenix.web_module_name(igniter, "AshJsonApiRouter")
 
     igniter =
       igniter
