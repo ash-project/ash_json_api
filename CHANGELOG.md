@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.8](https://github.com/ash-project/ash_json_api/compare/v1.4.7...v1.4.8) (2024-09-16)
+
+
+
+
+### Bug Fixes:
+
+* don't access `message` key of `InvalidKeyset` errors
+
+### Improvements:
+
+* upgrade to latest igniter functions and version
+
 ## [v1.4.7](https://github.com/ash-project/ash_json_api/compare/v1.4.6...v1.4.7) (2024-09-04)
 
 
