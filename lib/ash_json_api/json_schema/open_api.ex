@@ -1244,6 +1244,25 @@ if Code.ensure_loaded?(OpenApiSpex) do
            (action.pagination.keyset? || action.pagination.offset?) do
         cond do
           action.pagination.keyset? && action.pagination.offset? ->
+            keyset_pagination_schema = keyset_pagination_schema(action.pagination)
+            offset_pagination_schema = offset_pagination_schema(action.pagination)
+            keyset_props = keyset_pagination_schema.properties
+            offset_props = offset_pagination_schema.properties
+
+            schema_props =
+              Map.merge(keyset_props, offset_props, fn _key, keyset_prop, offset_prop ->
+                if keyset_prop == offset_prop do
+                  keyset_prop
+                else
+                  %Schema{
+                    anyOf: [
+                      keyset_prop,
+                      offset_prop
+                    ]
+                  }
+                end
+              end)
+
             %Parameter{
               name: :page,
               in: :query,
@@ -1252,10 +1271,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
               required: action.pagination.required? && !action.pagination.default_limit,
               style: :deepObject,
               schema: %Schema{
-                anyOf: [
-                  keyset_pagination_schema(action.pagination),
-                  offset_pagination_schema(action.pagination)
-                ]
+                type: :object,
+                properties: schema_props,
+                example: keyset_pagination_schema.example
               }
             }
 
@@ -1287,6 +1305,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp offset_pagination_schema(pagination) do
       %Schema{
         type: :object,
+        example: %{
+          limit: pagination.default_limit || 25,
+          offset: 0
+        },
         properties:
           %{
             limit: %Schema{type: :integer, minimum: 1},
@@ -1299,6 +1321,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp keyset_pagination_schema(pagination) do
       %Schema{
         type: :object,
+        example: %{
+          limit: pagination.default_limit || 25
+        },
         properties:
           %{
             limit: %Schema{type: :integer, minimum: 1},
