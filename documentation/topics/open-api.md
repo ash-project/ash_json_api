@@ -144,8 +144,30 @@ end
 You can also use the `--check` option to confirm that your checked in spec file(s) match.
 
 ```sh
-mix openapi.spec.json --spec MyAppWeb.AshJsonApi --check
-mix openapi.spec.yaml --spec MyAppWeb.AshJsonApi --check
+mix openapi.spec.json --spec MyAppWeb.AshJsonApiRouter --check
+mix openapi.spec.yaml --spec MyAppWeb.AshJsonApiRouter --check
+```
+
+## Using this file in production
+
+To avoid generating the spec every time your open_api endpoint is hit, you can use
+the `open_api_file` option. Ensure that it points to an existing `.json` file.
+You will almost certainly want to do this only for production so that the schema
+is generated dynamically in dev, but served statically in production.
+
+```elixir
+open_api_file =
+  if Mix.env() == :prod do
+    "priv/static/open_api.json"
+  else
+    nil
+  end
+
+use AshJsonApi.Router,
+  domains: [...],
+  open_api: "/open_api",
+  modify_open_api: {__MODULE__, :modify_open_api, []},
+  open_api_file: open_api_file
 ```
 
 ## Known issues/limitations

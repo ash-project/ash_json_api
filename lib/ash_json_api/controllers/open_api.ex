@@ -30,11 +30,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @doc false
     def spec(conn, opts) do
-      phoenix_endpoint = opts[:phoenix_endpoint] || conn.private[:phoenix_endpoint]
+      if path = opts[:open_api_file] do
+        File.read!(path)
+        |> Jason.decode!()
+      else
+        phoenix_endpoint = opts[:phoenix_endpoint] || conn.private[:phoenix_endpoint]
 
-      opts
-      |> Keyword.put(:phoenix_endpoint, phoenix_endpoint)
-      |> AshJsonApi.OpenApi.spec(conn)
+        opts
+        |> Keyword.put(:phoenix_endpoint, phoenix_endpoint)
+        |> AshJsonApi.OpenApi.spec(conn)
+      end
     end
   end
 end
