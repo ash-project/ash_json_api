@@ -237,7 +237,7 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Page.InvalidKeyset do
       status_code: AshJsonApi.Error.class_to_status(error.class),
       code: "invalid_keyset",
       title: "InvalidKeyset",
-      detail: error.message,
+      detail: "invalid keyset",
       meta: Map.new(error.vars)
     }
   end
