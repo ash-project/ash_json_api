@@ -58,6 +58,7 @@ defmodule Test.Acceptance.OpenApiTest do
         route :post, "/trigger_job", :trigger_job, query_params: [:job_id]
         route(:get, "returns_map", :returns_map)
         route(:get, "/get_foo", :get_foo)
+        post_to_relationship :posts
       end
     end
 
@@ -316,7 +317,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 10
+    assert map_size(api_spec.paths) == 11
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -501,19 +502,13 @@ defmodule Test.Acceptance.OpenApiTest do
       assert page.required == false
       assert page.style == :deepObject
       %Schema{} = schema = page.schema
-      assert [keyset, offset] = schema.anyOf
 
-      assert offset.properties == %{
-               limit: %Schema{type: :integer, minimum: 1},
-               offset: %Schema{type: :integer, minimum: 0},
-               count: %Schema{type: :boolean, default: false}
-             }
-
-      assert keyset.properties == %{
-               after: %Schema{type: :string},
-               before: %Schema{type: :string},
+      assert schema.properties == %{
                count: %Schema{type: :boolean, default: false},
-               limit: %Schema{type: :integer, minimum: 1}
+               limit: %Schema{minimum: 1, type: :integer},
+               offset: %Schema{minimum: 0, type: :integer},
+               after: %Schema{type: :string},
+               before: %Schema{type: :string}
              }
     end
 

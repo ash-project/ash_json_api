@@ -1016,7 +1016,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
             {Paths.path(), {verb :: atom, Operation.t()}}
     defp route_operation(route, domain, resource, opts) do
       resource =
-        if route.relationship do
+        if route.relationship &&
+             route.type not in [
+               :post_to_relationship,
+               :patch_relationship,
+               :delete_from_relationship
+             ] do
           Ash.Resource.Info.related(resource, route.relationship)
         else
           resource
@@ -1041,9 +1046,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec operation(Route.t(), resource :: module, path_params :: [String.t()]) ::
             Operation.t()
     defp operation(route, resource, path_params) do
-      action = Ash.Resource.Info.action(resource, route.action)
+      action =
+        if route.type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] do
+          case route.action do
+            nil -> Ash.Resource.Info.primary_action!(resource, :update)
+            action -> Ash.Resource.Info.action(resource, action)
+          end
+        else
+          Ash.Resource.Info.action(resource, route.action)
+        end
 
-      if !action do
+      if route.type not in [:post_to_relationship, :patch_relationship, :delete_from_relationship] and
+           !action do
         raise """
         No such action #{inspect(route.action)} for #{inspect(resource)}
 
@@ -1444,11 +1458,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
         nil
       else
         body_required =
-          if route.type == :route do
-            json_body_schema.properties.data.required != []
-          else
-            json_body_schema.properties.data.properties.attributes.required != [] ||
-              json_body_schema.properties.data.properties.relationships.required != []
+          cond do
+            route.type in [:post_to_relationship, :delete_from_relationship, :patch_relationship] ->
+              true
+
+            route.type == :route ->
+              json_body_schema.properties.data.required != []
+
+            true ->
+              json_body_schema.properties.data.properties.attributes.required != [] ||
+                json_body_schema.properties.data.properties.relationships.required != []
           end
 
         content =
@@ -1834,6 +1853,17 @@ if Code.ensure_loaded?(OpenApiSpex) do
         when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] ->
           resource
           |> Ash.Resource.Info.public_relationship(route.relationship)
+          |> tap(fn
+            nil ->
+              if Ash.Resource.Info.relationship(resource, route.relationship) do
+                raise "Relationship #{route.relationship} on #{inspect(resource)} must be public to use in a route"
+              else
+                raise "No such relationship #{route.relationship} for #{inspect(resource)}"
+              end
+
+            relationship ->
+              relationship
+          end)
           |> relationship_resource_identifiers()
 
         _ ->
