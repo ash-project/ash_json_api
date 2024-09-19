@@ -80,8 +80,8 @@ You can also specify routes that are dedicated to manipulating relationships. We
 ```elixir
 routes do
   ...
-  # use `post_relationship` when the operation is additive
-  post_relationship :add_author, action: :add_author
+  # use `post_to_relationship` when the operation is additive
+  post_to_relationship :add_author, action: :add_author
   # use `patch_relationship` when the operation is both additive and subtractive
   # use `delete_from_relationship` when the operation is subtractive
 end
