@@ -22,7 +22,7 @@ defmodule AshJsonApi.Domain.Transformers.SetBaseRoutes do
       %AshJsonApi.Domain.BaseRoute{route: prefix, routes: more_routes} = base ->
         prefix =
           case root do
-            nil -> prefix
+            nil -> String.trim_leading(prefix, "/")
             root -> Path.join(root, String.trim_leading(prefix, "/"))
           end
 

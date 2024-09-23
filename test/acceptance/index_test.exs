@@ -126,6 +126,10 @@ defmodule Test.Acceptance.IndexTest do
 
   import AshJsonApi.Test
 
+  test "derived routes have the correct format" do
+    assert [%{route: "/posts/names"}] = AshJsonApi.Domain.Info.routes(Domain)
+  end
+
   describe "index endpoint" do
     setup do
       post =
