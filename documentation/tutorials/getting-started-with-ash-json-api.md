@@ -164,7 +164,7 @@ defmodule Helpdesk.Support do
       base_route "/tickets", Helpdesk.Support.Ticket do
         get :read
         index :read
-        post :create
+        post :open
       end
     end
   end
@@ -200,7 +200,7 @@ defmodule Helpdesk.Support.Ticket do
 
       get :read
       index :read
-      post :create
+      post :open
       # ...
     end
   end
