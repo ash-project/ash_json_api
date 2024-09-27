@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.9](https://github.com/ash-project/ash_json_api/compare/v1.4.8...v1.4.9) (2024-09-27)
+
+
+
+
+### Bug Fixes:
+
+* properly strip double slashes from base_route prefixes
+
+* properly render post to relationship and friends in open api spec
+
+* support keyset & offset pagination when mixed in open api schema
+
+### Improvements:
+
+* support providing the open api schema as a file
+
 ## [v1.4.8](https://github.com/ash-project/ash_json_api/compare/v1.4.7...v1.4.8) (2024-09-16)
 
 
