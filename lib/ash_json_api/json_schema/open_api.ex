@@ -1394,6 +1394,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
         schema: %Schema{
           type: :object,
           additionalProperties: true,
+          example: %{
+            type =>
+              Ash.Resource.Info.public_attributes(resource)
+              |> Enum.map_join(",", & &1.name)
+          },
           properties: %{
             # There is a static set of types (one per resource)
             # so this is safe.
