@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.10](https://github.com/ash-project/ash_json_api/compare/v1.4.9...v1.4.10) (2024-10-10)
+
+
+
+
+### Improvements:
+
+* set status only if it hasn't already been set
+
+* better examples for `fields` parameter
+
 ## [v1.4.9](https://github.com/ash-project/ash_json_api/compare/v1.4.8...v1.4.9) (2024-09-27)
 
 
