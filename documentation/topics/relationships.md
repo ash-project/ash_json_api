@@ -93,6 +93,6 @@ This will use an action on the source resource, (by default the primary update),
 update :add_author do
   argument :author, :map
 
-  change manage_relationship(:add_author, :author, type: :append)
+  change manage_relationship(:author, type: :append)
 end
 ```
