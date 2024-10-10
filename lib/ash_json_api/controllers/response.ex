@@ -128,8 +128,17 @@ defmodule AshJsonApi.Controllers.Response do
   defp send_resp(conn, status, serialized) do
     conn
     |> Plug.Conn.put_resp_content_type("application/vnd.api+json", nil)
-    |> Plug.Conn.send_resp(status, serialized)
+    |> put_new_status(status)
+    |> Map.put(:resp_body, serialized)
+    |> Map.put(:state, :set)
+    |> Plug.Conn.send_resp()
   end
+
+  def put_new_status(%{status: nil} = conn, status) do
+    Plug.Conn.put_status(conn, status)
+  end
+
+  def put_new_status(conn, _status), do: conn
 
   defp error_status_code(errors) do
     errors
