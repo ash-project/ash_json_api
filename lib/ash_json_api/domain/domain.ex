@@ -216,7 +216,7 @@ defmodule AshJsonApi.Domain do
               )
           end
 
-        Igniter.Code.Module.find_and_update_module!(igniter, ash_json_api_router, fn zipper ->
+        Igniter.Project.Module.find_and_update_module!(igniter, ash_json_api_router, fn zipper ->
           with {:ok, zipper} <- Igniter.Code.Module.move_to_use(zipper, AshJsonApi.Router),
                {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 1),
                {:ok, zipper} <- Igniter.Code.Keyword.get_key(zipper, :domains),

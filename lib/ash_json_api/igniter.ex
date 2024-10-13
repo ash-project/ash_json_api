@@ -7,7 +7,8 @@ defmodule AshJsonApi.Igniter do
 
     modules
     |> Enum.find(fn module ->
-      with {:ok, {_igniter, _source, zipper}} <- Igniter.Code.Module.find_module(igniter, module),
+      with {:ok, {_igniter, _source, zipper}} <-
+             Igniter.Project.Module.find_module(igniter, module),
            {:ok, zipper} <- Igniter.Code.Module.move_to_use(zipper, AshJsonApi.Router),
            {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 1),
            {:ok, zipper} <- Igniter.Code.Keyword.get_key(zipper, :domains),
@@ -58,7 +59,7 @@ defmodule AshJsonApi.Igniter do
       end)
 
     igniter
-    |> Igniter.Code.Module.find_and_update_or_create_module(
+    |> Igniter.Project.Module.find_and_update_or_create_module(
       ash_phoenix_router_name,
       """
       use AshJsonApi.Router,
@@ -154,7 +155,7 @@ defmodule AshJsonApi.Igniter do
       Igniter.Libs.Phoenix.endpoints_for_router(igniter, router)
 
     Enum.reduce(endpoints_that_need_parser, igniter, fn endpoint, igniter ->
-      Igniter.Code.Module.find_and_update_module!(igniter, endpoint, fn zipper ->
+      Igniter.Project.Module.find_and_update_module!(igniter, endpoint, fn zipper ->
         case Igniter.Code.Function.move_to_function_call_in_current_scope(
                zipper,
                :plug,
@@ -214,7 +215,7 @@ defmodule AshJsonApi.Igniter do
 
   @doc "Returns all modules that `use AshJsonApi.Router`"
   def ash_json_api_routers(igniter) do
-    Igniter.Code.Module.find_all_matching_modules(igniter, fn _name, zipper ->
+    Igniter.Project.Module.find_all_matching_modules(igniter, fn _name, zipper ->
       match?({:ok, _}, Igniter.Code.Module.move_to_use(zipper, AshJsonApi.Router))
     end)
   end
