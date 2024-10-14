@@ -634,6 +634,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
+    defp resource_attribute_type(%{type: Ash.Type.NaiveDatetime}, _format) do
+      %Schema{
+        type: :string,
+        format: "date-time"
+      }
+    end
+
     defp resource_attribute_type(%{type: Ash.Type.UUID}, _format) do
       %Schema{
         type: :string,
