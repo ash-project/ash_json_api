@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.11](https://github.com/ash-project/ash_json_api/compare/v1.4.10...v1.4.11) (2024-10-14)
+
+
+
+
+### Improvements:
+
+* add type handler for NaiveDatetime
+
 ## [v1.4.10](https://github.com/ash-project/ash_json_api/compare/v1.4.9...v1.4.10) (2024-10-10)
 
 
