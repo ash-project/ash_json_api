@@ -1687,6 +1687,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       arguments =
         arguments
+        |> Enum.filter(& &1.public?)
         |> without_path_arguments(action, route)
         |> without_query_params(route)
         |> Enum.reject(& &1.allow_nil?)
@@ -1716,6 +1717,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         end
 
       arguments
+      |> Enum.filter(& &1.public?)
       |> without_path_arguments(action, route)
       |> without_query_params(route)
       |> Enum.reduce(attributes, fn argument, attributes ->
