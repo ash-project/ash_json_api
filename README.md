@@ -24,5 +24,5 @@ Welcome! This is the extension for building [JSON:API](https://jsonapi.org) spec
 
 ## Reference
 
-- [AshJsonApi.Resource DSL](documentation/dsls/DSL:-AshJsonApi.Resource.md)
-- [AshJsonApi.Domain DSL](documentation/dsls/DSL:-AshJsonApi.Domain.md)
+- [AshJsonApi.Resource DSL](documentation/dsls/DSL-AshJsonApi.Resource.md)
+- [AshJsonApi.Domain DSL](documentation/dsls/DSL-AshJsonApi.Domain.md)
