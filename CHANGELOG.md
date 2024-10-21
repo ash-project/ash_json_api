@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.12](https://github.com/ash-project/ash_json_api/compare/v1.4.11...v1.4.12) (2024-10-21)
+
+
+
+
+### Bug Fixes:
+
+* hide private arguments in open api (#247)
+
 ## [v1.4.11](https://github.com/ash-project/ash_json_api/compare/v1.4.10...v1.4.11) (2024-10-14)
 
 
