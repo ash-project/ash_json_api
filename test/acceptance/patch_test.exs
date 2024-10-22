@@ -291,6 +291,19 @@ defmodule Test.Acceptance.PatchTest do
       |> assert_attribute_equals("name_twice", "Valid PostbazValid Post")
     end
 
+    test "patch allows setting values to nil", %{post: post} do
+      Domain
+      |> patch(
+        "/posts/#{post.id}?field_inputs[post][name_twice][separator]=baz&fields[post]=email,name_twice",
+        %{
+          data: %{attributes: %{email: nil}}
+        }
+      )
+      |> assert_meta_equals(%{"bar" => "bar"})
+      |> assert_attribute_equals("email", nil)
+      |> assert_attribute_equals("name_twice", "Valid PostbazValid Post")
+    end
+
     test "patch works with generic actions", %{post: post} do
       Domain
       |> patch(

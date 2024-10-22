@@ -240,7 +240,42 @@ defmodule AshJsonApi.JsonSchema do
       "properties" => resource_attributes(resource),
       "additionalProperties" => false
     }
+    |> add_null_for_non_required()
   end
+
+  defp add_null_for_non_required(%{"required" => required, "properties" => _} = fields) do
+    Map.update!(fields, "properties", fn properties ->
+      Enum.reduce(properties, %{}, fn {key, value}, acc ->
+        if Enum.member?(required, key) do
+          Map.put(acc, key, value)
+        else
+          {base, rest} = Map.split(value, ["description"])
+
+          new_value =
+            Map.merge(
+              base,
+              %{
+                "anyOf" => [
+                  %{
+                    "type" => "null"
+                  },
+                  rest
+                ]
+              }
+              |> unwrap_any_of()
+            )
+
+          Map.put(
+            acc,
+            key,
+            new_value
+          )
+        end
+      end)
+    end)
+  end
+
+  defp add_null_for_non_required(v), do: v
 
   defp required_attributes(resource) do
     resource
@@ -469,6 +504,7 @@ defmodule AshJsonApi.JsonSchema do
           "properties" => resource_attributes(type),
           "required" => required_attributes(type)
         }
+        |> add_null_for_non_required()
 
       Ash.Type.NewType.new_type?(type) ->
         new_constraints = Ash.Type.NewType.constraints(type, constraints)
@@ -564,6 +600,7 @@ defmodule AshJsonApi.JsonSchema do
           |> unwrap_any_of()
         end)
     }
+    |> add_null_for_non_required()
   end
 
   defp unwrap_any_of(%{"anyOf" => options}) do
@@ -758,14 +795,17 @@ defmodule AshJsonApi.JsonSchema do
       "required" => required_outer_props,
       "additionalProperties" => false,
       "properties" => %{
-        "data" => %{
-          "type" => "object",
-          "additionalProperties" => false,
-          "properties" => write_attributes(resource, action.arguments, action, route),
-          "required" => required_write_props
-        }
+        "data" =>
+          %{
+            "type" => "object",
+            "additionalProperties" => false,
+            "properties" => write_attributes(resource, action.arguments, action, route),
+            "required" => required_write_props
+          }
+          |> add_null_for_non_required()
       }
     }
+    |> add_null_for_non_required()
   end
 
   defp route_in_schema(%{type: type}, _domain, _resource) when type in [:index, :get, :delete] do
@@ -799,14 +839,16 @@ defmodule AshJsonApi.JsonSchema do
             "type" => %{
               "const" => AshJsonApi.Resource.Info.type(resource)
             },
-            "attributes" => %{
-              "type" => "object",
-              "additionalProperties" => false,
-              "required" =>
-                required_write_attributes(resource, non_relationship_arguments, action, route),
-              "properties" =>
-                write_attributes(resource, non_relationship_arguments, action, route)
-            },
+            "attributes" =>
+              %{
+                "type" => "object",
+                "additionalProperties" => false,
+                "required" =>
+                  required_write_attributes(resource, non_relationship_arguments, action, route),
+                "properties" =>
+                  write_attributes(resource, non_relationship_arguments, action, route)
+              }
+              |> add_null_for_non_required(),
             "relationships" => %{
               "type" => "object",
               "required" =>
@@ -848,14 +890,16 @@ defmodule AshJsonApi.JsonSchema do
               "type" => %{
                 "const" => AshJsonApi.Resource.Info.type(resource)
               },
-              "attributes" => %{
-                "type" => "object",
-                "additionalProperties" => false,
-                "required" =>
-                  required_write_attributes(resource, non_relationship_arguments, action, route),
-                "properties" =>
-                  write_attributes(resource, non_relationship_arguments, action, route)
-              },
+              "attributes" =>
+                %{
+                  "type" => "object",
+                  "additionalProperties" => false,
+                  "required" =>
+                    required_write_attributes(resource, non_relationship_arguments, action, route),
+                  "properties" =>
+                    write_attributes(resource, non_relationship_arguments, action, route)
+                }
+                |> add_null_for_non_required(),
               "relationships" => %{
                 "type" => "object",
                 "additionalProperties" => false,

@@ -339,6 +339,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         required: required_attributes(resource),
         additionalProperties: false
       }
+      |> add_null_for_non_required()
     end
 
     defp required_attributes(resource) do
@@ -527,6 +528,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             |> Enum.filter(fn {_, config} -> !config[:allow_nil?] end)
             |> Enum.map(&elem(&1, 0))
         }
+        |> add_null_for_non_required()
       else
         %Schema{type: :object}
       end
@@ -618,6 +620,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             |> Enum.filter(fn {_, config} -> !config[:allow_nil?] end)
             |> Enum.map(&elem(&1, 0))
         }
+        |> add_null_for_non_required()
       else
         %Schema{type: :object}
       end
@@ -711,6 +714,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             properties: resource_attributes(type, nil, format),
             required: required_attributes(type)
           }
+          |> add_null_for_non_required()
         else
           resource_attribute_type(%{attr | type: Ash.Type.Map}, format)
         end
@@ -729,6 +733,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             properties: resource_attributes(type, nil, format),
             required: required_attributes(type)
           }
+          |> add_null_for_non_required()
 
         function_exported?(type, :json_schema, 1) ->
           type.json_schema(constraints)
@@ -831,6 +836,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end),
         required: required
       }
+      |> add_null_for_non_required()
     end
 
     defp unwrap_any_of(%{"anyOf" => options}) do
@@ -1526,19 +1532,21 @@ if Code.ensure_loaded?(OpenApiSpex) do
         required: [:data],
         additionalProperties: false,
         properties: %{
-          data: %Schema{
-            type: :object,
-            additionalProperties: false,
-            properties:
-              write_attributes(
-                resource,
-                action.arguments,
-                action,
-                route,
-                format
-              ),
-            required: required_write_attributes(resource, action.arguments, action, route)
-          }
+          data:
+            %Schema{
+              type: :object,
+              additionalProperties: false,
+              properties:
+                write_attributes(
+                  resource,
+                  action.arguments,
+                  action,
+                  route,
+                  format
+                ),
+              required: required_write_attributes(resource, action.arguments, action, route)
+            }
+            |> add_null_for_non_required()
         }
       }
     end
@@ -1572,20 +1580,22 @@ if Code.ensure_loaded?(OpenApiSpex) do
               type: %Schema{
                 enum: [AshJsonApi.Resource.Info.type(resource)]
               },
-              attributes: %Schema{
-                type: :object,
-                additionalProperties: false,
-                properties:
-                  write_attributes(
-                    resource,
-                    non_relationship_arguments,
-                    action,
-                    route,
-                    format
-                  ),
-                required:
-                  required_write_attributes(resource, non_relationship_arguments, action, route)
-              },
+              attributes:
+                %Schema{
+                  type: :object,
+                  additionalProperties: false,
+                  properties:
+                    write_attributes(
+                      resource,
+                      non_relationship_arguments,
+                      action,
+                      route,
+                      format
+                    ),
+                  required:
+                    required_write_attributes(resource, non_relationship_arguments, action, route)
+                }
+                |> add_null_for_non_required(),
               relationships: %Schema{
                 type: :object,
                 additionalProperties: false,
@@ -1632,20 +1642,22 @@ if Code.ensure_loaded?(OpenApiSpex) do
               type: %Schema{
                 enum: [AshJsonApi.Resource.Info.type(resource)]
               },
-              attributes: %Schema{
-                type: :object,
-                additionalProperties: false,
-                properties:
-                  write_attributes(
-                    resource,
-                    non_relationship_arguments,
-                    action,
-                    route,
-                    format
-                  ),
-                required:
-                  required_write_attributes(resource, non_relationship_arguments, action, route)
-              },
+              attributes:
+                %Schema{
+                  type: :object,
+                  additionalProperties: false,
+                  properties:
+                    write_attributes(
+                      resource,
+                      non_relationship_arguments,
+                      action,
+                      route,
+                      format
+                    ),
+                  required:
+                    required_write_attributes(resource, non_relationship_arguments, action, route)
+                }
+                |> add_null_for_non_required(),
               relationships: %Schema{
                 type: :object,
                 additionalProperties: false,
@@ -2417,5 +2429,34 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       "^(#{values})(,(#{values}))*$"
     end
+
+    defp add_null_for_non_required(%Schema{required: required} = schema) do
+      Map.update!(schema, :properties, fn properties ->
+        Enum.reduce(properties, %{}, fn {key, value}, acc ->
+          if Enum.member?(required, key) do
+            Map.put(acc, key, value)
+          else
+            new_value =
+              %{
+                "anyOf" => [
+                  %{
+                    "type" => "null"
+                  },
+                  value
+                ]
+              }
+              |> unwrap_any_of()
+
+            Map.put(
+              acc,
+              key,
+              new_value
+            )
+          end
+        end)
+      end)
+    end
+
+    defp add_null_for_non_required(v), do: v
   end
 end
