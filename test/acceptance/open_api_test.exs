@@ -369,7 +369,7 @@ defmodule Test.Acceptance.OpenApiTest do
              type: :object,
              required: [:b],
              properties: %{
-               a: %OpenApiSpex.Schema{type: :integer},
+               a: %{"anyOf" => [%OpenApiSpex.Schema{type: :integer}, %{"type" => "null"}]},
                b: %OpenApiSpex.Schema{type: :string}
              }
            } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
@@ -388,10 +388,15 @@ defmodule Test.Acceptance.OpenApiTest do
              type: :object,
              required: [],
              properties: %{
-               foo: %OpenApiSpex.Schema{
-                 type: :string,
-                 description: "Field included by default.",
-                 nullable: true
+               foo: %{
+                 "anyOf" => [
+                   %OpenApiSpex.Schema{
+                     type: :string,
+                     description: "Field included by default.",
+                     nullable: true
+                   },
+                   %{"type" => "null"}
+                 ]
                }
              }
            } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
@@ -555,47 +560,60 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.items."$ref" == "#/components/schemas/author"
 
       assert %OpenApiSpex.Schema{
-               type: :object,
-               description: "This is an author!",
                required: [:type, :id],
+               type: :object,
                properties: %{
                  attributes: %OpenApiSpex.Schema{
-                   type: :object,
-                   description: "An attributes object for a author",
                    required: [],
+                   type: :object,
                    properties: %{
-                     name: %OpenApiSpex.Schema{
-                       type: :string,
-                       description: "Field included by default.",
-                       nullable: true
-                     },
-                     bio: %OpenApiSpex.Schema{
-                       type: :object,
-                       description: "Field included by default.",
-                       required: [],
-                       properties: %{
-                         history: %OpenApiSpex.Schema{
+                     name: %{
+                       "anyOf" => [
+                         %OpenApiSpex.Schema{
                            type: :string,
                            description: "Field included by default.",
                            nullable: true
-                         }
-                       },
-                       nullable: true
+                         },
+                         %{"type" => "null"}
+                       ]
+                     },
+                     bio: %{
+                       "anyOf" => [
+                         %OpenApiSpex.Schema{
+                           required: [],
+                           type: :object,
+                           properties: %{
+                             history: %{
+                               "anyOf" => [
+                                 %OpenApiSpex.Schema{
+                                   type: :string,
+                                   description: "Field included by default.",
+                                   nullable: true
+                                 },
+                                 %{"type" => "null"}
+                               ]
+                             }
+                           },
+                           description: "Field included by default.",
+                           nullable: true
+                         },
+                         %{"type" => "null"}
+                       ]
                      }
                    },
-                   additionalProperties: false
+                   additionalProperties: false,
+                   description: "An attributes object for a author"
                  },
                  id: %{type: :string},
                  type: %OpenApiSpex.Schema{type: :string},
                  relationships: %OpenApiSpex.Schema{
                    type: :object,
-                   description: "A relationships object for a author",
                    properties: %{
                      posts: %OpenApiSpex.Schema{
                        properties: %{
                          data: %OpenApiSpex.Schema{
+                           uniqueItems: true,
                            type: :array,
-                           description: "An array of inputs for posts",
                            items: %{
                              type: :object,
                              description: "Resource identifiers for posts",
@@ -609,15 +627,17 @@ defmodule Test.Acceptance.OpenApiTest do
                                type: %OpenApiSpex.Schema{type: :string}
                              }
                            },
-                           uniqueItems: true
+                           description: "An array of inputs for posts"
                          }
                        }
                      }
                    },
-                   additionalProperties: false
+                   additionalProperties: false,
+                   description: "A relationships object for a author"
                  }
                },
-               additionalProperties: false
+               additionalProperties: false,
+               description: "This is an author!"
              } = api_spec.components.schemas["author"]
     end
 
@@ -631,51 +651,77 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.items."$ref" == "#/components/schemas/post"
 
       assert api_spec.components.schemas["post"] == %OpenApiSpex.Schema{
-               type: :object,
-               description: "A \"Resource object\" representing a post",
                required: [:type, :id],
+               type: :object,
                properties: %{
                  attributes: %OpenApiSpex.Schema{
-                   type: :object,
-                   description: "An attributes object for a post",
                    required: ["name", "author_id"],
+                   type: :object,
                    properties: %{
-                     hidden: %OpenApiSpex.Schema{
-                       type: :string,
-                       description:
-                         "description of attribute :hidden. Field included by default.",
-                       nullable: true
+                     hidden: %{
+                       "anyOf" => [
+                         %OpenApiSpex.Schema{
+                           type: :string,
+                           description:
+                             "description of attribute :hidden. Field included by default.",
+                           nullable: true
+                         },
+                         %{"type" => "null"}
+                       ]
                      },
-                     name: %OpenApiSpex.Schema{
-                       type: :string,
-                       description: "description of attribute :name. Field included by default."
+                     name: %{
+                       "anyOf" => [
+                         %OpenApiSpex.Schema{
+                           type: :string,
+                           description:
+                             "description of attribute :name. Field included by default."
+                         },
+                         %{"type" => "null"}
+                       ]
                      },
-                     author_id: %OpenApiSpex.Schema{
-                       type: :string,
-                       format: "uuid",
-                       description: "Field included by default."
+                     author_id: %{
+                       "anyOf" => [
+                         %OpenApiSpex.Schema{
+                           type: :string,
+                           description: "Field included by default.",
+                           format: "uuid"
+                         },
+                         %{"type" => "null"}
+                       ]
                      },
-                     email: %OpenApiSpex.Schema{
-                       type: :string,
-                       description: "Field included by default.",
-                       nullable: true
+                     email: %{
+                       "anyOf" => [
+                         %OpenApiSpex.Schema{
+                           type: :string,
+                           description: "Field included by default.",
+                           nullable: true
+                         },
+                         %{"type" => "null"}
+                       ]
                      },
-                     name_twice: %OpenApiSpex.Schema{type: :string, nullable: true},
-                     count_of_tags: %OpenApiSpex.Schema{type: :integer}
+                     name_twice: %{
+                       "anyOf" => [
+                         %OpenApiSpex.Schema{type: :string, nullable: true},
+                         %{"type" => "null"}
+                       ]
+                     },
+                     count_of_tags: %{
+                       "anyOf" => [%OpenApiSpex.Schema{type: :integer}, %{"type" => "null"}]
+                     }
                    },
-                   additionalProperties: false
+                   additionalProperties: false,
+                   description: "An attributes object for a post"
                  },
                  id: %{type: :string},
                  type: %OpenApiSpex.Schema{type: :string},
                  relationships: %OpenApiSpex.Schema{
                    type: :object,
-                   description: "A relationships object for a post",
                    properties: %{
                      author: %OpenApiSpex.Schema{
                        properties: %{
                          data: %OpenApiSpex.Schema{
+                           uniqueItems: true,
                            type: :array,
-                           description: "An array of inputs for author",
                            items: %{
                              type: :object,
                              description: "Resource identifiers for author",
@@ -689,15 +735,17 @@ defmodule Test.Acceptance.OpenApiTest do
                                type: %OpenApiSpex.Schema{type: :string}
                              }
                            },
-                           uniqueItems: true
+                           description: "An array of inputs for author"
                          }
                        }
                      }
                    },
-                   additionalProperties: false
+                   additionalProperties: false,
+                   description: "A relationships object for a post"
                  }
                },
-               additionalProperties: false
+               additionalProperties: false,
+               description: "A \"Resource object\" representing a post"
              }
     end
   end
