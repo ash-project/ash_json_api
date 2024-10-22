@@ -249,21 +249,15 @@ defmodule AshJsonApi.JsonSchema do
         if Enum.member?(required, key) do
           Map.put(acc, key, value)
         else
-          {base, rest} = Map.split(value, ["description"])
-
           new_value =
-            Map.merge(
-              base,
-              %{
-                "anyOf" => [
-                  %{
-                    "type" => "null"
-                  },
-                  rest
-                ]
-              }
-              |> unwrap_any_of()
-            )
+            %{
+              "anyOf" => [
+                %{
+                  "type" => "null"
+                },
+                value
+              ]
+            }
 
           Map.put(
             acc,
