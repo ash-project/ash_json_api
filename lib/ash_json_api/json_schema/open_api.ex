@@ -225,7 +225,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         {
           "#{AshJsonApi.Resource.Info.type(resource)}-filter",
           %Schema{
-            type: :deepObject,
+            type: :object,
             properties: resource_filter_fields(resource, domains),
             example: "",
             additionalProperties: false,
