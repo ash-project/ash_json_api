@@ -2430,33 +2430,41 @@ if Code.ensure_loaded?(OpenApiSpex) do
       "^(#{values})(,(#{values}))*$"
     end
 
-    defp add_null_for_non_required(%Schema{required: required} = schema) do
+    defp add_null_for_non_required(%Schema{required: required} = schema)
+         when is_list(required) do
       Map.update!(schema, :properties, fn properties ->
-        Enum.reduce(properties, %{}, fn {key, value}, acc ->
-          if Enum.member?(required, key) do
-            Map.put(acc, key, value)
-          else
-            new_value =
-              %{
-                "anyOf" => [
-                  %{
-                    "type" => "null"
-                  },
-                  value
-                ]
-              }
-              |> unwrap_any_of()
+        if is_map(properties) do
+          Enum.reduce(properties, %{}, fn {key, value}, acc ->
+            if Enum.member?(required, key) do
+              Map.put(acc, key, value)
+            else
+              new_value =
+                %{
+                  "anyOf" => [
+                    %{
+                      "type" => "null"
+                    },
+                    value
+                  ]
+                }
+                |> unwrap_any_of()
 
-            Map.put(
-              acc,
-              key,
-              new_value
-            )
-          end
-        end)
+              Map.put(
+                acc,
+                key,
+                new_value
+              )
+            end
+          end)
+        else
+          IO.inspect(properties)
+          properties
+        end
       end)
     end
 
-    defp add_null_for_non_required(v), do: v
+    defp add_null_for_non_required(schema) do
+      schema
+    end
   end
 end
