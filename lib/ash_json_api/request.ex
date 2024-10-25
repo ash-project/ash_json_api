@@ -347,6 +347,13 @@ defmodule AshJsonApi.Request do
     end
   end
 
+  defp parse_filter_included(%{query_params: %{"filter_included" => filter_included}} = request)
+       when is_binary(filter_included) do
+    parse_filter_included(
+      put_in(request.query_params["filter_included"], Plug.Conn.Query.decode(filter_included))
+    )
+  end
+
   defp parse_filter_included(
          %{resource: resource, query_params: %{"filter_included" => filter_included}} = request
        )
@@ -510,6 +517,10 @@ defmodule AshJsonApi.Request do
           )
       end
     end)
+  end
+
+  defp parse_filter(%{query_params: %{"filter" => filter}} = request) when is_binary(filter) do
+    parse_filter(put_in(request.query_params["filter"], Plug.Conn.Query.decode(filter)))
   end
 
   defp parse_filter(%{query_params: %{"filter" => filter}} = request)

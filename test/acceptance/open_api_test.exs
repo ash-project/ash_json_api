@@ -452,7 +452,7 @@ defmodule Test.Acceptance.OpenApiTest do
       assert filter.style == :deepObject
       assert %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"} = filter.schema
       assert schema = api_spec.components.schemas["post-filter"]
-      assert schema.type == :object
+      assert schema.type == :deepObject
 
       assert %{
                properties: %{

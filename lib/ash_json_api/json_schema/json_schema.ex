@@ -688,9 +688,7 @@ defmodule AshJsonApi.JsonSchema do
   defp add_filter(properties, route, resource) do
     if route.derive_filter? && read_action?(resource, route) &&
          AshJsonApi.Resource.Info.derive_filter?(resource) do
-      Map.put(properties, "filter", %{
-        "type" => "object"
-      })
+      Map.put(properties, "filter", %{anyOf: [%{"type" => "object"}, %{"type" => "string"}]})
     else
       properties
     end
