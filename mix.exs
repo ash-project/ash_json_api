@@ -49,6 +49,7 @@ defmodule AshJsonApi.MixProject do
         {"README.md", title: "Home"},
         "documentation/tutorials/getting-started-with-ash-json-api.md",
         "documentation/topics/what-is-ash-json-api.md",
+        "documentation/topics/non-spec-query-parameters.md",
         "documentation/topics/open-api.md",
         "documentation/topics/relationships.md",
         "documentation/topics/links.md",

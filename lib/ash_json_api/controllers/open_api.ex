@@ -29,6 +29,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @doc false
+    # sobelow_skip ["Traversal.FileModule"]
     def spec(conn, opts) do
       if path = opts[:open_api_file] do
         File.read!(path)

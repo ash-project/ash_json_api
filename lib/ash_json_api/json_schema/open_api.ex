@@ -2457,14 +2457,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
             end
           end)
         else
-          IO.inspect(properties)
           properties
         end
       end)
-    end
-
-    defp add_null_for_non_required(schema) do
-      schema
     end
   end
 end
