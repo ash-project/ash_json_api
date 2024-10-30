@@ -67,7 +67,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
         index(:read)
       end
 
-      includes author: [:posts]
+      includes author: [:posts], comments: []
     end
 
     attributes do
@@ -77,6 +77,39 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
     relationships do
       belongs_to(:author, Author, public?: true)
+
+      has_many(:comments, AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Comment,
+        public?: true
+      )
+    end
+  end
+
+  defmodule Comment do
+    use Ash.Resource,
+      domain: AshJsonApiTest.FetchingData.InclusionOfRelatedResources.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    actions do
+      default_accept(:*)
+      defaults([:create, :read, :update, :destroy])
+    end
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("comment")
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:text, :string, public?: true)
+    end
+
+    relationships do
+      belongs_to(:post, Post, public?: true)
     end
   end
 
@@ -93,6 +126,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
     resources do
       resource(Author)
       resource(Post)
+      resource(Comment)
     end
   end
 
@@ -173,104 +207,130 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
     test "resource endpoint with include param of to-many relationship" do
       # GET /posts/1?include=comments
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
+        |> Ash.create!()
+
+      %{id: comment1_id} =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{post_id: post.id, text: "foo"})
+        |> Ash.create!()
+
+      %{id: comment2_id} =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{post_id: post.id, text: "bar"})
+        |> Ash.create!()
+
+      Domain
+      |> get("/posts/#{post.id}/?include=comments", status: 200)
+      |> assert_has_matching_include(fn
+        %{"type" => "comment", "id" => ^comment1_id} ->
+          true
+
+        _ ->
+          false
+      end)
+      |> assert_has_matching_include(fn
+        %{"type" => "comment", "id" => ^comment2_id} ->
+          true
+
+        _ ->
+          false
+      end)
     end
 
-    test "resource endpoint with include param of multiple relationships" do
-      # GET /posts/1?include=author,comments
+    test "includes can be filtered" do
+      # GET /posts/1?include=comments
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
+        |> Ash.create!()
+
+      %{id: comment1_id} =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{post_id: post.id, text: "foo"})
+        |> Ash.create!()
+
+      %{id: comment2_id} =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{post_id: post.id, text: "bar"})
+        |> Ash.create!()
+
+      Domain
+      |> get("/posts/#{post.id}/?include=comments&filter_included[comments][text]=foo",
+        status: 200
+      )
+      |> assert_has_matching_include(fn
+        %{"type" => "comment", "id" => ^comment1_id} ->
+          true
+
+        _ ->
+          false
+      end)
+      |> refute_has_matching_include(fn
+        %{"type" => "comment", "id" => ^comment2_id} ->
+          true
+
+        _ ->
+          false
+      end)
     end
 
-    test "resource endpoint with include param of one-level nested relationship" do
-      # GET /posts/1?include=author.posts
-      # intermediate resources in a multi-part path must be returned along with the leaf nodes. For example, a response to a request for comments.author should include comments as well as the author of each of those comments.
-    end
+    test "includes can be sorted" do
+      # GET /posts/1?include=comments
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
 
-    test "resource endpoint with relationship alias" do
-      # Note: A server may choose to expose a deeply nested relationship such as comments.author as a direct relationship with an alias such as comment-authors. This would allow a client to request /articles/1?include=comment-authors instead of /articles/1?include=comments.author. By abstracting the nested relationship with an alias, the server can still provide full linkage in compound documents without including potentially unwanted intermediate resources.
-    end
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
+        |> Ash.create!()
 
-    test "resource endpoint with include param of overlapping resources" do
-      # rename this because I don't know if I fully captured the concept
-      # I specifically want to test behavior around the author for the primary resource vs the nested authors
-      # GET /articles/1?include=author,comments.author HTTP/1.1
-    end
+      %{id: comment1_id} =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{post_id: post.id, text: "foo"})
+        |> Ash.create!()
 
-    test "resource endpoint with include param of multiple one-level nested relationship" do
-      # GET /articles/1?include=author.posts,comments.user
-    end
+      %{id: comment2_id} =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{post_id: post.id, text: "bar"})
+        |> Ash.create!()
 
-    test "resource endpoint with include param of two-level nested relationship" do
-      # GET /posts/1?include=author.posts.comments
-    end
+      sorted_ids =
+        Domain
+        |> get("/posts/#{post.id}/?include=comments&sort_included[comments]=text",
+          status: 200
+        )
+        |> Map.get(:resp_body)
+        |> get_in(["data", "relationships", "comments", "data", Access.all(), "id"])
 
-    test "resource endpoint with include param of three-level nested relationship" do
-      # GET /posts/1?include=author.posts.comments.user
-    end
+      assert sorted_ids == [comment2_id, comment1_id]
 
-    test "relationship endpoints with include param" do
-      # GET /articles/1/relationships/comments?include=comments.author HTTP/1.1
-      # In this case, the primary data would be a collection of resource identifier objects that represent linkage to comments for an article, while the full comments and comment authors would be returned as included data.
-      # Do we need to run all the above tests on a to-one and to-many relationship endpoint?
+      sorted_desc_ids =
+        Domain
+        |> get("/posts/#{post.id}/?include=comments&sort_included[comments]=-text",
+          status: 200
+        )
+        |> Map.get(:resp_body)
+        |> get_in(["data", "relationships", "comments", "data", Access.all(), "id"])
+
+      assert sorted_desc_ids == [comment1_id, comment2_id]
     end
   end
-
-  # I put this as "may" because loading is an optional feature
-  @tag :spec_may
-  # JSON:API 1.0 Specification
-  # --------------------------
-  # If an endpoint does not support the include parameter, it MUST respond with 400 Bad Request to any requests that include it.
-  # --------------------------
-  test "400 Bad Request for requests that with include parameter for endpoints without include parameter support" do
-    # GET /posts/1?include=foobar
-    author =
-      Author
-      |> Ash.Changeset.for_create(:create, %{name: "foo"})
-      |> Ash.create!()
-
-    post =
-      Post
-      |> Ash.Changeset.for_create(:create, %{name: "foo"})
-      |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
-      |> Ash.create!()
-
-    get(Domain, "/posts/#{post.id}/?include=foobar", status: 400)
-  end
-
-  # I put this as "may" because loading is an optional feature
-  # JSON:API 1.0 Specification
-  # --------------------------
-  # If an endpoint supports the include parameter and a client supplies it, the server MUST NOT include unrequested resource objects in the included section of the compound document.
-  # --------------------------
-  describe "No unrequested resource objects when using the include parameter" do
-    @describetag :spec_may
-    # This is testing a negative, which is hard to do.
-    # Perhaps this test is better done as part of a higher level test suite validation that runs every single time a request in the test suite is made (and validates against the JSON:API schema as one step)?
-  end
-
-  # I put this as "may" because loading is an optional feature
-  # JSON:API 1.0 Specification
-  # --------------------------
-  # The value of the include parameter MUST be a comma-separated (U+002C COMMA, “,”) list of relationship paths. A relationship path is a dot-separated (U+002E FULL-STOP, “.”) list of relationship names.
-  # --------------------------
-  describe "include parameter value" do
-    @describetag :spec_may
-    # Not sure how to test this - seems like a client issue, and other tests should cover this in the error case
-  end
-
-  # JSON:API 1.0 Specification
-  # --------------------------
-  # If a server is unable to identify a relationship path or does not support inclusion of resources from a path, it MUST respond with 400 Bad Request.
-  # --------------------------
-  describe "400 Bad Request for unidentified relationships." do
-    @describetag :spec_must
-    test "incorrect relationship path" do
-      # GET /posts/1/relationships/foo
-    end
-
-    test "incorrect include param" do
-      # GET /posts/1?include=foo
-    end
-  end
-
-  # figure out if this note in the spec needs to be addressed, or if it will be covered from other statements
-  # Note: This section applies to any endpoint that responds with primary data, regardless of the request type. For instance, a server could support the inclusion of related resources along with a POST request to create a resource or relationship.
 end

@@ -43,6 +43,7 @@ defmodule AshJsonApi.Request do
     attributes: %{},
     arguments: %{},
     filter_included: %{},
+    sort_included: %{},
     sort: [],
     fields: %{},
     field_inputs: %{},
@@ -106,6 +107,7 @@ defmodule AshJsonApi.Request do
     |> parse_fields()
     |> parse_field_inputs()
     |> parse_filter_included()
+    |> parse_sort_included()
     |> parse_includes()
     |> parse_filter()
     |> parse_sort()
@@ -378,6 +380,37 @@ defmodule AshJsonApi.Request do
 
   defp parse_filter_included(request), do: request
 
+  defp parse_sort_included(%{query_params: %{"sort_included" => sort_included}} = request)
+       when is_binary(sort_included) do
+    parse_sort_included(
+      put_in(request.query_params["sort_included"], Plug.Conn.Query.decode(sort_included))
+    )
+  end
+
+  defp parse_sort_included(
+         %{resource: resource, query_params: %{"sort_included" => sort_included}} = request
+       )
+       when is_map(sort_included) do
+    Enum.reduce(sort_included, request, fn {relationship_path, sort_included}, request ->
+      path = String.split(relationship_path)
+
+      case public_related(resource, path) do
+        nil ->
+          add_error(request, "Invalid sort included", request.route.type)
+
+        related ->
+          if AshJsonApi.Resource.Info.derive_sort?(related) do
+            path = Enum.map(path, &String.to_existing_atom/1)
+            %{request | sort_included: Map.put(request.sort_included, path, sort_included)}
+          else
+            add_error(request, "Invalid sort included", request.route.type)
+          end
+      end
+    end)
+  end
+
+  defp parse_sort_included(request), do: request
+
   defp parse_fields(%{resource: resource, query_params: %{"fields" => fields}} = request)
        when is_binary(fields) do
     add_fields(request, resource, fields, false)
@@ -620,15 +653,17 @@ defmodule AshJsonApi.Request do
       request.fields,
       request.field_inputs,
       request.filter_included,
+      request.sort_included,
       request.resource
     )
   end
 
-  defp set_include_queries(includes, fields, field_inputs, filters, resource, path \\ []) do
+  defp set_include_queries(includes, fields, field_inputs, filters, sorts, resource, path \\ []) do
     Enum.map(includes, fn {key, nested} ->
       related = public_related(resource, key)
 
-      nested = set_include_queries(nested, fields, field_inputs, filters, related, path ++ [key])
+      nested =
+        set_include_queries(nested, fields, field_inputs, filters, sorts, related, path ++ [key])
 
       related_field_inputs = Map.get(field_inputs, related, %{})
 
@@ -652,13 +687,22 @@ defmodule AshJsonApi.Request do
       filtered_query =
         case Map.fetch(filters, path ++ [key]) do
           {:ok, filter} ->
-            Ash.Query.filter(new_query, ^filter)
+            Ash.Query.filter_input(new_query, filter)
 
           :error ->
             new_query
         end
 
-      {key, filtered_query}
+      sorted_query =
+        case Map.fetch(sorts, path ++ [key]) do
+          {:ok, sort} ->
+            Ash.Query.sort_input(filtered_query, sort)
+
+          :error ->
+            filtered_query
+        end
+
+      {key, sorted_query}
     end)
   end
 

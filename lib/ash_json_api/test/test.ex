@@ -384,6 +384,18 @@ defmodule AshJsonApi.Test do
     end
   end
 
+  defmacro refute_has_matching_include(conn, function) do
+    quote do
+      with %{"included" => included} when is_list(included) <- unquote(conn).resp_body do
+        refute Enum.any?(included, fn included ->
+                 unquote(function).(included)
+               end)
+      end
+
+      unquote(conn)
+    end
+  end
+
   defmacro assert_equal_links(conn, expected_links) do
     quote bind_quoted: [expected_links: expected_links, conn: conn] do
       %{"links" => resp_links} = conn.resp_body

@@ -6,6 +6,7 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyQueryParams do
     :fields,
     :field_inputs,
     :filter_included,
+    :sort_included,
     :include,
     :page
   ]
