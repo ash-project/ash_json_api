@@ -5,6 +5,27 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.13](https://github.com/ash-project/ash_json_api/compare/v1.4.12...v1.4.13) (2024-11-04)
+
+
+
+
+### Bug Fixes:
+
+* mark filters as deepObject
+
+* support `null` input for non-required attributes
+
+### Improvements:
+
+* fix relationship representation & descriptions in open api schema
+
+* add `sort_included` query parameter
+
+* add sort_included query parameter
+
+* accept arbitrary filters (by making it a stupid text field)
+
 ## [v1.4.12](https://github.com/ash-project/ash_json_api/compare/v1.4.11...v1.4.12) (2024-10-21)
 
 
