@@ -627,7 +627,7 @@ defmodule Test.Acceptance.OpenApiTest do
                                type: %OpenApiSpex.Schema{type: :string}
                              }
                            },
-                           description: "An array of inputs for posts"
+                           description: "Relationship data for posts"
                          }
                        }
                      }
@@ -720,22 +720,19 @@ defmodule Test.Acceptance.OpenApiTest do
                      author: %OpenApiSpex.Schema{
                        properties: %{
                          data: %OpenApiSpex.Schema{
-                           uniqueItems: true,
-                           type: :array,
-                           items: %{
-                             type: :object,
-                             description: "Resource identifiers for author",
-                             required: [:type, :id],
-                             properties: %{
-                               id: %OpenApiSpex.Schema{type: :string},
-                               meta: %OpenApiSpex.Schema{
-                                 type: :object,
-                                 additionalProperties: true
-                               },
-                               type: %OpenApiSpex.Schema{type: :string}
-                             }
-                           },
-                           description: "An array of inputs for author"
+                           type: :object,
+                           description: "An identifier for author",
+                           required: [:type, :id],
+                           additionalProperties: false,
+                           nullable: true,
+                           properties: %{
+                             id: %OpenApiSpex.Schema{type: :string},
+                             meta: %OpenApiSpex.Schema{
+                               type: :object,
+                               additionalProperties: true
+                             },
+                             type: %OpenApiSpex.Schema{type: :string}
+                           }
                          }
                        }
                      }

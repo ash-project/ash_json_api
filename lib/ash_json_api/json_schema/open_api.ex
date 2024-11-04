@@ -899,8 +899,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_relationships(resource) do
       resource
       |> Ash.Resource.Info.public_relationships()
-      |> Enum.filter(fn %{destination: relationship} ->
-        AshJsonApi.Resource.Info.type(relationship)
+      |> Enum.filter(fn %{destination: destination} ->
+        AshJsonApi.Resource.Info.type(destination)
       end)
       |> Map.new(fn rel ->
         data = resource_relationship_field_data(resource, rel)
@@ -923,14 +923,37 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @spec resource_relationship_field_data(
             resource :: module,
-            Relationships.relationship()
+            Relationship.t()
           ) :: Schema.t()
     defp resource_relationship_field_data(_resource, %{
-           type: {:array, _},
+           cardinality: :many,
            name: name
          }) do
       %Schema{
-        description: "Identifiers for #{name}",
+        description: "Relationship data for #{name}",
+        type: :array,
+        items: %{
+          description: "Resource identifiers for #{name}",
+          type: :object,
+          required: [:type, :id],
+          properties: %{
+            type: %Schema{type: :string},
+            id: %Schema{type: :string},
+            meta: %Schema{
+              type: :object,
+              additionalProperties: true
+            }
+          }
+        },
+        uniqueItems: true
+      }
+    end
+
+    defp resource_relationship_field_data(_resource, %{
+           name: name
+         }) do
+      %Schema{
+        description: "An identifier for #{name}",
         type: :object,
         nullable: true,
         required: [:type, :id],
@@ -946,7 +969,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp resource_relationship_field_data(_resource, %{
+    @spec resource_write_relationship_field_data(
+            resource :: module,
+            Ash.Resource.Actions.Argument.t()
+          ) :: Schema.t()
+    defp resource_write_relationship_field_data(_resource, %{
+           type: {:array, _},
            name: name
          }) do
       %Schema{
@@ -966,6 +994,26 @@ if Code.ensure_loaded?(OpenApiSpex) do
           }
         },
         uniqueItems: true
+      }
+    end
+
+    defp resource_write_relationship_field_data(_resource, %{
+           name: name
+         }) do
+      %Schema{
+        description: "Identifiers for #{name}",
+        type: :object,
+        nullable: true,
+        required: [:type, :id],
+        additionalProperties: false,
+        properties: %{
+          type: %Schema{type: :string},
+          id: %Schema{type: :string},
+          meta: %Schema{
+            type: :object,
+            additionalProperties: true
+          }
+        }
       }
     end
 
@@ -1781,7 +1829,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       action.arguments
       |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
       |> Map.new(fn argument ->
-        data = resource_relationship_field_data(resource, argument)
+        data = resource_write_relationship_field_data(resource, argument)
 
         schema = %Schema{
           type: :object,
