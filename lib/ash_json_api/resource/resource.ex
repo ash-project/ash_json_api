@@ -336,7 +336,7 @@ defmodule AshJsonApi.Resource do
     args: [:method, :route, :action],
     describe: "A route for a generic action.",
     examples: [
-      ~S{route :get, "say_hi/:name", :say_hello"}
+      ~S{route :get, "say_hi/:name", :say_hello}
     ],
     schema:
       Keyword.put(@route_schema, :method,
