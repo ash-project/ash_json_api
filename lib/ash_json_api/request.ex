@@ -126,6 +126,13 @@ defmodule AshJsonApi.Request do
     ]
   end
 
+  def load_opts(request, merge) do
+    Keyword.merge(
+      load_opts(request),
+      merge
+    )
+  end
+
   def opts(request, merge \\ []) do
     page_params = Map.get(request.assigns, :page)
 
