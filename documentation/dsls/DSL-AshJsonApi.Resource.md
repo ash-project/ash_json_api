@@ -575,7 +575,7 @@ A route for a generic action.
 
 ### Examples
 ```
-route :get, "say_hi/:name", :say_hello"
+route :get, "say_hi/:name", :say_hello
 ```
 
 
