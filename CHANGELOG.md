@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.14](https://github.com/ash-project/ash_json_api/compare/v1.4.13...v1.4.14) (2024-11-24)
+
+
+
+
+### Bug Fixes:
+
+* add opts to all Ash.load calls (#260)
+
 ## [v1.4.13](https://github.com/ash-project/ash_json_api/compare/v1.4.12...v1.4.13) (2024-11-04)
 
 
