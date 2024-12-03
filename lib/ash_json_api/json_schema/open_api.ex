@@ -2253,11 +2253,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp boolean_filter_fields(resource) do
       if Ash.DataLayer.can?(:boolean_filter, resource) do
         [
-          and: %Reference{
-            "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+          and: %Schema{
+            type: :array,
+            items: %Reference{
+              "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+            },
+            uniqueItems: true
           },
-          or: %Reference{
-            "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+          or: %Schema{
+            type: :array,
+            items: %Reference{
+              "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"
+            },
+            uniqueItems: true
           },
           not: %Reference{
             "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}-filter"

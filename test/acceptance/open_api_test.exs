@@ -467,12 +467,24 @@ defmodule Test.Acceptance.OpenApiTest do
                  hidden: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-hidden"},
                  id: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-id"},
                  name: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-name"},
-                 and: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"},
+                 and: %Schema{
+                   type: :array,
+                   items: %OpenApiSpex.Reference{
+                     "$ref": "#/components/schemas/post-filter"
+                   },
+                   uniqueItems: true
+                 },
+                 or: %Schema{
+                   type: :array,
+                   items: %OpenApiSpex.Reference{
+                     "$ref": "#/components/schemas/post-filter"
+                   },
+                   uniqueItems: true
+                 },
                  name_twice: %OpenApiSpex.Reference{
                    "$ref": "#/components/schemas/post-filter-name_twice"
                  },
-                 not: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"},
-                 or: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"}
+                 not: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"}
                }
              } = schema
 
