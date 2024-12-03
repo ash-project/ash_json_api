@@ -923,7 +923,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @spec resource_relationship_field_data(
             resource :: module,
-            Relationship.t()
+            relationship :: Ash.Resource.Relationships.relationship()
           ) :: Schema.t()
     defp resource_relationship_field_data(_resource, %{
            cardinality: :many,

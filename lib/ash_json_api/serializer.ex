@@ -664,13 +664,14 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp serialize_attributes(_, nil), do: nil
+  defp serialize_attributes(request, records, opts \\ [])
+  defp serialize_attributes(_, nil, _opts), do: nil
 
-  defp serialize_attributes(request, records) when is_list(records) do
-    Enum.map(records, &serialize_attributes(request, &1))
+  defp serialize_attributes(request, records, opts) when is_list(records) do
+    Enum.map(records, &serialize_attributes(request, &1, opts))
   end
 
-  defp serialize_attributes(request, %resource{} = record) do
+  defp serialize_attributes(request, %resource{} = record, opts) do
     fields =
       Map.get(request.fields, resource) || Map.get(request.route, :default_fields) ||
         default_attributes(resource)
@@ -703,7 +704,8 @@ defmodule AshJsonApi.Serializer do
         end
 
       cond do
-        AshJsonApi.Resource.only_primary_key?(resource, field_name) ->
+        AshJsonApi.Resource.only_primary_key?(resource, field_name) &&
+            Keyword.get(opts, :skip_only_primary_key?, true) ->
           acc
 
         !field ->
@@ -743,12 +745,12 @@ defmodule AshJsonApi.Serializer do
          instance_of when not is_nil(instance_of) <- constraints[:instance_of],
          true <- Ash.Resource.Info.resource?(instance_of) do
       req = %{fields: %{}, route: %{}, domain: domain}
-      serialize_attributes(req, value)
+      serialize_attributes(req, value, skip_only_primary_key?: false)
     else
       _ ->
-        if Ash.Type.embedded_type?(type) do
+        if Ash.Resource.Info.resource?(type) do
           req = %{fields: %{}, route: %{}, domain: domain}
-          serialize_attributes(req, value)
+          serialize_attributes(req, value, skip_only_primary_key?: false)
         else
           value
         end
