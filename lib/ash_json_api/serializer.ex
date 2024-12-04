@@ -187,7 +187,7 @@ defmodule AshJsonApi.Serializer do
   defp add_includes(payload, %{includes_keyword: []}, _), do: payload
 
   defp add_includes(payload, request, includes) do
-    includes = Enum.map(includes, &serialize_one_record(request, &1))
+    includes = Enum.map(includes, &serialize_one_record(request, &1, top_level?: false))
     Map.put(payload, :included, includes)
   end
 
@@ -462,11 +462,12 @@ defmodule AshJsonApi.Serializer do
     }
   end
 
-  defp serialize_one_record(request, %resource{} = record) do
+  defp serialize_one_record(request, %resource{} = record, opts \\ []) do
     %{
       id: AshJsonApi.Resource.encode_primary_key(record),
       type: AshJsonApi.Resource.Info.type(resource),
-      attributes: serialize_attributes(request, record),
+      attributes:
+        serialize_attributes(request, record, top_level?: Keyword.get(opts, :top_level?, true)),
       relationships: serialize_relationships(request, record),
       links: %{} |> add_one_record_self_link(request, record)
     }
@@ -664,7 +665,6 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp serialize_attributes(request, records, opts \\ [])
   defp serialize_attributes(_, nil, _opts), do: nil
 
   defp serialize_attributes(request, records, opts) when is_list(records) do
@@ -673,8 +673,13 @@ defmodule AshJsonApi.Serializer do
 
   defp serialize_attributes(request, %resource{} = record, opts) do
     fields =
-      Map.get(request.fields, resource) || Map.get(request.route, :default_fields) ||
-        default_attributes(resource)
+      if opts[:top_level?] do
+        Map.get(request.fields, resource) || Map.get(request.route, :default_fields) ||
+          default_attributes(resource)
+      else
+        Map.get(request.fields, resource) ||
+          default_attributes(resource)
+      end
 
     Enum.reduce(fields, %{}, fn field_name, acc ->
       field = Ash.Resource.Info.field(resource, field_name)
@@ -745,12 +750,12 @@ defmodule AshJsonApi.Serializer do
          instance_of when not is_nil(instance_of) <- constraints[:instance_of],
          true <- Ash.Resource.Info.resource?(instance_of) do
       req = %{fields: %{}, route: %{}, domain: domain}
-      serialize_attributes(req, value, skip_only_primary_key?: false)
+      serialize_attributes(req, value, skip_only_primary_key?: false, top_level?: false)
     else
       _ ->
         if Ash.Resource.Info.resource?(type) do
           req = %{fields: %{}, route: %{}, domain: domain}
-          serialize_attributes(req, value, skip_only_primary_key?: false)
+          serialize_attributes(req, value, skip_only_primary_key?: false, top_level?: false)
         else
           value
         end
