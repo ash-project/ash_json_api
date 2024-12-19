@@ -129,7 +129,7 @@ defmodule AshJsonApi.MixProject do
     [
       {:ash, ash_version("~> 3.0 and >= 3.3.0")},
       {:spark, "~> 2.2 and >= 2.2.10"},
-      {:igniter, "~> 0.3 and >= 0.3.58"},
+      {:igniter, "~> 0.3 and >= 0.3.58", optional: true},
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
       {:json_xema, "~> 0.4"},

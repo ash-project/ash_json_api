@@ -183,91 +183,97 @@ defmodule AshJsonApi.Domain do
     persisters: @persisters,
     transformers: @transformers
 
-  def install(igniter, module, Ash.Domain, _path, _argv) do
-    igniter
-    |> Spark.Igniter.add_extension(
-      module,
-      Ash.Domain,
-      :extensions,
-      AshJsonApi.Domain
-    )
-    |> add_to_ash_json_api_router(module)
-  end
-
-  defp add_to_ash_json_api_router(igniter, domain) do
-    case AshJsonApi.Igniter.find_ash_json_api_router(igniter, domain) do
-      {:ok, igniter, _} ->
-        igniter
-
-      {:error, igniter, []} ->
-        AshJsonApi.Igniter.setup_ash_json_api_router(igniter)
-
-      {:error, igniter, all_ash_json_api_routers} ->
-        ash_json_api_router =
-          case all_ash_json_api_routers do
-            [ash_json_api_router] ->
-              ash_json_api_router
-
-            ash_json_api_routers ->
-              Owl.IO.select(
-                ash_json_api_routers,
-                label: "Multiple AshJsonApi.Router modules found. Please select one to use:",
-                render_as: &inspect/1
-              )
-          end
-
-        Igniter.Project.Module.find_and_update_module!(igniter, ash_json_api_router, fn zipper ->
-          with {:ok, zipper} <- Igniter.Code.Module.move_to_use(zipper, AshJsonApi.Router),
-               {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 1),
-               {:ok, zipper} <- Igniter.Code.Keyword.get_key(zipper, :domains),
-               {:has_domain?, false} <- {:has_domain?, list_has_domain?(zipper, domain)},
-               {:ok, zipper} <-
-                 Igniter.Code.List.append_to_list(
-                   zipper,
-                   Sourceror.parse_string!("""
-                    Module.concat(["#{inspect(domain)}"])
-                   """)
-                 ) do
-            {:ok, zipper}
-          else
-            {:has_domain?, true} ->
-              {:ok, zipper}
-
-            _ ->
-              {:warning,
-               """
-               Could not add #{inspect(domain)} to the list of domains in #{inspect(ash_json_api_router)}.
-
-               Please make that change manually.
-               """}
-          end
-        end)
+  if Code.ensure_loaded?(Igniter) do
+    def install(igniter, module, Ash.Domain, _path, _argv) do
+      igniter
+      |> Spark.Igniter.add_extension(
+        module,
+        Ash.Domain,
+        :extensions,
+        AshJsonApi.Domain
+      )
+      |> add_to_ash_json_api_router(module)
     end
-  end
 
-  defp list_has_domain?(zipper, domain) do
-    list_has_literal_domain?(zipper, domain) || list_has_concat_domain?(zipper, domain)
-  end
+    defp add_to_ash_json_api_router(igniter, domain) do
+      case AshJsonApi.Igniter.find_ash_json_api_router(igniter, domain) do
+        {:ok, igniter, _} ->
+          igniter
 
-  defp list_has_literal_domain?(zipper, domain) do
-    !!Igniter.Code.List.find_list_item_index(zipper, fn zipper ->
-      Igniter.Code.Common.nodes_equal?(zipper, domain)
-    end)
-  end
+        {:error, igniter, []} ->
+          AshJsonApi.Igniter.setup_ash_json_api_router(igniter)
 
-  defp list_has_concat_domain?(zipper, domain) do
-    !!Igniter.Code.List.find_list_item_index(zipper, fn zipper ->
-      with true <- Igniter.Code.Function.function_call?(zipper, {Module, :concat}, 1),
-           {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 0),
-           true <- Igniter.Code.List.list?(zipper) do
-        Igniter.Code.Common.nodes_equal?(
-          zipper,
-          [inspect(domain)]
-        )
-      else
-        _ ->
-          false
+        {:error, igniter, all_ash_json_api_routers} ->
+          ash_json_api_router =
+            case all_ash_json_api_routers do
+              [ash_json_api_router] ->
+                ash_json_api_router
+
+              ash_json_api_routers ->
+                Owl.IO.select(
+                  ash_json_api_routers,
+                  label: "Multiple AshJsonApi.Router modules found. Please select one to use:",
+                  render_as: &inspect/1
+                )
+            end
+
+          Igniter.Project.Module.find_and_update_module!(
+            igniter,
+            ash_json_api_router,
+            fn zipper ->
+              with {:ok, zipper} <- Igniter.Code.Module.move_to_use(zipper, AshJsonApi.Router),
+                   {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 1),
+                   {:ok, zipper} <- Igniter.Code.Keyword.get_key(zipper, :domains),
+                   {:has_domain?, false} <- {:has_domain?, list_has_domain?(zipper, domain)},
+                   {:ok, zipper} <-
+                     Igniter.Code.List.append_to_list(
+                       zipper,
+                       Sourceror.parse_string!("""
+                        Module.concat(["#{inspect(domain)}"])
+                       """)
+                     ) do
+                {:ok, zipper}
+              else
+                {:has_domain?, true} ->
+                  {:ok, zipper}
+
+                _ ->
+                  {:warning,
+                   """
+                   Could not add #{inspect(domain)} to the list of domains in #{inspect(ash_json_api_router)}.
+
+                   Please make that change manually.
+                   """}
+              end
+            end
+          )
       end
-    end)
+    end
+
+    defp list_has_domain?(zipper, domain) do
+      list_has_literal_domain?(zipper, domain) || list_has_concat_domain?(zipper, domain)
+    end
+
+    defp list_has_literal_domain?(zipper, domain) do
+      !!Igniter.Code.List.find_list_item_index(zipper, fn zipper ->
+        Igniter.Code.Common.nodes_equal?(zipper, domain)
+      end)
+    end
+
+    defp list_has_concat_domain?(zipper, domain) do
+      !!Igniter.Code.List.find_list_item_index(zipper, fn zipper ->
+        with true <- Igniter.Code.Function.function_call?(zipper, {Module, :concat}, 1),
+             {:ok, zipper} <- Igniter.Code.Function.move_to_nth_argument(zipper, 0),
+             true <- Igniter.Code.List.list?(zipper) do
+          Igniter.Code.Common.nodes_equal?(
+            zipper,
+            [inspect(domain)]
+          )
+        else
+          _ ->
+            false
+        end
+      end)
+    end
   end
 end

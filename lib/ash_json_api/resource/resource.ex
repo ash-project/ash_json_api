@@ -399,31 +399,33 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
-  # sobelow_skip ["DOS.StringToAtom"]
-  def install(igniter, module, Ash.Resource, _path, _argv) do
-    type =
-      module
-      |> Module.split()
-      |> List.last()
-      |> Macro.underscore()
+  if Code.ensure_loaded?(Igniter) do
+    # sobelow_skip ["DOS.StringToAtom"]
+    def install(igniter, module, Ash.Resource, _path, _argv) do
+      type =
+        module
+        |> Module.split()
+        |> List.last()
+        |> Macro.underscore()
 
-    igniter =
-      case Ash.Resource.Igniter.domain(igniter, module) do
-        {:ok, igniter, domain} ->
-          AshJsonApi.Domain.install(igniter, domain, Ash.Domain, nil, nil)
+      igniter =
+        case Ash.Resource.Igniter.domain(igniter, module) do
+          {:ok, igniter, domain} ->
+            AshJsonApi.Domain.install(igniter, domain, Ash.Domain, nil, nil)
 
-        {:error, igniter} ->
-          igniter
-      end
+          {:error, igniter} ->
+            igniter
+        end
 
-    igniter
-    |> Spark.Igniter.add_extension(
-      module,
-      Ash.Resource,
-      :extensions,
-      AshJsonApi.Resource
-    )
-    |> Spark.Igniter.set_option(module, [:json_api, :type], type)
+      igniter
+      |> Spark.Igniter.add_extension(
+        module,
+        Ash.Resource,
+        :extensions,
+        AshJsonApi.Resource
+      )
+      |> Spark.Igniter.set_option(module, [:json_api, :type], type)
+    end
   end
 
   @doc false
