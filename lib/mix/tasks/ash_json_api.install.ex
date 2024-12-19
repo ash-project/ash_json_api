@@ -34,7 +34,7 @@ if Code.ensure_loaded?(Igniter) do
     end
   end
 else
-  defmodule Mix.Tasks.Ash.Install do
+  defmodule Mix.Tasks.AshJsonApi.Install do
     @moduledoc "Installs AshJsonApi. Should be run with `mix igniter.install ash_json_api`"
     @shortdoc @moduledoc
 
