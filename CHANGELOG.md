@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.15](https://github.com/ash-project/ash_json_api/compare/v1.4.14...v1.4.15) (2024-12-20)
+
+
+
+
+### Bug Fixes:
+
+* only use route's fields on top level records
+
+* nested boolean filters accept a list of filters, not a single filter
+
+* encode primary key always when encoding resources as values
+
+### Improvements:
+
+* make igniter optional
+
 ## [v1.4.14](https://github.com/ash-project/ash_json_api/compare/v1.4.13...v1.4.14) (2024-11-24)
 
 
