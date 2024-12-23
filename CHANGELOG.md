@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.16](https://github.com/ash-project/ash_json_api/compare/v1.4.15...v1.4.16) (2024-12-23)
+
+
+
+
+### Improvements:
+
+* make testing helpers public and document them
+
+* deprecate the DSL router configuration
+
 ## [v1.4.15](https://github.com/ash-project/ash_json_api/compare/v1.4.14...v1.4.15) (2024-12-20)
 
 
