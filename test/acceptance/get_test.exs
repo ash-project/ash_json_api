@@ -119,12 +119,12 @@ defmodule Test.Acceptance.GetTest do
 
   defmodule Domain do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router(Test.Acceptance.GetTest.Router)
       log_errors?(false)
     end
 
@@ -138,6 +138,12 @@ defmodule Test.Acceptance.GetTest do
   end
 
   import AshJsonApi.Test
+
+  setup do
+    Application.put_env(:ash_json_api, Domain, json_api: [test_router: Router])
+
+    :ok
+  end
 
   describe "not_found" do
     test "returns a 404 error for a non-existent error" do
@@ -165,6 +171,12 @@ defmodule Test.Acceptance.GetTest do
         "title" => "not_available"
       })
     end
+  end
+
+  setup do
+    Application.put_env(:ash_json_api, Domain, json_api: [test_router: Router])
+
+    :ok
   end
 
   describe "arguments" do

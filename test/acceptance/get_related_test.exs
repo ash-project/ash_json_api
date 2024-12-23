@@ -116,12 +116,12 @@ defmodule Test.Acceptance.GetRelatedTest do
 
   defmodule Domain do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router Test.Acceptance.GetRelatedTest.Router
       log_errors?(false)
 
       routes do
@@ -143,6 +143,12 @@ defmodule Test.Acceptance.GetRelatedTest do
   end
 
   import AshJsonApi.Test
+
+  setup do
+    Application.put_env(:ash_json_api, Domain, json_api: [test_router: Router])
+
+    :ok
+  end
 
   describe "index endpoint" do
     setup do

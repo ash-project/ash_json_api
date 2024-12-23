@@ -76,13 +76,10 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
   defmodule Domain do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
-
-    json_api do
-      router(AshJsonApi.ContentNegotiationTest.Router)
-    end
 
     resources do
       resource(Author)
@@ -97,6 +94,8 @@ defmodule AshJsonApi.ContentNegotiationTest do
   import AshJsonApi.Test
 
   setup do
+    Application.put_env(:ash_json_api, Domain, json_api: [test_router: Router])
+
     post =
       Post
       |> Ash.Changeset.for_create(:create, %{name: "foo"})

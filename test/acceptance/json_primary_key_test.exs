@@ -126,12 +126,12 @@ defmodule Test.Acceptance.ResourceTest do
 
   defmodule Domain do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router(Test.Acceptance.ResourceTest.Router)
       log_errors?(false)
     end
 
@@ -144,6 +144,12 @@ defmodule Test.Acceptance.ResourceTest do
 
   defmodule Router do
     use AshJsonApi.Router, domain: Domain
+  end
+
+  setup do
+    Application.put_env(:ash_json_api, Domain, json_api: [test_router: Router])
+
+    :ok
   end
 
   import AshJsonApi.Test

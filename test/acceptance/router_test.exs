@@ -33,12 +33,12 @@ defmodule Test.Acceptance.RouterTest do
 
   defmodule Personnel do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router(Test.Acceptance.RouterTest.Router)
       log_errors?(false)
     end
 
@@ -79,12 +79,12 @@ defmodule Test.Acceptance.RouterTest do
 
   defmodule Inventory do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router(Test.Acceptance.RouterTest.Router)
       log_errors?(false)
     end
 
@@ -98,6 +98,13 @@ defmodule Test.Acceptance.RouterTest do
       domains: [Test.Acceptance.RouterTest.Personnel, Test.Acceptance.RouterTest.Inventory],
       json_schema: "/json_schema",
       open_api: "/open_api"
+  end
+
+  setup do
+    Application.put_env(:ash_json_api, Inventory, json_api: [test_router: Router])
+    Application.put_env(:ash_json_api, Personnel, json_api: [test_router: Router])
+
+    :ok
   end
 
   describe "POST /people" do

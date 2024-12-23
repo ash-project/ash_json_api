@@ -251,12 +251,12 @@ defmodule Test.Acceptance.OpenApiTest do
 
   defmodule Blogs do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router(Test.Acceptance.OpenApiTest.Router)
       log_errors?(false)
     end
 

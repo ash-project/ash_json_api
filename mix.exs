@@ -92,7 +92,8 @@ defmodule AshJsonApi.MixProject do
           AshJsonApi.Domain
         ],
         Utilities: [
-          AshJsonApi.OpenApi
+          AshJsonApi.OpenApi,
+          AshJsonApi.Test
         ],
         Introspection: [
           AshJsonApi.Resource.Info,

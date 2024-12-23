@@ -35,7 +35,8 @@ defmodule AshJsonApi.Domain.Info do
   end
 
   def router(domain) do
-    Extension.get_opt(domain, [:json_api], :router, nil, false)
+    Extension.get_opt(domain, [:json_api], :test_router, nil, true) ||
+      Extension.get_opt(domain, [:json_api], :router, nil, false)
   end
 
   def include_nil_values?(domain) do

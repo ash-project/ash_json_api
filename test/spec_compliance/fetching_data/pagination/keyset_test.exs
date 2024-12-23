@@ -50,13 +50,10 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
   defmodule Domain do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
-
-    json_api do
-      router(AshJsonApiTest.FetchingData.Pagination.Keyset.Router)
-    end
 
     resources do
       resource(Post)
@@ -68,6 +65,12 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
   end
 
   import AshJsonApi.Test
+
+  setup do
+    Application.put_env(:ash_json_api, Domain, json_api: [test_router: Router])
+
+    :ok
+  end
 
   # JSON:API 1.0 Specification
   # --------------------------

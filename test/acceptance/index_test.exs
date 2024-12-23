@@ -95,12 +95,12 @@ defmodule Test.Acceptance.IndexTest do
 
   defmodule Domain do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router Test.Acceptance.IndexTest.Router
       log_errors?(false)
 
       routes do
@@ -125,6 +125,12 @@ defmodule Test.Acceptance.IndexTest do
   end
 
   import AshJsonApi.Test
+
+  setup do
+    Application.put_env(:ash_json_api, Domain, json_api: [test_router: Router])
+
+    :ok
+  end
 
   test "derived routes have the correct format" do
     assert [%{route: "/posts/names"}] = AshJsonApi.Domain.Info.routes(Domain)

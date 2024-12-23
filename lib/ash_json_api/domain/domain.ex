@@ -119,7 +119,9 @@ defmodule AshJsonApi.Domain do
     ],
     modules: [:router],
     deprecations: [
-      serve_schema?: "Use the `json_schema` option to `use AshJsonApi.Router` instead."
+      serve_schema?: "Use the `json_schema` option to `use AshJsonApi.Router` instead.",
+      router:
+        "Specify the router option in your calls to test helpers, or configure it via `config :your_app, YourDomain, test_router: YourRouter` in config/test.exs."
     ],
     schema: [
       router: [

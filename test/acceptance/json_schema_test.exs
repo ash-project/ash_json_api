@@ -99,12 +99,12 @@ defmodule Test.Acceptance.JsonSchemaTest do
 
   defmodule Blogs do
     use Ash.Domain,
+      otp_app: :ash_json_api,
       extensions: [
         AshJsonApi.Domain
       ]
 
     json_api do
-      router(Test.Acceptance.JsonSchemaTest.Router)
       log_errors?(false)
     end
 
@@ -115,6 +115,8 @@ defmodule Test.Acceptance.JsonSchemaTest do
   end
 
   setup do
+    Application.put_env(:ash_json_api, Blogs, json_api: [test_router: Router])
+
     json_api = AshJsonApi.JsonSchema.generate([Blogs])
 
     %{json_api: json_api}
