@@ -137,7 +137,7 @@ defmodule AshJsonApi.MixProject do
       {:multipart, "~> 0.4.0", only: [:dev, :test]},
       {:open_api_spex, "~> 3.16", optional: true},
       {:git_ops, "~> 2.4", only: [:dev, :test]},
-      {:ex_doc, github: "elixir-lang/ex_doc", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.36", only: [:dev, :test]},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
