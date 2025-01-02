@@ -346,7 +346,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       resource
       |> Ash.Resource.Info.public_attributes()
       |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
-      |> Enum.map(&to_string(&1.name))
+      |> Enum.map(& &1.name)
     end
 
     @spec resource_attributes(
