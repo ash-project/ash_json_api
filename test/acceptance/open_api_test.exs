@@ -667,7 +667,7 @@ defmodule Test.Acceptance.OpenApiTest do
                type: :object,
                properties: %{
                  attributes: %OpenApiSpex.Schema{
-                   required: ["name", "author_id"],
+                   required: [:name, :author_id],
                    type: :object,
                    properties: %{
                      hidden: %{
@@ -681,25 +681,20 @@ defmodule Test.Acceptance.OpenApiTest do
                          %{"type" => "null"}
                        ]
                      },
-                     name: %{
+                     name: %OpenApiSpex.Schema{
+                       type: :string,
+                       description: "description of attribute :name. Field included by default."
+                     },
+                     name_twice: %{
                        "anyOf" => [
-                         %OpenApiSpex.Schema{
-                           type: :string,
-                           description:
-                             "description of attribute :name. Field included by default."
-                         },
+                         %OpenApiSpex.Schema{type: :string, nullable: true},
                          %{"type" => "null"}
                        ]
                      },
-                     author_id: %{
-                       "anyOf" => [
-                         %OpenApiSpex.Schema{
-                           type: :string,
-                           description: "Field included by default.",
-                           format: "uuid"
-                         },
-                         %{"type" => "null"}
-                       ]
+                     author_id: %OpenApiSpex.Schema{
+                       type: :string,
+                       description: "Field included by default.",
+                       format: "uuid"
                      },
                      email: %{
                        "anyOf" => [
@@ -708,12 +703,6 @@ defmodule Test.Acceptance.OpenApiTest do
                            description: "Field included by default.",
                            nullable: true
                          },
-                         %{"type" => "null"}
-                       ]
-                     },
-                     name_twice: %{
-                       "anyOf" => [
-                         %OpenApiSpex.Schema{type: :string, nullable: true},
                          %{"type" => "null"}
                        ]
                      },
@@ -732,11 +721,8 @@ defmodule Test.Acceptance.OpenApiTest do
                      author: %OpenApiSpex.Schema{
                        properties: %{
                          data: %OpenApiSpex.Schema{
-                           type: :object,
-                           description: "An identifier for author",
                            required: [:type, :id],
-                           additionalProperties: false,
-                           nullable: true,
+                           type: :object,
                            properties: %{
                              id: %OpenApiSpex.Schema{type: :string},
                              meta: %OpenApiSpex.Schema{
@@ -744,7 +730,10 @@ defmodule Test.Acceptance.OpenApiTest do
                                additionalProperties: true
                              },
                              type: %OpenApiSpex.Schema{type: :string}
-                           }
+                           },
+                           additionalProperties: false,
+                           description: "An identifier for author",
+                           nullable: true
                          }
                        }
                      }
