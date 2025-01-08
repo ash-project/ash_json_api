@@ -25,7 +25,7 @@ defmodule AshJsonApi.Error.NotFound do
       filter = error.filter
       resource = error.resource
 
-      if is_map(filter) || (Keyword.keyword?(filter) && filter not in [[], []]) do
+      if is_map(filter) || (Keyword.keyword?(filter) && filter not in [[], %{}]) do
         filter =
           Enum.map_join(filter, ", ", fn {key, value} ->
             try do
