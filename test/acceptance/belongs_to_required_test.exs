@@ -198,7 +198,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         })
 
       # response is a Plug.
-      assert response.status == 400
+      assert response.status == 404
       assert Enum.any?(response.resp_body["errors"], &(&1["code"] == "not_found"))
     end
   end
