@@ -25,7 +25,7 @@ defmodule AshJsonApi.Error.NotFound do
       filter = error.filter
       resource = error.resource
 
-      if is_map(filter) || Keyword.keyword?(filter) do
+      if is_map(filter) || (Keyword.keyword?(filter) && filter not in [[], []]) do
         filter =
           Enum.map_join(filter, ", ", fn {key, value} ->
             try do
@@ -38,7 +38,11 @@ defmodule AshJsonApi.Error.NotFound do
 
         "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{filter}`"
       else
-        "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{inspect(filter)}`"
+        if is_nil(error.filter) do
+          "No #{AshJsonApi.Resource.Info.type(resource)} record found"
+        else
+          "No #{AshJsonApi.Resource.Info.type(resource)} record found with `#{inspect(filter)}`"
+        end
       end
     end
   end

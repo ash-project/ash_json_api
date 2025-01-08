@@ -312,7 +312,7 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.NotFound do
   def to_json_api_error(error) do
     %AshJsonApi.Error{
       id: Ash.UUID.generate(),
-      status_code: AshJsonApi.Error.class_to_status(error.class),
+      status_code: 404,
       code: "not_found",
       title: "NotFound",
       detail: "could not be found",
