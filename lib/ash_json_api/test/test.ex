@@ -408,8 +408,8 @@ defmodule AshJsonApi.Test do
   has the same value in the error.
 
   ## Example
-   
-  ```elixr
+
+  ```elixir
   Domain
   |> delete("/posts/1", status: 404)
   |> assert_has_error(%{
@@ -438,6 +438,7 @@ defmodule AshJsonApi.Test do
 
   ## Example
 
+  ```elixir
   Domain
   |> get("/posts/\#{post.id}/?include=author", status: 200)
   |> assert_has_matching_include(fn
@@ -447,6 +448,7 @@ defmodule AshJsonApi.Test do
     _ ->
       false
   end)
+  ```
   """
   defmacro assert_has_matching_include(conn, function) do
     quote do
@@ -466,6 +468,7 @@ defmodule AshJsonApi.Test do
 
   ## Example
 
+  ```elixir
   Domain
   |> get("/posts/\#{post.id}/?include=author", status: 200)
   |> refute_has_matching_include(fn
@@ -475,6 +478,7 @@ defmodule AshJsonApi.Test do
     _ ->
       false
   end)
+  ```
   """
   defmacro refute_has_matching_include(conn, function) do
     quote do
