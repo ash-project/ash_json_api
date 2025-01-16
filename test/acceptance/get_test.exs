@@ -60,7 +60,7 @@ defmodule Test.Acceptance.GetTest do
 
         get(:by_name, route: "/by_name/:name")
         get(:with_error, route: "/with_error/:id")
-        get(:fake, route: "/fake")
+        get(:fake, route: "/fake", default_fields: [:name, :profile, :tag, :name_twice])
 
         index(:read)
       end
@@ -276,10 +276,13 @@ defmodule Test.Acceptance.GetTest do
       |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
     end
 
-    test "calculated fields are rendered properly by default", %{post: post} do
-      Domain
-      |> get("/posts/#{post.id}")
-      |> assert_attribute_equals("name_twice", post.name <> "-" <> post.name)
+    test "calculated fields are not rendered by default", %{post: post} do
+      refute Domain
+             |> get("/posts/#{post.id}")
+             |> Map.fetch!(:resp_body)
+             |> Map.fetch!("data")
+             |> Map.fetch!("attributes")
+             |> Map.has_key?("name_twice")
     end
 
     test "calculated fields can be sorted on", %{post: post} do

@@ -25,6 +25,13 @@ if Code.ensure_loaded?(Igniter) do
 
       if Enum.empty?(candidate_ash_json_api_routers) do
         igniter
+        # Remove in 2.0
+        |> Igniter.Project.Config.configure(
+          "config.exs",
+          :ash_json_api,
+          [:show_public_calculations_when_loaded?],
+          false
+        )
         |> AshJsonApi.Igniter.setup_ash_json_api_router(ash_phoenix_router_name)
         |> AshJsonApi.Igniter.setup_phoenix(ash_phoenix_router_name)
       else

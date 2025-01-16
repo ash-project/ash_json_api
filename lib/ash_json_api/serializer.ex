@@ -783,12 +783,22 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp default_attributes(resource) do
-    AshJsonApi.Resource.Info.default_fields(resource) ||
-      resource
-      |> Ash.Resource.Info.public_attributes()
-      |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
-      |> Enum.map(& &1.name)
+  # make this always false in 2.0
+  if Application.compile_env(:ash_json_api, :show_public_calculations_when_loaded?, true) do
+    defp default_attributes(resource) do
+      AshJsonApi.Resource.Info.default_fields(resource) ||
+        resource
+        |> Ash.Resource.Info.public_attributes()
+        |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
+        |> Enum.map(& &1.name)
+    end
+  else
+    defp default_attributes(resource) do
+      AshJsonApi.Resource.Info.default_fields(resource) ||
+        resource
+        |> Ash.Resource.Info.public_attributes()
+        |> Enum.map(& &1.name)
+    end
   end
 
   defp encode_link(value) do

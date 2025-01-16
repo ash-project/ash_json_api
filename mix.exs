@@ -18,7 +18,7 @@ defmodule AshJsonApi.MixProject do
       consolidate_protocols: Mix.env() == :prod,
       docs: docs(),
       dialyzer: [
-        plt_add_apps: [:ex_unit, :open_api_spex]
+        plt_add_apps: [:ex_unit, :open_api_spex, :mix]
       ],
       deps: deps(),
       docs: docs(),
