@@ -48,6 +48,10 @@ defmodule Test.Acceptance.PostTest do
           route "/fake"
         end
 
+        post :with_age do
+          route "/with_age"
+        end
+
         post :sign_in do
           route "/sign_in/:id"
 
@@ -74,6 +78,11 @@ defmodule Test.Acceptance.PostTest do
       create :confirm_name do
         argument(:confirm, :string, allow_nil?: false)
         validate(confirm(:name, :confirm))
+      end
+
+      create :with_age do
+        accept([:age])
+        validate(numericality(:age, greater_than: &__MODULE__.zero/0))
       end
 
       create :import do
@@ -126,6 +135,7 @@ defmodule Test.Acceptance.PostTest do
     attributes do
       uuid_primary_key(:id, writable?: true)
       attribute(:name, :string, public?: true)
+      attribute(:age, :integer, public?: true)
     end
 
     relationships do
@@ -134,6 +144,8 @@ defmodule Test.Acceptance.PostTest do
         public?: true
       )
     end
+
+    def zero, do: 0
   end
 
   defmodule Post do
@@ -313,6 +325,27 @@ defmodule Test.Acceptance.PostTest do
 
       assert %{"data" => %{"attributes" => %{"hidden" => nil}}} = response.resp_body
     end
+
+    test "create with validation that uses a function" do
+      response =
+        Domain
+        |> post("/authors/with_age", %{
+          data: %{
+            type: "author",
+            attributes: %{
+              age: -1
+            }
+          }
+        })
+
+      # Make sure we get correct error code back
+      assert response.status == 400
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "invalid_attribute"
+      assert error["source"] == %{"pointer" => "/data/attributes/age"}
+      assert error["detail"] == "must be greater than %{greater_than}"
+      assert error["meta"]["greater_than"] == 0
+    end
   end
 
   describe "post" do
@@ -376,7 +409,7 @@ defmodule Test.Acceptance.PostTest do
         status: 201
       )
       |> assert_data_equals(%{
-        "attributes" => %{"name" => "fake"},
+        "attributes" => %{"name" => "fake", "age" => nil},
         "id" => nil,
         "links" => %{},
         "meta" => %{},
