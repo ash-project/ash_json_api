@@ -16,12 +16,11 @@ defmodule AshJsonApi.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       consolidate_protocols: Mix.env() == :prod,
-      docs: docs(),
       dialyzer: [
         plt_add_apps: [:ex_unit, :open_api_spex, :mix]
       ],
       deps: deps(),
-      docs: docs(),
+      docs: &docs/0,
       aliases: aliases(),
       package: package(),
       source_url: "https://github.com/ash-project/ash_json_api",
@@ -56,8 +55,10 @@ defmodule AshJsonApi.MixProject do
         "documentation/topics/upgrade.md",
         "documentation/topics/authorize-with-json-api.md",
         "documentation/topics/authenticate-with-json-api.md",
-        "documentation/dsls/DSL-AshJsonApi.Resource.md",
-        "documentation/dsls/DSL-AshJsonApi.Domain.md",
+        {"documentation/dsls/DSL-AshJsonApi.Resource.md",
+         search_data: Spark.Docs.search_data_for(AshJsonApi.Resource)},
+        {"documentation/dsls/DSL-AshJsonApi.Domain.md",
+         search_data: Spark.Docs.search_data_for(AshJsonApi.Domain)},
         "CHANGELOG.md"
       ],
       groups_for_extras: [
@@ -137,7 +138,7 @@ defmodule AshJsonApi.MixProject do
       {:multipart, "~> 0.4.0", only: [:dev, :test]},
       {:open_api_spex, "~> 3.16", optional: true},
       {:git_ops, "~> 2.4", only: [:dev, :test]},
-      {:ex_doc, "~> 0.36", only: [:dev, :test]},
+      {:ex_doc, "~> 0.37-rc", only: [:dev, :test]},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
@@ -162,12 +163,9 @@ defmodule AshJsonApi.MixProject do
       docs: [
         "spark.cheat_sheets",
         "docs",
-        "spark.replace_doc_links",
-        "spark.cheat_sheets_in_search"
+        "spark.replace_doc_links"
       ],
       "spark.formatter": "spark.formatter --extensions AshJsonApi.Resource,AshJsonApi.Domain",
-      "spark.cheat_sheets_in_search":
-        "spark.cheat_sheets_in_search --extensions AshJsonApi.Resource,AshJsonApi.Domain",
       "spark.cheat_sheets":
         "spark.cheat_sheets --extensions AshJsonApi.Resource,AshJsonApi.Domain"
     ]
