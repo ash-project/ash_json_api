@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.18](https://github.com/ash-project/ash_json_api/compare/v1.4.17...v1.4.18) (2025-01-29)
+
+
+
+
+### Improvements:
+
+* On igniter install modify project aliases with expanded routes task (#282)
+
+* Add task for printing ash json routes (#281)
+
 ## [v1.4.17](https://github.com/ash-project/ash_json_api/compare/v1.4.16...v1.4.17) (2025-01-27)
 
 
