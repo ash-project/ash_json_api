@@ -7,7 +7,10 @@ if Code.ensure_loaded?(Igniter) do
 
     def info(_argv, _parent) do
       %Igniter.Mix.Task.Info{
-        adds_deps: [{:open_api_spex, "~> 3.0"}]
+        adds_deps: [{:open_api_spex, "~> 3.0"}],
+        aliases: [
+          "phx.routes": ["phx.routes", "ash_json_api.routes"]
+        ]
       }
     end
 
@@ -34,6 +37,7 @@ if Code.ensure_loaded?(Igniter) do
         )
         |> AshJsonApi.Igniter.setup_ash_json_api_router(ash_phoenix_router_name)
         |> AshJsonApi.Igniter.setup_phoenix(ash_phoenix_router_name)
+        |> AshJsonApi.Igniter.setup_routes_alias()
       else
         igniter
         |> Igniter.add_warning("AshJsonApi router already exists, skipping installation.")
