@@ -32,6 +32,10 @@ defmodule AshJsonApi.Router do
       domains = List.wrap(@opts[:domain] || @opts[:domains])
       @opts Keyword.put(@opts, :domains, domains)
 
+      def domains do
+        @opts[:domains]
+      end
+
       plug(:match)
 
       plug(Plug.Parsers,

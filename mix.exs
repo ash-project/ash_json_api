@@ -134,6 +134,7 @@ defmodule AshJsonApi.MixProject do
       {:igniter, "~> 0.3 and >= 0.3.58", optional: true},
       {:plug, "~> 1.11"},
       {:jason, "~> 1.1"},
+      {:phoenix, "~> 1.6"},
       {:json_xema, "~> 0.4"},
       {:multipart, "~> 0.4.0", only: [:dev, :test]},
       {:open_api_spex, "~> 3.16", optional: true},
