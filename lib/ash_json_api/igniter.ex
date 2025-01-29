@@ -158,6 +158,11 @@ if Code.ensure_loaded?(Igniter) do
       end
     end
 
+    def setup_routes_alias(igniter) do
+      alias = ["phx.routes", "ash_json_api.routes"]
+      Igniter.Project.TaskAliases.add_alias(igniter, "phx.routes", alias)
+    end
+
     defp update_endpoints(igniter, router) do
       {igniter, endpoints_that_need_parser} =
         Igniter.Libs.Phoenix.endpoints_for_router(igniter, router)
