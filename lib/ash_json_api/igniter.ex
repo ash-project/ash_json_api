@@ -159,8 +159,12 @@ if Code.ensure_loaded?(Igniter) do
     end
 
     def setup_routes_alias(igniter) do
-      alias = ["phx.routes", "ash_json_api.routes"]
-      Igniter.Project.TaskAliases.add_alias(igniter, "phx.routes", alias)
+      Igniter.Project.TaskAliases.add_alias(
+        igniter,
+        "phx.routes",
+        ["phx.routes", "ash_json_api.routes"],
+        if_exists: {:append, "ash_json_api.routes"}
+      )
     end
 
     defp update_endpoints(igniter, router) do
