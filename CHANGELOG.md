@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.17](https://github.com/ash-project/ash_json_api/compare/v1.4.16...v1.4.17) (2025-01-27)
+
+
+
+
+### Bug Fixes:
+
+* don't display calculations just because they are loaded
+
+* use 404 for `Ash.Error.Query.NotFound`
+
+* properly fall back to `filter` or nothing for built-in not Found
+
+* required attributes being marked as nullable in OpenAPI output (#269)
+
 ## [v1.4.16](https://github.com/ash-project/ash_json_api/compare/v1.4.15...v1.4.16) (2024-12-23)
 
 
