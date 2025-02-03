@@ -100,11 +100,16 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
 
     json_api do
       type("comment")
+      default_fields [:text, :calc]
     end
 
     attributes do
       uuid_primary_key(:id)
       attribute(:text, :string, public?: true)
+    end
+
+    calculations do
+      calculate(:calc, :string, expr("hello"))
     end
 
     relationships do
@@ -241,6 +246,37 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
       end)
       |> assert_has_matching_include(fn
         %{"type" => "comment", "id" => ^comment2_id} ->
+          true
+
+        _ ->
+          false
+      end)
+    end
+
+    test "includes have fields for calcs in their default_fields" do
+      # GET /posts/1?include=comments
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.Changeset.manage_relationship(:author, author, type: :append_and_remove)
+        |> Ash.create!()
+
+      %{id: comment1_id} =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{post_id: post.id, text: "foo"})
+        |> Ash.create!()
+
+      Domain
+      |> get("/posts/#{post.id}/?include=comments&filter_included[comments][text]=foo",
+        status: 200
+      )
+      |> assert_has_matching_include(fn
+        %{"type" => "comment", "id" => ^comment1_id, "attributes" => %{"calc" => "hello"}} ->
           true
 
         _ ->

@@ -677,7 +677,12 @@ defmodule AshJsonApi.Request do
       load =
         fields
         |> Map.get(related)
-        |> Kernel.||([])
+        |> Kernel.||(
+          AshJsonApi.Resource.Info.default_fields(related) ||
+            related
+            |> Ash.Resource.Info.public_attributes()
+            |> Enum.map(& &1.name)
+        )
         |> Enum.map(fn field ->
           case Map.get(related_field_inputs, field) do
             nil -> field
