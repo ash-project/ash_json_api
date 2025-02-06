@@ -1750,12 +1750,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
             resource
             |> Ash.Resource.Info.attributes()
             |> Enum.filter(&(&1.name in action.accept && &1.writable?))
-            |> Enum.reject(&(&1.name in arguments))
             |> Enum.reject(
-              &(&1.allow_nil? || not is_nil(&1.default) || &1.generated? ||
+              &(&1.name in arguments || &1.allow_nil? || not is_nil(&1.default) || &1.generated? ||
                   &1.name in Map.get(action, :allow_nil_input, []))
             )
-            |> Enum.map(&to_string(&1.name))
+            |> Enum.map(& &1.name)
         end
 
       arguments =
