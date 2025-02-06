@@ -1730,26 +1730,36 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> relationship_resource_identifiers()
     end
 
-    defp required_write_attributes(resource, arguments, action, route \\ nil) do
-      attributes =
-        if action.type in [:action, :read] do
-          []
-        else
-          resource
-          |> Ash.Resource.Info.attributes()
-          |> Enum.filter(&(&1.name in action.accept && &1.writable?))
-          |> Enum.reject(
-            &(&1.allow_nil? || not is_nil(&1.default) || &1.generated? ||
-                &1 in Map.get(action, :allow_nil_input, []))
-          )
-          |> Enum.map(& &1.name)
-        end
-
+    @doc false
+    def required_write_attributes(resource, arguments, action, route \\ nil) do
       arguments =
         arguments
         |> Enum.filter(& &1.public?)
         |> without_path_arguments(action, route)
         |> without_query_params(route)
+
+      attributes =
+        case action.type do
+          type when type in [:action, :read] ->
+            []
+
+          :update ->
+            action.require_attributes
+
+          _ ->
+            resource
+            |> Ash.Resource.Info.attributes()
+            |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+            |> Enum.reject(&(&1.name in arguments))
+            |> Enum.reject(
+              &(&1.allow_nil? || not is_nil(&1.default) || &1.generated? ||
+                  &1.name in Map.get(action, :allow_nil_input, []))
+            )
+            |> Enum.map(&to_string(&1.name))
+        end
+
+      arguments =
+        arguments
         |> Enum.reject(& &1.allow_nil?)
         |> Enum.map(& &1.name)
 

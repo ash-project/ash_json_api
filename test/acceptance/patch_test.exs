@@ -159,7 +159,7 @@ defmodule Test.Acceptance.PatchTest do
       end
 
       update :update_email do
-        accept([:email])
+        accept([:email, :name])
       end
 
       action :fake_update, :struct do

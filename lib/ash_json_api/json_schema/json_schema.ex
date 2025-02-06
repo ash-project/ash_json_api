@@ -956,29 +956,8 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp required_write_attributes(resource, arguments, action, route \\ nil) do
-    attributes =
-      if action.type in [:action, :read] do
-        []
-      else
-        resource
-        |> Ash.Resource.Info.attributes()
-        |> Enum.filter(&(&1.name in action.accept && &1.writable?))
-        |> Enum.reject(
-          &(&1.allow_nil? || not is_nil(&1.default) || &1.generated? ||
-              &1.name in Map.get(action, :allow_nil_input, []))
-        )
-        |> Enum.map(&to_string(&1.name))
-      end
-
-    arguments =
-      arguments
-      |> without_path_arguments(action, route)
-      |> Enum.reject(& &1.allow_nil?)
-      |> Enum.map(&to_string(&1.name))
-
-    Enum.uniq(
-      attributes ++ arguments ++ Enum.map(Map.get(action, :require_attributes, []), &to_string/1)
-    )
+    AshJsonApi.OpenApi.required_write_attributes(resource, arguments, action, route)
+    |> Enum.map(&to_string/1)
   end
 
   defp write_attributes(resource, arguments, action, route \\ nil) do
