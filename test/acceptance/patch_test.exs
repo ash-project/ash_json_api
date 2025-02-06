@@ -127,6 +127,10 @@ defmodule Test.Acceptance.PatchTest do
           end)
         end
 
+        patch :update_email do
+          route("/update_email/:id")
+        end
+
         patch :fake_update do
           route "/fake_update/:id"
         end
@@ -152,6 +156,10 @@ defmodule Test.Acceptance.PatchTest do
         require_atomic?(false)
         allow_nil_input([:name])
         change(manage_relationship(:author, type: :append_and_remove))
+      end
+
+      update :update_email do
+        accept([:email])
       end
 
       action :fake_update, :struct do
@@ -295,6 +303,17 @@ defmodule Test.Acceptance.PatchTest do
       |> assert_meta_equals(%{"bar" => "bar"})
       |> assert_attribute_equals("email", "dummy@test.com")
       |> assert_attribute_equals("name_twice", "Valid PostbazValid Post")
+    end
+
+    test "patch doesn't require all required attributes", %{post: post} do
+      Domain
+      |> patch(
+        "/posts/update_email/#{post.id}",
+        %{
+          data: %{attributes: %{email: "dummy@test.com"}}
+        }
+      )
+      |> assert_attribute_equals("email", "dummy@test.com")
     end
 
     test "patch allows setting values to nil", %{post: post} do
