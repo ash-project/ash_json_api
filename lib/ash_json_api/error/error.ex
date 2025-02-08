@@ -10,7 +10,7 @@ defmodule AshJsonApi.Error do
             meta: :undefined,
             status_code: :undefined,
             internal_description: nil,
-            log_level: :error
+            log_level: :debug
 
   @type t :: %__MODULE__{}
 
