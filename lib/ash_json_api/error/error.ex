@@ -160,7 +160,14 @@ defmodule AshJsonApi.Error do
           "No description"
       end
 
-    [code, title, " | ", description]
+    source_pointer =
+      if is_bitstring(error.source_pointer) do
+        error.source_pointer
+      else
+        "|"
+      end
+
+    [code, title, " ", source_pointer, " ", description]
   end
 
   def with_source_pointer(%{source_pointer: source_pointer} = built_error, _, _, _)
