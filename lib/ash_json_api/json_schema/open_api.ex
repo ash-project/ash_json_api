@@ -484,9 +484,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
             action_type :: atom,
             format :: content_type_format()
           ) :: Schema.t()
-    defp resource_write_attribute_type(attribute, action_type, format \\ :json)
+    @doc false
+    def resource_write_attribute_type(attribute, action_type, format \\ :json)
 
-    defp resource_write_attribute_type(%{type: {:array, type}} = attr, action_type, format) do
+    def resource_write_attribute_type(%{type: {:array, type}} = attr, action_type, format) do
       %Schema{
         type: :array,
         items:
@@ -502,11 +503,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
-    defp resource_write_attribute_type(
-           %{type: Ash.Type.Map, constraints: constraints} = attr,
-           action_type,
-           format
-         ) do
+    def resource_write_attribute_type(
+          %{type: Ash.Type.Map, constraints: constraints} = attr,
+          action_type,
+          format
+        ) do
       if constraints[:fields] && constraints[:fields] != [] do
         %Schema{
           type: :object,
@@ -534,11 +535,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp resource_write_attribute_type(
-           %{type: Ash.Type.Union, constraints: constraints} = attr,
-           action_type,
-           format
-         ) do
+    def resource_write_attribute_type(
+          %{type: Ash.Type.Union, constraints: constraints} = attr,
+          action_type,
+          format
+        ) do
       subtypes =
         Enum.map(constraints[:types], fn {_name, config} ->
           fake_attr = %{
@@ -556,7 +557,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> unwrap_any_of()
     end
 
-    defp resource_write_attribute_type(%{type: type} = attr, action_type, format) do
+    def resource_write_attribute_type(%{type: type} = attr, action_type, format) do
       if AshJsonApi.JsonSchema.embedded?(type) do
         embedded_type_input(attr, action_type)
       else
@@ -568,11 +569,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp resource_write_attribute_type(
-           %{type: Ash.Type.Struct, constraints: constraints} = attr,
-           action_type,
-           format
-         ) do
+    def resource_write_attribute_type(
+          %{type: Ash.Type.Struct, constraints: constraints} = attr,
+          action_type,
+          format
+        ) do
       if type = constraints[:instance_of] do
         if AshJsonApi.JsonSchema.embedded?(type) do
           embedded_type_input(attr, action_type, format)
@@ -2140,6 +2141,73 @@ if Code.ensure_loaded?(OpenApiSpex) do
              additionalProperties: false
            }}
         ]
+      end
+    end
+
+    def raw_filter_type(%Ash.Resource.Calculation{} = calculation, resource) do
+      type = attribute_or_aggregate_type(calculation, resource)
+
+      input =
+        if Enum.empty?(calculation.arguments) do
+          []
+        else
+          inputs =
+            Enum.map(calculation.arguments, fn argument ->
+              {argument.name, resource_write_attribute_type(argument, :create)}
+            end)
+
+          required =
+            Enum.flat_map(calculation.arguments, fn argument ->
+              if argument.allow_nil? do
+                []
+              else
+                [argument.name]
+              end
+            end)
+
+          [
+            {:input,
+             %Schema{
+               type: :object,
+               properties: Map.new(inputs),
+               required: required,
+               additionalProperties: false
+             }}
+          ]
+        end
+
+      array_type? = match?({:array, _}, type)
+
+      fields =
+        Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.DataLayer.functions(resource))
+        |> Enum.filter(& &1.predicate?())
+        |> restrict_for_lists(type)
+        |> Enum.flat_map(fn operator ->
+          filter_fields(operator, type, array_type?, calculation, resource)
+        end)
+
+      input_required = Enum.any?(calculation.arguments, &(!&1.allow_nil?))
+
+      fields_with_input =
+        Enum.concat(fields, input)
+
+      required =
+        if input_required do
+          [:input]
+        else
+          []
+        end
+
+      if fields == [] do
+        nil
+      else
+        %Schema{
+          type: :object,
+          required: required,
+          properties: Map.new(fields_with_input),
+          additionalProperties: false
+        }
       end
     end
 
