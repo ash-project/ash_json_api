@@ -5,6 +5,25 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.19](https://github.com/ash-project/ash_json_api/compare/v1.4.18...v1.4.19) (2025-02-11)
+
+
+
+
+### Bug Fixes:
+
+* Use debug log level for errors by default (#289)
+
+* ensure that update actions don't require all inputs
+
+* apply default_fields to included relationships
+
+### Improvements:
+
+* add calculation inputs to openapi filter spec
+
+* Include source pointer in the debug logs
+
 ## [v1.4.18](https://github.com/ash-project/ash_json_api/compare/v1.4.17...v1.4.18) (2025-01-29)
 
 
