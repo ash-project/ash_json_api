@@ -1,6 +1,6 @@
 # Authorize with AshJsonApi
 
-By default, `authorize?` in the domain is set to true. To disable authorization entirely for a given domain in graphql, use:
+By default, `authorize?` in the domain is set to true. To disable authorization entirely for a given domain in json_api, use:
 
 ```elixir
 json_api do
