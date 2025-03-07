@@ -356,7 +356,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           ) :: %{
             atom => Schema.t()
           }
-    defp resource_attributes(resource, fields, format \\ :json) do
+    defp resource_attributes(resource, fields, format \\ :json, hide_pkeys? \\ true) do
       resource
       |> Ash.Resource.Info.public_attributes()
       |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
@@ -401,7 +401,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
         other ->
           other
       end)
-      |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
+      |> then(fn keys ->
+        if hide_pkeys? do
+          Enum.reject(keys, &AshJsonApi.Resource.only_primary_key?(resource, &1.name))
+        else
+          keys
+        end
+      end)
       |> Map.new(fn attr ->
         {attr.name,
          resource_attribute_type(attr, format)
@@ -712,7 +718,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         if AshJsonApi.JsonSchema.embedded?(type) do
           %Schema{
             type: :object,
-            properties: resource_attributes(type, nil, format),
+            properties: resource_attributes(type, nil, format, false),
             required: required_attributes(type)
           }
           |> add_null_for_non_required()
@@ -731,7 +737,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         AshJsonApi.JsonSchema.embedded?(type) ->
           %Schema{
             type: :object,
-            properties: resource_attributes(type, nil, format),
+            properties: resource_attributes(type, nil, format, false),
             required: required_attributes(type)
           }
           |> add_null_for_non_required()
