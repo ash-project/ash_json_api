@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.20](https://github.com/ash-project/ash_json_api/compare/v1.4.19...v1.4.20) (2025-03-11)
+
+
+
+
+### Bug Fixes:
+
+* display primary keys for embedded resources
+
 ## [v1.4.19](https://github.com/ash-project/ash_json_api/compare/v1.4.18...v1.4.19) (2025-02-11)
 
 
