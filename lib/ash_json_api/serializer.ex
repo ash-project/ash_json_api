@@ -111,7 +111,8 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
-  defp serialize_one_error(error, request) do
+  @doc false
+  def serialize_one_error(error, request) do
     %{}
     |> add_if_defined(:id, error.id)
     |> add_if_defined(:status, to_string(error.status_code))
