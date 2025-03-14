@@ -853,7 +853,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             %{"anyOf" => _} = schema ->
               case unwrap_any_of(schema) do
                 %{"anyOf" => nested_options} ->
-                  {options, [nested_options | to_add]}
+                  {options, nested_options ++ to_add}
 
                 schema ->
                   {options, [schema | to_add]}
