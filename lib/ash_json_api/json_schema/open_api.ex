@@ -2129,6 +2129,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       fields =
         Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.Filter.builtin_functions())
         |> Enum.concat(Ash.DataLayer.functions(resource))
         |> Enum.filter(& &1.predicate?())
         |> restrict_for_lists(type)

@@ -447,6 +447,7 @@ defmodule Test.Acceptance.OpenApiTest do
     test "filter parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
       %OpenApiSpex.Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == :filter))
+      assert api_spec.components.schemas["author-filter-name"].properties[:contains]
       assert filter.in == :query
       assert filter.required == false
       assert filter.style == :deepObject
