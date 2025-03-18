@@ -30,7 +30,8 @@ defmodule AshJsonApi.Test do
   end
   ```
   """
-  use Plug.Test
+  import Plug.Test
+  import Plug.Conn
 
   require ExUnit.Assertions
   import ExUnit.Assertions

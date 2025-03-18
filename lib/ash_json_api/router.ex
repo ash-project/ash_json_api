@@ -32,6 +32,23 @@ defmodule AshJsonApi.Router do
       domains = List.wrap(@opts[:domain] || @opts[:domains])
       @opts Keyword.put(@opts, :domains, domains)
 
+      @behaviour Phoenix.Router.PlugWithRoutes
+
+      def phoenix_routes(opts) do
+        domains()
+        |> Enum.flat_map(&AshJsonApi.Domain.Info.routes/1)
+        |> Enum.map(fn route ->
+          %{
+            verb: route.method,
+            path: route.route,
+            plug_opts: [
+              resource: route.resource,
+              action: route.action
+            ]
+          }
+        end)
+      end
+
       def domains do
         @opts[:domains]
       end

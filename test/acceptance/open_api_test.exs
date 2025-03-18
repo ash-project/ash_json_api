@@ -1,6 +1,8 @@
 defmodule Test.Acceptance.OpenApiTest do
   use ExUnit.Case, async: true
-  use Plug.Test
+
+  import Plug.Test
+  import Plug.Conn
   alias OpenApiSpex.{OpenApi, Schema}
 
   defmodule Bio do

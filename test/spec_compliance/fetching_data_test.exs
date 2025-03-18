@@ -1,6 +1,8 @@
 defmodule AshJsonApiTest.FetchingData do
   use ExUnit.Case
-  use Plug.Test
+
+  import Plug.Test
+  import Plug.Conn
   @moduletag :json_api_spec_1_0
 
   # JSON:API 1.0 Specification
