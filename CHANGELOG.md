@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.21](https://github.com/ash-project/ash_json_api/compare/v1.4.20...v1.4.21) (2025-03-18)
+
+
+
+
+### Bug Fixes:
+
+* properly handle nested `anyOf` statements in open api
+
+* show predicate functions in open api spec
+
 ## [v1.4.20](https://github.com/ash-project/ash_json_api/compare/v1.4.19...v1.4.20) (2025-03-11)
 
 

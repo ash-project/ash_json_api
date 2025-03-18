@@ -5,7 +5,7 @@ defmodule AshJsonApi.MixProject do
   The JSON:API extension for the Ash Framework.
   """
 
-  @version "1.4.20"
+  @version "1.4.21"
 
   def project do
     [
@@ -129,7 +129,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 3.0 and >= 3.3.0")},
+      {:ash, ash_version("~> 3.0 and >= 3.4.69")},
       {:spark, "~> 2.2 and >= 2.2.10"},
       {:igniter, "~> 0.3 and >= 0.3.58", optional: true},
       {:plug, "~> 1.11"},
