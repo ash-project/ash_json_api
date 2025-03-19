@@ -517,6 +517,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       if constraints[:fields] && constraints[:fields] != [] do
         %Schema{
           type: :object,
+          additionalProperties: false,
           properties:
             Map.new(constraints[:fields], fn {key, config} ->
               {key,
@@ -563,31 +564,43 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> unwrap_any_of()
     end
 
-    def resource_write_attribute_type(%{type: type} = attr, action_type, format) do
-      if AshJsonApi.JsonSchema.embedded?(type) do
-        embedded_type_input(attr, action_type)
-      else
-        if :erlang.function_exported(type, :json_write_schema, 1) do
-          type.json_write_schema(attr.constraints)
-        else
-          resource_attribute_type(attr, format)
-        end
-      end
-    end
-
     def resource_write_attribute_type(
           %{type: Ash.Type.Struct, constraints: constraints} = attr,
           action_type,
           format
         ) do
-      if type = constraints[:instance_of] do
-        if AshJsonApi.JsonSchema.embedded?(type) do
+      if instance_of = constraints[:instance_of] do
+        if AshJsonApi.JsonSchema.embedded?(instance_of) do
           embedded_type_input(attr, action_type, format)
         else
           resource_write_attribute_type(%{attr | type: Ash.Type.Map}, action_type, format)
         end
       else
         %Schema{}
+      end
+    end
+
+    def resource_write_attribute_type(%{type: type} = attr, action_type, format) do
+      cond do
+        Ash.Type.NewType.new_type?(type) ->
+          new_constraints = Ash.Type.NewType.constraints(type, attr.constraints)
+          new_type = Ash.Type.NewType.subtype_of(type)
+
+          resource_write_attribute_type(
+            Map.merge(attr, %{type: Ash.Type.get_type(new_type), constraints: new_constraints}),
+            action_type,
+            format
+          )
+
+        AshJsonApi.JsonSchema.embedded?(type) ->
+          embedded_type_input(attr, action_type)
+
+        true ->
+          if :erlang.function_exported(type, :json_write_schema, 1) do
+            type.json_write_schema(attr.constraints)
+          else
+            resource_attribute_type(attr, format)
+          end
       end
     end
 
@@ -622,6 +635,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                  format
                )}
             end),
+          additionalProperties: false,
           required:
             constraints[:fields]
             |> Enum.filter(fn {_, config} -> !config[:allow_nil?] end)
@@ -718,6 +732,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         if AshJsonApi.JsonSchema.embedded?(type) do
           %Schema{
             type: :object,
+            additionalProperties: false,
             properties: resource_attributes(type, nil, format, false),
             required: required_attributes(type)
           }
@@ -737,6 +752,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         AshJsonApi.JsonSchema.embedded?(type) ->
           %Schema{
             type: :object,
+            additionalProperties: false,
             properties: resource_attributes(type, nil, format, false),
             required: required_attributes(type)
           }
@@ -750,7 +766,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           new_type = Ash.Type.NewType.subtype_of(type)
 
           resource_attribute_type(
-            Map.merge(attr, %{type: new_type, constraints: new_constraints}),
+            Map.merge(attr, %{type: Ash.Type.get_type(new_type), constraints: new_constraints}),
             format
           )
 
@@ -831,6 +847,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       %Schema{
         type: :object,
+        additionalProperties: false,
         properties:
           Map.merge(create_write_attributes, update_write_attributes, fn _k, l, r ->
             %{
@@ -943,6 +960,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           description: "Resource identifiers for #{name}",
           type: :object,
           required: [:type, :id],
+          additionalProperties: false,
           properties: %{
             type: %Schema{type: :string},
             id: %Schema{type: :string},
@@ -991,6 +1009,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           description: "Resource identifiers for #{name}",
           type: :object,
           required: [:type, :id],
+          additionalProperties: false,
           properties: %{
             type: %Schema{type: :string},
             id: %Schema{type: :string},
@@ -1849,6 +1868,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
         schema = %Schema{
           type: :object,
+          additionalProperties: false,
           properties: %{
             data: data,
             links: %Schema{type: :object, additionalProperties: true}
@@ -1899,6 +1919,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             if route.wrap_in_result? do
               %Schema{
                 type: :object,
+                additionalProperties: false,
                 properties: %{
                   result: return_type
                 },
@@ -1910,6 +1931,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           else
             %Schema{
               type: :object,
+              additionalProperties: false,
               properties: %{
                 success: %Schema{enum: [true]}
               },
@@ -1921,6 +1943,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           %Schema{
             type: :object,
             properties: %{
+              additionalProperties: false,
               data: %Schema{
                 description:
                   "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
@@ -1958,6 +1981,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
         _ ->
           %Schema{
+            additionalProperties: false,
             properties: %{
               data: item_reference(route, resource),
               included: included_resource_schemas(resource),
