@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.22](https://github.com/ash-project/ash_json_api/compare/v1.4.21...v1.4.22) (2025-03-19)
+
+
+
+
+### Bug Fixes:
+
+* remove accidentally commited future code
+
+### Improvements:
+
+* handle NewTypes in write attributes
+
+* add `additionalProperties: false` where possible
+
 ## [v1.4.21](https://github.com/ash-project/ash_json_api/compare/v1.4.20...v1.4.21) (2025-03-18)
 
 
