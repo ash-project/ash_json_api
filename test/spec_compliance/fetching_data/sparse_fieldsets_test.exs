@@ -1,8 +1,6 @@
 defmodule AshJsonApiTest.FetchingData.SparseFieldsets do
   use ExUnit.Case
 
-  import Plug.Test
-  import Plug.Conn
   @moduletag :json_api_spec_1_0
 
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
