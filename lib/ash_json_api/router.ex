@@ -32,17 +32,15 @@ defmodule AshJsonApi.Router do
       domains = List.wrap(@opts[:domain] || @opts[:domains])
       @opts Keyword.put(@opts, :domains, domains)
 
-      if Code.ensure_loaded?(Phoenix.Router.PlugWithRoutes) do
-        @behaviour Phoenix.Router.PlugWithRoutes
-
-        def formatted_routes(_opts) do
-          AshJsonApi.Router.formatted_routes(__MODULE__)
-        end
-
-        def verified_route?(_opts, path) do
-          AshJsonApi.Router.verified_route?(__MODULE__, path)
-        end
-      end
+      #   @behaviour Phoenix.VerifiedRoutes
+      #
+      #   def formatted_routes(_opts) do
+      #     AshJsonApi.Router.formatted_routes(__MODULE__)
+      #   end
+      #
+      #   def verified_route?(_opts, path) do
+      #     AshJsonApi.Router.verified_route?(__MODULE__, path)
+      #   end
 
       def domains do
         @opts[:domains]
@@ -88,41 +86,42 @@ defmodule AshJsonApi.Router do
       end)
     end
 
-    @doc false
-    def verified_route?(router, path) do
-      router
-      |> formatted_routes()
-      |> Enum.map(fn route ->
-        case Path.split(route.path) do
-          ["/" | rest] -> rest
-          path -> path
-        end
-      end)
-      |> Enum.any?(&match_path?(&1, path))
-    end
-
-    defp match_path?([], []), do: true
-    defp match_path?([], _), do: false
-    defp match_path?(_, []), do: false
-
-    defp match_path?([":" <> _ | rest_route], [_ | rest_path]) do
-      match_path?(rest_route, rest_path)
-    end
-
-    defp match_path?(["_" <> _ | rest_route], [_ | rest_path]) do
-      match_path?(rest_route, rest_path)
-    end
-
-    defp match_path?(["*" <> _], _) do
-      true
-    end
-
-    defp match_path?([same | rest_path], [same | rest_route]) do
-      match_path?(rest_path, rest_route)
-    end
-
-    defp match_path?(_, _) do
-      false
-    end
+    #
+    # @doc false
+    # def verified_route?(router, path) do
+    #   router
+    #   |> formatted_routes()
+    #   |> Enum.map(fn route ->
+    #     case Path.split(route.path) do
+    #       ["/" | rest] -> rest
+    #       path -> path
+    #     end
+    #   end)
+    #   |> Enum.any?(&match_path?(&1, path))
+    # end
+    #
+    # defp match_path?([], []), do: true
+    # defp match_path?([], _), do: false
+    # defp match_path?(_, []), do: false
+    #
+    # defp match_path?([":" <> _ | rest_route], [_ | rest_path]) do
+    #   match_path?(rest_route, rest_path)
+    # end
+    #
+    # defp match_path?(["_" <> _ | rest_route], [_ | rest_path]) do
+    #   match_path?(rest_route, rest_path)
+    # end
+    #
+    # defp match_path?(["*" <> _], _) do
+    #   true
+    # end
+    #
+    # defp match_path?([same | rest_path], [same | rest_route]) do
+    #   match_path?(rest_path, rest_route)
+    # end
+    #
+    # defp match_path?(_, _) do
+    #   false
+    # end
   end
 end
