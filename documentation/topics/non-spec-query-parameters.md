@@ -31,3 +31,14 @@ Example:
 > Keep in mind that the records in the top level `included` key will not be
 > reliably sorted. This is because multiple relationships could include the same record.
 > When sorting includes, look at the `data.relationships.name` key for the order instead.
+
+## `field_inputs`
+
+You can pass arguments to calculations via the `field_inputs` query parameter.
+
+Example:
+
+Suppose posts have a calculation called `time_to_read` with an argument `words_per_minute`.
+We can load that calculation with a specified `words_per_minute` argument like this:
+
+`posts?fields[post]=time_to_read&field_inputs[post][time_to_read][words_per_minute]=50`
