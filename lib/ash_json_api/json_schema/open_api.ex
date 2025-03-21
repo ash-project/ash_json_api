@@ -611,8 +611,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
       %Schema{type: :string}
     end
 
+    defp resource_attribute_type(%{type: Ash.Type.CiString}, _format) do
+      %Schema{type: :string}
+    end
+
     defp resource_attribute_type(%{type: Ash.Type.Boolean}, _format) do
       %Schema{type: :boolean}
+    end
+
+    defp resource_attribute_type(%{type: Ash.Type.Decimal}, _format) do
+      %Schema{type: :string}
     end
 
     defp resource_attribute_type(%{type: Ash.Type.Integer}, _format) do
@@ -651,6 +659,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
       %Schema{type: :number, format: :float}
     end
 
+    defp resource_attribute_type(%{type: Ash.Type.Date}, _format) do
+      %Schema{
+        type: :string,
+        format: "date"
+      }
+    end
+
     defp resource_attribute_type(%{type: Ash.Type.UtcDatetime}, _format) do
       %Schema{
         type: :string,
@@ -683,6 +698,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type: :string
         }
       end
+    end
+
+    defp resource_attribute_type(%{type: Ash.Type.DurationName}, _format) do
+      %Schema{
+        type: :string,
+        enum: Enum.map(Ash.Type.DurationName.values(), &to_string/1)
+      }
     end
 
     defp resource_attribute_type(%{type: Ash.Type.File}, :json),
