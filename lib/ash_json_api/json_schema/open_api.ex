@@ -570,7 +570,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           format
         ) do
       if instance_of = constraints[:instance_of] do
-        if AshJsonApi.JsonSchema.embedded?(instance_of) do
+        if AshJsonApi.JsonSchema.embedded?(instance_of) && !constraints[:fields] do
           embedded_type_input(attr, action_type, format)
         else
           resource_write_attribute_type(%{attr | type: Ash.Type.Map}, action_type, format)
@@ -750,13 +750,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
            %{type: Ash.Type.Struct, constraints: constraints} = attr,
            format
          ) do
-      if type = constraints[:instance_of] do
-        if AshJsonApi.JsonSchema.embedded?(type) do
+      if instance_of = constraints[:instance_of] do
+        if AshJsonApi.JsonSchema.embedded?(instance_of) && !constraints[:fields] do
           %Schema{
             type: :object,
             additionalProperties: false,
-            properties: resource_attributes(type, nil, format, false),
-            required: required_attributes(type)
+            properties: resource_attributes(instance_of, nil, format, false),
+            required: required_attributes(instance_of)
           }
           |> add_null_for_non_required()
         else
