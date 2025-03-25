@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.23](https://github.com/ash-project/ash_json_api/compare/v1.4.22...v1.4.23) (2025-03-25)
+
+
+
+
+### Bug Fixes:
+
+* move additionalProperties into schema, not properties
+
+### Improvements:
+
+* support more types in OpenApi (#304)
+
 ## [v1.4.22](https://github.com/ash-project/ash_json_api/compare/v1.4.21...v1.4.22) (2025-03-19)
 
 
