@@ -1964,8 +1964,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
         :index ->
           %Schema{
             type: :object,
+            additionalProperties: false,
             properties: %{
-              additionalProperties: false,
               data: %Schema{
                 description:
                   "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
