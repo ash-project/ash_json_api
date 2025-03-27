@@ -809,7 +809,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
         | constraints: Ash.Type.NewType.constraints(resource, attribute.constraints)
       }
 
-      resource = Ash.Type.NewType.subtype_of(resource)
+      resource =
+        case attribute.constraints[:instance_of] do
+          nil -> Ash.Type.NewType.subtype_of(resource)
+          type -> type
+        end
 
       create_action =
         case attribute.constraints[:create_action] do

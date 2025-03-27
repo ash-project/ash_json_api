@@ -78,6 +78,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
       action :get_foo, :struct do
         constraints(instance_of: Foo)
+        argument(:bio, :struct, allow_nil?: false, constraints: [instance_of: Bio])
 
         run(fn input, _ ->
           {:ok, %Foo{foo: "bar"}}
@@ -383,7 +384,22 @@ defmodule Test.Acceptance.OpenApiTest do
 
     assert [] = generic_action_schema.parameters
 
-    refute generic_action_schema.requestBody
+    assert %OpenApiSpex.Schema{
+             type: :object,
+             required: [:bio],
+             properties: %{
+               bio: %OpenApiSpex.Schema{
+                 type: :object,
+                 properties: %{
+                   history: %{
+                     "anyOf" => [%OpenApiSpex.Schema{type: :string}, %{"type" => "null"}]
+                   }
+                 }
+               }
+             },
+             additionalProperties: false
+           } =
+             generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data
 
     assert %OpenApiSpex.Schema{
              type: :object,
