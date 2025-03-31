@@ -9,7 +9,7 @@ defmodule Test.Acceptance.OpenApiTest do
       data_layer: :embedded
 
     attributes do
-      attribute(:history, :string, public?: true)
+      attribute(:history, :string, public?: true, description: "The history of the author")
     end
   end
 
@@ -104,8 +104,8 @@ defmodule Test.Acceptance.OpenApiTest do
 
     attributes do
       uuid_primary_key(:id, writable?: true)
-      attribute(:name, :string, public?: true)
-      attribute(:bio, Bio, public?: true)
+      attribute(:name, :string, public?: true, description: "The name of the author")
+      attribute(:bio, Bio, public?: true, description: "The bio of the author")
     end
 
     relationships do
@@ -601,7 +601,7 @@ defmodule Test.Acceptance.OpenApiTest do
                        "anyOf" => [
                          %OpenApiSpex.Schema{
                            type: :string,
-                           description: "Field included by default.",
+                           description: "The name of the author. Field included by default.",
                            nullable: true
                          },
                          %{"type" => "null"}
@@ -617,15 +617,17 @@ defmodule Test.Acceptance.OpenApiTest do
                                "anyOf" => [
                                  %OpenApiSpex.Schema{
                                    type: :string,
-                                   description: "Field included by default.",
+                                   description:
+                                     "The history of the author. Field included by default.",
                                    nullable: true
                                  },
                                  %{"type" => "null"}
                                ]
                              }
                            },
-                           description: "Field included by default.",
-                           nullable: true
+                           description: "The bio of the author. Field included by default.",
+                           nullable: true,
+                           additionalProperties: false
                          },
                          %{"type" => "null"}
                        ]
@@ -655,7 +657,8 @@ defmodule Test.Acceptance.OpenApiTest do
                                  additionalProperties: true
                                },
                                type: %OpenApiSpex.Schema{type: :string}
-                             }
+                             },
+                             additionalProperties: false
                            },
                            description: "Relationship data for posts"
                          }

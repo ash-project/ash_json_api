@@ -507,6 +507,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             format
           )
       }
+      |> with_attribute_description(attr)
     end
 
     def resource_write_attribute_type(
@@ -540,6 +541,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       else
         %Schema{type: :object}
       end
+      |> with_attribute_description(attr)
     end
 
     def resource_write_attribute_type(
@@ -562,6 +564,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         "anyOf" => subtypes
       }
       |> unwrap_any_of()
+      |> with_attribute_description(attr)
     end
 
     def resource_write_attribute_type(
@@ -578,6 +581,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       else
         %Schema{}
       end
+      |> with_attribute_description(attr)
     end
 
     def resource_write_attribute_type(%{type: type} = attr, action_type, format) do
@@ -602,6 +606,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             resource_attribute_type(attr, format)
           end
       end
+      |> with_attribute_description(attr)
     end
 
     @spec resource_attribute_type(term(), format :: content_type_format()) :: Schema.t() | map()
