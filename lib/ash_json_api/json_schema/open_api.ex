@@ -926,7 +926,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @spec with_attribute_description(
             Schema.t() | map(),
-            Ash.Resource.Attribute.t() | Ash.Resource.Actions.Argument.t()
+            Ash.Resource.Attribute.t() | Ash.Resource.Actions.Argument.t() | any
           ) :: Schema.t() | map()
     defp with_attribute_description(schema, %{description: nil}) do
       schema
@@ -938,6 +938,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp with_attribute_description(schema, %{"description" => description}) do
       Map.merge(schema, %{"description" => description})
+    end
+
+    defp with_attribute_description(schema, _) do
+      schema
     end
 
     @spec relationships(resource :: Ash.Resource.t()) :: Schema.t()
