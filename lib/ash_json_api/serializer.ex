@@ -673,6 +673,15 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp serialize_attributes(request, %resource{} = record, opts) do
+    load = Keyword.get(opts, :load, [])
+
+    load_fields =
+      load
+      |> Enum.map(fn
+        {key, _} -> key
+        key -> key
+      end)
+
     fields =
       if opts[:top_level?] do
         Map.get(request.fields, resource) || Map.get(request.route, :default_fields) ||
@@ -681,6 +690,7 @@ defmodule AshJsonApi.Serializer do
         Map.get(request.fields, resource) ||
           default_attributes(resource)
       end
+      |> Enum.concat(load_fields)
 
     Enum.reduce(fields, %{}, fn field_name, acc ->
       field = Ash.Resource.Info.field(resource, field_name)
@@ -702,11 +712,25 @@ defmodule AshJsonApi.Serializer do
                 {type, constraints}
             end
 
+          %relationship{destination: destination}
+          when relationship in [
+                 Ash.Resource.Relationships.HasMany,
+                 Ash.Resource.Relationships.ManyToMany
+               ] ->
+            {{:array, destination}, []}
+
+          %relationship{destination: destination}
+          when relationship in [
+                 Ash.Resource.Relationships.HasOne,
+                 Ash.Resource.Relationships.BelongsTo
+               ] ->
+            {destination, []}
+
           nil ->
             {:string, []}
 
-          attribute ->
-            {attribute.type, attribute.constraints}
+          attr ->
+            {attr.type, attr.constraints}
         end
 
       cond do
@@ -715,6 +739,22 @@ defmodule AshJsonApi.Serializer do
           acc
 
         !field ->
+          acc
+
+        match?(%Ash.Resource.Relationships.HasMany{}, field) &&
+            match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
+          acc
+
+        match?(%Ash.Resource.Relationships.HasOne{}, field) &&
+            match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
+          acc
+
+        match?(%Ash.Resource.Relationships.BelongsTo{}, field) &&
+            match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
+          acc
+
+        match?(%Ash.Resource.Relationships.ManyToMany{}, field) &&
+            match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
           acc
 
         match?(%Ash.Resource.Calculation{}, field) &&
@@ -726,7 +766,23 @@ defmodule AshJsonApi.Serializer do
           acc
 
         true ->
-          value = serialize_value(Map.get(record, field.name), type, constraints, request.domain)
+          new_load =
+            load
+            |> Enum.find_value([], fn
+              {^field_name, value} -> value
+              _ -> nil
+            end)
+
+          new_opts = opts |> Keyword.put(:load, new_load)
+
+          value =
+            serialize_value(
+              Map.get(record, field.name),
+              type,
+              constraints,
+              request.domain,
+              new_opts
+            )
 
           if not is_nil(value) or include_nil_values?(request, record) do
             Map.put(acc, field.name, value)
@@ -738,25 +794,28 @@ defmodule AshJsonApi.Serializer do
   end
 
   @doc false
-  def serialize_value(nil, _, _, _), do: nil
+  def serialize_value(value, type, constraints, domain, opts \\ [])
 
-  def serialize_value(value, {:array, type}, constraints, domain) when is_list(value) do
-    Enum.map(value, &serialize_value(&1, type, constraints[:items] || [], domain))
+  def serialize_value(nil, _, _, _, _), do: nil
+
+  def serialize_value(value, {:array, type}, constraints, domain, opts) when is_list(value) do
+    Enum.map(value, &serialize_value(&1, type, constraints[:items] || [], domain, opts))
   end
 
-  def serialize_value(value, type, constraints, domain) do
+  def serialize_value(value, type, constraints, domain, opts) do
     {type, constraints} = flatten_new_type(type, constraints || [])
+    opts = [skip_only_primary_key?: false, top_level?: false] |> Keyword.merge(opts)
 
     with Ash.Type.Struct <- type,
          instance_of when not is_nil(instance_of) <- constraints[:instance_of],
          true <- Ash.Resource.Info.resource?(instance_of) do
       req = %{fields: %{}, route: %{}, domain: domain}
-      serialize_attributes(req, value, skip_only_primary_key?: false, top_level?: false)
+      serialize_attributes(req, value, opts)
     else
       _ ->
         if Ash.Resource.Info.resource?(type) do
           req = %{fields: %{}, route: %{}, domain: domain}
-          serialize_attributes(req, value, skip_only_primary_key?: false, top_level?: false)
+          serialize_attributes(req, value, opts)
         else
           value
         end
