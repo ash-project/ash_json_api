@@ -2672,7 +2672,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             end
           end)
 
-        _ ->
+        properties ->
           properties
       end)
     end
