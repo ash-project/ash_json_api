@@ -734,6 +734,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         "anyOf" => subtypes
       }
       |> unwrap_any_of()
+      |> with_attribute_description(attr)
     end
 
     defp resource_attribute_type(%{type: {:array, type}} = attr, format) do
@@ -894,7 +895,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> add_null_for_non_required()
     end
 
-    defp unwrap_any_of(%{"anyOf" => options}) do
+    defp unwrap_any_of(%{"anyOf" => options} = schema) do
       {options_remaining, options_to_add} =
         Enum.reduce(options, {[], []}, fn schema, {options, to_add} ->
           case schema do
@@ -922,6 +923,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
         many ->
           %{"anyOf" => many}
       end
+      |> then(fn result ->
+        case schema["description"] do
+          nil -> result
+          description -> Map.put(result, "description", description)
+        end
+      end)
     end
 
     @spec with_attribute_description(
@@ -2631,12 +2638,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp add_null_for_non_required(%Schema{required: required} = schema)
          when is_list(required) do
-      Map.update!(schema, :properties, fn properties ->
-        if is_map(properties) do
+      Map.update!(schema, :properties, fn
+        properties when is_map(properties) ->
           Enum.reduce(properties, %{}, fn {key, value}, acc ->
             if Enum.member?(required, key) do
               Map.put(acc, key, value)
             else
+              description = value |> Map.get(:description)
+              value = value |> Map.put(:description, nil)
+
               new_value =
                 %{
                   "anyOf" => [
@@ -2646,6 +2656,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
                     value
                   ]
                 }
+                |> then(fn new_value ->
+                  case description do
+                    nil -> new_value
+                    description -> Map.put(new_value, "description", description)
+                  end
+                end)
                 |> unwrap_any_of()
 
               Map.put(
@@ -2655,9 +2671,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
               )
             end
           end)
-        else
+
+        properties ->
           properties
-        end
       end)
     end
   end

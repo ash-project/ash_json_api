@@ -2,7 +2,7 @@ defmodule Test.Acceptance.OpenApiTest do
   use ExUnit.Case, async: true
 
   import Plug.Test
-  alias OpenApiSpex.{OpenApi, Schema}
+  alias OpenApiSpex.{OpenApi, Operation, Parameter, Reference, RequestBody, Schema}
 
   defmodule Bio do
     use Ash.Resource,
@@ -324,14 +324,14 @@ defmodule Test.Acceptance.OpenApiTest do
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
 
-    assert %OpenApiSpex.Operation{} = api_spec.paths["/authors"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["/authors/{id}"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["/authors/{id}"].patch
+    assert %Operation{} = api_spec.paths["/authors"].get
+    assert %Operation{} = api_spec.paths["/authors/{id}"].get
+    assert %Operation{} = api_spec.paths["/authors/{id}"].patch
     assert nil == api_spec.paths["/authors"].post
 
-    assert %OpenApiSpex.Operation{} = api_spec.paths["/posts"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["/posts/{id}"].get
-    assert %OpenApiSpex.Operation{} = api_spec.paths["/posts"].post
+    assert %Operation{} = api_spec.paths["/posts"].get
+    assert %Operation{} = api_spec.paths["/posts/{id}"].get
+    assert %Operation{} = api_spec.paths["/posts"].post
     assert nil == api_spec.paths["/posts/{id}"].patch
   end
 
@@ -339,23 +339,23 @@ defmodule Test.Acceptance.OpenApiTest do
     assert generic_action_schema = api_spec.paths["/authors/say_hello/{to}"].post
 
     assert [
-             %OpenApiSpex.Parameter{
+             %Parameter{
                name: "to",
                in: :path,
-               schema: %OpenApiSpex.Schema{type: :string}
+               schema: %Schema{type: :string}
              }
            ] = generic_action_schema.parameters
 
-    assert %OpenApiSpex.Schema{
-             type: :object,
-             required: [:from],
-             properties: %{from: %OpenApiSpex.Schema{type: :string}},
-             additionalProperties: false
-           } =
-             generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data
+    assert generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data ==
+             %Schema{
+               type: :object,
+               required: [:from],
+               properties: %{from: %Schema{type: :string}},
+               additionalProperties: false
+             }
 
-    assert %OpenApiSpex.Schema{type: :string} =
-             generic_action_schema.responses[201].content["application/vnd.api+json"].schema
+    assert generic_action_schema.responses[201].content["application/vnd.api+json"].schema ==
+             %Schema{type: :string}
   end
 
   test "generic routes have properly specified returns in the case of maps", %{
@@ -367,14 +367,16 @@ defmodule Test.Acceptance.OpenApiTest do
 
     refute generic_action_schema.requestBody
 
-    assert %OpenApiSpex.Schema{
-             type: :object,
-             required: [:b],
-             properties: %{
-               a: %{"anyOf" => [%OpenApiSpex.Schema{type: :integer}, %{"type" => "null"}]},
-               b: %OpenApiSpex.Schema{type: :string}
+    assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==
+             %Schema{
+               type: :object,
+               required: [:b],
+               properties: %{
+                 a: %{"anyOf" => [%Schema{type: :integer}, %{"type" => "null"}]},
+                 b: %Schema{type: :string}
+               },
+               additionalProperties: false
              }
-           } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
   end
 
   test "generic routes have properly specified returns in the case of structs", %{
@@ -384,39 +386,47 @@ defmodule Test.Acceptance.OpenApiTest do
 
     assert [] = generic_action_schema.parameters
 
-    assert %OpenApiSpex.Schema{
-             type: :object,
-             required: [:bio],
-             properties: %{
-               bio: %OpenApiSpex.Schema{
-                 type: :object,
-                 properties: %{
-                   history: %{
-                     "anyOf" => [%OpenApiSpex.Schema{type: :string}, %{"type" => "null"}]
-                   }
-                 }
-               }
-             },
-             additionalProperties: false
-           } =
-             generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data
-
-    assert %OpenApiSpex.Schema{
-             type: :object,
-             required: [],
-             properties: %{
-               foo: %{
-                 "anyOf" => [
-                   %OpenApiSpex.Schema{
-                     type: :string,
-                     description: "Field included by default.",
-                     nullable: true
+    assert generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data ==
+             %Schema{
+               type: :object,
+               required: [:bio],
+               properties: %{
+                 bio: %Schema{
+                   type: :object,
+                   properties: %{
+                     history: %{
+                       "anyOf" => [
+                         %Schema{type: :string},
+                         %{"type" => "null"}
+                       ],
+                       "description" => "The history of the author"
+                     }
                    },
-                   %{"type" => "null"}
-                 ]
-               }
+                   required: [],
+                   additionalProperties: false
+                 }
+               },
+               additionalProperties: false
              }
-           } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
+
+    assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==
+             %Schema{
+               type: :object,
+               required: [],
+               properties: %{
+                 foo: %{
+                   "anyOf" => [
+                     %Schema{
+                       type: :string,
+                       nullable: true
+                     },
+                     %{"type" => "null"}
+                   ],
+                   "description" => "Field included by default."
+                 }
+               },
+               additionalProperties: false
+             }
   end
 
   test "generic routes can omit returns, getting a `success/failure` response", %{
@@ -424,98 +434,104 @@ defmodule Test.Acceptance.OpenApiTest do
   } do
     assert generic_action_schema = api_spec.paths["/authors/trigger_job"].post
 
-    assert [
-             %OpenApiSpex.Parameter{
+    assert generic_action_schema.parameters == [
+             %Parameter{
                name: :job_id,
                in: :query,
                description: "job_id",
                required: false,
-               schema: %OpenApiSpex.Schema{type: :string}
+               schema: %Schema{type: :string},
+               style: :form
              }
-           ] = generic_action_schema.parameters
+           ]
 
     refute generic_action_schema.requestBody
 
-    assert %OpenApiSpex.Schema{
-             type: :object,
-             properties: %{success: %OpenApiSpex.Schema{enum: [true]}}
-           } =
-             generic_action_schema.responses[201].content["application/vnd.api+json"].schema
+    assert generic_action_schema.responses[201].content["application/vnd.api+json"].schema ==
+             %Schema{
+               type: :object,
+               properties: %{success: %Schema{enum: [true]}},
+               required: [:success],
+               additionalProperties: false
+             }
   end
 
   test "API routes use `name` as operationId", %{
     open_api_spec: %OpenApi{} = api_spec
   } do
-    assert %OpenApiSpex.Operation{operationId: "listAuthors"} = api_spec.paths["/authors"].get
-    assert %OpenApiSpex.Operation{operationId: nil} = api_spec.paths["/authors/{id}"].get
+    assert %Operation{operationId: "listAuthors"} = api_spec.paths["/authors"].get
+    assert %Operation{operationId: nil} = api_spec.paths["/authors/{id}"].get
   end
 
   test "API routes use `name` in default descriptions", %{
     open_api_spec: %OpenApi{} = api_spec
   } do
-    assert %OpenApiSpex.Operation{description: "listAuthors operation on author resource"} =
+    assert %Operation{description: "listAuthors operation on author resource"} =
              api_spec.paths["/authors"].get
 
-    assert %OpenApiSpex.Operation{description: "/authors/:id operation on author resource"} =
+    assert %Operation{description: "/authors/:id operation on author resource"} =
              api_spec.paths["/authors/{id}"].get
   end
 
   describe "Index route" do
     test "filter parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
-      %OpenApiSpex.Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == :filter))
+      %Operation{} = operation = api_spec.paths["/posts"].get
+      %Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == :filter))
       assert api_spec.components.schemas["author-filter-name"].properties[:contains]
       assert filter.in == :query
       assert filter.required == false
       assert filter.style == :deepObject
-      assert %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"} = filter.schema
+      assert %Reference{"$ref": "#/components/schemas/post-filter"} = filter.schema
       assert schema = api_spec.components.schemas["post-filter"]
-      assert schema.type == :deepObject
 
-      assert %{
+      assert schema == %Schema{
+               type: :deepObject,
+               description: "Filters the query to results matching the given filter object",
                properties: %{
-                 author: %OpenApiSpex.Reference{"$ref": "#/components/schemas/author-filter"},
-                 author_id: %OpenApiSpex.Reference{
+                 author: %Reference{"$ref": "#/components/schemas/author-filter"},
+                 author_id: %Reference{
                    "$ref": "#/components/schemas/post-filter-author_id"
                  },
-                 count_of_tags: %OpenApiSpex.Reference{
+                 count_of_tags: %Reference{
                    "$ref": "#/components/schemas/post-filter-count_of_tags"
                  },
-                 email: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-email"},
-                 hidden: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-hidden"},
-                 id: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-id"},
-                 name: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter-name"},
+                 email: %Reference{"$ref": "#/components/schemas/post-filter-email"},
+                 hidden: %Reference{"$ref": "#/components/schemas/post-filter-hidden"},
+                 id: %Reference{"$ref": "#/components/schemas/post-filter-id"},
+                 name: %Reference{"$ref": "#/components/schemas/post-filter-name"},
                  and: %Schema{
                    type: :array,
-                   items: %OpenApiSpex.Reference{
+                   items: %Reference{
                      "$ref": "#/components/schemas/post-filter"
                    },
                    uniqueItems: true
                  },
                  or: %Schema{
                    type: :array,
-                   items: %OpenApiSpex.Reference{
+                   items: %Reference{
                      "$ref": "#/components/schemas/post-filter"
                    },
                    uniqueItems: true
                  },
-                 name_twice: %OpenApiSpex.Reference{
+                 name_twice: %Reference{
                    "$ref": "#/components/schemas/post-filter-name_twice"
                  },
-                 not: %OpenApiSpex.Reference{"$ref": "#/components/schemas/post-filter"}
-               }
-             } = schema
+                 not: %Reference{"$ref": "#/components/schemas/post-filter"}
+               },
+               additionalProperties: false,
+               example: ""
+             }
 
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
+      %Operation{} = operation = api_spec.paths["/authors/no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :filter))
 
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors_no_filter"].get
+      %Operation{} = operation = api_spec.paths["/authors_no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :filter))
     end
 
     test "sort parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
-      %OpenApiSpex.Parameter{} = sort = operation.parameters |> Enum.find(&(&1.name == :sort))
+      %Operation{} = operation = api_spec.paths["/posts"].get
+      %Parameter{} = sort = operation.parameters |> Enum.find(&(&1.name == :sort))
       assert sort.in == :query
       assert sort.required == false
       assert sort.style == :form
@@ -526,13 +542,13 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.pattern ==
                "^(id|-id|\\+\\+id|--id|name|-name|\\+\\+name|--name|hidden|-hidden|\\+\\+hidden|--hidden|email|-email|\\+\\+email|--email|author_id|-author_id|\\+\\+author_id|--author_id|name_twice|-name_twice|\\+\\+name_twice|--name_twice|count_of_tags|-count_of_tags|\\+\\+count_of_tags|--count_of_tags)(,(id|-id|\\+\\+id|--id|name|-name|\\+\\+name|--name|hidden|-hidden|\\+\\+hidden|--hidden|email|-email|\\+\\+email|--email|author_id|-author_id|\\+\\+author_id|--author_id|name_twice|-name_twice|\\+\\+name_twice|--name_twice|count_of_tags|-count_of_tags|\\+\\+count_of_tags|--count_of_tags))*$"
 
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/no_filter"].get
+      %Operation{} = operation = api_spec.paths["/authors/no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :sort))
     end
 
     test "page parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
-      %OpenApiSpex.Parameter{} = page = operation.parameters |> Enum.find(&(&1.name == :page))
+      %Operation{} = operation = api_spec.paths["/posts"].get
+      %Parameter{} = page = operation.parameters |> Enum.find(&(&1.name == :page))
       assert page.in == :query
       assert page.required == false
       assert page.style == :deepObject
@@ -548,9 +564,9 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
+      %Operation{} = operation = api_spec.paths["/posts"].get
 
-      %OpenApiSpex.Parameter{} =
+      %Parameter{} =
         include = operation.parameters |> Enum.find(&(&1.name == :include))
 
       assert include.in == :query
@@ -563,8 +579,8 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
-      %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
+      %Operation{} = operation = api_spec.paths["/posts"].get
+      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
       assert fields.in == :query
       assert fields.required == false
       assert fields.style == :deepObject
@@ -576,12 +592,12 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Has no request body", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
+      %Operation{} = operation = api_spec.paths["/posts"].get
       refute operation.requestBody
     end
 
     test "embedded attribute types are expanded", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors"].get
+      %Operation{} = operation = api_spec.paths["/authors"].get
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.type == :object
@@ -589,93 +605,94 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.uniqueItems == true
       assert schema.properties.data.items."$ref" == "#/components/schemas/author"
 
-      assert %OpenApiSpex.Schema{
-               required: [:type, :id],
-               type: :object,
-               properties: %{
-                 attributes: %OpenApiSpex.Schema{
-                   required: [],
-                   type: :object,
-                   properties: %{
-                     name: %{
-                       "anyOf" => [
-                         %OpenApiSpex.Schema{
-                           type: :string,
-                           description: "The name of the author. Field included by default.",
-                           nullable: true
-                         },
-                         %{"type" => "null"}
-                       ]
-                     },
-                     bio: %{
-                       "anyOf" => [
-                         %OpenApiSpex.Schema{
-                           required: [],
-                           type: :object,
-                           properties: %{
-                             history: %{
-                               "anyOf" => [
-                                 %OpenApiSpex.Schema{
-                                   type: :string,
-                                   description:
-                                     "The history of the author. Field included by default.",
-                                   nullable: true
-                                 },
-                                 %{"type" => "null"}
-                               ]
-                             }
+      assert api_spec.components.schemas["author"] ==
+               %Schema{
+                 required: [:type, :id],
+                 type: :object,
+                 properties: %{
+                   attributes: %Schema{
+                     required: [],
+                     type: :object,
+                     properties: %{
+                       name: %{
+                         "anyOf" => [
+                           %Schema{
+                             type: :string,
+                             nullable: true
                            },
-                           description: "The bio of the author. Field included by default.",
-                           nullable: true,
-                           additionalProperties: false
-                         },
-                         %{"type" => "null"}
-                       ]
-                     }
-                   },
-                   additionalProperties: false,
-                   description: "An attributes object for a author"
-                 },
-                 id: %{type: :string},
-                 type: %OpenApiSpex.Schema{type: :string},
-                 relationships: %OpenApiSpex.Schema{
-                   type: :object,
-                   properties: %{
-                     posts: %OpenApiSpex.Schema{
-                       properties: %{
-                         data: %OpenApiSpex.Schema{
-                           uniqueItems: true,
-                           type: :array,
-                           items: %{
+                           %{"type" => "null"}
+                         ],
+                         "description" => "The name of the author. Field included by default."
+                       },
+                       bio: %{
+                         "anyOf" => [
+                           %Schema{
+                             required: [],
                              type: :object,
-                             description: "Resource identifiers for posts",
-                             required: [:type, :id],
                              properties: %{
-                               id: %OpenApiSpex.Schema{type: :string},
-                               meta: %OpenApiSpex.Schema{
-                                 type: :object,
-                                 additionalProperties: true
-                               },
-                               type: %OpenApiSpex.Schema{type: :string}
+                               history: %{
+                                 "anyOf" => [
+                                   %Schema{
+                                     type: :string,
+                                     nullable: true
+                                   },
+                                   %{"type" => "null"}
+                                 ],
+                                 "description" =>
+                                   "The history of the author. Field included by default."
+                               }
                              },
+                             nullable: true,
                              additionalProperties: false
                            },
-                           description: "Relationship data for posts"
+                           %{"type" => "null"}
+                         ],
+                         "description" => "The bio of the author. Field included by default."
+                       }
+                     },
+                     additionalProperties: false,
+                     description: "An attributes object for a author"
+                   },
+                   id: %{type: :string},
+                   type: %Schema{type: :string},
+                   relationships: %Schema{
+                     type: :object,
+                     properties: %{
+                       posts: %Schema{
+                         properties: %{
+                           data: %Schema{
+                             uniqueItems: true,
+                             type: :array,
+                             items: %{
+                               type: :object,
+                               description: "Resource identifiers for posts",
+                               required: [:type, :id],
+                               properties: %{
+                                 id: %Schema{type: :string},
+                                 meta: %Schema{
+                                   type: :object,
+                                   additionalProperties: true
+                                 },
+                                 type: %Schema{type: :string}
+                               },
+                               additionalProperties: false
+                             },
+                             description: "Relationship data for posts"
+                           }
                          }
                        }
-                     }
-                   },
-                   additionalProperties: false,
-                   description: "A relationships object for a author"
-                 }
-               },
-               additionalProperties: false,
-               description: "This is an author!"
-             } = api_spec.components.schemas["author"]
+                     },
+                     additionalProperties: false,
+                     description: "A relationships object for a author"
+                   }
+                 },
+                 additionalProperties: false,
+                 description: "This is an author!"
+               }
     end
 
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].get
+      %Operation{} = operation = api_spec.paths["/posts"].get
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.type == :object
@@ -683,74 +700,74 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.uniqueItems == true
       assert schema.properties.data.items."$ref" == "#/components/schemas/post"
 
-      assert api_spec.components.schemas["post"] == %OpenApiSpex.Schema{
+      assert api_spec.components.schemas["post"] == %Schema{
                required: [:type, :id],
                type: :object,
                properties: %{
-                 attributes: %OpenApiSpex.Schema{
+                 attributes: %Schema{
                    required: [:name, :author_id],
                    type: :object,
                    properties: %{
                      hidden: %{
                        "anyOf" => [
-                         %OpenApiSpex.Schema{
+                         %Schema{
                            type: :string,
-                           description:
-                             "description of attribute :hidden. Field included by default.",
                            nullable: true
                          },
                          %{"type" => "null"}
-                       ]
+                       ],
+                       "description" =>
+                         "description of attribute :hidden. Field included by default."
                      },
-                     name: %OpenApiSpex.Schema{
+                     name: %Schema{
                        type: :string,
                        description: "description of attribute :name. Field included by default."
                      },
                      name_twice: %{
                        "anyOf" => [
-                         %OpenApiSpex.Schema{type: :string, nullable: true},
+                         %Schema{type: :string, nullable: true},
                          %{"type" => "null"}
                        ]
                      },
-                     author_id: %OpenApiSpex.Schema{
+                     author_id: %Schema{
                        type: :string,
                        description: "Field included by default.",
                        format: "uuid"
                      },
                      email: %{
                        "anyOf" => [
-                         %OpenApiSpex.Schema{
+                         %Schema{
                            type: :string,
-                           description: "Field included by default.",
                            nullable: true
                          },
                          %{"type" => "null"}
-                       ]
+                       ],
+                       "description" => "Field included by default."
                      },
                      count_of_tags: %{
-                       "anyOf" => [%OpenApiSpex.Schema{type: :integer}, %{"type" => "null"}]
+                       "anyOf" => [%Schema{type: :integer}, %{"type" => "null"}]
                      }
                    },
                    additionalProperties: false,
                    description: "An attributes object for a post"
                  },
                  id: %{type: :string},
-                 type: %OpenApiSpex.Schema{type: :string},
-                 relationships: %OpenApiSpex.Schema{
+                 type: %Schema{type: :string},
+                 relationships: %Schema{
                    type: :object,
                    properties: %{
-                     author: %OpenApiSpex.Schema{
+                     author: %Schema{
                        properties: %{
-                         data: %OpenApiSpex.Schema{
+                         data: %Schema{
                            required: [:type, :id],
                            type: :object,
                            properties: %{
-                             id: %OpenApiSpex.Schema{type: :string},
-                             meta: %OpenApiSpex.Schema{
+                             id: %Schema{type: :string},
+                             meta: %Schema{
                                type: :object,
                                additionalProperties: true
                              },
-                             type: %OpenApiSpex.Schema{type: :string}
+                             type: %Schema{type: :string}
                            },
                            additionalProperties: false,
                            description: "An identifier for author",
@@ -771,8 +788,8 @@ defmodule Test.Acceptance.OpenApiTest do
 
   describe "Get route" do
     test "id parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
-      %OpenApiSpex.Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == "id"))
+      %Operation{} = operation = api_spec.paths["/posts/{id}"].get
+      %Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == "id"))
       assert filter.in == :path
       assert filter.required == true
       assert filter.style == nil
@@ -781,9 +798,9 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
+      %Operation{} = operation = api_spec.paths["/posts/{id}"].get
 
-      %OpenApiSpex.Parameter{} =
+      %Parameter{} =
         include = operation.parameters |> Enum.find(&(&1.name == :include))
 
       assert include.in == :query
@@ -794,8 +811,8 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
-      %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
+      %Operation{} = operation = api_spec.paths["/posts/{id}"].get
+      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
       assert fields.in == :query
       assert fields.required == false
       assert fields.style == :deepObject
@@ -807,12 +824,12 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Has no request body", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
+      %Operation{} = operation = api_spec.paths["/posts/{id}"].get
       refute operation.requestBody
     end
 
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts/{id}"].get
+      %Operation{} = operation = api_spec.paths["/posts/{id}"].get
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.properties.data."$ref" == "#/components/schemas/post"
@@ -821,22 +838,22 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Response body schema with includes", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/authors/{id}"].get
+      %Operation{} = operation = api_spec.paths["/authors/{id}"].get
       response = operation.responses[200]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.properties.data."$ref" == "#/components/schemas/author"
 
       assert schema.properties.included.items.oneOf == [
-               %OpenApiSpex.Reference{"$ref": "#/components/schemas/post"}
+               %Reference{"$ref": "#/components/schemas/post"}
              ]
     end
   end
 
   describe "Create route" do
     test "include parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
+      %Operation{} = operation = api_spec.paths["/posts"].post
 
-      %OpenApiSpex.Parameter{} =
+      %Parameter{} =
         include = operation.parameters |> Enum.find(&(&1.name == :include))
 
       assert include.in == :query
@@ -848,8 +865,8 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
-      %OpenApiSpex.Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
+      %Operation{} = operation = api_spec.paths["/posts"].post
+      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
       assert fields.in == :query
       assert fields.required == false
       assert fields.style == :deepObject
@@ -861,8 +878,8 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Request body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
-      %OpenApiSpex.RequestBody{} = body = operation.requestBody
+      %Operation{} = operation = api_spec.paths["/posts"].post
+      %RequestBody{} = body = operation.requestBody
       schema = body.content["application/vnd.api+json"].schema
       assert schema.properties.data.type == :object
       assert schema.properties.data.properties.attributes.required == [:name]
@@ -870,7 +887,7 @@ defmodule Test.Acceptance.OpenApiTest do
     end
 
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
-      %OpenApiSpex.Operation{} = operation = api_spec.paths["/posts"].post
+      %Operation{} = operation = api_spec.paths["/posts"].post
       response = operation.responses[201]
       schema = response.content["application/vnd.api+json"].schema
       assert schema.properties.data."$ref" == "#/components/schemas/post"
