@@ -25,6 +25,10 @@ defmodule AshJsonApi.SerializerTest do
         accept([:id, :name])
       end
     end
+
+    aggregates do
+      count(:posts_count, :posts)
+    end
   end
 
   defmodule Post do
@@ -105,6 +109,7 @@ defmodule AshJsonApi.SerializerTest do
     test "serializes a resource with load opt" do
       author_id = Ash.UUID.generate()
       post_id = Ash.UUID.generate()
+      load = [:posts_count, posts: [:calc, :author]]
 
       author =
         Author
@@ -115,13 +120,21 @@ defmodule AshJsonApi.SerializerTest do
           type: :create
         )
         |> Ash.create!()
-        |> Ash.load!(posts: [:calc])
+        |> Ash.load!(load)
 
-      assert Serializer.serialize_value(author, Author, [], Blogs, load: [posts: [:calc]]) ==
+      assert Serializer.serialize_value(author, Author, [], Blogs, load: load) ==
                %{
                  id: author_id,
                  name: "name",
-                 posts: [%{id: post_id, title: "title", calc: "calc"}]
+                 posts_count: 1,
+                 posts: [
+                   %{
+                     id: post_id,
+                     title: "title",
+                     calc: "calc",
+                     author: %{id: author_id, name: "name"}
+                   }
+                 ]
                }
     end
   end
