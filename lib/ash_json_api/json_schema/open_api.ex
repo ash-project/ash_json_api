@@ -2638,8 +2638,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp add_null_for_non_required(%Schema{required: required} = schema)
          when is_list(required) do
-      Map.update!(schema, :properties, fn properties ->
-        if is_map(properties) do
+      Map.update!(schema, :properties, fn
+        properties when is_map(properties) ->
           Enum.reduce(properties, %{}, fn {key, value}, acc ->
             if Enum.member?(required, key) do
               Map.put(acc, key, value)
@@ -2671,9 +2671,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
               )
             end
           end)
-        else
+
+        _ ->
           properties
-        end
       end)
     end
   end
