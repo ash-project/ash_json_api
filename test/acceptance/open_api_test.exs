@@ -346,16 +346,16 @@ defmodule Test.Acceptance.OpenApiTest do
              }
            ] = generic_action_schema.parameters
 
-    assert %Schema{
-             type: :object,
-             required: [:from],
-             properties: %{from: %Schema{type: :string}},
-             additionalProperties: false
-           } =
-             generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data
+    assert generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data ==
+             %Schema{
+               type: :object,
+               required: [:from],
+               properties: %{from: %Schema{type: :string}},
+               additionalProperties: false
+             }
 
-    assert %Schema{type: :string} =
-             generic_action_schema.responses[201].content["application/vnd.api+json"].schema
+    assert generic_action_schema.responses[201].content["application/vnd.api+json"].schema ==
+             %Schema{type: :string}
   end
 
   test "generic routes have properly specified returns in the case of maps", %{
@@ -367,14 +367,16 @@ defmodule Test.Acceptance.OpenApiTest do
 
     refute generic_action_schema.requestBody
 
-    assert %Schema{
-             type: :object,
-             required: [:b],
-             properties: %{
-               a: %{"anyOf" => [%Schema{type: :integer}, %{"type" => "null"}]},
-               b: %Schema{type: :string}
+    assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==
+             %Schema{
+               type: :object,
+               required: [:b],
+               properties: %{
+                 a: %{"anyOf" => [%Schema{type: :integer}, %{"type" => "null"}]},
+                 b: %Schema{type: :string}
+               },
+               additionalProperties: false
              }
-           } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
   end
 
   test "generic routes have properly specified returns in the case of structs", %{
@@ -384,39 +386,46 @@ defmodule Test.Acceptance.OpenApiTest do
 
     assert [] = generic_action_schema.parameters
 
-    assert %Schema{
-             type: :object,
-             required: [:bio],
-             properties: %{
-               bio: %Schema{
-                 type: :object,
-                 properties: %{
-                   history: %{
-                     "anyOf" => [%Schema{type: :string}, %{"type" => "null"}]
-                   }
-                 }
-               }
-             },
-             additionalProperties: false
-           } =
-             generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data
-
-    assert %Schema{
-             type: :object,
-             required: [],
-             properties: %{
-               foo: %{
-                 "anyOf" => [
-                   %Schema{
-                     type: :string,
-                     description: "Field included by default.",
-                     nullable: true
+    assert generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data ==
+             %Schema{
+               type: :object,
+               required: [:bio],
+               properties: %{
+                 bio: %Schema{
+                   type: :object,
+                   properties: %{
+                     history: %{
+                       "anyOf" => [
+                         %Schema{type: :string, description: "The history of the author"},
+                         %{"type" => "null"}
+                       ]
+                     }
                    },
-                   %{"type" => "null"}
-                 ]
-               }
+                   required: [],
+                   additionalProperties: false
+                 }
+               },
+               additionalProperties: false
              }
-           } = generic_action_schema.responses[200].content["application/vnd.api+json"].schema
+
+    assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==
+             %Schema{
+               type: :object,
+               required: [],
+               properties: %{
+                 foo: %{
+                   "anyOf" => [
+                     %Schema{
+                       type: :string,
+                       description: "Field included by default.",
+                       nullable: true
+                     },
+                     %{"type" => "null"}
+                   ]
+                 }
+               },
+               additionalProperties: false
+             }
   end
 
   test "generic routes can omit returns, getting a `success/failure` response", %{
@@ -424,23 +433,26 @@ defmodule Test.Acceptance.OpenApiTest do
   } do
     assert generic_action_schema = api_spec.paths["/authors/trigger_job"].post
 
-    assert [
+    assert generic_action_schema.parameters == [
              %Parameter{
                name: :job_id,
                in: :query,
                description: "job_id",
                required: false,
-               schema: %Schema{type: :string}
+               schema: %Schema{type: :string},
+               style: :form
              }
-           ] = generic_action_schema.parameters
+           ]
 
     refute generic_action_schema.requestBody
 
-    assert %Schema{
-             type: :object,
-             properties: %{success: %Schema{enum: [true]}}
-           } =
-             generic_action_schema.responses[201].content["application/vnd.api+json"].schema
+    assert generic_action_schema.responses[201].content["application/vnd.api+json"].schema ==
+             %Schema{
+               type: :object,
+               properties: %{success: %Schema{enum: [true]}},
+               required: [:success],
+               additionalProperties: false
+             }
   end
 
   test "API routes use `name` as operationId", %{
@@ -470,9 +482,10 @@ defmodule Test.Acceptance.OpenApiTest do
       assert filter.style == :deepObject
       assert %Reference{"$ref": "#/components/schemas/post-filter"} = filter.schema
       assert schema = api_spec.components.schemas["post-filter"]
-      assert schema.type == :deepObject
 
-      assert %{
+      assert schema == %Schema{
+               type: :deepObject,
+               description: "Filters the query to results matching the given filter object",
                properties: %{
                  author: %Reference{"$ref": "#/components/schemas/author-filter"},
                  author_id: %Reference{
@@ -503,8 +516,10 @@ defmodule Test.Acceptance.OpenApiTest do
                    "$ref": "#/components/schemas/post-filter-name_twice"
                  },
                  not: %Reference{"$ref": "#/components/schemas/post-filter"}
-               }
-             } = schema
+               },
+               additionalProperties: false,
+               example: ""
+             }
 
       %Operation{} = operation = api_spec.paths["/authors/no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :filter))
@@ -589,89 +604,90 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.uniqueItems == true
       assert schema.properties.data.items."$ref" == "#/components/schemas/author"
 
-      assert %Schema{
-               required: [:type, :id],
-               type: :object,
-               properties: %{
-                 attributes: %Schema{
-                   required: [],
-                   type: :object,
-                   properties: %{
-                     name: %{
-                       "anyOf" => [
-                         %Schema{
-                           type: :string,
-                           description: "The name of the author. Field included by default.",
-                           nullable: true
-                         },
-                         %{"type" => "null"}
-                       ]
-                     },
-                     bio: %{
-                       "anyOf" => [
-                         %Schema{
-                           required: [],
-                           type: :object,
-                           properties: %{
-                             history: %{
-                               "anyOf" => [
-                                 %Schema{
-                                   type: :string,
-                                   description:
-                                     "The history of the author. Field included by default.",
-                                   nullable: true
-                                 },
-                                 %{"type" => "null"}
-                               ]
-                             }
+      assert api_spec.components.schemas["author"] ==
+               %Schema{
+                 required: [:type, :id],
+                 type: :object,
+                 properties: %{
+                   attributes: %Schema{
+                     required: [],
+                     type: :object,
+                     properties: %{
+                       name: %{
+                         "anyOf" => [
+                           %Schema{
+                             type: :string,
+                             description: "The name of the author. Field included by default.",
+                             nullable: true
                            },
-                           description: "The bio of the author. Field included by default.",
-                           nullable: true,
-                           additionalProperties: false
-                         },
-                         %{"type" => "null"}
-                       ]
-                     }
-                   },
-                   additionalProperties: false,
-                   description: "An attributes object for a author"
-                 },
-                 id: %{type: :string},
-                 type: %Schema{type: :string},
-                 relationships: %Schema{
-                   type: :object,
-                   properties: %{
-                     posts: %Schema{
-                       properties: %{
-                         data: %Schema{
-                           uniqueItems: true,
-                           type: :array,
-                           items: %{
+                           %{"type" => "null"}
+                         ]
+                       },
+                       bio: %{
+                         "anyOf" => [
+                           %Schema{
+                             required: [],
                              type: :object,
-                             description: "Resource identifiers for posts",
-                             required: [:type, :id],
                              properties: %{
-                               id: %Schema{type: :string},
-                               meta: %Schema{
-                                 type: :object,
-                                 additionalProperties: true
-                               },
-                               type: %Schema{type: :string}
+                               history: %{
+                                 "anyOf" => [
+                                   %Schema{
+                                     type: :string,
+                                     description:
+                                       "The history of the author. Field included by default.",
+                                     nullable: true
+                                   },
+                                   %{"type" => "null"}
+                                 ]
+                               }
                              },
+                             description: "The bio of the author. Field included by default.",
+                             nullable: true,
                              additionalProperties: false
                            },
-                           description: "Relationship data for posts"
+                           %{"type" => "null"}
+                         ]
+                       }
+                     },
+                     additionalProperties: false,
+                     description: "An attributes object for a author"
+                   },
+                   id: %{type: :string},
+                   type: %Schema{type: :string},
+                   relationships: %Schema{
+                     type: :object,
+                     properties: %{
+                       posts: %Schema{
+                         properties: %{
+                           data: %Schema{
+                             uniqueItems: true,
+                             type: :array,
+                             items: %{
+                               type: :object,
+                               description: "Resource identifiers for posts",
+                               required: [:type, :id],
+                               properties: %{
+                                 id: %Schema{type: :string},
+                                 meta: %Schema{
+                                   type: :object,
+                                   additionalProperties: true
+                                 },
+                                 type: %Schema{type: :string}
+                               },
+                               additionalProperties: false
+                             },
+                             description: "Relationship data for posts"
+                           }
                          }
                        }
-                     }
-                   },
-                   additionalProperties: false,
-                   description: "A relationships object for a author"
-                 }
-               },
-               additionalProperties: false,
-               description: "This is an author!"
-             } = api_spec.components.schemas["author"]
+                     },
+                     additionalProperties: false,
+                     description: "A relationships object for a author"
+                   }
+                 },
+                 additionalProperties: false,
+                 description: "This is an author!"
+               }
     end
 
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do
