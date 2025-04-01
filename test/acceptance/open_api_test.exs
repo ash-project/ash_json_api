@@ -2,7 +2,7 @@ defmodule Test.Acceptance.OpenApiTest do
   use ExUnit.Case, async: true
 
   import Plug.Test
-  alias OpenApiSpex.{OpenApi, Schema, Operation, Parameter, Reference, RequestBody}
+  alias OpenApiSpex.{OpenApi, Operation, Parameter, Reference, RequestBody, Schema}
 
   defmodule Bio do
     use Ash.Resource,
@@ -396,9 +396,10 @@ defmodule Test.Acceptance.OpenApiTest do
                    properties: %{
                      history: %{
                        "anyOf" => [
-                         %Schema{type: :string, description: "The history of the author"},
+                         %Schema{type: :string},
                          %{"type" => "null"}
-                       ]
+                       ],
+                       "description" => "The history of the author"
                      }
                    },
                    required: [],
@@ -417,11 +418,11 @@ defmodule Test.Acceptance.OpenApiTest do
                    "anyOf" => [
                      %Schema{
                        type: :string,
-                       description: "Field included by default.",
                        nullable: true
                      },
                      %{"type" => "null"}
-                   ]
+                   ],
+                   "description" => "Field included by default."
                  }
                },
                additionalProperties: false
@@ -617,11 +618,11 @@ defmodule Test.Acceptance.OpenApiTest do
                          "anyOf" => [
                            %Schema{
                              type: :string,
-                             description: "The name of the author. Field included by default.",
                              nullable: true
                            },
                            %{"type" => "null"}
-                         ]
+                         ],
+                         "description" => "The name of the author. Field included by default."
                        },
                        bio: %{
                          "anyOf" => [
@@ -633,20 +634,20 @@ defmodule Test.Acceptance.OpenApiTest do
                                  "anyOf" => [
                                    %Schema{
                                      type: :string,
-                                     description:
-                                       "The history of the author. Field included by default.",
                                      nullable: true
                                    },
                                    %{"type" => "null"}
-                                 ]
+                                 ],
+                                 "description" =>
+                                   "The history of the author. Field included by default."
                                }
                              },
-                             description: "The bio of the author. Field included by default.",
                              nullable: true,
                              additionalProperties: false
                            },
                            %{"type" => "null"}
-                         ]
+                         ],
+                         "description" => "The bio of the author. Field included by default."
                        }
                      },
                      additionalProperties: false,
@@ -711,12 +712,12 @@ defmodule Test.Acceptance.OpenApiTest do
                        "anyOf" => [
                          %Schema{
                            type: :string,
-                           description:
-                             "description of attribute :hidden. Field included by default.",
                            nullable: true
                          },
                          %{"type" => "null"}
-                       ]
+                       ],
+                       "description" =>
+                         "description of attribute :hidden. Field included by default."
                      },
                      name: %Schema{
                        type: :string,
@@ -737,11 +738,11 @@ defmodule Test.Acceptance.OpenApiTest do
                        "anyOf" => [
                          %Schema{
                            type: :string,
-                           description: "Field included by default.",
                            nullable: true
                          },
                          %{"type" => "null"}
-                       ]
+                       ],
+                       "description" => "Field included by default."
                      },
                      count_of_tags: %{
                        "anyOf" => [%Schema{type: :integer}, %{"type" => "null"}]
