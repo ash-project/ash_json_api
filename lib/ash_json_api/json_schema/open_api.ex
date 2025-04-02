@@ -2282,6 +2282,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           additionalProperties: false
         }
       end
+      |> with_attribute_description(calculation)
     end
 
     def raw_filter_type(attribute_or_aggregate, resource) do
@@ -2307,6 +2308,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           additionalProperties: false
         }
       end
+      |> with_attribute_description(attribute_or_aggregate)
     end
 
     defp attribute_filter_field_type(resource, attribute) do
