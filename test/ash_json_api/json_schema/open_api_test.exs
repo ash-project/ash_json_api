@@ -90,6 +90,7 @@ defmodule AshJsonApi.OpenApiTest do
                {"post-filter-view_count",
                 %OpenApiSpex.Schema{
                   type: :object,
+                  description: "View count of the post",
                   properties: %{
                     in: %OpenApiSpex.Schema{
                       type: :array,
@@ -116,6 +117,7 @@ defmodule AshJsonApi.OpenApiTest do
                {"author-filter-posts_count",
                 %OpenApiSpex.Schema{
                   type: :object,
+                  description: "Count of posts",
                   properties: %{
                     in: %OpenApiSpex.Schema{
                       type: :array,
@@ -136,6 +138,7 @@ defmodule AshJsonApi.OpenApiTest do
                {"post-filter-calc",
                 %OpenApiSpex.Schema{
                   type: :object,
+                  description: "A calculation",
                   properties: %{
                     in: %OpenApiSpex.Schema{
                       type: :array,
@@ -150,6 +153,7 @@ defmodule AshJsonApi.OpenApiTest do
                     greater_than_or_equal: %OpenApiSpex.Schema{type: :string},
                     contains: %OpenApiSpex.Schema{type: :string}
                   },
+                  required: [],
                   additionalProperties: false
                 }}
              ]
@@ -208,7 +212,8 @@ defmodule AshJsonApi.OpenApiTest do
                  less_than: %OpenApiSpex.Schema{type: :string},
                  greater_than: %OpenApiSpex.Schema{type: :string},
                  less_than_or_equal: %OpenApiSpex.Schema{type: :string},
-                 greater_than_or_equal: %OpenApiSpex.Schema{type: :string}
+                 greater_than_or_equal: %OpenApiSpex.Schema{type: :string},
+                 contains: %OpenApiSpex.Schema{type: :string}
                },
                required: [],
                additionalProperties: false
