@@ -924,7 +924,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           %{"anyOf" => many}
       end
       |> then(fn result ->
-        case schema["description"] do
+        case schema["description"] || schema[:description] do
           nil -> result
           description -> Map.put(result, "description", description)
         end
