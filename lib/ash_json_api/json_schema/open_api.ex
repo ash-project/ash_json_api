@@ -2160,13 +2160,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.flat_map(&filter_type(&1, resource))
     end
 
-    defp attribute_or_aggregate_type(%Ash.Resource.Attribute{type: type}, _resource),
+    defp field_type(%Ash.Resource.Attribute{type: type}, _resource),
       do: type
 
-    defp attribute_or_aggregate_type(%Ash.Resource.Calculation{type: type}, _resource),
+    defp field_type(%Ash.Resource.Calculation{type: type}, _resource),
       do: type
 
-    defp attribute_or_aggregate_type(
+    defp field_type(
            %Ash.Resource.Aggregate{
              kind: kind,
              field: field,
@@ -2188,37 +2188,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     @doc false
-    def filter_type(attribute_or_aggregate, resource) do
-      type = attribute_or_aggregate_type(attribute_or_aggregate, resource)
+    def filter_type(field, resource) do
+      raw_filter_type(field, resource)
+      |> case do
+        nil ->
+          []
 
-      array_type? = match?({:array, _}, type)
-
-      fields =
-        Ash.Filter.builtin_operators()
-        |> Enum.concat(Ash.Filter.builtin_functions())
-        |> Enum.concat(Ash.DataLayer.functions(resource))
-        |> Enum.filter(& &1.predicate?())
-        |> restrict_for_lists(type)
-        |> Enum.flat_map(fn operator ->
-          filter_fields(operator, type, array_type?, attribute_or_aggregate, resource)
-        end)
-
-      if fields == [] do
-        []
-      else
-        [
-          {attribute_filter_field_type(resource, attribute_or_aggregate),
-           %Schema{
-             type: :object,
-             properties: Map.new(fields),
-             additionalProperties: false
-           }}
-        ]
+        schema ->
+          [{attribute_filter_field_type(resource, field), schema}]
       end
     end
 
     def raw_filter_type(%Ash.Resource.Calculation{} = calculation, resource) do
-      type = attribute_or_aggregate_type(calculation, resource)
+      type = field_type(calculation, resource)
 
       input =
         if Enum.empty?(calculation.arguments) do
@@ -2253,6 +2235,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       fields =
         Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.Filter.builtin_functions())
         |> Enum.concat(Ash.DataLayer.functions(resource))
         |> Enum.filter(& &1.predicate?())
         |> restrict_for_lists(type)
@@ -2281,17 +2264,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
           properties: Map.new(fields_with_input),
           additionalProperties: false
         }
+        |> with_attribute_description(calculation)
       end
-      |> with_attribute_description(calculation)
     end
 
     def raw_filter_type(attribute_or_aggregate, resource) do
-      type = attribute_or_aggregate_type(attribute_or_aggregate, resource)
+      type = field_type(attribute_or_aggregate, resource)
 
       array_type? = match?({:array, _}, type)
 
       fields =
         Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.Filter.builtin_functions())
         |> Enum.concat(Ash.DataLayer.functions(resource))
         |> Enum.filter(& &1.predicate?())
         |> restrict_for_lists(type)
@@ -2307,8 +2291,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           properties: Map.new(fields),
           additionalProperties: false
         }
+        |> with_attribute_description(attribute_or_aggregate)
       end
-      |> with_attribute_description(attribute_or_aggregate)
     end
 
     defp attribute_filter_field_type(resource, attribute) do
