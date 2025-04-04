@@ -650,7 +650,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_attribute_type(type, resource, format \\ :json)
 
     defp resource_attribute_type(%Ash.Resource.Aggregate{type: nil} = agg, resource, format) do
-      {type, constraints} = field_type(agg, resource) 
+      {type, constraints} = field_type(agg, resource)
 
       resource_attribute_type(
         Map.merge(agg, %{type: type, constraints: constraints}),
