@@ -410,7 +410,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
       |> Map.new(fn attr ->
         {attr.name,
-         resource_attribute_type(attr, format)
+         resource_attribute_type(attr, resource, format)
          |> with_attribute_description(attr)
          |> with_attribute_nullability(attr)
          |> with_comment_on_included(attr, fields)}
@@ -487,13 +487,39 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @spec resource_write_attribute_type(
             term(),
+            resource :: Ash.Resource.t(),
             action_type :: atom,
             format :: content_type_format()
           ) :: Schema.t()
     @doc false
-    def resource_write_attribute_type(attribute, action_type, format \\ :json)
+    def resource_write_attribute_type(attribute, resource, action_type, format \\ :json)
 
-    def resource_write_attribute_type(%{type: {:array, type}} = attr, action_type, format) do
+    def resource_write_attribute_type(
+          %Ash.Resource.Aggregate{type: nil} = agg,
+          resource,
+          action_type,
+          format
+        ) do
+      case field_type(agg, resource) do
+        {type, constraints} ->
+          resource_write_attribute_type(
+            Map.merge(agg, %{type: type, constraints: constraints}),
+            resource,
+            action_type,
+            format
+          )
+
+        _type ->
+          %Schema{type: :any}
+      end
+    end
+
+    def resource_write_attribute_type(
+          %{type: {:array, type}} = attr,
+          resource,
+          action_type,
+          format
+        ) do
       %Schema{
         type: :array,
         items:
@@ -503,6 +529,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
               | type: type,
                 constraints: attr.constraints[:items] || []
             },
+            resource,
             action_type,
             format
           )
@@ -512,6 +539,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     def resource_write_attribute_type(
           %{type: Ash.Type.Map, constraints: constraints} = attr,
+          resource,
           action_type,
           format
         ) do
@@ -528,6 +556,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                    | type: config[:type],
                      constraints: config[:constraints] || []
                  },
+                 resource,
                  action_type,
                  format
                )}
@@ -546,6 +575,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     def resource_write_attribute_type(
           %{type: Ash.Type.Union, constraints: constraints} = attr,
+          resource,
           action_type,
           format
         ) do
@@ -557,7 +587,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
               constraints: config[:constraints]
           }
 
-          resource_write_attribute_type(fake_attr, action_type, format)
+          resource_write_attribute_type(fake_attr, resource, action_type, format)
         end)
 
       %{
@@ -569,6 +599,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     def resource_write_attribute_type(
           %{type: Ash.Type.Struct, constraints: constraints} = attr,
+          resource,
           action_type,
           format
         ) do
@@ -576,7 +607,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
         if AshJsonApi.JsonSchema.embedded?(instance_of) && !constraints[:fields] do
           embedded_type_input(attr, action_type, format)
         else
-          resource_write_attribute_type(%{attr | type: Ash.Type.Map}, action_type, format)
+          resource_write_attribute_type(
+            %{attr | type: Ash.Type.Map},
+            resource,
+            action_type,
+            format
+          )
         end
       else
         %Schema{}
@@ -584,7 +620,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> with_attribute_description(attr)
     end
 
-    def resource_write_attribute_type(%{type: type} = attr, action_type, format) do
+    def resource_write_attribute_type(%{type: type} = attr, resource, action_type, format) do
       cond do
         Ash.Type.NewType.new_type?(type) ->
           new_constraints = Ash.Type.NewType.constraints(type, attr.constraints)
@@ -592,6 +628,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
           resource_write_attribute_type(
             Map.merge(attr, %{type: Ash.Type.get_type(new_type), constraints: new_constraints}),
+            resource,
             action_type,
             format
           )
@@ -603,36 +640,58 @@ if Code.ensure_loaded?(OpenApiSpex) do
           if :erlang.function_exported(type, :json_write_schema, 1) do
             type.json_write_schema(attr.constraints)
           else
-            resource_attribute_type(attr, format)
+            resource_attribute_type(attr, resource, format)
           end
       end
       |> with_attribute_description(attr)
     end
 
-    @spec resource_attribute_type(term(), format :: content_type_format()) :: Schema.t() | map()
-    defp resource_attribute_type(type, format \\ :json)
+    @spec resource_attribute_type(
+            term(),
+            resource :: Ash.Resource.t(),
+            format :: content_type_format()
+          ) :: Schema.t() | map()
+    defp resource_attribute_type(type, resource, format \\ :json)
 
-    defp resource_attribute_type(%{type: Ash.Type.String}, _format) do
+    defp resource_attribute_type(%Ash.Resource.Aggregate{type: nil} = agg, resource, format) do
+      case field_type(agg, resource) do
+        {type, constraints} ->
+          resource_attribute_type(
+            Map.merge(agg, %{type: type, constraints: constraints}),
+            resource,
+            format
+          )
+
+        _type ->
+          %Schema{type: :any}
+      end
+    end
+
+    defp resource_attribute_type(%{type: Ash.Type.String}, _resource, _format) do
       %Schema{type: :string}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.CiString}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.CiString}, _resource, _format) do
       %Schema{type: :string}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Boolean}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.Boolean}, _resource, _format) do
       %Schema{type: :boolean}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Decimal}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.Decimal}, _resource, _format) do
       %Schema{type: :string}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Integer}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.Integer}, _resource, _format) do
       %Schema{type: :integer}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Map, constraints: constraints} = attr, format) do
+    defp resource_attribute_type(
+           %{type: Ash.Type.Map, constraints: constraints} = attr,
+           resource,
+           format
+         ) do
       if constraints[:fields] && constraints[:fields] != [] do
         %Schema{
           type: :object,
@@ -645,6 +704,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                    | type: Ash.Type.get_type(config[:type]),
                      constraints: config[:constraints] || []
                  },
+                 resource,
                  format
                )}
             end),
@@ -660,39 +720,43 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Float}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.Float}, _resource, _format) do
       %Schema{type: :number, format: :float}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Date}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.Date}, _resource, _format) do
       %Schema{
         type: :string,
         format: "date"
       }
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.UtcDatetime}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.UtcDatetime}, _resource, _format) do
       %Schema{
         type: :string,
         format: "date-time"
       }
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.NaiveDatetime}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.NaiveDatetime}, _resource, _format) do
       %Schema{
         type: :string,
         format: "date-time"
       }
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.UUID}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.UUID}, _resource, _format) do
       %Schema{
         type: :string,
         format: "uuid"
       }
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Atom, constraints: constraints}, _format) do
+    defp resource_attribute_type(
+           %{type: Ash.Type.Atom, constraints: constraints},
+           _resource,
+           _format
+         ) do
       if one_of = constraints[:one_of] do
         %Schema{
           type: :string,
@@ -705,20 +769,24 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.DurationName}, _format) do
+    defp resource_attribute_type(%{type: Ash.Type.DurationName}, _resource, _format) do
       %Schema{
         type: :string,
         enum: Enum.map(Ash.Type.DurationName.values(), &to_string/1)
       }
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.File}, :json),
+    defp resource_attribute_type(%{type: Ash.Type.File}, _resource, :json),
       do: %Schema{type: :string, format: :byte, description: "Base64 encoded file content"}
 
-    defp resource_attribute_type(%{type: Ash.Type.File}, :multipart),
+    defp resource_attribute_type(%{type: Ash.Type.File}, _resource, :multipart),
       do: %Schema{type: :string, description: "Name of multipart upload file"}
 
-    defp resource_attribute_type(%{type: Ash.Type.Union, constraints: constraints} = attr, format) do
+    defp resource_attribute_type(
+           %{type: Ash.Type.Union, constraints: constraints} = attr,
+           resource,
+           format
+         ) do
       subtypes =
         Enum.map(constraints[:types], fn {_name, config} ->
           fake_attr = %{
@@ -727,7 +795,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
               constraints: config[:constraints]
           }
 
-          resource_attribute_type(fake_attr, format)
+          resource_attribute_type(fake_attr, resource, format)
         end)
 
       %{
@@ -737,7 +805,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> with_attribute_description(attr)
     end
 
-    defp resource_attribute_type(%{type: {:array, type}} = attr, format) do
+    defp resource_attribute_type(%{type: {:array, type}} = attr, resource, format) do
       %Schema{
         type: :array,
         items:
@@ -747,6 +815,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
               | type: type,
                 constraints: attr.constraints[:items] || []
             },
+            resource,
             format
           )
       }
@@ -754,6 +823,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp resource_attribute_type(
            %{type: Ash.Type.Struct, constraints: constraints} = attr,
+           resource,
            format
          ) do
       if instance_of = constraints[:instance_of] do
@@ -766,14 +836,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
           }
           |> add_null_for_non_required()
         else
-          resource_attribute_type(%{attr | type: Ash.Type.Map}, format)
+          resource_attribute_type(%{attr | type: Ash.Type.Map}, resource, format)
         end
       else
         %Schema{}
       end
     end
 
-    defp resource_attribute_type(%{type: type} = attr, format) do
+    defp resource_attribute_type(%{type: type} = attr, resource, format) do
       constraints = attr.constraints
 
       cond do
@@ -795,6 +865,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
           resource_attribute_type(
             Map.merge(attr, %{type: Ash.Type.get_type(new_type), constraints: new_constraints}),
+            resource,
             format
           )
 
@@ -1305,7 +1376,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         end)
         |> Enum.filter(& &1)
         |> Enum.map(fn argument_or_attribute ->
-          schema = resource_write_attribute_type(argument_or_attribute, action.type)
+          schema = resource_write_attribute_type(argument_or_attribute, resource, action.type)
 
           %Parameter{
             name: argument_or_attribute.name,
@@ -1553,7 +1624,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.filter(& &1.public?)
       |> without_path_arguments(action, route)
       |> Enum.map(fn argument ->
-        schema = resource_attribute_type(argument)
+        schema = resource_attribute_type(argument, resource)
 
         %Parameter{
           name: argument.name,
@@ -1849,7 +1920,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> Ash.Resource.Info.attributes()
           |> Enum.filter(&(&1.name in action.accept && &1.writable?))
           |> Map.new(fn attribute ->
-            {attribute.name, resource_write_attribute_type(attribute, action.type, format)}
+            {attribute.name,
+             resource_write_attribute_type(attribute, resource, action.type, format)}
           end)
         end
 
@@ -1861,7 +1933,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         Map.put(
           attributes,
           argument.name,
-          resource_write_attribute_type(argument, :create, format)
+          resource_write_attribute_type(argument, resource, :create, format)
         )
       end)
     end
@@ -1956,7 +2028,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
           if action.returns do
             return_type =
-              resource_attribute_type(%{type: action.returns, constraints: action.constraints})
+              resource_attribute_type(
+                %{type: action.returns, constraints: action.constraints},
+                resource
+              )
 
             if route.wrap_in_result? do
               %Schema{
@@ -2160,11 +2235,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.flat_map(&filter_type(&1, resource))
     end
 
-    defp field_type(%Ash.Resource.Attribute{type: type}, _resource),
-      do: type
+    defp field_type(%Ash.Resource.Attribute{type: type, constraints: constraints}, _resource),
+      do: {type, constraints}
 
-    defp field_type(%Ash.Resource.Calculation{type: type}, _resource),
-      do: type
+    defp field_type(%Ash.Resource.Calculation{type: type, constraints: constraints}, _resource),
+      do: {type, constraints}
+
+    defp field_type(%Ash.Resource.Aggregate{type: type, constraints: constraints}, _resource)
+         when not is_nil(type),
+         do: {type, constraints}
 
     defp field_type(
            %Ash.Resource.Aggregate{
@@ -2182,9 +2261,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
           attr.type
         end
 
-      {:ok, aggregate_type, _} = Ash.Query.Aggregate.kind_to_type(kind, field_type, [])
+      {:ok, aggregate_type, constraints} =
+        Ash.Query.Aggregate.kind_to_type(kind, field_type, [])
 
-      aggregate_type
+      {aggregate_type, constraints}
     end
 
     @doc false
@@ -2200,98 +2280,106 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     def raw_filter_type(%Ash.Resource.Calculation{} = calculation, resource) do
-      type = field_type(calculation, resource)
+      case field_type(calculation, resource) do
+        {type, _constraints} ->
+          input =
+            if Enum.empty?(calculation.arguments) do
+              []
+            else
+              inputs =
+                Enum.map(calculation.arguments, fn argument ->
+                  {argument.name, resource_write_attribute_type(argument, resource, :create)}
+                end)
 
-      input =
-        if Enum.empty?(calculation.arguments) do
-          []
-        else
-          inputs =
-            Enum.map(calculation.arguments, fn argument ->
-              {argument.name, resource_write_attribute_type(argument, :create)}
+              required =
+                Enum.flat_map(calculation.arguments, fn argument ->
+                  if argument.allow_nil? do
+                    []
+                  else
+                    [argument.name]
+                  end
+                end)
+
+              [
+                {:input,
+                 %Schema{
+                   type: :object,
+                   properties: Map.new(inputs),
+                   required: required,
+                   additionalProperties: false
+                 }}
+              ]
+            end
+
+          array_type? = match?({:array, _}, type)
+
+          fields =
+            Ash.Filter.builtin_operators()
+            |> Enum.concat(Ash.Filter.builtin_functions())
+            |> Enum.concat(Ash.DataLayer.functions(resource))
+            |> Enum.filter(& &1.predicate?())
+            |> restrict_for_lists(type)
+            |> Enum.flat_map(fn operator ->
+              filter_fields(operator, type, array_type?, calculation, resource)
             end)
+
+          input_required = Enum.any?(calculation.arguments, &(!&1.allow_nil?))
+
+          fields_with_input =
+            Enum.concat(fields, input)
 
           required =
-            Enum.flat_map(calculation.arguments, fn argument ->
-              if argument.allow_nil? do
-                []
-              else
-                [argument.name]
-              end
-            end)
+            if input_required do
+              [:input]
+            else
+              []
+            end
 
-          [
-            {:input,
-             %Schema{
-               type: :object,
-               properties: Map.new(inputs),
-               required: required,
-               additionalProperties: false
-             }}
-          ]
-        end
+          if fields == [] do
+            nil
+          else
+            %Schema{
+              type: :object,
+              required: required,
+              properties: Map.new(fields_with_input),
+              additionalProperties: false
+            }
+            |> with_attribute_description(calculation)
+          end
 
-      array_type? = match?({:array, _}, type)
-
-      fields =
-        Ash.Filter.builtin_operators()
-        |> Enum.concat(Ash.Filter.builtin_functions())
-        |> Enum.concat(Ash.DataLayer.functions(resource))
-        |> Enum.filter(& &1.predicate?())
-        |> restrict_for_lists(type)
-        |> Enum.flat_map(fn operator ->
-          filter_fields(operator, type, array_type?, calculation, resource)
-        end)
-
-      input_required = Enum.any?(calculation.arguments, &(!&1.allow_nil?))
-
-      fields_with_input =
-        Enum.concat(fields, input)
-
-      required =
-        if input_required do
-          [:input]
-        else
-          []
-        end
-
-      if fields == [] do
-        nil
-      else
-        %Schema{
-          type: :object,
-          required: required,
-          properties: Map.new(fields_with_input),
-          additionalProperties: false
-        }
-        |> with_attribute_description(calculation)
+        _ ->
+          nil
       end
     end
 
     def raw_filter_type(attribute_or_aggregate, resource) do
-      type = field_type(attribute_or_aggregate, resource)
+      case field_type(attribute_or_aggregate, resource) do
+        {type, _constraints} ->
+          array_type? = match?({:array, _}, type)
 
-      array_type? = match?({:array, _}, type)
+          fields =
+            Ash.Filter.builtin_operators()
+            |> Enum.concat(Ash.Filter.builtin_functions())
+            |> Enum.concat(Ash.DataLayer.functions(resource))
+            |> Enum.filter(& &1.predicate?())
+            |> restrict_for_lists(type)
+            |> Enum.flat_map(fn operator ->
+              filter_fields(operator, type, array_type?, attribute_or_aggregate, resource)
+            end)
 
-      fields =
-        Ash.Filter.builtin_operators()
-        |> Enum.concat(Ash.Filter.builtin_functions())
-        |> Enum.concat(Ash.DataLayer.functions(resource))
-        |> Enum.filter(& &1.predicate?())
-        |> restrict_for_lists(type)
-        |> Enum.flat_map(fn operator ->
-          filter_fields(operator, type, array_type?, attribute_or_aggregate, resource)
-        end)
+          if fields == [] do
+            nil
+          else
+            %Schema{
+              type: :object,
+              properties: Map.new(fields),
+              additionalProperties: false
+            }
+            |> with_attribute_description(attribute_or_aggregate)
+          end
 
-      if fields == [] do
-        nil
-      else
-        %Schema{
-          type: :object,
-          properties: Map.new(fields),
-          additionalProperties: false
-        }
-        |> with_attribute_description(attribute_or_aggregate)
+        _ ->
+          nil
       end
     end
 
@@ -2487,13 +2575,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
            type,
            array_type?,
            attribute_or_aggregate,
-           _resource
+           resource
          ) do
       expressable_types = get_expressable_types(operator, type, array_type?)
 
       if Enum.any?(expressable_types, &(&1 == :same)) do
         [
-          {operator.name(), resource_attribute_type(attribute_or_aggregate)}
+          {operator.name(), resource_attribute_type(attribute_or_aggregate, resource)}
         ]
       else
         type =
@@ -2534,16 +2622,17 @@ if Code.ensure_loaded?(OpenApiSpex) do
             attribute_or_aggregate = constraints_to_item_constraints(type, attribute_or_aggregate)
 
             [
-              {operator.name(), resource_attribute_type(attribute_or_aggregate)}
+              {operator.name(), resource_attribute_type(attribute_or_aggregate, resource)}
             ]
           end
         else
           []
         end
       end
-    rescue
-      _e ->
-        []
+
+      # rescue
+      #   _e ->
+      #     []
     end
 
     defp filterable?(%Ash.Resource.Aggregate{} = aggregate, resource) do

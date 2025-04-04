@@ -114,19 +114,27 @@ defmodule AshJsonApi.OpenApiTest do
       aggregate = Ash.Resource.Info.aggregate(Author, :posts_count)
 
       assert OpenApi.filter_type(aggregate, resource) == [
-               {"author-filter-posts_count",
-                %OpenApiSpex.Schema{
-                  type: :object,
-                  description: "Count of posts",
-                  properties: %{
-                    in: %OpenApiSpex.Schema{
-                      type: :array,
-                      items: %OpenApiSpex.Schema{type: :integer}
-                    },
-                    is_nil: %OpenApiSpex.Schema{type: :boolean}
-                  },
-                  additionalProperties: false
-                }}
+               {
+                 "author-filter-posts_count",
+                 %OpenApiSpex.Schema{
+                   type: :object,
+                   properties: %{
+                     in: %OpenApiSpex.Schema{
+                       type: :array,
+                       items: %OpenApiSpex.Schema{type: :integer}
+                     },
+                     eq: %OpenApiSpex.Schema{type: :integer},
+                     is_nil: %OpenApiSpex.Schema{type: :boolean},
+                     not_eq: %OpenApiSpex.Schema{type: :integer},
+                     less_than: %OpenApiSpex.Schema{type: :integer},
+                     greater_than: %OpenApiSpex.Schema{type: :integer},
+                     less_than_or_equal: %OpenApiSpex.Schema{type: :integer},
+                     greater_than_or_equal: %OpenApiSpex.Schema{type: :integer}
+                   },
+                   additionalProperties: false,
+                   description: "Count of posts"
+                 }
+               }
              ]
     end
 
@@ -188,12 +196,18 @@ defmodule AshJsonApi.OpenApiTest do
 
       assert OpenApi.raw_filter_type(aggregate, resource) == %OpenApiSpex.Schema{
                type: :object,
-               description: "Count of posts",
                properties: %{
                  in: %OpenApiSpex.Schema{type: :array, items: %OpenApiSpex.Schema{type: :integer}},
-                 is_nil: %OpenApiSpex.Schema{type: :boolean}
+                 eq: %OpenApiSpex.Schema{type: :integer},
+                 is_nil: %OpenApiSpex.Schema{type: :boolean},
+                 greater_than: %OpenApiSpex.Schema{type: :integer},
+                 not_eq: %OpenApiSpex.Schema{type: :integer},
+                 less_than: %OpenApiSpex.Schema{type: :integer},
+                 less_than_or_equal: %OpenApiSpex.Schema{type: :integer},
+                 greater_than_or_equal: %OpenApiSpex.Schema{type: :integer}
                },
-               additionalProperties: false
+               additionalProperties: false,
+               description: "Count of posts"
              }
     end
 
