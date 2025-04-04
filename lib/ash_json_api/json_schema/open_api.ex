@@ -500,18 +500,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
           action_type,
           format
         ) do
-      case field_type(agg, resource) do
-        {type, constraints} ->
-          resource_write_attribute_type(
-            Map.merge(agg, %{type: type, constraints: constraints}),
-            resource,
-            action_type,
-            format
-          )
+      {type, constraints} = field_type(agg, resource)
 
-        _type ->
-          %Schema{type: :any}
-      end
+      resource_write_attribute_type(
+        Map.merge(agg, %{type: type, constraints: constraints}),
+        resource,
+        action_type,
+        format
+      )
     end
 
     def resource_write_attribute_type(
@@ -654,17 +650,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_attribute_type(type, resource, format \\ :json)
 
     defp resource_attribute_type(%Ash.Resource.Aggregate{type: nil} = agg, resource, format) do
-      case field_type(agg, resource) do
-        {type, constraints} ->
-          resource_attribute_type(
-            Map.merge(agg, %{type: type, constraints: constraints}),
-            resource,
-            format
-          )
+      {type, constraints} = field_type(agg, resource) 
 
-        _type ->
-          %Schema{type: :any}
-      end
+      resource_attribute_type(
+        Map.merge(agg, %{type: type, constraints: constraints}),
+        resource,
+        format
+      )
     end
 
     defp resource_attribute_type(%{type: Ash.Type.String}, _resource, _format) do
@@ -2280,106 +2272,97 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     def raw_filter_type(%Ash.Resource.Calculation{} = calculation, resource) do
-      case field_type(calculation, resource) do
-        {type, _constraints} ->
-          input =
-            if Enum.empty?(calculation.arguments) do
-              []
-            else
-              inputs =
-                Enum.map(calculation.arguments, fn argument ->
-                  {argument.name, resource_write_attribute_type(argument, resource, :create)}
-                end)
+      {type, _constraints} = field_type(calculation, resource)
 
-              required =
-                Enum.flat_map(calculation.arguments, fn argument ->
-                  if argument.allow_nil? do
-                    []
-                  else
-                    [argument.name]
-                  end
-                end)
-
-              [
-                {:input,
-                 %Schema{
-                   type: :object,
-                   properties: Map.new(inputs),
-                   required: required,
-                   additionalProperties: false
-                 }}
-              ]
-            end
-
-          array_type? = match?({:array, _}, type)
-
-          fields =
-            Ash.Filter.builtin_operators()
-            |> Enum.concat(Ash.Filter.builtin_functions())
-            |> Enum.concat(Ash.DataLayer.functions(resource))
-            |> Enum.filter(& &1.predicate?())
-            |> restrict_for_lists(type)
-            |> Enum.flat_map(fn operator ->
-              filter_fields(operator, type, array_type?, calculation, resource)
+      input =
+        if Enum.empty?(calculation.arguments) do
+          []
+        else
+          inputs =
+            Enum.map(calculation.arguments, fn argument ->
+              {argument.name, resource_write_attribute_type(argument, resource, :create)}
             end)
 
-          input_required = Enum.any?(calculation.arguments, &(!&1.allow_nil?))
-
-          fields_with_input =
-            Enum.concat(fields, input)
-
           required =
-            if input_required do
-              [:input]
-            else
-              []
-            end
+            Enum.flat_map(calculation.arguments, fn argument ->
+              if argument.allow_nil? do
+                []
+              else
+                [argument.name]
+              end
+            end)
 
-          if fields == [] do
-            nil
-          else
-            %Schema{
-              type: :object,
-              required: required,
-              properties: Map.new(fields_with_input),
-              additionalProperties: false
-            }
-            |> with_attribute_description(calculation)
-          end
+          [
+            {:input,
+             %Schema{
+               type: :object,
+               properties: Map.new(inputs),
+               required: required,
+               additionalProperties: false
+             }}
+          ]
+        end
 
-        _ ->
-          nil
+      array_type? = match?({:array, _}, type)
+
+      fields =
+        Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.Filter.builtin_functions())
+        |> Enum.concat(Ash.DataLayer.functions(resource))
+        |> Enum.filter(& &1.predicate?())
+        |> restrict_for_lists(type)
+        |> Enum.flat_map(fn operator ->
+          filter_fields(operator, type, array_type?, calculation, resource)
+        end)
+
+      input_required = Enum.any?(calculation.arguments, &(!&1.allow_nil?))
+
+      fields_with_input =
+        Enum.concat(fields, input)
+
+      required =
+        if input_required do
+          [:input]
+        else
+          []
+        end
+
+      if fields == [] do
+        nil
+      else
+        %Schema{
+          type: :object,
+          required: required,
+          properties: Map.new(fields_with_input),
+          additionalProperties: false
+        }
+        |> with_attribute_description(calculation)
       end
     end
 
     def raw_filter_type(attribute_or_aggregate, resource) do
-      case field_type(attribute_or_aggregate, resource) do
-        {type, _constraints} ->
-          array_type? = match?({:array, _}, type)
+      {type, _constraints} = field_type(attribute_or_aggregate, resource)
+      array_type? = match?({:array, _}, type)
 
-          fields =
-            Ash.Filter.builtin_operators()
-            |> Enum.concat(Ash.Filter.builtin_functions())
-            |> Enum.concat(Ash.DataLayer.functions(resource))
-            |> Enum.filter(& &1.predicate?())
-            |> restrict_for_lists(type)
-            |> Enum.flat_map(fn operator ->
-              filter_fields(operator, type, array_type?, attribute_or_aggregate, resource)
-            end)
+      fields =
+        Ash.Filter.builtin_operators()
+        |> Enum.concat(Ash.Filter.builtin_functions())
+        |> Enum.concat(Ash.DataLayer.functions(resource))
+        |> Enum.filter(& &1.predicate?())
+        |> restrict_for_lists(type)
+        |> Enum.flat_map(fn operator ->
+          filter_fields(operator, type, array_type?, attribute_or_aggregate, resource)
+        end)
 
-          if fields == [] do
-            nil
-          else
-            %Schema{
-              type: :object,
-              properties: Map.new(fields),
-              additionalProperties: false
-            }
-            |> with_attribute_description(attribute_or_aggregate)
-          end
-
-        _ ->
-          nil
+      if fields == [] do
+        nil
+      else
+        %Schema{
+          type: :object,
+          properties: Map.new(fields),
+          additionalProperties: false
+        }
+        |> with_attribute_description(attribute_or_aggregate)
       end
     end
 
@@ -2629,10 +2612,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
           []
         end
       end
-
-      # rescue
-      #   _e ->
-      #     []
     end
 
     defp filterable?(%Ash.Resource.Aggregate{} = aggregate, resource) do
