@@ -737,7 +737,21 @@ if Code.ensure_loaded?(OpenApiSpex) do
       }
     end
 
+    defp resource_attribute_type(%{type: Ash.Type.Time}, _resource, _format) do
+      %Schema{
+        type: :string,
+        format: "time"
+      }
+    end
+
     defp resource_attribute_type(%{type: Ash.Type.UUID}, _resource, _format) do
+      %Schema{
+        type: :string,
+        format: "uuid"
+      }
+    end
+
+    defp resource_attribute_type(%{type: Ash.Type.UUIDv7}, _resource, _format) do
       %Schema{
         type: :string,
         format: "uuid"
