@@ -5,6 +5,33 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.24](https://github.com/ash-project/ash_json_api/compare/v1.4.23...v1.4.24) (2025-04-09)
+
+
+
+
+### Bug Fixes:
+
+* properly determine aggregate filter types
+
+* attribute descriptions may not be present
+
+### Improvements:
+
+* Support UUIDv7, Time type in AshJsonApi.OpenApi (#322)
+
+* Refactor filter_type/2 of OpenAPI with raw_filter_type/2 (#319)
+
+* Check :description also in AshJsonApi.OpenApi.unwrap_any_of/1 (#318)
+
+* Add description in filter_type/2, raw_filter_type/2 (#315)
+
+* Preserve description with anyOf (#314)
+
+* Impl serializing with load (#313)
+
+* Add description of attributes in OpenAPI.resource_write_attribute_type/3 (#311)
+
 ## [v1.4.23](https://github.com/ash-project/ash_json_api/compare/v1.4.22...v1.4.23) (2025-03-25)
 
 
