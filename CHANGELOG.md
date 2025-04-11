@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.26](https://github.com/ash-project/ash_json_api/compare/v1.4.25...v1.4.26) (2025-04-11)
+
+
+
+
+### Improvements:
+
+* add `before_dispatch` option to `AshJsonApi.Router`
+
+* support new verified routes behaviour in phx 1.8
+
 ## [v1.4.25](https://github.com/ash-project/ash_json_api/compare/v1.4.24...v1.4.25) (2025-04-11)
 
 
