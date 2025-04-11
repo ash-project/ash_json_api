@@ -95,7 +95,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         },
         security: [
           %{
-            # API Key security applies to all operations
+            # bearer auth security applies to all operations
             "bearerAuth" => []
           }
         ]
