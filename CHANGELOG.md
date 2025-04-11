@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.27](https://github.com/ash-project/ash_json_api/compare/v1.4.26...v1.4.27) (2025-04-11)
+
+
+
+
+### Improvements:
+
+* remove need for Module.concat
+
 ## [v1.4.26](https://github.com/ash-project/ash_json_api/compare/v1.4.25...v1.4.26) (2025-04-11)
 
 
