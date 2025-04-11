@@ -395,7 +395,7 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Invalid.NoSuchInput do
       status_code: 422,
       code: "no_such_input",
       title: "NoSuchInput",
-      detail: Ash.Error.Invalid.NoSuchInput.message(error),
+      detail: "no such input",
       meta: Map.new(error.vars)
     }
   end
