@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.AshJsonApi.Routes do
   use Mix.Task
 
+  require Logger
   alias AshJsonApi.Router.ConsoleFormatter
 
   @moduledoc """
@@ -20,6 +21,16 @@ defmodule Mix.Tasks.AshJsonApi.Routes do
   @shortdoc "Prints all routes by AshJsonApiRouter"
   @impl true
   def run(args, base \\ Mix.Phoenix.base()) do
+    if Code.ensure_loaded?(Phoenix.Router) &&
+         function_exported?(Phoenix.Router, :__formatted_routes__, 1) do
+      raise """
+      AshJsonApi routes are now included in `mix phx.routes` automatically.
+      There is no need to use this task or include it in your aliases.
+
+      Remove: `ash_json_api.routes`
+      """
+    end
+
     Mix.Task.run("compile", args)
     Mix.Task.reenable("ash_json_api.routes")
 
