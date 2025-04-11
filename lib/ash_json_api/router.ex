@@ -22,6 +22,32 @@ defmodule AshJsonApi.Router do
   ```elixir
       forward "/api", YourRouter
   ```
+
+  ## Customizing request handling
+
+  You can provide the `before_dispatch` option to customize request handling.
+  This can also be used to do things like set monitoring/observability information,
+  like which domain/resource/route is handling the request.
+
+  For example:
+
+  ```elixir
+  use AshJsonApi.Router,
+    ...,
+    before_dispatch: {__MODULE__, :before_dispatch, []}
+
+
+  def before_dispatch(conn, route_info) do
+   ...
+  end
+  ```
+
+  `route_info` will be one of the following:
+
+  - `:open_api` - The open api is being requested
+  - `:json_schema` - The json schema is being requested
+  - `:not_found` - No matching route was found
+  - A map containing the keys: `domain`, `resource`, `route`, `params`
   """
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do

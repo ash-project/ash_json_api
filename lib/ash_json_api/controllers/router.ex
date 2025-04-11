@@ -45,13 +45,64 @@ defmodule AshJsonApi.Controllers.Router do
       conn.method in ["GET", :get] &&
         Enum.any?(domains, &AshJsonApi.Domain.Info.serve_schema?/1) &&
           conn.path_info in [["schema"], ["schema.json"]] ->
-        AshJsonApi.Controllers.Schema.call(conn, domains: domains, prefix: prefix)
+        conn
+        |> then(fn conn ->
+          case opts[:before_dispatch] do
+            nil ->
+              conn
+
+            {m, f, a} ->
+              apply(m, f, [
+                conn,
+                :json_schema
+                | a
+              ])
+
+            other ->
+              raise "Invalid before_dispatch option: #{inspect(other)}"
+          end
+        end)
+        |> AshJsonApi.Controllers.Schema.call(domains: domains, prefix: prefix)
 
       open_api_request?(conn, open_api) ->
-        apply(AshJsonApi.Controllers.OpenApi, :call, [conn, opts])
+        conn
+        |> then(fn conn ->
+          case opts[:before_dispatch] do
+            nil ->
+              conn
+
+            {m, f, a} ->
+              apply(m, f, [
+                conn,
+                :open_api
+                | a
+              ])
+
+            other ->
+              raise "Invalid before_dispatch option: #{inspect(other)}"
+          end
+        end)
+        |> then(&apply(AshJsonApi.Controllers.OpenApi, :call, [&1, opts]))
 
       conn.method == "GET" && Enum.any?(json_schema, &(&1 == conn.path_info)) ->
-        AshJsonApi.Controllers.Schema.call(conn, Keyword.put(opts, :prefix, prefix))
+        conn
+        |> then(fn conn ->
+          case opts[:before_dispatch] do
+            nil ->
+              conn
+
+            {m, f, a} ->
+              apply(m, f, [
+                conn,
+                :json_schema
+                | a
+              ])
+
+            other ->
+              raise "Invalid before_dispatch option: #{inspect(other)}"
+          end
+        end)
+        |> AshJsonApi.Controllers.Schema.call(Keyword.put(opts, :prefix, prefix))
 
       true ->
         Enum.find_value(domains, :error, fn domain ->
@@ -76,7 +127,24 @@ defmodule AshJsonApi.Controllers.Router do
         end)
         |> case do
           :error ->
-            AshJsonApi.Controllers.NoRouteFound.call(conn, [])
+            conn
+            |> then(fn conn ->
+              case opts[:before_dispatch] do
+                nil ->
+                  conn
+
+                {m, f, a} ->
+                  apply(m, f, [
+                    conn,
+                    :not_found
+                    | a
+                  ])
+
+                other ->
+                  raise "Invalid before_dispatch option: #{inspect(other)}"
+              end
+            end)
+            |> AshJsonApi.Controllers.NoRouteFound.call([])
 
           {:ok, domain, resource, route, params} ->
             conn
@@ -84,6 +152,27 @@ defmodule AshJsonApi.Controllers.Router do
               path_params
               |> Kernel.||(%{})
               |> Map.merge(params)
+            end)
+            |> then(fn conn ->
+              case opts[:before_dispatch] do
+                nil ->
+                  conn
+
+                {m, f, a} ->
+                  apply(m, f, [
+                    conn,
+                    %{
+                      domain: domain,
+                      resource: resource,
+                      route: route,
+                      params: params
+                    }
+                    | a
+                  ])
+
+                other ->
+                  raise "Invalid before_dispatch option: #{inspect(other)}"
+              end
             end)
             |> route.controller.call(
               domain: domain,
