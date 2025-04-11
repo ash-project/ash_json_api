@@ -66,15 +66,11 @@ We will later forward requests from your Applications primary (Phoenix) Router t
 defmodule HelpdeskWeb.JsonApiRouter do
   use AshJsonApi.Router,
     # The api modules you want to serve
-    domains: [Module.concat(["Helpdesk.Support"])],
+    domains: [Helpdesk.Support],
     # optionally an open_api route
     open_api: "/open_api"
 end
 ```
-
-> ### Whats up with `Module.concat/1`? {: .info}
->
-> This `Module.concat/1` prevents a [compile-time dependency](https://dashbit.co/blog/speeding-up-re-compilation-of-elixir-projects) from this router module to the domain modules. It is an implementation detail of how `forward/2` works that you end up with a compile-time dependency on the schema, but there is no need for this dependency, and that dependency can have _drastic_ impacts on your compile times in certain scenarios.
 
 Additionally, your Resource requires a type, a base route and a set of allowed HTTP methods and what action they will trigger.
 

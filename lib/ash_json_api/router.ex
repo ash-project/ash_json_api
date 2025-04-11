@@ -50,13 +50,15 @@ defmodule AshJsonApi.Router do
   - A map containing the keys: `domain`, `resource`, `route`, `params`
   """
   defmacro __using__(opts) do
+    opts = Macro.expand_literals(opts, __CALLER__)
+
     quote bind_quoted: [opts: opts] do
       require Ash.Domain.Info
       use Plug.Router
       require Ash
       @opts opts
-      domains = List.wrap(@opts[:domain] || @opts[:domains])
-      @opts Keyword.put(@opts, :domains, domains)
+      @domains List.wrap(@opts[:domain] || @opts[:domains])
+      @opts Keyword.put(@opts, :domains, @domains)
 
       if Code.ensure_loaded?(Phoenix.Router) &&
            function_exported?(Phoenix.Router, :__formatted_routes__, 1) do
@@ -72,7 +74,7 @@ defmodule AshJsonApi.Router do
       end
 
       def domains do
-        @opts[:domains]
+        @domains
       end
 
       plug(:match)

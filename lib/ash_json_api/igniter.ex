@@ -55,17 +55,12 @@ if Code.ensure_loaded?(Igniter) do
           end
         end)
 
-      domains =
-        Enum.map_join(domains, ", ", fn domain ->
-          "Module.concat([\"#{inspect(domain)}\"])"
-        end)
-
       igniter
       |> Igniter.Project.Module.find_and_update_or_create_module(
         ash_phoenix_router_name,
         """
         use AshJsonApi.Router,
-          domains: [#{domains}],
+          domains: #{inspect(domains)},
           open_api: "/open_api"
         """,
         fn zipper ->

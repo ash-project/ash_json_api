@@ -230,9 +230,7 @@ defmodule AshJsonApi.Domain do
                    {:ok, zipper} <-
                      Igniter.Code.List.append_to_list(
                        zipper,
-                       Sourceror.parse_string!("""
-                        Module.concat(["#{inspect(domain)}"])
-                       """)
+                       domain
                      ) do
                 {:ok, zipper}
               else
