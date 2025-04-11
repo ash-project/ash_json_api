@@ -85,18 +85,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
           responses: AshJsonApi.OpenApi.responses(),
           schemas: AshJsonApi.OpenApi.schemas(domains),
           securitySchemes: %{
-            "api_key" => %SecurityScheme{
-              type: "apiKey",
-              description: "API Key provided in the Authorization header",
-              name: "api_key",
-              in: "header"
+            "bearerAuth" => %SecurityScheme{
+              type: "http",
+              description: "JWT for bearer authentication",
+              scheme: "bearer",
+              bearerFormat: "JWT"
             }
           }
         },
         security: [
           %{
             # API Key security applies to all operations
-            "api_key" => []
+            "bearerAuth" => []
           }
         ]
       }
