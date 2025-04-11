@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.25](https://github.com/ash-project/ash_json_api/compare/v1.4.24...v1.4.25) (2025-04-11)
+
+
+
+
+### Bug Fixes:
+
+* don't show exception messages in NoSuchInput
+
 ## [v1.4.24](https://github.com/ash-project/ash_json_api/compare/v1.4.23...v1.4.24) (2025-04-09)
 
 
