@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.28](https://github.com/ash-project/ash_json_api/compare/v1.4.27...v1.4.28) (2025-04-15)
+
+
+
+
+### Improvements:
+
+* config swagger to use bearer auth (#324)
+
 ## [v1.4.27](https://github.com/ash-project/ash_json_api/compare/v1.4.26...v1.4.27) (2025-04-11)
 
 
