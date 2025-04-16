@@ -154,12 +154,25 @@ if Code.ensure_loaded?(Igniter) do
     end
 
     def setup_routes_alias(igniter) do
-      Igniter.Project.TaskAliases.add_alias(
-        igniter,
-        "phx.routes",
-        ["phx.routes", "ash_json_api.routes"],
-        if_exists: {:append, "ash_json_api.routes"}
-      )
+      # if `Phoenix.Router` is not loaded we don't
+      # know what version they are using and conservatively
+      # do not add an alias that will cause an error
+      if Code.ensure_loaded?(Phoenix.Router) do
+        # Phoenix >= 1.8 uses the new formatted routes feature and
+        # so we do not need this alias
+        if function_exported?(Phoenix.Router, :__formatted_routes__, 1) do
+          igniter
+        else
+          Igniter.Project.TaskAliases.add_alias(
+            igniter,
+            "phx.routes",
+            ["phx.routes", "ash_json_api.routes"],
+            if_exists: {:append, "ash_json_api.routes"}
+          )
+        end
+      else
+        igniter
+      end
     end
 
     defp update_endpoints(igniter, router) do

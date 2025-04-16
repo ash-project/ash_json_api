@@ -7,10 +7,7 @@ if Code.ensure_loaded?(Igniter) do
 
     def info(_argv, _parent) do
       %Igniter.Mix.Task.Info{
-        adds_deps: [{:open_api_spex, "~> 3.0"}],
-        aliases: [
-          "phx.routes": ["phx.routes", "ash_json_api.routes"]
-        ]
+        adds_deps: [{:open_api_spex, "~> 3.0"}]
       }
     end
 
