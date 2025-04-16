@@ -618,6 +618,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     def resource_write_attribute_type(%{type: type} = attr, resource, action_type, format) do
       cond do
+        AshJsonApi.JsonSchema.embedded?(type) ->
+          embedded_type_input(attr, action_type)
+
+        :erlang.function_exported(type, :json_write_schema, 1) ->
+          type.json_write_schema(attr.constraints)
+
         Ash.Type.NewType.new_type?(type) ->
           new_constraints = Ash.Type.NewType.constraints(type, attr.constraints)
           new_type = Ash.Type.NewType.subtype_of(type)
@@ -629,15 +635,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
             format
           )
 
-        AshJsonApi.JsonSchema.embedded?(type) ->
-          embedded_type_input(attr, action_type)
-
         true ->
-          if :erlang.function_exported(type, :json_write_schema, 1) do
-            type.json_write_schema(attr.constraints)
-          else
-            resource_attribute_type(attr, resource, format)
-          end
+          resource_attribute_type(attr, resource, format)
       end
       |> with_attribute_description(attr)
     end
