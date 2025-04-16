@@ -621,7 +621,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         AshJsonApi.JsonSchema.embedded?(type) ->
           embedded_type_input(attr, action_type)
 
-        function_exported?(type, :json_write_schema, 1) ->
+        :erlang.function_exported(type, :json_write_schema, 1) ->
           type.json_write_schema(attr.constraints)
 
         Ash.Type.NewType.new_type?(type) ->
