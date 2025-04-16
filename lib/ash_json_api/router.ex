@@ -105,13 +105,10 @@ defmodule AshJsonApi.Router do
     router.domains()
     |> Enum.flat_map(&AshJsonApi.Domain.Info.routes/1)
     |> Enum.map(fn route ->
-      plug_opts = [resource: route.resource, action: route.action]
-
       %{
         verb: route.method,
         path: route.route,
-        label: "#{inspect(router)} #{inspect(plug_opts)}",
-        plug_opts: plug_opts
+        label: "#{inspect(router)} #{inspect(route.resource)}.#{route.action}"
       }
     end)
   end
