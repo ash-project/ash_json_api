@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.29](https://github.com/ash-project/ash_json_api/compare/v1.4.28...v1.4.29) (2025-04-21)
+
+
+
+
+### Bug Fixes:
+
+* don't add routes task alias for phoenix 1.8
+
+* Remove unused `plug_opts` key in formatted routes and simplify route label
+
+* Add a `label` key to generated formatted routes
+
+* correct json_write_schema call order (#325)
+
+* correct json_write_schema call order
+
 ## [v1.4.28](https://github.com/ash-project/ash_json_api/compare/v1.4.27...v1.4.28) (2025-04-15)
 
 
