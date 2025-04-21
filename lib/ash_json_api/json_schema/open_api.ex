@@ -581,7 +581,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           fake_attr = %{
             attr
             | type: Ash.Type.get_type(config[:type]),
-              constraints: config[:constraints]
+              constraints: config[:constraints],
+              description: config[:description] || nil
           }
 
           resource_write_attribute_type(fake_attr, resource, action_type, format)
@@ -799,7 +800,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           fake_attr = %{
             attr
             | type: Ash.Type.get_type(config[:type]),
-              constraints: config[:constraints]
+              constraints: config[:constraints],
+              description: config[:description] || nil
           }
 
           resource_attribute_type(fake_attr, resource, format)
