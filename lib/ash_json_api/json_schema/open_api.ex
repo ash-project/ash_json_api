@@ -550,7 +550,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
                  %{
                    attr
                    | type: config[:type],
-                     constraints: config[:constraints] || []
+                     constraints: config[:constraints] || [],
+                     description: config[:description] || nil
                  },
                  resource,
                  action_type,
@@ -693,7 +694,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
                  %{
                    attr
                    | type: Ash.Type.get_type(config[:type]),
-                     constraints: config[:constraints] || []
+                     constraints: config[:constraints] || [],
+                     description: config[:description] || nil
                  },
                  resource,
                  format
