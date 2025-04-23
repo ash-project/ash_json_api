@@ -550,9 +550,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
                  %{
                    attr
                    | type: config[:type],
-                     constraints: config[:constraints] || [],
-                     description: config[:description] || nil
-                 },
+                     constraints: config[:constraints] || []
+                 }
+                 |> Map.put(:description, config[:description] || nil),
                  resource,
                  action_type,
                  format
@@ -578,12 +578,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
         ) do
       subtypes =
         Enum.map(constraints[:types], fn {_name, config} ->
-          fake_attr = %{
-            attr
-            | type: Ash.Type.get_type(config[:type]),
-              constraints: config[:constraints],
-              description: config[:description] || nil
-          }
+          fake_attr =
+            %{
+              attr
+              | type: Ash.Type.get_type(config[:type]),
+                constraints: config[:constraints]
+            }
+            |> Map.put(:description, config[:description] || nil)
 
           resource_write_attribute_type(fake_attr, resource, action_type, format)
         end)
@@ -695,9 +696,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
                  %{
                    attr
                    | type: Ash.Type.get_type(config[:type]),
-                     constraints: config[:constraints] || [],
-                     description: config[:description] || nil
-                 },
+                     constraints: config[:constraints] || []
+                 }
+                 |> Map.put(:description, config[:description] || nil),
                  resource,
                  format
                )}
@@ -797,12 +798,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
          ) do
       subtypes =
         Enum.map(constraints[:types], fn {_name, config} ->
-          fake_attr = %{
-            attr
-            | type: Ash.Type.get_type(config[:type]),
-              constraints: config[:constraints],
-              description: config[:description] || nil
-          }
+          fake_attr =
+            %{
+              attr
+              | type: Ash.Type.get_type(config[:type]),
+                constraints: config[:constraints]
+            }
+            |> Map.put(:description, config[:description] || nil)
 
           resource_attribute_type(fake_attr, resource, format)
         end)
