@@ -5,7 +5,7 @@ config :ash, :validate_domain_config_inclusion?, false
 config :logger, level: :info
 
 config :ash_json_api, :show_public_calculations_when_loaded?, false
-config :ash_json_api, :authorize_update_destroy_with_error?, false
+config :ash_json_api, :authorize_update_destroy_with_error?, true
 
 if Mix.env() == :dev do
   config :git_ops,
