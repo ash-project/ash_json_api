@@ -133,6 +133,20 @@ defmodule AshJsonApi.Request do
     )
   end
 
+  if Application.compile_env(:ash_json_api, :authorize_update_destroy_with_error?) do
+    def authorize_bulk_with(resource) do
+      if Ash.DataLayer.data_layer_can?(resource, :expr_error) do
+        :error
+      else
+        :filter
+      end
+    end
+  else
+    def authorize_bulk_with(_resource) do
+      :filter
+    end
+  end
+
   def opts(request, merge \\ []) do
     page_params = Map.get(request.assigns, :page)
 

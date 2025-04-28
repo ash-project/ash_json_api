@@ -32,6 +32,12 @@ if Code.ensure_loaded?(Igniter) do
           [:show_public_calculations_when_loaded?],
           false
         )
+        |> Igniter.Project.Config.configure(
+          "config.exs",
+          :ash_json_api,
+          [:authorize_update_destroy_with_error?],
+          true
+        )
         |> AshJsonApi.Igniter.setup_ash_json_api_router(ash_phoenix_router_name)
         |> AshJsonApi.Igniter.setup_phoenix(ash_phoenix_router_name)
         |> AshJsonApi.Igniter.setup_routes_alias()
