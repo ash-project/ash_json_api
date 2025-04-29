@@ -5,6 +5,27 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.30](https://github.com/ash-project/ash_json_api/compare/v1.4.29...v1.4.30) (2025-04-29)
+
+
+
+
+### Bug Fixes:
+
+* include resource in all formatted routes
+
+* use `flat_map` for resources
+
+* include routes from resources in formatted routes
+
+* add description to map types
+
+### Improvements:
+
+* add `authorize_update_destroy_with_error?` config
+
+* use union descriptions if present
+
 ## [v1.4.29](https://github.com/ash-project/ash_json_api/compare/v1.4.28...v1.4.29) (2025-04-21)
 
 
