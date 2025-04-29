@@ -104,7 +104,9 @@ defmodule AshJsonApi.Router do
   def formatted_routes(router) do
     router.domains()
     |> Enum.flat_map(&Ash.Domain.Info.resources/1)
-    |> Enum.flat_map(&AshJsonApi.Resource.Info.routes/1)
+    |> Enum.flat_map(fn resource ->
+      resource |> AshJsonApi.Resource.Info.routes() |> Enum.map(&Map.put(&1, :resource, resource))
+    end)
     |> then(fn routes ->
       Enum.concat(
         Enum.flat_map(router.domains(), &AshJsonApi.Domain.Info.routes/1),
