@@ -1633,7 +1633,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       action.arguments
       |> Enum.filter(& &1.public?)
-      |> without_path_arguments(action, route)
+      |> without_path_arguments(route)
       |> Enum.map(fn argument ->
         schema = resource_attribute_type(argument, resource)
 
@@ -1885,7 +1885,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       arguments =
         arguments
         |> Enum.filter(& &1.public?)
-        |> without_path_arguments(action, route)
+        |> without_path_arguments(route)
         |> without_query_params(route)
 
       attributes =
@@ -1938,7 +1938,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       arguments
       |> Enum.filter(& &1.public?)
-      |> without_path_arguments(action, route)
+      |> without_path_arguments(route)
       |> without_query_params(route)
       |> Enum.reduce(attributes, fn argument, attributes ->
         Map.put(
@@ -1949,8 +1949,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
     end
 
-    defp without_path_arguments(arguments, %{type: type}, %{route: route, type: route_type})
-         when type == :action or route_type == :post do
+    defp without_path_arguments(arguments, %{route: route}) do
       route_params =
         route
         |> Path.split()
@@ -1962,7 +1961,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
     end
 
-    defp without_path_arguments(arguments, _, _), do: arguments
+    defp without_path_arguments(arguments, _), do: arguments
 
     defp without_query_params(inputs, %{query_params: query_params}) do
       query_params = List.wrap(query_params)
