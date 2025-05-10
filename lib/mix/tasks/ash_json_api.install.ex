@@ -11,7 +11,7 @@ if Code.ensure_loaded?(Igniter) do
       }
     end
 
-    def igniter(igniter, _argv) do
+    def igniter(igniter) do
       ash_phoenix_router_name = Igniter.Libs.Phoenix.web_module_name(igniter, "AshJsonApiRouter")
 
       igniter =
