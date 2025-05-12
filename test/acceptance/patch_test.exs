@@ -1,6 +1,60 @@
 defmodule Test.Acceptance.PatchTest do
   use ExUnit.Case, async: true
 
+  defmodule Address do
+    use Ash.Resource,
+      domain: Test.Acceptance.PatchTest.Domain,
+      data_layer: :embedded,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    actions do
+      default_accept(:*)
+      defaults([:create, :read, :update, :destroy])
+    end
+
+    attributes do
+      attribute(:street_1, :string, allow_nil?: true, public?: true)
+      attribute(:street_2, :string, allow_nil?: true, public?: true)
+      attribute(:city, :string, allow_nil?: true, public?: true)
+      attribute(:state, :string, allow_nil?: true, public?: true)
+      attribute(:zip_code, :string, allow_nil?: true, public?: true)
+      attribute(:country, :string, allow_nil?: true, public?: true)
+    end
+
+    json_api do
+      type "address"
+    end
+  end
+
+  defmodule Preferences do
+    use Ash.Resource,
+      domain: Test.Acceptance.PatchTest.Domain,
+      data_layer: :embedded,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    actions do
+      default_accept(:*)
+      defaults([:create, :read, :update, :destroy])
+    end
+
+    attributes do
+      attribute(:language, :string, allow_nil?: false, public?: true)
+
+      attribute(:billing_address, Test.Acceptance.PatchTest.Address,
+        allow_nil?: true,
+        public?: true
+      )
+    end
+
+    json_api do
+      type "preferences"
+    end
+  end
+
   defmodule Author do
     use Ash.Resource,
       domain: Test.Acceptance.PatchTest.Domain,
@@ -24,6 +78,7 @@ defmodule Test.Acceptance.PatchTest do
 
         patch :delete_posts, route: "/:id/posts/delete"
         patch :delete_bios, route: "/:id/bios/delete"
+        patch :update_preferences, route: ":id/preferences"
 
         patch :update do
           relationship_arguments([:bios])
@@ -69,11 +124,19 @@ defmodule Test.Acceptance.PatchTest do
 
         change(manage_relationship(:bios, on_match: :destroy))
       end
+
+      update :update_preferences do
+        accept([:preferences])
+
+        # NOTE: Uncomment this line to make failing test pass
+        # change(before_action(fn changeset, _ctx -> changeset end))
+      end
     end
 
     attributes do
       uuid_primary_key(:id, writable?: true, public?: true)
       attribute(:name, :string, public?: true)
+      attribute(:preferences, Test.Acceptance.PatchTest.Preferences, public?: true)
     end
 
     relationships do
@@ -579,6 +642,65 @@ defmodule Test.Acceptance.PatchTest do
         |> Map.get("data")
 
       assert related == []
+    end
+  end
+
+  describe "patch updating preferences" do
+    setup do
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{
+          id: Ecto.UUID.generate(),
+          name: "John",
+          preferences: %{
+            language: "EN"
+          }
+        })
+        |> Ash.create!()
+
+      %{author: author}
+    end
+
+    test "patch to update billing address", %{
+      author: author
+    } do
+      Domain
+      |> patch(
+        "/authors/#{author.id}/preferences",
+        %{
+          data: %{
+            attributes: %{
+              preferences: %{
+                billing_address: %{
+                  street_1: "123 Example St",
+                  city: "Springfield",
+                  state: "OH",
+                  country: "US"
+                }
+              }
+            }
+          }
+        },
+        status: 200
+      )
+
+      preferences =
+        Domain
+        |> get("/authors/#{author.id}/", status: 200)
+        |> Map.get(:resp_body)
+        |> get_in(["data", "attributes", "preferences"])
+
+      assert preferences == %{
+               "billing_address" => %{
+                 "city" => "Springfield",
+                 "country" => "US",
+                 "state" => "OH",
+                 "street_1" => "123 Example St",
+                 "street_2" => nil,
+                 "zip_code" => nil
+               },
+               "language" => "EN"
+             }
     end
   end
 end
