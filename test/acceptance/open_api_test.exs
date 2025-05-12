@@ -57,6 +57,7 @@ defmodule Test.Acceptance.OpenApiTest do
         patch(:update)
         route :post, "/say_hello/:to", :say_hello
         route :post, "/trigger_job", :trigger_job, query_params: [:job_id]
+        route :post, "/trigger_job/:job_id", :trigger_job
         route(:get, "returns_map", :returns_map)
         route(:get, "/get_foo", :get_foo)
         post_to_relationship :posts
@@ -319,7 +320,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 11
+    assert map_size(api_spec.paths) == 12
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -442,6 +443,18 @@ defmodule Test.Acceptance.OpenApiTest do
                required: false,
                schema: %Schema{type: :string},
                style: :form
+             }
+           ]
+
+    assert generic_action_schema = api_spec.paths["/authors/trigger_job/{job_id}"].post
+
+    assert generic_action_schema.parameters == [
+             %Parameter{
+               name: "job_id",
+               in: :path,
+               description: nil,
+               required: true,
+               schema: %Schema{type: :string}
              }
            ]
 
