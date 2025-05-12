@@ -126,10 +126,8 @@ defmodule Test.Acceptance.PatchTest do
       end
 
       update :update_preferences do
+        require_atomic?(false)
         accept([:preferences])
-
-        # NOTE: Uncomment this line to make failing test pass
-        # change(before_action(fn changeset, _ctx -> changeset end))
       end
     end
 
