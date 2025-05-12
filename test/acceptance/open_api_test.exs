@@ -58,6 +58,7 @@ defmodule Test.Acceptance.OpenApiTest do
         route :post, "/say_hello/:to", :say_hello
         route :post, "/trigger_job", :trigger_job, query_params: [:job_id]
         route :post, "/trigger_job/:job_id", :trigger_job
+        route :post, "/path_with_enum/:enum", :takes_enum
         route(:get, "returns_map", :returns_map)
         route(:get, "/get_foo", :get_foo)
         post_to_relationship :posts
@@ -88,6 +89,14 @@ defmodule Test.Acceptance.OpenApiTest do
 
       action :trigger_job do
         argument(:job_id, :string)
+
+        run(fn _input, _ ->
+          :ok
+        end)
+      end
+
+      action :takes_enum do
+        argument(:enum, :atom, constraints: [one_of: [:one, :two]])
 
         run(fn _input, _ ->
           :ok
@@ -320,7 +329,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 12
+    assert map_size(api_spec.paths) == 13
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -439,7 +448,6 @@ defmodule Test.Acceptance.OpenApiTest do
              %Parameter{
                name: "job_id",
                in: :query,
-               description: "job_id",
                required: false,
                schema: %Schema{type: :string},
                style: :form
@@ -452,8 +460,8 @@ defmodule Test.Acceptance.OpenApiTest do
              %Parameter{
                name: "job_id",
                in: :path,
-               description: nil,
                required: true,
+               style: :form,
                schema: %Schema{type: :string}
              }
            ]
@@ -467,6 +475,22 @@ defmodule Test.Acceptance.OpenApiTest do
                required: [:success],
                additionalProperties: false
              }
+  end
+
+  test "generic route paths have enums", %{
+    open_api_spec: %OpenApi{} = api_spec
+  } do
+    assert generic_action_schema = api_spec.paths["/authors/path_with_enum/{enum}"].post
+
+    assert generic_action_schema.parameters == [
+             %Parameter{
+               name: "enum",
+               in: :path,
+               required: true,
+               schema: %OpenApiSpex.Schema{enum: ["one", "two"], type: :string},
+               style: :form
+             }
+           ]
   end
 
   test "API routes use `name` as operationId", %{
@@ -805,7 +829,7 @@ defmodule Test.Acceptance.OpenApiTest do
       %Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == "id"))
       assert filter.in == :path
       assert filter.required == true
-      assert filter.style == nil
+      assert filter.style == :form
       %Schema{} = schema = filter.schema
       assert schema.type == :string
     end
