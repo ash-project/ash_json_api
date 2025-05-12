@@ -436,7 +436,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     assert generic_action_schema.parameters == [
              %Parameter{
-               name: :job_id,
+               name: "job_id",
                in: :query,
                description: "job_id",
                required: false,
@@ -476,7 +476,7 @@ defmodule Test.Acceptance.OpenApiTest do
   describe "Index route" do
     test "filter parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts"].get
-      %Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == :filter))
+      %Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == "filter"))
       assert api_spec.components.schemas["author-filter-name"].properties[:contains]
       assert filter.in == :query
       assert filter.required == false
@@ -531,7 +531,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     test "sort parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts"].get
-      %Parameter{} = sort = operation.parameters |> Enum.find(&(&1.name == :sort))
+      %Parameter{} = sort = operation.parameters |> Enum.find(&(&1.name == "sort"))
       assert sort.in == :query
       assert sort.required == false
       assert sort.style == :form
@@ -548,7 +548,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     test "page parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts"].get
-      %Parameter{} = page = operation.parameters |> Enum.find(&(&1.name == :page))
+      %Parameter{} = page = operation.parameters |> Enum.find(&(&1.name == "page"))
       assert page.in == :query
       assert page.required == false
       assert page.style == :deepObject
@@ -567,7 +567,7 @@ defmodule Test.Acceptance.OpenApiTest do
       %Operation{} = operation = api_spec.paths["/posts"].get
 
       %Parameter{} =
-        include = operation.parameters |> Enum.find(&(&1.name == :include))
+        include = operation.parameters |> Enum.find(&(&1.name == "include"))
 
       assert include.in == :query
       assert include.required == false
@@ -580,7 +580,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts"].get
-      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
+      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == "fields"))
       assert fields.in == :query
       assert fields.required == false
       assert fields.style == :deepObject
@@ -801,7 +801,7 @@ defmodule Test.Acceptance.OpenApiTest do
       %Operation{} = operation = api_spec.paths["/posts/{id}"].get
 
       %Parameter{} =
-        include = operation.parameters |> Enum.find(&(&1.name == :include))
+        include = operation.parameters |> Enum.find(&(&1.name == "include"))
 
       assert include.in == :query
       assert include.required == false
@@ -812,7 +812,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts/{id}"].get
-      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
+      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == "fields"))
       assert fields.in == :query
       assert fields.required == false
       assert fields.style == :deepObject
@@ -854,7 +854,7 @@ defmodule Test.Acceptance.OpenApiTest do
       %Operation{} = operation = api_spec.paths["/posts"].post
 
       %Parameter{} =
-        include = operation.parameters |> Enum.find(&(&1.name == :include))
+        include = operation.parameters |> Enum.find(&(&1.name == "include"))
 
       assert include.in == :query
       assert include.required == false
@@ -866,7 +866,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts"].post
-      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == :fields))
+      %Parameter{} = fields = operation.parameters |> Enum.find(&(&1.name == "fields"))
       assert fields.in == :query
       assert fields.required == false
       assert fields.style == :deepObject

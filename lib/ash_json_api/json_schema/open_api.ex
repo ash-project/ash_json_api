@@ -1345,8 +1345,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           fields_parameter(resource)
         ],
         & &1
-      ) ++
-        read_argument_parameters(route, resource)
+      )
+      |> Enum.concat(read_argument_parameters(route, resource))
+      |> Enum.map(fn param ->
+        Map.update!(param, :name, &to_string/1)
+      end)
     end
 
     defp query_parameters(%{type: type}, _resource)
@@ -1363,6 +1366,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.filter(& &1)
       |> Enum.concat(read_argument_parameters(route, resource))
       |> Enum.reverse()
+      |> Enum.map(fn param ->
+        Map.update!(param, :name, &to_string/1)
+      end)
       |> Enum.uniq_by(& &1.name)
       |> Enum.reverse()
     end
@@ -1390,7 +1396,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           schema = resource_write_attribute_type(argument_or_attribute, resource, action.type)
 
           %Parameter{
-            name: argument_or_attribute.name,
+            name: to_string(argument_or_attribute.name),
             in: :query,
             description:
               argument_or_attribute.description || to_string(argument_or_attribute.name),
@@ -1412,6 +1418,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.filter(& &1)
       |> Enum.concat(query_params)
       |> Enum.reverse()
+      |> Enum.map(fn param ->
+        Map.update!(param, :name, &to_string/1)
+      end)
       |> Enum.uniq_by(& &1.name)
       |> Enum.reverse()
     end
