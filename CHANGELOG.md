@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.31](https://github.com/ash-project/ash_json_api/compare/v1.4.30...v1.4.31) (2025-05-15)
+
+
+
+
+### Bug Fixes:
+
+* use string names for parameters everywhere in open api spec
+
+* handle more cases where path params collide w/ query params
+
+### Improvements:
+
+* more consistency for route & query params
+
 ## [v1.4.30](https://github.com/ash-project/ash_json_api/compare/v1.4.29...v1.4.30) (2025-04-29)
 
 
