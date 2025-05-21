@@ -495,7 +495,7 @@ defmodule AshJsonApi.Resource do
         doc: "The resource identifier type of this resource in JSON:API"
       ],
       includes: [
-        type: :any,
+        type: {:wrap_list, :any},
         default: [],
         doc: "A keyword list of all paths that are includable from this resource"
       ],

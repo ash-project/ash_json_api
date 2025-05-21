@@ -81,7 +81,7 @@ defmodule Test.Acceptance.GetRelatedTest do
     json_api do
       type("comment")
 
-      includes [:post]
+      includes :post
     end
 
     actions do
