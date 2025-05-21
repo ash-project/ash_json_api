@@ -33,7 +33,7 @@ defmodule AshJsonApi.MixProject do
       name: :ash_json_api,
       licenses: ["MIT"],
       files: ~w(lib .formatter.exs mix.exs README* LICENSE*
-      CHANGELOG* documentation),
+      CHANGELOG* documentation usage-rules.md),
       links: %{
         GitHub: "https://github.com/ash-project/ash_json_api"
       }
