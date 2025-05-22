@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.32](https://github.com/ash-project/ash_json_api/compare/v1.4.31...v1.4.32) (2025-05-22)
+
+
+
+
+### Bug Fixes:
+
+* wrap includes configuration list
+
 ## [v1.4.31](https://github.com/ash-project/ash_json_api/compare/v1.4.30...v1.4.31) (2025-05-15)
 
 
