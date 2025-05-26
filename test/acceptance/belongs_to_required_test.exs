@@ -86,7 +86,7 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
         allow_nil?: true,
         public?: true,
         constraints: [
-          match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
+          match: fn -> ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/ end
         ]
       )
     end

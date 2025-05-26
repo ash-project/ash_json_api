@@ -250,7 +250,7 @@ defmodule Test.Acceptance.PatchTest do
         public?: true,
         allow_nil?: true,
         constraints: [
-          match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
+          match: fn -> ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/ end
         ]
       )
 

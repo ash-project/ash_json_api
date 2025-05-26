@@ -212,7 +212,7 @@ defmodule Test.Acceptance.PostTest do
         public?: true,
         allow_nil?: true,
         constraints: [
-          match: ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/
+          match: fn -> ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/ end
         ]
       )
 
@@ -271,7 +271,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     validations do
-      validate(match(:pin, ~r/^[0-9]{4}$/))
+      validate(match(:pin, fn -> ~r/^[0-9]{4}$/ end))
       validate(string_length(:pin, exact: 4))
     end
   end
