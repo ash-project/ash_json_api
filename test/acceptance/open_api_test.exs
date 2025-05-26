@@ -211,7 +211,7 @@ defmodule Test.Acceptance.OpenApiTest do
         allow_nil?: true,
         public?: true,
         constraints: [
-          match: fn -> ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/ end
+          match: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
         ]
       )
     end

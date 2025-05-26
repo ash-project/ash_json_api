@@ -212,7 +212,7 @@ defmodule Test.Acceptance.PostTest do
         public?: true,
         allow_nil?: true,
         constraints: [
-          match: fn -> ~r/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/ end
+          match: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
         ]
       )
 
@@ -271,7 +271,7 @@ defmodule Test.Acceptance.PostTest do
     end
 
     validations do
-      validate(match(:pin, fn -> ~r/^[0-9]{4}$/ end))
+      validate(match(:pin, "^[0-9]{4}$"))
       validate(string_length(:pin, exact: 4))
     end
   end
@@ -562,7 +562,7 @@ defmodule Test.Acceptance.PostTest do
       assert %{"errors" => [error_regex, error_length]} = response.resp_body
 
       assert error_regex["code"] == "invalid_attribute"
-      assert error_regex["detail"] == "must match ~r/^[0-9]{4}$/"
+      assert error_regex["detail"] == "must match \"^[0-9]{4}$\""
       assert error_regex["meta"] == %{"match" => "^[0-9]{4}$"}
       assert error_regex["source"] == %{"pointer" => "/data/attributes/pin"}
 
