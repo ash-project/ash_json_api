@@ -802,6 +802,10 @@ defmodule AshJsonApi.Serializer do
     Enum.map(value, &serialize_value(&1, type, constraints[:items] || [], domain, opts))
   end
 
+  def serialize_value(value, Ash.Type.Decimal, _constraints, _domain, _opts) do
+    Decimal.to_string(value)
+  end
+
   def serialize_value(value, type, constraints, domain, opts) do
     {type, constraints} = flatten_new_type(type, constraints || [])
     opts = [skip_only_primary_key?: false, top_level?: false] |> Keyword.merge(opts)
