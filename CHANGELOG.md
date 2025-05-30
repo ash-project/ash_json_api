@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.33](https://github.com/ash-project/ash_json_api/compare/v1.4.32...v1.4.33) (2025-05-30)
+
+
+
+
+### Improvements:
+
+* add support for decimal serialization
+
 ## [v1.4.32](https://github.com/ash-project/ash_json_api/compare/v1.4.31...v1.4.32) (2025-05-22)
 
 
