@@ -103,4 +103,33 @@ defmodule Test.Acceptance.RouteTest do
            )
            |> Map.get(:resp_body)
   end
+
+  test "generic actions with missing required arguments should include field name in source pointer" do
+    response =
+      Domain
+      |> post(
+        "/required_say_hello/fred",
+        %{
+          data: %{
+            from: ""
+          }
+        },
+        status: 400
+      )
+
+    assert %{"errors" => errors} = response.resp_body
+    assert is_list(errors)
+    assert length(errors) > 0
+
+    # Find the "required" error for the missing "from" argument
+    required_error = Enum.find(errors, &(&1["code"] == "required"))
+    assert required_error, "Expected to find a 'required' error"
+
+    # The source pointer should include the field name that's missing
+    source_pointer = get_in(required_error, ["source", "pointer"])
+    assert source_pointer, "Expected source pointer to be present"
+
+    assert String.contains?(source_pointer, "from"),
+           "Expected source pointer '#{source_pointer}' to contain field name 'from'"
+  end
 end

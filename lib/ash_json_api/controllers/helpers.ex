@@ -128,7 +128,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           Request.assign(request, :result, result)
 
         {:error, error} ->
-          Request.add_error(request, error, :read)
+          Request.add_error(request, error, :action)
       end
     end)
   end
