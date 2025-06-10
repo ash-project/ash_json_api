@@ -10,6 +10,7 @@ config :ash_json_api, :authorize_update_destroy_with_error?, true
 if Mix.env() == :dev do
   config :git_ops,
     mix_project: AshJsonApi.MixProject,
+    github_handle_lookup?: true,
     changelog_file: "CHANGELOG.md",
     repository_url: "https://github.com/ash-project/ash_json_api",
     # Instructs the tool to manage your mix version in your `mix.exs` file
