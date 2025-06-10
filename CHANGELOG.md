@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.34](https://github.com/ash-project/ash_json_api/compare/v1.4.33...v1.4.34) (2025-06-10)
+
+
+
+
+### Bug Fixes:
+
+* properly include source pointers for generic actions by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.33](https://github.com/ash-project/ash_json_api/compare/v1.4.32...v1.4.33) (2025-05-30)
 
 
