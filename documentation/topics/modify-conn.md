@@ -122,8 +122,8 @@ Return rate limiting information to clients:
 ```elixir
 index :read do
   modify_conn(fn conn, _subject, _result, request ->
-    # Assume we have rate limiting info in the request assigns
-    rate_limit_info = request.assigns[:rate_limit] || %{}
+    # Assume we have rate limiting info in the conn assigns
+    rate_limit_info = conn.assigns[:rate_limit] || %{}
     
     conn
     |> Plug.Conn.put_resp_header("x-ratelimit-limit", to_string(rate_limit_info[:limit] || 100))
