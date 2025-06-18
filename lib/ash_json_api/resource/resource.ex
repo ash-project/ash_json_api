@@ -31,7 +31,7 @@ defmodule AshJsonApi.Resource do
       type: {:fun, 4},
       required: false,
       doc:
-        "A function to modify the conn before responding. Used for things like setting headers based on the response. Takes `conn, subject, result, request`",
+        "A function to modify the conn before responding. Used for things like setting headers based on the response. Takes `conn, subject, result, request`. See the modify_conn guide for more details and examples.",
       snippet: "fn ${1:conn}, ${2:subject}, ${3:result}, ${4:request} -> $5 end"
     ],
     query_params: [
