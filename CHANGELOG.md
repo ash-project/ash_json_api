@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.35](https://github.com/ash-project/ash_json_api/compare/v1.4.34...v1.4.35) (2025-06-18)
+
+
+
+
+### Improvements:
+
+* add a guide on modify_conn by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.34](https://github.com/ash-project/ash_json_api/compare/v1.4.33...v1.4.34) (2025-06-10)
 
 
