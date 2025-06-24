@@ -927,15 +927,12 @@ defmodule AshJsonApi.Request do
        when is_list(value) do
     value
     |> Stream.map(&relationship_change_value(&1))
-    |> Enum.reduce({:ok, []}, fn
+    |> Enum.reduce_while({:ok, []}, fn
       {:ok, change}, {:ok, changes} ->
-        {:ok, [change | changes]}
+        {:cont, {:ok, [change | changes]}}
 
       {:error, change}, _ ->
-        {:error, change}
-
-      _, {:error, change} ->
-        {:error, change}
+        {:halt, {:error, change}}
     end)
     |> case do
       {:ok, changes} ->
@@ -957,8 +954,8 @@ defmodule AshJsonApi.Request do
     {:ok, nil}
   end
 
-  defp relationship_change_value(_) do
-    :error
+  defp relationship_change_value(value) do
+    {:error, value}
   end
 
   defp url(conn) do
