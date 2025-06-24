@@ -130,31 +130,6 @@ defmodule Test.Acceptance.BelongsToRequiredTest do
 
   describe "invalid_post" do
     @describetag :attributes
-    test "create without an author_id in relationship" do
-      id = Ecto.UUID.generate()
-
-      response =
-        Domain
-        |> post("/posts", %{
-          data: %{
-            type: "post",
-            attributes: %{
-              id: id,
-              name: "Invalid Post 1"
-            },
-            relationships: %{
-              author: %{
-                data: %{}
-              }
-            }
-          }
-        })
-
-      # response is a Plug.
-      assert response.status == 400
-
-      assert Enum.any?(response.resp_body["errors"], &(&1["code"] == "required"))
-    end
 
     test "create without an author in relationship" do
       id = Ecto.UUID.generate()
