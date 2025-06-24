@@ -659,6 +659,42 @@ defmodule Test.Acceptance.PostTest do
       assert %{"data" => %{"attributes" => %{"hidden" => "hidden"}}} = response.resp_body
     end
 
+    test "creating with invalid relationships displays the correct error" do
+      id = Ecto.UUID.generate()
+
+      response =
+        Domain
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              id: id,
+              name: "Post 2",
+              hidden: "hidden"
+            },
+            relationships: %{
+              author: %{
+                data: "foo"
+              }
+            }
+          }
+        })
+
+      # response is a Plug.
+      assert %{
+               "errors" => [
+                 %{
+                   "code" => "invalid_body",
+                   "detail" => "invalid relationship input",
+                   "source" => %{"pointer" => "/data/relationships/author"},
+                   "status" => "400",
+                   "title" => "InvalidBody"
+                 }
+               ],
+               "jsonapi" => %{"version" => "1.0"}
+             } = response.resp_body
+    end
+
     test "create with all attributes in accept list with email along with relationship", %{
       author: author
     } do

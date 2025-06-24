@@ -8,6 +8,7 @@ defmodule AshJsonApi.Request do
     InvalidHeader,
     InvalidIncludes,
     InvalidQuery,
+    InvalidRelationshipInput,
     InvalidType,
     UnacceptableMediaType,
     UnsupportedMediaType
@@ -851,14 +852,15 @@ defmodule AshJsonApi.Request do
        when is_map(relationships) do
     Enum.reduce(relationships, request, fn {name, value}, request ->
       with %{"data" => data} when is_map(data) or is_list(data) <- value,
-           arg when not is_nil(arg) <-
-             Enum.find(
-               action.arguments,
-               &(to_string(&1.name) == name &&
-                   has_relationship_argument?(relationship_arguments, &1.name))
-             ),
+           {:arg, arg} when not is_nil(arg) <-
+             {:arg,
+              Enum.find(
+                action.arguments,
+                &(to_string(&1.name) == name &&
+                    has_relationship_argument?(relationship_arguments, &1.name))
+              )},
            {:ok, change_value} <-
-             relationship_change_value(data) do
+             relationship_change_value(name, data) do
         case find_relationship_argument(relationship_arguments, arg.name) do
           {:id, _arg} ->
             %{
@@ -873,8 +875,33 @@ defmodule AshJsonApi.Request do
             }
         end
       else
-        _ ->
-          add_error(request, "invalid relationship input: #{name}", request.route.type)
+        {:arg, nil} ->
+          add_error(
+            request,
+            Ash.Error.Invalid.NoSuchInput.exception(input: name, resource: request.resource),
+            request.route.type
+          )
+
+        {:error, error} ->
+          add_error(
+            request,
+            error,
+            request.route.type
+          )
+
+        %{"data" => data} ->
+          add_error(
+            request,
+            InvalidRelationshipInput.exception(relationship: name, input: data),
+            request.route.type
+          )
+
+        other ->
+          add_error(
+            request,
+            InvalidRelationshipInput.exception(relationship: name, input: other),
+            request.route.type
+          )
       end
     end)
   end
@@ -923,10 +950,10 @@ defmodule AshJsonApi.Request do
     %{request | resource_identifiers: nil}
   end
 
-  defp relationship_change_value(value)
+  defp relationship_change_value(name, value)
        when is_list(value) do
     value
-    |> Stream.map(&relationship_change_value(&1))
+    |> Stream.map(&relationship_change_value(name, &1))
     |> Enum.reduce_while({:ok, []}, fn
       {:ok, change}, {:ok, changes} ->
         {:cont, {:ok, [change | changes]}}
@@ -938,24 +965,24 @@ defmodule AshJsonApi.Request do
       {:ok, changes} ->
         {:ok, Enum.reverse(changes)}
 
-      {:error, error} ->
-        {:error, error}
+      {:error, input} ->
+        {:error, InvalidRelationshipInput.exception(relationship: name, input: input)}
     end
   end
 
-  defp relationship_change_value(%{"id" => id} = value) do
+  defp relationship_change_value(_name, %{"id" => id} = value) do
     case Map.fetch(value, "meta") do
       {:ok, meta} -> {:ok, Map.put(meta, "id", id)}
       _ -> {:ok, %{"id" => id}}
     end
   end
 
-  defp relationship_change_value(value) when value in [nil, %{}] do
-    {:ok, nil}
+  defp relationship_change_value(_name, value) when is_nil(value) or is_map(value) do
+    {:ok, value}
   end
 
-  defp relationship_change_value(value) do
-    {:error, value}
+  defp relationship_change_value(name, value) do
+    {:error, InvalidRelationshipInput.exception(relationship: name, input: value)}
   end
 
   defp url(conn) do
