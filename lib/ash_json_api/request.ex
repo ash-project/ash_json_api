@@ -977,8 +977,12 @@ defmodule AshJsonApi.Request do
     end
   end
 
-  defp relationship_change_value(_name, value) when is_nil(value) or is_map(value) do
+  defp relationship_change_value(_name, value) when is_nil(value) do
     {:ok, value}
+  end
+
+  defp relationship_change_value(_name, %{"meta" => meta}) when is_map(meta) do
+    {:ok, meta}
   end
 
   defp relationship_change_value(name, value) do
