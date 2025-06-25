@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.36](https://github.com/ash-project/ash_json_api/compare/v1.4.35...v1.4.36) (2025-06-25)
+
+
+
+
+### Bug Fixes:
+
+* expect fields in meta by [@zachdaniel](https://github.com/zachdaniel)
+
+* handle relationship inputs w/o `id` in them by [@zachdaniel](https://github.com/zachdaniel)
+
+* improve error handling around invalid relationship inputs by [@zachdaniel](https://github.com/zachdaniel)
+
+* fix pattern match error while validating relationship inputs by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.35](https://github.com/ash-project/ash_json_api/compare/v1.4.34...v1.4.35) (2025-06-18)
 
 
