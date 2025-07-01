@@ -75,16 +75,13 @@ instead of `:author`, use `{:id, :author}`. This works for `{:array, _}` type ar
 
 
 ## Creating related resources without the id
-This is useful for those who want to create relationship, without create them 
-in two separatated api calls and be associated with an Id, this is an escape
-hatch of doing the previous and is not open api spec compatible
-le, but is totally
-possible
+
+This feature is useful for creating relationships without requiring two separate API calls and without needing to associate resources with an ID first. This is an escape hatch from the standard approach and is not JSON:API spec compliant, but it is completely possible to implement.
 
 ```elixir
 # With a post route that references the `leads` argument, this will mean that
-# locations will have the ability to create a Lead resource when called from 
-# the api
+# locations will have the ability to create Lead resources when called from 
+# the API
   json_api do
     routes do
       base_route "/location", Marketplace.Location do
@@ -98,7 +95,7 @@ possible
   end
 
 
-# in leads resource you will have the following
+# In the leads resource you will have the following:
   actions do
     create :create do
       primary?(true)
@@ -110,7 +107,7 @@ possible
     belongs_to :location, Marketplace.Location
   end
 
-# in Location you will have the following:
+# In the Location resource you will have the following:
 
   actions do
     create :create do
@@ -128,18 +125,18 @@ possible
   end
 ```
 
-this way, when requesting to create a location, leads will be automatically be created
+This way, when requesting to create a location, leads will be automatically created as well.
 
 ```json
 {
   "data": {
     "type": "location",
     "attributes": {
-      "name": "Test Lead",
+      "name": "Test Location",
       "location": {
         "lat": 32323,
         "long": 23232,
-        "address": "dsdsds"
+        "address": "test street 123"
       },
       "images": ["url1", "url2", "url3"]
     },
@@ -158,7 +155,7 @@ this way, when requesting to create a location, leads will be automatically be c
             "type": "lead",
             "meta": {
               "type": "garden",
-              "description": "Garden looks like it could be polsih",
+              "description": "Garden looks like it could be polished",
               "priority": "medium"
             }
           }
@@ -169,8 +166,7 @@ this way, when requesting to create a location, leads will be automatically be c
 }
 ```
 
-be aware that the `"relationships"` field in the response will be empty, since we are not following open api spec convention, but if you check in your data storage
-the data should be there
+Be aware that the `"relationships"` field in the response will be empty, since we are not following JSON:API spec conventions, but if you check your data storage, the data should be there.
 
 
 ## Relationship Manipulation Routes
