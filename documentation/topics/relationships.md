@@ -73,6 +73,106 @@ Non-map argument types, e.g `argument :author, :integer` (expecting an author id
 JSON:API, because it expects `{"type": _type, "id" => id}` for relationship values. To support non-map arguments in `relationship_arguments`,
 instead of `:author`, use `{:id, :author}`. This works for `{:array, _}` type arguments as well, so the value would be a list of ids.
 
+
+## Creating related resources without the id
+This is useful for those who want to create relationship, without create them 
+in two separatated api calls and be associated with an Id, this is an escape
+hatch of doing the previous and is not open api spec compatible
+le, but is totally
+possible
+
+```elixir
+# With a post route that references the `leads` argument, this will mean that
+# locations will have the ability to create a Lead resource when called from 
+# the api
+  json_api do
+    routes do
+      base_route "/location", Marketplace.Location do
+        post :create, relationship_arguments: [:leads]
+      end
+
+      base_route "/lead", Marketplace.Lead do
+        post :create
+      end
+    end
+  end
+
+
+# in leads resource you will have the following
+  actions do
+    create :create do
+      primary?(true)
+      accept([:type, :description, :priority, :location_id])
+    end
+  end
+
+  relationships do
+    belongs_to :location, Marketplace.Location
+  end
+
+# in Location you will have the following:
+
+  actions do
+    create :create do
+      primary?(true)
+      accept([:name, :location, :images])
+      argument(:leads, {:array, :map}, allow_nil?: false)
+
+      change(manage_relationship(:leads, type: :create))
+    end
+  end
+
+
+  relationships do
+    has_many :leads, ProjectX.Marketplace.Lead
+  end
+```
+
+this way, when requesting to create a location, leads will be automatically be created
+
+```json
+{
+  "data": {
+    "type": "location",
+    "attributes": {
+      "name": "Test Lead",
+      "location": {
+        "lat": 32323,
+        "long": 23232,
+        "address": "dsdsds"
+      },
+      "images": ["url1", "url2", "url3"]
+    },
+    "relationships": {
+      "leads": {
+        "data": [
+          {
+            "type": "lead",
+            "meta": {
+              "type": "Roof",
+              "description": "roofing has 3 holes to fix",
+              "priority": "high"
+            }
+          },
+          {
+            "type": "lead",
+            "meta": {
+              "type": "garden",
+              "description": "Garden looks like it could be polsih",
+              "priority": "medium"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+be aware that the `"relationships"` field in the response will be empty, since we are not following open api spec convention, but if you check in your data storage
+the data should be there
+
+
 ## Relationship Manipulation Routes
 
 You can also specify routes that are dedicated to manipulating relationships. We generally suggest the above approach, but JSON:API spec also allows for dedicated relationship routes. For example:
