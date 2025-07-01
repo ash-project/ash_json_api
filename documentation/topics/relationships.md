@@ -121,7 +121,7 @@ This feature is useful for creating relationships without requiring two separate
 
 
   relationships do
-    has_many :leads, ProjectX.Marketplace.Lead
+    has_many :leads, Marketplace.Lead
   end
 ```
 
