@@ -166,7 +166,7 @@ This way, when requesting to create a location, leads will be automatically crea
 }
 ```
 
-Note that the related data won't be returned unless included with the include query parameter. For the JSON:API specification on the include parameter, see [https://jsonapi.org/format/#fetching-includes](https://jsonapi.org/format/#fetching-includes).
+Note that the related data won't be returned unless included with the include query parameter. For the JSON:API specification on the include parameter, see [json api fetching includes](https://jsonapi.org/format/#fetching-includes).
 
 ## Relationship Manipulation Routes
 
