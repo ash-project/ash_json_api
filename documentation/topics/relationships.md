@@ -73,6 +73,101 @@ Non-map argument types, e.g `argument :author, :integer` (expecting an author id
 JSON:API, because it expects `{"type": _type, "id" => id}` for relationship values. To support non-map arguments in `relationship_arguments`,
 instead of `:author`, use `{:id, :author}`. This works for `{:array, _}` type arguments as well, so the value would be a list of ids.
 
+
+## Creating related resources without the id
+
+This feature is useful for creating relationships without requiring two separate API calls and without needing to associate resources with an ID first. This is an escape hatch from the standard approach and is not JSON:API spec compliant, but it is completely possible to implement.
+
+```elixir
+# With a post route that references the `leads` argument, this will mean that
+# locations will have the ability to create Lead resources when called from 
+# the API
+  json_api do
+    routes do
+      base_route "/location", Marketplace.Location do
+        post :create, relationship_arguments: [:leads]
+      end
+
+      base_route "/lead", Marketplace.Lead do
+        post :create
+      end
+    end
+  end
+
+
+# In the leads resource you will have the following:
+  actions do
+    create :create do
+      primary?(true)
+      accept([:type, :description, :priority, :location_id])
+    end
+  end
+
+  relationships do
+    belongs_to :location, Marketplace.Location
+  end
+
+# In the Location resource you will have the following:
+
+  actions do
+    create :create do
+      primary?(true)
+      accept([:name, :location, :images])
+      argument(:leads, {:array, :map}, allow_nil?: false)
+
+      change(manage_relationship(:leads, type: :create))
+    end
+  end
+
+
+  relationships do
+    has_many :leads, Marketplace.Lead
+  end
+```
+
+This way, when requesting to create a location, leads will be automatically created as well.
+
+```json
+{
+  "data": {
+    "type": "location",
+    "attributes": {
+      "name": "Test Location",
+      "location": {
+        "lat": 32323,
+        "long": 23232,
+        "address": "test street 123"
+      },
+      "images": ["url1", "url2", "url3"]
+    },
+    "relationships": {
+      "leads": {
+        "data": [
+          {
+            "type": "lead",
+            "meta": {
+              "type": "Roof",
+              "description": "roofing has 3 holes to fix",
+              "priority": "high"
+            }
+          },
+          {
+            "type": "lead",
+            "meta": {
+              "type": "garden",
+              "description": "Garden looks like it could be polished",
+              "priority": "medium"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+Note that the related data won't be returned unless included with the include query parameter. For the JSON:API specification on the include parameter, see [json api fetching includes](https://jsonapi.org/format/#fetching-includes).
+
 ## Relationship Manipulation Routes
 
 You can also specify routes that are dedicated to manipulating relationships. We generally suggest the above approach, but JSON:API spec also allows for dedicated relationship routes. For example:
