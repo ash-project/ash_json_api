@@ -13,8 +13,8 @@ defmodule AshJsonApi.Includes.Includer do
 
   def get_includes(records, %Request{includes_keyword: includes_keyword})
       when is_list(records) do
-    {record, includes_map} = get_includes_map(records, includes_keyword)
-    {record, Map.values(includes_map)}
+    {records, includes_map} = get_includes_map(records, includes_keyword)
+    {records, Map.values(includes_map)}
   end
 
   def get_includes(%{results: results} = paginator, request) do
