@@ -583,6 +583,10 @@ defmodule AshJsonApi.Serializer do
       # There could be another case here if a bug in the system gave us a list
       # of more than one shouldn't happen though
 
+      %{__linkage__: %{^name => other}} ->
+        IO.inspect(other, label: "Unexpected record for relationship #{name}")
+        payload
+
       _ ->
         payload
     end
