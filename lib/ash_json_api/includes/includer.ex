@@ -38,6 +38,11 @@ defmodule AshJsonApi.Includes.Includer do
     includes_keyword
     |> Enum.reduce({preloaded, includes_map}, fn
       {relationship, further}, {preloaded_without_linkage, includes_map} ->
+        linkage_only? =
+          case further do
+            %{__linkage_only__: true} -> true
+            _ -> false
+          end
         {related, includes_map} =
           preloaded
           |> Enum.flat_map(fn record ->
@@ -61,22 +66,32 @@ defmodule AshJsonApi.Includes.Includer do
           )
 
         includes_map =
-          related
-          |> List.wrap()
-          |> Enum.reduce(includes_map, fn related_item, includes_map ->
-            type = AshJsonApi.Resource.Info.type(related_item)
-            id = AshJsonApi.Resource.encode_primary_key(related_item)
+          if linkage_only? do
+            includes_map
+          else
+            related
+            |> List.wrap()
+            |> Enum.reduce(includes_map, fn related_item, includes_map ->
+              # On construit la clé {type, id}
+              type = AshJsonApi.Resource.Info.type(related_item)
+              id = AshJsonApi.Resource.encode_primary_key(related_item)
 
-            case Map.fetch(includes_map, {type, id}) do
-              {:ok, _} ->
-                Map.update!(includes_map, {type, id}, fn existing ->
-                  merge_linkages(existing, related_item)
-                end)
+              # On ajoute le record dans includes_map
+              case Map.fetch(includes_map, {type, id}) do
+                {:ok, _} ->
+                  # La clé existe déjà, on merge les linkages
+                  Map.update!(includes_map, {type, id}, fn existing ->
+                    # On merge les linkages en une liste
+                    merge_linkages(existing, related_item)
+                  end)
 
-              :error ->
-                Map.put(includes_map, {type, id}, Map.put_new(related_item, :__linkage__, %{}))
-            end
-          end)
+                :error ->
+                  # La clé n'existe pas, on l'ajoute avec le linkage, et un linkage vide
+                  # si il n'existe pas déjà,
+                  Map.put(includes_map, {type, id}, Map.put_new(related_item, :__linkage__, %{}))
+              end
+            end)
+          end
 
         {preloaded_with_linkage, includes_map}
     end)
