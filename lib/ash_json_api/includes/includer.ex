@@ -45,6 +45,7 @@ defmodule AshJsonApi.Includes.Includer do
             |> Map.get(relationship, [])
             |> List.wrap()
           end)
+          |> Enum.uniq()
           |> get_includes_map(further, includes_map)
 
         preloaded_with_linkage =
