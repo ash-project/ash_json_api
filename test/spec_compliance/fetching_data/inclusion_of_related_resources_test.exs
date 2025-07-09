@@ -160,6 +160,23 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
   # --------------------------
   describe "include request parameter" do
     @describetag :spec_may
+    test "resource endpoint with include param of an empty to-one relationship (linkage)" do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      assert %{
+               resp_body: %{
+                 "data" => %{
+                   "relationships" => %{
+                     "author" => %{"data" => nil}
+                   }
+                 }
+               }
+             } = get(Domain, "/posts/#{post.id}/?include=author", status: 200)
+    end
+
     test "resource endpoint with include param of to-one relationship (linkage)" do
       # GET /posts/1?include=author
       author =
@@ -210,6 +227,24 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfRelatedResources do
         _ ->
           false
       end)
+    end
+
+    test "resource endpoint with include param of empty to-many relationship" do
+      # GET /posts/1?include=comments
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      assert %{
+               resp_body: %{
+                 "data" => %{
+                   "relationships" => %{
+                     "comments" => %{"data" => []}
+                   }
+                 }
+               }
+             } = get(Domain, "/posts/#{post.id}/?include=comments", status: 200)
     end
 
     test "resource endpoint with include param of to-many relationship" do
