@@ -13,8 +13,8 @@ defmodule AshJsonApi.Includes.Includer do
 
   def get_includes(records, %Request{includes_keyword: includes_keyword})
       when is_list(records) do
-    {record, includes_map} = get_includes_map(records, includes_keyword)
-    {record, Map.values(includes_map)}
+    {records, includes_map} = get_includes_map(records, includes_keyword)
+    {records, Map.values(includes_map)}
   end
 
   def get_includes(%{results: results} = paginator, request) do
@@ -28,14 +28,14 @@ defmodule AshJsonApi.Includes.Includer do
     {record, includes}
   end
 
-  defp get_includes_map(preloaded, include_keyword, includes_map \\ %{})
+  defp get_includes_map(preloaded, includes_keyword, includes_map \\ %{})
   defp get_includes_map(related, [], includes_map), do: {related, includes_map}
 
   defp get_includes_map(preloaded, %Ash.Query{load: load}, includes_map),
     do: get_includes_map(preloaded, load, includes_map)
 
-  defp get_includes_map(preloaded, include_keyword, includes_map) do
-    include_keyword
+  defp get_includes_map(preloaded, includes_keyword, includes_map) do
+    includes_keyword
     |> Enum.reduce({preloaded, includes_map}, fn
       {relationship, further}, {preloaded_without_linkage, includes_map} ->
         {related, includes_map} =
