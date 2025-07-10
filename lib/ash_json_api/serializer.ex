@@ -571,7 +571,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
     case record do
-      %{__linkage__: %{^name => [record]}} ->
+      %{__linkage__: %{^name => [record | _]}} ->
         Map.put(payload, :data, %{
           id: AshJsonApi.Resource.encode_primary_key(record),
           type: AshJsonApi.Resource.Info.type(destination)
@@ -600,11 +600,12 @@ defmodule AshJsonApi.Serializer do
         Map.put(
           payload,
           :data,
-          Enum.map(
-            linkage,
+          linkage
+          |> Enum.map(
             &(%{id: AshJsonApi.Resource.encode_primary_key(&1), type: type}
               |> add_relationship_meta(&1, record, relationship))
           )
+          |> Enum.uniq_by(& &1.id)
         )
 
       _ ->
