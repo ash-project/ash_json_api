@@ -680,11 +680,28 @@ defmodule AshJsonApi.Request do
     )
   end
 
-  defp set_include_queries(includes, fields, field_inputs, filters, sorts, resource, path \\ []) do
+  defp set_include_queries(includes, fields, field_inputs, filters, sorts, resource, path \\ [])
+
+  defp set_include_queries(:linkage_only, _, _, _, _, _, _), do: []
+
+  defp set_include_queries(includes, fields, field_inputs, filters, sorts, resource, path) do
+    includes =
+      Enum.reduce(
+        AshJsonApi.Resource.Info.always_include_linkage(resource),
+        includes,
+        fn key, includes ->
+          if Keyword.has_key?(includes, key) do
+            includes
+          else
+            Keyword.put(includes, key, :linkage_only)
+          end
+        end
+      )
+
     Enum.map(includes, fn {key, nested} ->
       related = public_related(resource, key)
 
-      nested =
+      nested_queries =
         set_include_queries(nested, fields, field_inputs, filters, sorts, related, path ++ [key])
 
       related_field_inputs = Map.get(field_inputs, related, %{})
@@ -704,12 +721,13 @@ defmodule AshJsonApi.Request do
             value -> {field, value}
           end
         end)
-        |> Kernel.++(nested)
+        |> Kernel.++(nested_queries)
 
       new_query =
         related
         |> Ash.Query.new()
         |> Ash.Query.load(load)
+        |> Map.put(:__linkage_only__, nested == :linkage_only)
 
       filtered_query =
         case Map.fetch(filters, path ++ [key]) do
