@@ -15,6 +15,10 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :derive_sort, true, false)
   end
 
+  def always_include_linkage(resource) do
+    Extension.get_opt(resource, [:json_api], :always_include_linkage, [], false)
+  end
+
   def includes(resource) do
     Extension.get_opt(resource, [:json_api], :includes, [], false)
   end

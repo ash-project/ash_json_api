@@ -1,4 +1,5 @@
 spark_locals_without_parens = [
+  always_include_linkage: 1,
   authorize?: 1,
   base: 1,
   base_route: 1,

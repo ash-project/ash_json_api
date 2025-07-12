@@ -494,6 +494,12 @@ defmodule AshJsonApi.Resource do
         type: :string,
         doc: "The resource identifier type of this resource in JSON:API"
       ],
+      always_include_linkage: [
+        type: {:list, :atom},
+        doc:
+          "A list of relationships that should always have their linkage included in the resource",
+        default: []
+      ],
       includes: [
         type: {:wrap_list, :any},
         default: [],

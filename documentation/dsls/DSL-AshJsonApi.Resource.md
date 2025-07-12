@@ -62,6 +62,7 @@ end
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`type`](#json_api-type){: #json_api-type } | `String.t` |  | The resource identifier type of this resource in JSON:API |
+| [`always_include_linkage`](#json_api-always_include_linkage){: #json_api-always_include_linkage } | `list(atom)` | `[]` | A list of relationships that should always have their linkage included in the resource |
 | [`includes`](#json_api-includes){: #json_api-includes } | `any \| list(any)` | `[]` | A keyword list of all paths that are includable from this resource |
 | [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | `any` |  | Whether or not to include properties for values that are nil in the JSON output |
 | [`default_fields`](#json_api-default_fields){: #json_api-default_fields } | `list(atom)` |  | The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public |
