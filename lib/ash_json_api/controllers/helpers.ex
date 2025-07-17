@@ -59,7 +59,9 @@ defmodule AshJsonApi.Controllers.Helpers do
              {:ok, result} <-
                Ash.load(
                  result,
-                 fields(request, request.resource),
+                 request
+                 |> fields(request.resource)
+                 |> Enum.filter(&(&1 not in Ash.Resource.Info.attribute_names(request.resource))),
                  Request.load_opts(request, reuse_values?: true)
                ),
              {:ok, result} <-
