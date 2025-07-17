@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.37](https://github.com/ash-project/ash_json_api/compare/v1.4.36...v1.4.37) (2025-07-17)
+
+
+
+
+### Bug Fixes:
+
+* uniq linkage for display, but only when necessary by [@zachdaniel](https://github.com/zachdaniel)
+
+* explicit linkage of empty relationships (#357) by Cyprien Poisson
+
+### Improvements:
+
+* add always_include_linkage param to resources (#362) by Cyprien Poisson
+
 ## [v1.4.36](https://github.com/ash-project/ash_json_api/compare/v1.4.35...v1.4.36) (2025-06-25)
 
 
