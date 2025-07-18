@@ -286,6 +286,15 @@ defmodule Test.Acceptance.PatchTest do
 
       primary_key do
         keys [:author_id, :pkey_b]
+        delimiter "|"
+      end
+
+      routes do
+        base("/bios")
+        get :read
+        index :read
+        post :create
+        patch :update
       end
     end
 
@@ -699,6 +708,68 @@ defmodule Test.Acceptance.PatchTest do
                },
                "language" => "EN"
              }
+    end
+  end
+
+  describe "patch with composite primary key" do
+    setup do
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "Test Author"})
+        |> Ash.create!()
+
+      bio =
+        Bio
+        |> Ash.Changeset.for_create(:create, %{
+          author_id: author.id,
+          pkey_b: "test-key",
+          bio: "Original bio"
+        })
+        |> Ash.create!()
+
+      %{author: author, bio: bio}
+    end
+
+    test "patch with composite primary key updates correct record", %{bio: bio} do
+      # The composite ID should be "author_id|pkey_b" (using custom delimiter |)
+      composite_id = "#{bio.author_id}|#{bio.pkey_b}"
+
+      response =
+        Domain
+        |> patch("/bios/#{composite_id}", %{
+          data: %{
+            type: "bio",
+            attributes: %{
+              bio: "Updated bio content"
+            }
+          }
+        })
+
+      assert response.status == 200
+      assert %{"data" => %{"attributes" => %{"bio" => "Updated bio content"}}} = response.resp_body
+
+      # Verify the record was actually updated by reading it back via API
+      get_response = Domain |> get("/bios/#{composite_id}")
+      assert get_response.status == 200
+      assert %{"data" => %{"attributes" => %{"bio" => "Updated bio content"}}} = get_response.resp_body
+    end
+
+    test "patch with wrong composite primary key returns 404", %{bio: bio} do
+      # Use incorrect composite ID
+      wrong_composite_id = "#{bio.author_id}|wrong-key"
+
+      response =
+        Domain
+        |> patch("/bios/#{wrong_composite_id}", %{
+          data: %{
+            type: "bio",
+            attributes: %{
+              bio: "This should not work"
+            }
+          }
+        }, status: 404)
+
+      assert %{"errors" => [%{"code" => "not_found"}]} = response.resp_body
     end
   end
 end

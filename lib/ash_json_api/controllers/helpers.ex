@@ -105,27 +105,30 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def run_action(request) do
     chain(request, fn request ->
-      {route_params, _filter} =
-        path_args_and_filter(request.path_params, request.resource, request.action)
+      case path_args_and_filter(request.path_params, request.resource, request.action) do
+        {:ok, route_params, _filter} ->
+          action_input =
+            request.resource
+            |> Ash.ActionInput.new()
+            |> Ash.ActionInput.set_context(request.context || %{})
+            |> Ash.ActionInput.for_action(
+              request.action.name,
+              Map.merge(request.arguments, route_params),
+              Request.opts(request)
+            )
 
-      action_input =
-        request.resource
-        |> Ash.ActionInput.new()
-        |> Ash.ActionInput.set_context(request.context || %{})
-        |> Ash.ActionInput.for_action(
-          request.action.name,
-          Map.merge(request.arguments, route_params),
-          Request.opts(request)
-        )
+          request = Request.assign(request, :action_input, action_input)
 
-      request = Request.assign(request, :action_input, action_input)
+          case Ash.run_action(action_input) do
+            :ok ->
+              Request.assign(request, :result, :ok)
 
-      case Ash.run_action(action_input) do
-        :ok ->
-          Request.assign(request, :result, :ok)
+            {:ok, result} ->
+              Request.assign(request, :result, result)
 
-        {:ok, result} ->
-          Request.assign(request, :result, result)
+            {:error, error} ->
+              Request.add_error(request, error, :action)
+          end
 
         {:error, error} ->
           Request.add_error(request, error, :action)
@@ -158,88 +161,95 @@ defmodule AshJsonApi.Controllers.Helpers do
     chain(request, fn %{resource: resource} = request ->
       cond do
         request.action.type == :read ->
-          {route_params, _filter} =
-            path_args_and_filter(request.path_params, request.resource, request.action)
+          case path_args_and_filter(request.path_params, request.resource, request.action) do
+            {:ok, route_params, _filter} ->
+              query =
+                request.resource
+                |> Ash.Query.load(
+                  fields(request, request.resource) ++ (request.includes_keyword || [])
+                )
+                |> Ash.Query.set_context(request.context || %{})
+                |> Ash.Query.for_read(
+                  request.action.name,
+                  Map.merge(Map.merge(request.attributes, request.arguments), route_params),
+                  Request.opts(request)
+                )
 
-          query =
-            request.resource
-            |> Ash.Query.load(
-              fields(request, request.resource) ++ (request.includes_keyword || [])
-            )
-            |> Ash.Query.set_context(request.context || %{})
-            |> Ash.Query.for_read(
-              request.action.name,
-              Map.merge(Map.merge(request.attributes, request.arguments), route_params),
-              Request.opts(request)
-            )
+              request = Request.assign(request, :query, query)
 
-          request = Request.assign(request, :query, query)
+              case Ash.read(query) do
+                {:ok, %resource{} = result} when resource == request.resource ->
+                  Request.assign(request, :result, result)
 
-          case Ash.read(query) do
-            {:ok, %resource{} = result} when resource == request.resource ->
-              Request.assign(request, :result, result)
+                {:ok, [result]} ->
+                  Request.assign(request, :result, result)
 
-            {:ok, [result]} ->
-              Request.assign(request, :result, result)
+                {:ok, %page{results: [result]}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
+                  Request.assign(request, :result, result)
 
-            {:ok, %page{results: [result]}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
-              Request.assign(request, :result, result)
+                {:ok, []} ->
+                  Request.add_error(request, Ash.Error.Query.NotFound.exception(), :create)
 
-            {:ok, []} ->
-              Request.add_error(request, Ash.Error.Query.NotFound.exception(), :create)
+                {:ok, %page{results: []}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
+                  Request.add_error(request, Ash.Error.Query.NotFound.exception(), :create)
 
-            {:ok, %page{results: []}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
-              Request.add_error(request, Ash.Error.Query.NotFound.exception(), :create)
+                {:ok, [result | _]} ->
+                  Logger.warning(
+                    "Got multiple results for #{inspect(request.resource)}.#{request.action} in `:post` handler. Expected zero or one. Extra results are being ignored."
+                  )
 
-            {:ok, [result | _]} ->
-              Logger.warning(
-                "Got multiple results for #{inspect(request.resource)}.#{request.action} in `:post` handler. Expected zero or one. Extra results are being ignored."
-              )
+                  Request.assign(request, :result, result)
 
-              Request.assign(request, :result, result)
+                {:ok, %page{results: [result | _]}}
+                when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
+                  Request.assign(request, :result, result)
 
-            {:ok, %page{results: [result | _]}} when page in [Ash.Page.Keyset, Ash.Page.Offset] ->
-              Request.assign(request, :result, result)
+                  Logger.warning(
+                    "Got multiple results for #{inspect(request.resource)}.#{request.action} in `:post` handler. Expected zero or one. Extra results are being ignored."
+                  )
 
-              Logger.warning(
-                "Got multiple results for #{inspect(request.resource)}.#{request.action} in `:post` handler. Expected zero or one. Extra results are being ignored."
-              )
+                {:error, error} ->
+                  Request.add_error(request, error, :create)
+              end
 
             {:error, error} ->
               Request.add_error(request, error, :create)
           end
 
         request.action.type == :action ->
-          {route_params, _filter} =
-            path_args_and_filter(request.path_params, request.resource, request.action)
+          case path_args_and_filter(request.path_params, request.resource, request.action) do
+            {:ok, route_params, _filter} ->
+              action_input =
+                request.resource
+                |> Ash.ActionInput.new()
+                |> Ash.ActionInput.set_context(request.context || %{})
+                |> Ash.ActionInput.for_action(
+                  request.action.name,
+                  Map.merge(Map.merge(request.attributes, request.arguments), route_params),
+                  Request.opts(request)
+                )
 
-          action_input =
-            request.resource
-            |> Ash.ActionInput.new()
-            |> Ash.ActionInput.set_context(request.context || %{})
-            |> Ash.ActionInput.for_action(
-              request.action.name,
-              Map.merge(Map.merge(request.attributes, request.arguments), route_params),
-              Request.opts(request)
-            )
+              request = Request.assign(request, :action_input, action_input)
 
-          request = Request.assign(request, :action_input, action_input)
+              with {:ok, result} <- Ash.run_action(action_input),
+                   {:ok, result} <-
+                     Ash.load(
+                       result,
+                       fields(request, request.resource),
+                       Request.load_opts(request, reuse_values?: true)
+                     ),
+                   {:ok, result} <-
+                     Ash.load(
+                       result,
+                       request.includes_keyword || [],
+                       Request.load_opts(request)
+                     ) do
+                Request.assign(request, :result, result)
+              else
+                {:error, error} ->
+                  Request.add_error(request, error, :create)
+              end
 
-          with {:ok, result} <- Ash.run_action(action_input),
-               {:ok, result} <-
-                 Ash.load(
-                   result,
-                   fields(request, request.resource),
-                   Request.load_opts(request, reuse_values?: true)
-                 ),
-               {:ok, result} <-
-                 Ash.load(
-                   result,
-                   request.includes_keyword || [],
-                   Request.load_opts(request)
-                 ) do
-            Request.assign(request, :result, result)
-          else
             {:error, error} ->
               Request.add_error(request, error, :create)
           end
@@ -261,29 +271,32 @@ defmodule AshJsonApi.Controllers.Helpers do
               []
             end
 
-          {route_params, _filter} =
-            path_args_and_filter(request.path_params, request.resource, request.action)
+          case path_args_and_filter(request.path_params, request.resource, request.action) do
+            {:ok, route_params, _filter} ->
+              changeset =
+                resource
+                |> Ash.Changeset.new()
+                |> Ash.Changeset.set_context(request.context)
+                |> Ash.Changeset.for_create(
+                  request.action.name,
+                  Map.merge(Map.merge(request.attributes, request.arguments), route_params),
+                  Request.opts(request)
+                )
+                |> Ash.Changeset.load(
+                  fields(request, request.resource) ++ (request.includes_keyword || [])
+                )
 
-          changeset =
-            resource
-            |> Ash.Changeset.new()
-            |> Ash.Changeset.set_context(request.context)
-            |> Ash.Changeset.for_create(
-              request.action.name,
-              Map.merge(Map.merge(request.attributes, request.arguments), route_params),
-              Request.opts(request)
-            )
-            |> Ash.Changeset.load(
-              fields(request, request.resource) ++ (request.includes_keyword || [])
-            )
+              request = Request.assign(request, :changeset, changeset)
 
-          request = Request.assign(request, :changeset, changeset)
+              changeset
+              |> Ash.create(Request.opts(request, opts))
+              |> case do
+                {:ok, record} ->
+                  Request.assign(request, :result, record)
 
-          changeset
-          |> Ash.create(Request.opts(request, opts))
-          |> case do
-            {:ok, record} ->
-              Request.assign(request, :result, record)
+                {:error, error} ->
+                  Request.add_error(request, error, :create)
+              end
 
             {:error, error} ->
               Request.add_error(request, error, :create)
@@ -295,36 +308,39 @@ defmodule AshJsonApi.Controllers.Helpers do
   def update_record(request, attributes \\ &Map.merge(&1.attributes, &1.arguments)) do
     chain(request, fn request ->
       if request.action.type == :action do
-        {route_params, _filter} =
-          path_args_and_filter(request.path_params, request.resource, request.action)
+        case path_args_and_filter(request.path_params, request.resource, request.action) do
+          {:ok, route_params, _filter} ->
+            action_input =
+              request.resource
+              |> Ash.ActionInput.new()
+              |> Ash.ActionInput.set_context(request.context || %{})
+              |> Ash.ActionInput.for_action(
+                request.action.name,
+                Map.merge(attributes.(request), route_params),
+                Request.opts(request)
+              )
 
-        action_input =
-          request.resource
-          |> Ash.ActionInput.new()
-          |> Ash.ActionInput.set_context(request.context || %{})
-          |> Ash.ActionInput.for_action(
-            request.action.name,
-            Map.merge(attributes.(request), route_params),
-            Request.opts(request)
-          )
+            request = Request.assign(request, :action_input, action_input)
 
-        request = Request.assign(request, :action_input, action_input)
+            with {:ok, result} <- Ash.run_action(action_input),
+                 {:ok, result} <-
+                   Ash.load(
+                     result,
+                     fields(request, request.resource),
+                     Request.load_opts(request, reuse_values?: true)
+                   ),
+                 {:ok, result} <-
+                   Ash.load(
+                     result,
+                     request.includes_keyword || [],
+                     Request.load_opts(request)
+                   ) do
+              Request.assign(request, :result, result)
+            else
+              {:error, error} ->
+                Request.add_error(request, error, :create)
+            end
 
-        with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <-
-               Ash.load(
-                 result,
-                 fields(request, request.resource),
-                 Request.load_opts(request, reuse_values?: true)
-               ),
-             {:ok, result} <-
-               Ash.load(
-                 result,
-                 request.includes_keyword || [],
-                 Request.load_opts(request)
-               ) do
-          Request.assign(request, :result, result)
-        else
           {:error, error} ->
             Request.add_error(request, error, :create)
         end
@@ -453,36 +469,39 @@ defmodule AshJsonApi.Controllers.Helpers do
   def destroy_record(request) do
     chain(request, fn request ->
       if request.action.type == :action do
-        {route_params, _filter} =
-          path_args_and_filter(request.path_params, request.resource, request.action)
+        case path_args_and_filter(request.path_params, request.resource, request.action) do
+          {:ok, route_params, _filter} ->
+            action_input =
+              request.resource
+              |> Ash.ActionInput.new()
+              |> Ash.ActionInput.set_context(request.context || %{})
+              |> Ash.ActionInput.for_action(
+                request.action.name,
+                route_params,
+                Request.opts(request)
+              )
 
-        action_input =
-          request.resource
-          |> Ash.ActionInput.new()
-          |> Ash.ActionInput.set_context(request.context || %{})
-          |> Ash.ActionInput.for_action(
-            request.action.name,
-            route_params,
-            Request.opts(request)
-          )
+            request = Request.assign(request, :action_input, action_input)
 
-        request = Request.assign(request, :action_input, action_input)
+            with {:ok, result} <- Ash.run_action(action_input),
+                 {:ok, result} <-
+                   Ash.load(
+                     result,
+                     fields(request, request.resource),
+                     Request.load_opts(request, reuse_values?: true)
+                   ),
+                 {:ok, result} <-
+                   Ash.load(
+                     result,
+                     request.includes_keyword || [],
+                     Request.load_opts(request)
+                   ) do
+              Request.assign(request, :result, result)
+            else
+              {:error, error} ->
+                Request.add_error(request, error, :create)
+            end
 
-        with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <-
-               Ash.load(
-                 result,
-                 fields(request, request.resource),
-                 Request.load_opts(request, reuse_values?: true)
-               ),
-             {:ok, result} <-
-               Ash.load(
-                 result,
-                 request.includes_keyword || [],
-                 Request.load_opts(request)
-               ) do
-          Request.assign(request, :result, result)
-        else
           {:error, error} ->
             Request.add_error(request, error, :create)
         end
@@ -530,20 +549,41 @@ defmodule AshJsonApi.Controllers.Helpers do
   end
 
   defp path_args_and_filter(path_params, resource, action) do
-    Enum.reduce(path_params, {%{}, %{}}, fn {key, value}, {params, filter} ->
-      case Enum.find(action.arguments, &(to_string(&1.name) == key)) do
-        nil ->
-          case Ash.Resource.Info.public_attribute(resource, key) do
-            nil ->
-              {params, filter}
+    primary_key_fields = AshJsonApi.Resource.Info.primary_key_fields(resource)
 
-            attribute ->
-              {params, Map.put(filter, attribute.name, value)}
-          end
+    Enum.reduce_while(path_params, {:ok, %{}, %{}}, fn
+      {"id", value}, {:ok, params, filter} when primary_key_fields != [] ->
+        primary_key_delimiter = AshJsonApi.Resource.Info.primary_key_delimiter(resource)
+        values = String.split(value, primary_key_delimiter)
 
-        argument ->
-          {Map.put(params, argument.name, value), filter}
-      end
+        if Enum.count(values) != Enum.count(primary_key_fields) do
+          {:halt,
+           {:error, Ash.Error.Query.NotFound.exception(primary_key: value, resource: resource)}}
+        else
+          filter =
+            primary_key_fields
+            |> Enum.zip(values)
+            |> Enum.reduce(filter, fn {key, value}, filter ->
+              Map.put(filter, key, value)
+            end)
+
+          {:cont, {:ok, params, filter}}
+        end
+
+      {key, value}, {:ok, params, filter} ->
+        case Enum.find(action.arguments, &(to_string(&1.name) == key)) do
+          nil ->
+            case Ash.Resource.Info.public_attribute(resource, key) do
+              nil ->
+                {:cont, {:ok, params, filter}}
+
+              attribute ->
+                {:cont, {:ok, params, Map.put(filter, attribute.name, value)}}
+            end
+
+          argument ->
+            {:cont, {:ok, Map.put(params, argument.name, value), filter}}
+        end
     end)
   end
 
@@ -561,52 +601,56 @@ defmodule AshJsonApi.Controllers.Helpers do
         request.action
       end
 
-    {params, filter} = path_args_and_filter(request.path_params, resource, action)
-
-    action = action.name
-
-    fields_to_load =
-      if through_resource do
-        []
-      else
-        fields(request, request.resource)
-      end
-
-    query =
-      if filter do
-        case Ash.Filter.parse_input(resource, filter) do
-          {:ok, parsed} ->
-            {:ok, Ash.Query.filter(resource, ^parsed)}
-
-          {:error, error} ->
-            {:error, error}
-        end
-      else
-        {:ok, resource}
-      end
-
-    case query do
+    case path_args_and_filter(request.path_params, resource, action) do
       {:error, error} ->
         {:error, Request.add_error(request, error, :filter)}
 
-      {:ok, query} ->
-        query =
-          if load do
-            Ash.Query.load(query, load)
+      {:ok, params, filter} ->
+        action = action.name
+
+        fields_to_load =
+          if through_resource do
+            []
           else
-            query
+            fields(request, request.resource)
           end
 
-        {:ok, filter,
-         query
-         |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
-         |> Ash.Query.set_context(request.context)
-         |> Ash.Query.for_read(
-           action,
-           params,
-           Keyword.put(Request.opts(request), :page, false)
-         )
-         |> Ash.Query.limit(1)}
+        query =
+          if filter do
+            case Ash.Filter.parse_input(resource, filter) do
+              {:ok, parsed} ->
+                {:ok, Ash.Query.filter(resource, ^parsed)}
+
+              {:error, error} ->
+                {:error, error}
+            end
+          else
+            {:ok, resource}
+          end
+
+        case query do
+          {:error, error} ->
+            {:error, Request.add_error(request, error, :filter)}
+
+          {:ok, query} ->
+            query =
+              if load do
+                Ash.Query.load(query, load)
+              else
+                query
+              end
+
+            {:ok, filter,
+             query
+             |> Ash.Query.load(fields_to_load ++ (request.includes_keyword || []))
+             |> Ash.Query.set_context(request.context)
+             |> Ash.Query.for_read(
+               action,
+               params,
+               Keyword.put(Request.opts(request), :page, false)
+             )
+             |> Ash.Query.limit(1)}
+        end
     end
   end
 
@@ -658,71 +702,73 @@ defmodule AshJsonApi.Controllers.Helpers do
             Request.add_error(request, error, :read)
         end
       else
-        {params, filter} = path_args_and_filter(request.path_params, resource, action)
+        case path_args_and_filter(request.path_params, resource, action) do
+          {:ok, params, filter} ->
+            action = action.name
 
-        action = action.name
-
-        fields_to_load =
-          if through_resource do
-            []
-          else
-            fields(request, request.resource) ++ (request.includes_keyword || [])
-          end
-
-        query =
-          if filter do
-            case Ash.Filter.parse_input(resource, filter) do
-              {:ok, parsed} ->
-                {:ok, Ash.Query.filter(resource, ^parsed)}
-
-              {:error, error} ->
-                {:error, error}
-            end
-          else
-            {:ok, resource}
-          end
-
-        case query do
-          {:error, error} ->
-            {:error, Request.add_error(request, error, :filter)}
-
-          {:ok, query} ->
-            query =
-              if load do
-                Ash.Query.load(query, load)
+            fields_to_load =
+              if through_resource do
+                []
               else
-                query
+                fields(request, request.resource) ++ (request.includes_keyword || [])
               end
 
             query =
-              query
-              |> Ash.Query.set_context(request.context)
-              |> Ash.Query.for_read(
-                action,
-                Map.merge(request.arguments, params),
-                Keyword.put(Request.opts(request), :page, false)
-              )
-              |> Ash.Query.load(fields_to_load)
+              if filter do
+                case Ash.Filter.parse_input(resource, filter) do
+                  {:ok, parsed} ->
+                    {:ok, Ash.Query.filter(resource, ^parsed)}
 
-            request = Request.assign(request, :query, query)
+                  {:error, error} ->
+                    {:error, error}
+                end
+              else
+                {:ok, resource}
+              end
 
-            query
-            |> Ash.read_one(Request.opts(request))
-            |> case do
-              {:ok, nil} ->
-                error = Error.NotFound.exception(filter: filter, resource: resource)
-                Request.add_error(request, error, :fetch_from_path)
-
-                Request.add_error(request, error, :fetch_from_path)
-
-              {:ok, record} ->
-                request
-                |> Request.assign(:result, record)
-                |> Request.assign(:record_from_path, record)
-
+            case query do
               {:error, error} ->
-                Request.add_error(request, error, :fetch_from_path)
+                {:error, Request.add_error(request, error, :filter)}
+
+              {:ok, query} ->
+                query =
+                  if load do
+                    Ash.Query.load(query, load)
+                  else
+                    query
+                  end
+
+                query =
+                  query
+                  |> Ash.Query.set_context(request.context)
+                  |> Ash.Query.for_read(
+                    action,
+                    Map.merge(request.arguments, params),
+                    Keyword.put(Request.opts(request), :page, false)
+                  )
+                  |> Ash.Query.load(fields_to_load)
+
+                request = Request.assign(request, :query, query)
+
+                query
+                |> Ash.read_one(Request.opts(request))
+                |> case do
+                  {:ok, nil} ->
+                    error = Error.NotFound.exception(filter: filter, resource: resource)
+                    Request.add_error(request, error, :fetch_from_path)
+
+                  {:ok, record} ->
+                    request
+                    |> Request.assign(:result, record)
+                    |> Request.assign(:record_from_path, record)
+
+                  {:error, error} ->
+                    Request.add_error(request, error, :fetch_from_path)
+                end
             end
+
+          {:error, error} ->
+            Request.add_error(request, error, :fetch_from_path)
         end
       end
     end)
