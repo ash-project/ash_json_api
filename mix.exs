@@ -52,6 +52,7 @@ defmodule AshJsonApi.MixProject do
         "documentation/topics/open-api.md",
         "documentation/topics/relationships.md",
         "documentation/topics/links.md",
+        "documentation/topics/composite-primary-keys.md",
         "documentation/topics/upgrade.md",
         "documentation/topics/authorize-with-json-api.md",
         "documentation/topics/authenticate-with-json-api.md",

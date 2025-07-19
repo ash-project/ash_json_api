@@ -36,6 +36,7 @@ spark_locals_without_parens = [
   patch_relationship: 1,
   patch_relationship: 2,
   patch_relationship: 3,
+  path_param_is_composite_key: 1,
   post: 1,
   post: 2,
   post: 3,

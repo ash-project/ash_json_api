@@ -105,7 +105,12 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   def run_action(request) do
     chain(request, fn request ->
-      case path_args_and_filter(request.path_params, request.resource, request.action) do
+      case path_args_and_filter(
+             request.path_params,
+             request.resource,
+             request.action,
+             request.route
+           ) do
         {:ok, route_params, _filter} ->
           action_input =
             request.resource
@@ -161,7 +166,12 @@ defmodule AshJsonApi.Controllers.Helpers do
     chain(request, fn %{resource: resource} = request ->
       cond do
         request.action.type == :read ->
-          case path_args_and_filter(request.path_params, request.resource, request.action) do
+          case path_args_and_filter(
+                 request.path_params,
+                 request.resource,
+                 request.action,
+                 request.route
+               ) do
             {:ok, route_params, _filter} ->
               query =
                 request.resource
@@ -217,7 +227,12 @@ defmodule AshJsonApi.Controllers.Helpers do
           end
 
         request.action.type == :action ->
-          case path_args_and_filter(request.path_params, request.resource, request.action) do
+          case path_args_and_filter(
+                 request.path_params,
+                 request.resource,
+                 request.action,
+                 request.route
+               ) do
             {:ok, route_params, _filter} ->
               action_input =
                 request.resource
@@ -271,7 +286,12 @@ defmodule AshJsonApi.Controllers.Helpers do
               []
             end
 
-          case path_args_and_filter(request.path_params, request.resource, request.action) do
+          case path_args_and_filter(
+                 request.path_params,
+                 request.resource,
+                 request.action,
+                 request.route
+               ) do
             {:ok, route_params, _filter} ->
               changeset =
                 resource
@@ -308,7 +328,12 @@ defmodule AshJsonApi.Controllers.Helpers do
   def update_record(request, attributes \\ &Map.merge(&1.attributes, &1.arguments)) do
     chain(request, fn request ->
       if request.action.type == :action do
-        case path_args_and_filter(request.path_params, request.resource, request.action) do
+        case path_args_and_filter(
+               request.path_params,
+               request.resource,
+               request.action,
+               request.route
+             ) do
           {:ok, route_params, _filter} ->
             action_input =
               request.resource
@@ -469,7 +494,12 @@ defmodule AshJsonApi.Controllers.Helpers do
   def destroy_record(request) do
     chain(request, fn request ->
       if request.action.type == :action do
-        case path_args_and_filter(request.path_params, request.resource, request.action) do
+        case path_args_and_filter(
+               request.path_params,
+               request.resource,
+               request.action,
+               request.route
+             ) do
           {:ok, route_params, _filter} ->
             action_input =
               request.resource
@@ -548,41 +578,51 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
-  defp path_args_and_filter(path_params, resource, action) do
+  defp path_args_and_filter(path_params, resource, action, route) do
     primary_key_fields = AshJsonApi.Resource.Info.primary_key_fields(resource)
 
     Enum.reduce_while(path_params, {:ok, %{}, %{}}, fn
-      {"id", value}, {:ok, params, filter} when primary_key_fields != [] ->
-        primary_key_delimiter = AshJsonApi.Resource.Info.primary_key_delimiter(resource)
-        values = String.split(value, primary_key_delimiter)
-
-        if Enum.count(values) != Enum.count(primary_key_fields) do
-          {:halt,
-           {:error, Ash.Error.Query.NotFound.exception(primary_key: value, resource: resource)}}
-        else
-          filter =
-            primary_key_fields
-            |> Enum.zip(values)
-            |> Enum.reduce(filter, fn {key, value}, filter ->
-              Map.put(filter, key, value)
-            end)
-
-          {:cont, {:ok, params, filter}}
-        end
-
       {key, value}, {:ok, params, filter} ->
-        case Enum.find(action.arguments, &(to_string(&1.name) == key)) do
-          nil ->
-            case Ash.Resource.Info.public_attribute(resource, key) do
-              nil ->
-                {:cont, {:ok, params, filter}}
+        # Check if this parameter should be parsed as a composite key
+        if route != nil and to_string(route.path_param_is_composite_key) == key and
+             primary_key_fields != [] do
+          primary_key_delimiter = AshJsonApi.Resource.Info.primary_key_delimiter(resource)
+          values = String.split(value, primary_key_delimiter)
 
-              attribute ->
-                {:cont, {:ok, params, Map.put(filter, attribute.name, value)}}
-            end
+          if Enum.count(values) != Enum.count(primary_key_fields) do
+            {:halt,
+             {:error, Ash.Error.Query.NotFound.exception(primary_key: value, resource: resource)}}
+          else
+            filter =
+              primary_key_fields
+              |> Enum.zip(values)
+              |> Enum.reduce(filter, fn {key, value}, filter ->
+                Map.put(filter, key, value)
+              end)
 
-          argument ->
-            {:cont, {:ok, Map.put(params, argument.name, value), filter}}
+            {:cont, {:ok, params, filter}}
+          end
+        else
+          # Normal parameter handling
+          case Enum.find(action.arguments, &(to_string(&1.name) == key)) do
+            nil ->
+              case Ash.Resource.Info.public_attribute(resource, key) do
+                nil ->
+                  {:halt,
+                   {:error,
+                    Ash.Error.Invalid.NoSuchInput.exception(
+                      resource: resource,
+                      action: action.name,
+                      inputs: []
+                    )}}
+
+                attribute ->
+                  {:cont, {:ok, params, Map.put(filter, attribute.name, value)}}
+              end
+
+            argument ->
+              {:cont, {:ok, Map.put(params, argument.name, value), filter}}
+          end
         end
     end)
   end
@@ -601,9 +641,9 @@ defmodule AshJsonApi.Controllers.Helpers do
         request.action
       end
 
-    case path_args_and_filter(request.path_params, resource, action) do
+    case path_args_and_filter(request.path_params, resource, action, request.route) do
       {:error, error} ->
-        {:error, Request.add_error(request, error, :filter)}
+        {:error, error}
 
       {:ok, params, filter} ->
         action = action.name
@@ -702,7 +742,7 @@ defmodule AshJsonApi.Controllers.Helpers do
             Request.add_error(request, error, :read)
         end
       else
-        case path_args_and_filter(request.path_params, resource, action) do
+        case path_args_and_filter(request.path_params, resource, action, request.route) do
           {:ok, params, filter} ->
             action = action.name
 

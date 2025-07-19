@@ -206,6 +206,10 @@ A GET route to retrieve a single record
 get :read
 ```
 
+```
+get :read, path_param_is_composite_key: :id
+```
+
 
 
 ### Arguments
@@ -226,6 +230,7 @@ get :read
 | [`name`](#json_api-routes-base_route-get-name){: #json_api-routes-base_route-get-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-get-derive_sort?){: #json_api-routes-base_route-get-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-get-derive_filter?){: #json_api-routes-base_route-get-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-get-path_param_is_composite_key){: #json_api-routes-base_route-get-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -271,6 +276,7 @@ index :read
 | [`name`](#json_api-routes-base_route-index-name){: #json_api-routes-base_route-index-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-index-derive_sort?){: #json_api-routes-base_route-index-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-index-derive_filter?){: #json_api-routes-base_route-index-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-index-path_param_is_composite_key){: #json_api-routes-base_route-index-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -316,6 +322,7 @@ post :create
 | [`name`](#json_api-routes-base_route-post-name){: #json_api-routes-base_route-post-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-post-derive_sort?){: #json_api-routes-base_route-post-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-post-derive_filter?){: #json_api-routes-base_route-post-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-post-path_param_is_composite_key){: #json_api-routes-base_route-post-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 | [`relationship_arguments`](#json_api-routes-base_route-post-relationship_arguments){: #json_api-routes-base_route-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
 | [`upsert?`](#json_api-routes-base_route-post-upsert?){: #json_api-routes-base_route-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
 | [`upsert_identity`](#json_api-routes-base_route-post-upsert_identity){: #json_api-routes-base_route-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
@@ -343,6 +350,10 @@ A PATCH route to update a record
 patch :update
 ```
 
+```
+patch :update, path_param_is_composite_key: :id
+```
+
 
 
 ### Arguments
@@ -366,6 +377,7 @@ patch :update
 | [`name`](#json_api-routes-base_route-patch-name){: #json_api-routes-base_route-patch-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-patch-derive_sort?){: #json_api-routes-base_route-patch-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-patch-derive_filter?){: #json_api-routes-base_route-patch-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-patch-path_param_is_composite_key){: #json_api-routes-base_route-patch-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -390,6 +402,10 @@ A DELETE route to destroy a record
 delete :destroy
 ```
 
+```
+delete :destroy, path_param_is_composite_key: :id
+```
+
 
 
 ### Arguments
@@ -412,6 +428,7 @@ delete :destroy
 | [`name`](#json_api-routes-base_route-delete-name){: #json_api-routes-base_route-delete-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-delete-derive_sort?){: #json_api-routes-base_route-delete-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-delete-derive_filter?){: #json_api-routes-base_route-delete-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-delete-path_param_is_composite_key){: #json_api-routes-base_route-delete-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -458,6 +475,7 @@ related :comments, :read
 | [`name`](#json_api-routes-base_route-related-name){: #json_api-routes-base_route-related-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-related-derive_sort?){: #json_api-routes-base_route-related-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-related-derive_filter?){: #json_api-routes-base_route-related-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-related-path_param_is_composite_key){: #json_api-routes-base_route-related-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -504,6 +522,7 @@ relationship :comments, :read
 | [`name`](#json_api-routes-base_route-relationship-name){: #json_api-routes-base_route-relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-relationship-derive_sort?){: #json_api-routes-base_route-relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-relationship-derive_filter?){: #json_api-routes-base_route-relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-relationship-path_param_is_composite_key){: #json_api-routes-base_route-relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -549,6 +568,7 @@ post_to_relationship :comments
 | [`name`](#json_api-routes-base_route-post_to_relationship-name){: #json_api-routes-base_route-post_to_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-post_to_relationship-derive_sort?){: #json_api-routes-base_route-post_to_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-post_to_relationship-derive_filter?){: #json_api-routes-base_route-post_to_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-post_to_relationship-path_param_is_composite_key){: #json_api-routes-base_route-post_to_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -594,6 +614,7 @@ patch_relationship :comments
 | [`name`](#json_api-routes-base_route-patch_relationship-name){: #json_api-routes-base_route-patch_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-patch_relationship-derive_sort?){: #json_api-routes-base_route-patch_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-patch_relationship-derive_filter?){: #json_api-routes-base_route-patch_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-patch_relationship-path_param_is_composite_key){: #json_api-routes-base_route-patch_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -639,6 +660,7 @@ delete_from_relationship :comments
 | [`name`](#json_api-routes-base_route-delete_from_relationship-name){: #json_api-routes-base_route-delete_from_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-delete_from_relationship-derive_sort?){: #json_api-routes-base_route-delete_from_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-delete_from_relationship-derive_filter?){: #json_api-routes-base_route-delete_from_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-delete_from_relationship-path_param_is_composite_key){: #json_api-routes-base_route-delete_from_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -686,6 +708,7 @@ route :get, "say_hi/:name", :say_hello
 | [`name`](#json_api-routes-base_route-route-name){: #json_api-routes-base_route-route-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-base_route-route-derive_sort?){: #json_api-routes-base_route-route-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-route-derive_filter?){: #json_api-routes-base_route-route-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-base_route-route-path_param_is_composite_key){: #json_api-routes-base_route-route-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -717,6 +740,10 @@ A GET route to retrieve a single record
 get :read
 ```
 
+```
+get :read, path_param_is_composite_key: :id
+```
+
 
 
 ### Arguments
@@ -737,6 +764,7 @@ get :read
 | [`name`](#json_api-routes-get-name){: #json_api-routes-get-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-get-derive_sort?){: #json_api-routes-get-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-get-derive_filter?){: #json_api-routes-get-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-get-path_param_is_composite_key){: #json_api-routes-get-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -782,6 +810,7 @@ index :read
 | [`name`](#json_api-routes-index-name){: #json_api-routes-index-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-index-derive_sort?){: #json_api-routes-index-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-index-derive_filter?){: #json_api-routes-index-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-index-path_param_is_composite_key){: #json_api-routes-index-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -827,6 +856,7 @@ post :create
 | [`name`](#json_api-routes-post-name){: #json_api-routes-post-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-post-derive_sort?){: #json_api-routes-post-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-post-derive_filter?){: #json_api-routes-post-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-post-path_param_is_composite_key){: #json_api-routes-post-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 | [`relationship_arguments`](#json_api-routes-post-relationship_arguments){: #json_api-routes-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
 | [`upsert?`](#json_api-routes-post-upsert?){: #json_api-routes-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
 | [`upsert_identity`](#json_api-routes-post-upsert_identity){: #json_api-routes-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
@@ -854,6 +884,10 @@ A PATCH route to update a record
 patch :update
 ```
 
+```
+patch :update, path_param_is_composite_key: :id
+```
+
 
 
 ### Arguments
@@ -877,6 +911,7 @@ patch :update
 | [`name`](#json_api-routes-patch-name){: #json_api-routes-patch-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-patch-derive_sort?){: #json_api-routes-patch-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-patch-derive_filter?){: #json_api-routes-patch-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-patch-path_param_is_composite_key){: #json_api-routes-patch-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -901,6 +936,10 @@ A DELETE route to destroy a record
 delete :destroy
 ```
 
+```
+delete :destroy, path_param_is_composite_key: :id
+```
+
 
 
 ### Arguments
@@ -923,6 +962,7 @@ delete :destroy
 | [`name`](#json_api-routes-delete-name){: #json_api-routes-delete-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-delete-derive_sort?){: #json_api-routes-delete-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-delete-derive_filter?){: #json_api-routes-delete-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-delete-path_param_is_composite_key){: #json_api-routes-delete-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -969,6 +1009,7 @@ related :comments, :read
 | [`name`](#json_api-routes-related-name){: #json_api-routes-related-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-related-derive_sort?){: #json_api-routes-related-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-related-derive_filter?){: #json_api-routes-related-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-related-path_param_is_composite_key){: #json_api-routes-related-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -1015,6 +1056,7 @@ relationship :comments, :read
 | [`name`](#json_api-routes-relationship-name){: #json_api-routes-relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-relationship-derive_sort?){: #json_api-routes-relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-relationship-derive_filter?){: #json_api-routes-relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-relationship-path_param_is_composite_key){: #json_api-routes-relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -1060,6 +1102,7 @@ post_to_relationship :comments
 | [`name`](#json_api-routes-post_to_relationship-name){: #json_api-routes-post_to_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-post_to_relationship-derive_sort?){: #json_api-routes-post_to_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-post_to_relationship-derive_filter?){: #json_api-routes-post_to_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-post_to_relationship-path_param_is_composite_key){: #json_api-routes-post_to_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -1105,6 +1148,7 @@ patch_relationship :comments
 | [`name`](#json_api-routes-patch_relationship-name){: #json_api-routes-patch_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-patch_relationship-derive_sort?){: #json_api-routes-patch_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-patch_relationship-derive_filter?){: #json_api-routes-patch_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-patch_relationship-path_param_is_composite_key){: #json_api-routes-patch_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -1150,6 +1194,7 @@ delete_from_relationship :comments
 | [`name`](#json_api-routes-delete_from_relationship-name){: #json_api-routes-delete_from_relationship-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-delete_from_relationship-derive_sort?){: #json_api-routes-delete_from_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-delete_from_relationship-derive_filter?){: #json_api-routes-delete_from_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-delete_from_relationship-path_param_is_composite_key){: #json_api-routes-delete_from_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 
@@ -1197,6 +1242,7 @@ route :get, "say_hi/:name", :say_hello
 | [`name`](#json_api-routes-route-name){: #json_api-routes-route-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
 | [`derive_sort?`](#json_api-routes-route-derive_sort?){: #json_api-routes-route-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-route-derive_filter?){: #json_api-routes-route-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-route-path_param_is_composite_key){: #json_api-routes-route-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
 
 
 

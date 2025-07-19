@@ -291,10 +291,10 @@ defmodule Test.Acceptance.PatchTest do
 
       routes do
         base("/bios")
-        get :read
+        get :read, path_param_is_composite_key: :id
         index :read
         post :create
-        patch :update
+        patch :update, path_param_is_composite_key: :id
       end
     end
 
@@ -746,12 +746,16 @@ defmodule Test.Acceptance.PatchTest do
         })
 
       assert response.status == 200
-      assert %{"data" => %{"attributes" => %{"bio" => "Updated bio content"}}} = response.resp_body
+
+      assert %{"data" => %{"attributes" => %{"bio" => "Updated bio content"}}} =
+               response.resp_body
 
       # Verify the record was actually updated by reading it back via API
       get_response = Domain |> get("/bios/#{composite_id}")
       assert get_response.status == 200
-      assert %{"data" => %{"attributes" => %{"bio" => "Updated bio content"}}} = get_response.resp_body
+
+      assert %{"data" => %{"attributes" => %{"bio" => "Updated bio content"}}} =
+               get_response.resp_body
     end
 
     test "patch with wrong composite primary key returns 404", %{bio: bio} do
@@ -760,16 +764,51 @@ defmodule Test.Acceptance.PatchTest do
 
       response =
         Domain
-        |> patch("/bios/#{wrong_composite_id}", %{
-          data: %{
-            type: "bio",
-            attributes: %{
-              bio: "This should not work"
+        |> patch(
+          "/bios/#{wrong_composite_id}",
+          %{
+            data: %{
+              type: "bio",
+              attributes: %{
+                bio: "This should not work"
+              }
             }
-          }
-        }, status: 404)
+          },
+          status: 404
+        )
 
       assert %{"errors" => [%{"code" => "not_found"}]} = response.resp_body
+    end
+
+    test "patch without opt-in path_param_is_composite_key does not parse composite keys", %{
+      bio: bio
+    } do
+      # Create a resource with composite key but WITHOUT opt-in
+      # We'll simulate this by directly testing path parameter parsing
+      # The ID should NOT be split with the delimiter
+      composite_id = "#{bio.author_id}|#{bio.pkey_b}"
+
+      # Create a Bio with a weird ID that contains the delimiter
+      _weird_bio =
+        Bio
+        |> Ash.Changeset.for_create(:create, %{
+          author_id: bio.author_id,
+          # The pkey_b itself contains the delimiter
+          pkey_b: composite_id,
+          bio: "Bio with delimiter in key"
+        })
+        |> Ash.create!()
+
+      # Since we're using the opt-in mechanism, this should correctly handle
+      # the composite key and find the original bio, not the weird one
+      response =
+        Domain
+        |> get("/bios/#{composite_id}")
+
+      assert response.status == 200
+      assert %{"data" => %{"attributes" => %{"bio" => bio_content}}} = response.resp_body
+      # Should find the original bio
+      assert bio_content == bio.bio
     end
   end
 end

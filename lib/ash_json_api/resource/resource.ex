@@ -56,6 +56,12 @@ defmodule AshJsonApi.Resource do
       doc:
         "Whether or not to derive a filter parameter based on the sortable fields of the resource",
       default: true
+    ],
+    path_param_is_composite_key: [
+      type: :atom,
+      doc:
+        "The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details.",
+      default: nil
     ]
   ]
 
@@ -64,7 +70,8 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A GET route to retrieve a single record",
     examples: [
-      "get :read"
+      "get :read",
+      "get :read, path_param_is_composite_key: :id"
     ],
     schema:
       @route_schema
@@ -142,7 +149,8 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A PATCH route to update a record",
     examples: [
-      "patch :update"
+      "patch :update",
+      "patch :update, path_param_is_composite_key: :id"
     ],
     schema:
       @route_schema
@@ -172,7 +180,8 @@ defmodule AshJsonApi.Resource do
     args: [:action],
     describe: "A DELETE route to destroy a record",
     examples: [
-      "delete :destroy"
+      "delete :destroy",
+      "delete :destroy, path_param_is_composite_key: :id"
     ],
     schema:
       @route_schema
