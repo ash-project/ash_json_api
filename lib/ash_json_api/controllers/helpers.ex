@@ -56,14 +56,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         request = Request.assign(request, :action_input, action_input)
 
         with {:ok, result} <- Ash.run_action(action_input),
-             {:ok, result} <-
-               Ash.load(
-                 result,
-                 fields(request, request.resource),
-                 Request.load_opts(request, reuse_values?: true)
-               ),
-             {:ok, result} <-
-               Ash.load(result, request.includes_keyword, Request.load_opts(request)) do
+             {:ok, result} <- load_action_data(result, request) do
           Request.assign(request, :result, result)
         else
           {:error, error} ->
@@ -101,6 +94,30 @@ defmodule AshJsonApi.Controllers.Helpers do
         end
       end
     end)
+  end
+
+  defp load_action_data(result, request) do
+    # If the resouce has no primary read action, we can skip loading
+    if is_nil(Ash.Resource.Info.primary_action(request.resource, :read)) do
+      {:ok, result}
+    else
+      with {:ok, result} <-
+             Ash.load(
+               result,
+               fields(
+                 request,
+                 request.resource
+               ),
+               Request.load_opts(request, reuse_values?: true)
+             ),
+           {:ok, result} <-
+             Ash.load(result, request.includes_keyword, Request.load_opts(request)) do
+        {:ok, result}
+      else
+        {:error, error} ->
+          {:error, error}
+      end
+    end
   end
 
   def run_action(request) do
