@@ -31,7 +31,19 @@ defmodule AshJsonApi.Error do
     [error]
   end
 
-  def to_json_api_errors(domain, resource, %{class: :invalid} = error, type) do
+  def to_json_api_errors(_domain, _resource, %{class: :forbidden} = error, _type) do
+    [
+      %__MODULE__{
+        id: Ash.UUID.generate(),
+        status_code: class_to_status(error.class),
+        code: "forbidden",
+        title: "Forbidden",
+        detail: "forbidden"
+      }
+    ]
+  end
+
+  def to_json_api_errors(domain, resource, error, type) do
     if AshJsonApi.ToJsonApiError.impl_for(error) do
       error
       |> AshJsonApi.ToJsonApiError.to_json_api_error()
@@ -53,13 +65,21 @@ defmodule AshJsonApi.Error do
         "`#{uuid}`: AshJsonApi.Error not implemented for error:\n\n#{Exception.format(:error, error, stacktrace)}"
       )
 
+      code = if error.class == :forbidden, do: "forbidden", else: "something_went_wrong"
+      title = if error.class == :forbidden, do: "Forbidden", else: "SomethingWentWrong"
+
+      detail =
+        if error.class == :forbidden,
+          do: "forbidden",
+          else: "Something went wrong. Error id: #{uuid}"
+
       if AshJsonApi.Domain.Info.show_raised_errors?(domain) do
         [
           %__MODULE__{
             id: uuid,
             status_code: class_to_status(error.class),
-            code: "something_went_wrong",
-            title: "SomethingWentWrong",
+            code: code,
+            title: title,
             detail: """
             Raised error: #{uuid}
 
@@ -72,52 +92,13 @@ defmodule AshJsonApi.Error do
           %__MODULE__{
             id: uuid,
             status_code: class_to_status(error.class),
-            code: "something_went_wrong",
-            title: "SomethingWentWrong",
-            detail: "Something went wrong. Error id: #{uuid}"
+            code: code,
+            title: title,
+            detail: detail
           }
         ]
       end
     end
-  end
-
-  def to_json_api_errors(_domain, _resource, %{class: :forbidden} = error, _type) do
-    [
-      %__MODULE__{
-        id: Ash.UUID.generate(),
-        status_code: class_to_status(error.class),
-        code: "forbidden",
-        title: "Forbidden",
-        detail: "forbidden"
-      }
-    ]
-  end
-
-  def to_json_api_errors(_domain, _resource, error, _type) do
-    uuid = Ash.UUID.generate()
-
-    stacktrace =
-      case error do
-        %{stacktrace: %{stacktrace: v}} ->
-          v
-
-        _ ->
-          nil
-      end
-
-    Logger.warning(
-      "`#{uuid}`: AshJsonApi.Error not implemented for error:\n\n#{Exception.format(:error, error, stacktrace)}"
-    )
-
-    [
-      %__MODULE__{
-        id: uuid,
-        status_code: class_to_status(error.class),
-        code: "something_went_wrong",
-        title: "SomethingWentWrong",
-        detail: "Something went wrong. Error id: #{uuid}"
-      }
-    ]
   end
 
   @doc "Turns an error class into an HTTP status code"
