@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.38](https://github.com/ash-project/ash_json_api/compare/v1.4.37...v1.4.38) (2025-07-22)
+
+
+
+
+### Bug Fixes:
+
+* check for impl for all classes of errors. (#365) by [@barnabasJ](https://github.com/barnabasJ)
+
+* make composite primary key path param behavior opt-in by [@zachdaniel](https://github.com/zachdaniel)
+
+* properly apply fetch/get logic on records w/ composite primary keys by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.37](https://github.com/ash-project/ash_json_api/compare/v1.4.36...v1.4.37) (2025-07-17)
 
 
