@@ -31,18 +31,6 @@ defmodule AshJsonApi.Error do
     [error]
   end
 
-  def to_json_api_errors(_domain, _resource, %{class: :forbidden} = error, _type) do
-    [
-      %__MODULE__{
-        id: Ash.UUID.generate(),
-        status_code: class_to_status(error.class),
-        code: "forbidden",
-        title: "Forbidden",
-        detail: "forbidden"
-      }
-    ]
-  end
-
   def to_json_api_errors(domain, resource, error, type) do
     if AshJsonApi.ToJsonApiError.impl_for(error) do
       error
