@@ -129,6 +129,10 @@ defmodule Test.Acceptance.PatchTest do
         require_atomic?(false)
         accept([:preferences])
       end
+
+      update :update_author_name do
+        accept([:name])
+      end
     end
 
     attributes do
@@ -221,6 +225,10 @@ defmodule Test.Acceptance.PatchTest do
 
       update :update_email do
         accept([:email, :name])
+      end
+
+      update :update_post_name do
+        accept([:name])
       end
 
       action :fake_update, :struct do
@@ -327,6 +335,18 @@ defmodule Test.Acceptance.PatchTest do
       resource(Author)
       resource(Post)
       resource(Bio)
+    end
+
+    json_api do
+      routes do
+        base_route "/domain_posts", Post do
+          patch :update_post_name, route: "/:id/update_post_name"
+
+          base_route "/:post_id/authors", Author do
+            patch :update_author_name, route: "/:id/update_author_name"
+          end
+        end
+      end
     end
   end
 
@@ -809,6 +829,47 @@ defmodule Test.Acceptance.PatchTest do
       assert %{"data" => %{"attributes" => %{"bio" => bio_content}}} = response.resp_body
       # Should find the original bio
       assert bio_content == bio.bio
+    end
+  end
+
+  describe "domain routes" do
+    setup do
+      id = Ecto.UUID.generate()
+
+      author =
+        Author
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
+        |> Ash.create!()
+
+      posts =
+        Enum.map(1..2, fn _ ->
+          Post
+          |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+          |> Ash.Changeset.force_change_attribute(:author_id, author.id)
+          |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
+          |> Ash.create!()
+        end)
+
+      %{posts: posts, author: author}
+    end
+
+    test "patch updates post attribute", %{posts: [%{id: post_id} | _]} do
+      assert %{status: 200} =
+               Domain
+               |> patch("/domain_posts/#{post_id}/update_post_name", %{
+                 data: %{attributes: %{name: "New name"}}
+               })
+    end
+
+    test "patch updates nested route attribute", %{
+      author: %{id: author_id},
+      posts: [%{id: post_id} | _]
+    } do
+      assert %{status: 200} =
+               Domain
+               |> patch("/domain_posts/#{post_id}/authors/#{author_id}/update_author_name", %{
+                 data: %{attributes: %{name: "New name"}}
+               })
     end
   end
 end
