@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.39](https://github.com/ash-project/ash_json_api/compare/v1.4.38...v1.4.39) (2025-07-29)
+
+
+
+
+### Bug Fixes:
+
+* remove default case for class: :forbidden (#367) by Philip Capel
+
 ## [v1.4.38](https://github.com/ash-project/ash_json_api/compare/v1.4.37...v1.4.38) (2025-07-22)
 
 
