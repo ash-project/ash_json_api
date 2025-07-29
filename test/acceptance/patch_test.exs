@@ -854,10 +854,13 @@ defmodule Test.Acceptance.PatchTest do
     end
 
     test "patch updates post attribute", %{posts: [%{id: post_id} | _]} do
-      assert %{status: 200} =
+      assert %{
+               status: 200,
+               resp_body: %{"data" => %{"attributes" => %{"name" => "New post name"}}}
+             } =
                Domain
                |> patch("/domain_posts/#{post_id}/update_post_name", %{
-                 data: %{attributes: %{name: "New name"}}
+                 data: %{attributes: %{name: "New post name"}}
                })
     end
 
@@ -865,10 +868,13 @@ defmodule Test.Acceptance.PatchTest do
       author: %{id: author_id},
       posts: [%{id: post_id} | _]
     } do
-      assert %{status: 200} =
+      assert %{
+               status: 200,
+               resp_body: %{"data" => %{"attributes" => %{"name" => "New author name"}}}
+             } =
                Domain
                |> patch("/domain_posts/#{post_id}/authors/#{author_id}/update_author_name", %{
-                 data: %{attributes: %{name: "New name"}}
+                 data: %{attributes: %{name: "New author name"}}
                })
     end
   end
