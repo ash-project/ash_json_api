@@ -141,4 +141,21 @@ defmodule Test.Acceptance.GenericActionIndexTest do
     assert String.contains?(source_pointer, "query"),
            "Expected source pointer '#{source_pointer}' to contain field name 'query'"
   end
+
+  test "generic GET actions include arguments as query parameters in JSON schema" do
+    schema = AshJsonApi.JsonSchema.generate([Domain])
+
+    assert %{
+             "method" => "GET",
+             "rel" => "route",
+             "hrefSchema" => %{
+               "properties" => properties,
+               "required" => required
+             }
+           } = Enum.find(schema["links"], &(&1["method"] == "GET" and &1["rel"] == "route"))
+
+    assert Map.has_key?(properties, "query")
+    assert Map.has_key?(properties, "category")
+    assert "query" in required
+  end
 end

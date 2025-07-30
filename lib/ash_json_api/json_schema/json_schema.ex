@@ -675,7 +675,7 @@ defmodule AshJsonApi.JsonSchema do
       }
     }
 
-    if route.type in [:get, :related] do
+    if route.type in [:get, :related] or (route.type == :route and route.method == :get) do
       props
       |> add_route_properties(resource, properties)
       |> add_read_arguments(route, resource)
