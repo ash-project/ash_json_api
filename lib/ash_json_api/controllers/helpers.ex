@@ -623,13 +623,14 @@ defmodule AshJsonApi.Controllers.Helpers do
           # Normal parameter handling
           case Enum.find(action.arguments, &(to_string(&1.name) == key)) do
             nil ->
-              case Ash.Resource.Info.public_attribute(resource, key) do
+              case Ash.Resource.Info.attribute(resource, key) do
                 nil ->
                   {:halt,
                    {:error,
                     Ash.Error.Invalid.NoSuchInput.exception(
                       resource: resource,
                       action: action.name,
+                      input: key,
                       inputs: []
                     )}}
 
