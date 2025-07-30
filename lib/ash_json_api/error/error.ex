@@ -359,13 +359,22 @@ end
 
 defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Invalid.NoSuchInput do
   def to_json_api_error(error) do
+    vars =
+      if error.input do
+        error.vars
+        |> Map.new()
+        |> Map.put(:input, error.input)
+      else
+        Map.new(error.vars)
+      end
+
     %AshJsonApi.Error{
       id: Ash.UUID.generate(),
       status_code: 422,
       code: "no_such_input",
       title: "NoSuchInput",
       detail: "no such input",
-      meta: Map.new(error.vars)
+      meta: vars
     }
   end
 end
