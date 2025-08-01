@@ -419,24 +419,9 @@ defmodule Test.Acceptance.OpenApiTest do
                additionalProperties: false
              }
 
+    # Now Foo is treated as a schema with JSON API type, so it gets referenced
     assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==
-             %Schema{
-               type: :object,
-               required: [],
-               properties: %{
-                 foo: %{
-                   "anyOf" => [
-                     %Schema{
-                       type: :string,
-                       nullable: true
-                     },
-                     %{"type" => "null"}
-                   ],
-                   "description" => "Field included by default."
-                 }
-               },
-               additionalProperties: false
-             }
+             %{"$ref" => "#/components/schemas/foo"}
   end
 
   test "generic routes can omit returns, getting a `success/failure` response", %{

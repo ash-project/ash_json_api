@@ -86,7 +86,9 @@ defmodule AshJsonApi.OpenApiTest do
       resource = Post
       attribute = Ash.Resource.Info.attribute(Post, :view_count)
 
-      assert OpenApi.filter_type(attribute, resource) == [
+      {result, _acc} = OpenApi.filter_type(attribute, resource, OpenApi.empty_acc())
+
+      assert result == [
                {"post-filter-view_count",
                 %OpenApiSpex.Schema{
                   type: :object,
@@ -113,7 +115,9 @@ defmodule AshJsonApi.OpenApiTest do
       resource = Author
       aggregate = Ash.Resource.Info.aggregate(Author, :posts_count)
 
-      assert OpenApi.filter_type(aggregate, resource) == [
+      {result, _acc} = OpenApi.filter_type(aggregate, resource, OpenApi.empty_acc())
+
+      assert result == [
                {
                  "author-filter-posts_count",
                  %OpenApiSpex.Schema{
@@ -142,7 +146,9 @@ defmodule AshJsonApi.OpenApiTest do
       resource = Post
       calculation = Ash.Resource.Info.calculation(Post, :calc)
 
-      assert OpenApi.filter_type(calculation, resource) == [
+      {result, _acc} = OpenApi.filter_type(calculation, resource, OpenApi.empty_acc())
+
+      assert result == [
                {"post-filter-calc",
                 %OpenApiSpex.Schema{
                   type: :object,
@@ -173,7 +179,9 @@ defmodule AshJsonApi.OpenApiTest do
       resource = Post
       attribute = Ash.Resource.Info.attribute(Post, :view_count)
 
-      assert OpenApi.raw_filter_type(attribute, resource) == %OpenApiSpex.Schema{
+      {result, _acc} = OpenApi.raw_filter_type(attribute, resource, OpenApi.empty_acc())
+
+      assert result == %OpenApiSpex.Schema{
                type: :object,
                description: "View count of the post",
                properties: %{
@@ -194,7 +202,9 @@ defmodule AshJsonApi.OpenApiTest do
       resource = Author
       aggregate = Ash.Resource.Info.aggregate(Author, :posts_count)
 
-      assert OpenApi.raw_filter_type(aggregate, resource) == %OpenApiSpex.Schema{
+      {result, _acc} = OpenApi.raw_filter_type(aggregate, resource, OpenApi.empty_acc())
+
+      assert result == %OpenApiSpex.Schema{
                type: :object,
                properties: %{
                  in: %OpenApiSpex.Schema{type: :array, items: %OpenApiSpex.Schema{type: :integer}},
@@ -215,7 +225,9 @@ defmodule AshJsonApi.OpenApiTest do
       resource = Post
       calculation = Ash.Resource.Info.calculation(Post, :calc)
 
-      assert OpenApi.raw_filter_type(calculation, resource) == %OpenApiSpex.Schema{
+      {result, _acc} = OpenApi.raw_filter_type(calculation, resource, OpenApi.empty_acc())
+
+      assert result == %OpenApiSpex.Schema{
                type: :object,
                description: "A calculation",
                properties: %{
