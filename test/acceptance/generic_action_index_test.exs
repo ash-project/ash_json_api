@@ -135,7 +135,7 @@ defmodule Test.Acceptance.GenericActionIndexTest do
     required_error =
       Enum.find(
         errors,
-        &(&1["code"] == "invalid_query" and String.contains?(&1["detail"], "Required properties"))
+        &(&1["code"] == "required" and &1["detail"] == "is required")
       )
 
     assert required_error, "Expected to find a 'required' error"
@@ -143,8 +143,8 @@ defmodule Test.Acceptance.GenericActionIndexTest do
     source_pointer = get_in(required_error, ["source", "pointer"])
     assert source_pointer, "Expected source pointer to be present"
 
-    assert source_pointer == "/",
-           "Expected source pointer '#{source_pointer}' to be /"
+    assert source_pointer == "/query",
+           "Expected source pointer '#{source_pointer}' to be /query"
   end
 
   test "generic GET actions include arguments as query parameters in JSON schema" do

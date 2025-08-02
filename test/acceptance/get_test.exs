@@ -36,6 +36,7 @@ defmodule Test.Acceptance.GetTest do
     use Ash.Resource,
       data_layer: Ash.DataLayer.Ets,
       domain: Test.Acceptance.GetTest.Domain,
+      primary_read_warning?: false,
       extensions: [
         AshJsonApi.Resource
       ]

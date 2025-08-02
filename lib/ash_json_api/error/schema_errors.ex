@@ -3,11 +3,31 @@ defmodule AshJsonApi.Error.SchemaErrors do
   def all_errors(%{reason: reason}, format \\ :parameter) do
     reason
     |> JsonXema.ValidationError.travers_errors([], fn error, path, acc ->
-      error
-      |> error_messages(path)
-      |> Enum.reduce(acc, fn message, acc ->
-        [%{path: format_path_name(format, path), message: message} | acc]
-      end)
+      # Special handling for required errors - return proper required errors
+      case error do
+        %{required: fields} ->
+          required_errors =
+            Enum.map(fields, fn field ->
+              field_path = path ++ [field]
+
+              %{
+                path: format_path_name(format, field_path),
+                message: "is required",
+                code: "required",
+                title: "Required"
+              }
+            end)
+
+          Enum.concat(required_errors, acc)
+
+        _ ->
+          # For all other errors, use the original format
+          error
+          |> error_messages(path)
+          |> Enum.reduce(acc, fn message, acc ->
+            [%{path: format_path_name(format, path), message: message} | acc]
+          end)
+      end
     end)
     |> List.flatten()
   end
@@ -24,52 +44,13 @@ defmodule AshJsonApi.Error.SchemaErrors do
 
   defp error_messages(reason, path, acc \\ [])
 
-  defp error_messages(%{exclusiveMinimum: minimum, value: value}, path, acc)
-       when minimum == value do
-    msg = "Value #{inspect(minimum)} equals exclusive minimum value of #{inspect(minimum)}"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{minimum: minimum, exclusiveMinimum: true, value: value}, path, acc)
-       when minimum == value do
-    msg = "Value #{inspect(value)} equals exclusive minimum value of #{inspect(minimum)}"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{minimum: minimum, exclusiveMinimum: true, value: value}, path, acc) do
-    msg = "Value #{inspect(value)} is less than minimum value of #{inspect(minimum)}"
-    [msg <> at_path(path) | acc]
-  end
-
   defp error_messages(%{exclusiveMinimum: minimum, value: value}, path, acc) do
-    msg = "Value #{inspect(value)} is less than minimum value of #{inspect(minimum)}"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{minimum: minimum, value: value}, path, acc) do
-    msg = "Value #{inspect(value)} is less than minimum value of #{inspect(minimum)}"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{exclusiveMaximum: maximum, value: value}, path, acc)
-       when maximum == value do
-    msg = "Value #{inspect(maximum)} equals exclusive maximum value of #{inspect(maximum)}"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{maximum: maximum, exclusiveMaximum: true, value: value}, path, acc)
-       when maximum == value do
-    msg = "Value #{inspect(value)} equals exclusive maximum value of #{inspect(maximum)}"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{maximum: maximum, exclusiveMaximum: true, value: value}, path, acc) do
-    msg = "Value #{inspect(value)} exceeds maximum value of #{inspect(maximum)}"
+    msg = "Value #{inspect(value)} is not greater than #{inspect(minimum)}"
     [msg <> at_path(path) | acc]
   end
 
   defp error_messages(%{exclusiveMaximum: maximum, value: value}, path, acc) do
-    msg = "Value #{inspect(value)} exceeds maximum value of #{inspect(maximum)}"
+    msg = "Value #{inspect(value)} is not less than #{inspect(maximum)}"
     [msg <> at_path(path) | acc]
   end
 
@@ -78,13 +59,8 @@ defmodule AshJsonApi.Error.SchemaErrors do
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{maxLength: max, value: value}, path, acc) do
-    msg = "Expected maximum length of #{inspect(max)}, got #{inspect(value)}"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{minLength: min, value: value}, path, acc) do
-    msg = "Expected minimum length of #{inspect(min)}, got #{inspect(value)}"
+  defp error_messages(%{minimum: minimum, value: value}, path, acc) do
+    msg = "Value #{inspect(value)} is less than minimum value of #{inspect(minimum)}"
     [msg <> at_path(path) | acc]
   end
 
@@ -93,28 +69,33 @@ defmodule AshJsonApi.Error.SchemaErrors do
     [msg <> at_path(path) | acc]
   end
 
+  defp error_messages(%{type: type, value: value}, path, acc) do
+    msg = "Expected #{inspect(value)} to be #{type_name(type)}"
+    [msg <> at_path(path) | acc]
+  end
+
   defp error_messages(%{enum: _enum, value: value}, path, acc) do
-    msg = "Value #{inspect(value)} is not defined in enum"
+    msg = "Value #{inspect(value)} is not allowed in enum"
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{minProperties: min, value: value}, path, acc) do
-    msg = "Expected at least #{inspect(min)} properties, got #{inspect(value)}"
+  defp error_messages(%{const: const, value: value}, path, acc) do
+    msg = "Expected the value to be #{inspect(const)}, got #{inspect(value)}"
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{maxProperties: max, value: value}, path, acc) do
-    msg = "Expected at most #{inspect(max)} properties, got #{inspect(value)}"
+  defp error_messages(%{maxLength: max_length, value: value}, path, acc) do
+    msg = "Expected maximum length of #{max_length}, got #{inspect(value)}"
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{additionalProperties: false}, path, acc) do
-    msg = "Expected only defined properties, got key #{inspect(path)}."
-    [msg | acc]
+  defp error_messages(%{minLength: min_length, value: value}, path, acc) do
+    msg = "Expected minimum length of #{min_length}, got #{inspect(value)}"
+    [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{additionalItems: false}, path, acc) do
-    msg = "Unexpected additional item"
+  defp error_messages(%{pattern: pattern, value: value}, path, acc) do
+    msg = "String #{inspect(value)} does not match pattern #{inspect(pattern)}"
     [msg <> at_path(path) | acc]
   end
 
@@ -123,26 +104,12 @@ defmodule AshJsonApi.Error.SchemaErrors do
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{then: error}, path, acc) do
-    msg = ["Schema for then does not match#{at_path(path)}"]
-
-    error =
-      error
-      |> JsonXema.ValidationError.travers_errors([], &error_messages/3, path: path)
-      |> indent()
-
-    Enum.concat([error, msg, acc])
+  defp error_messages(%{then: _error}, path, acc) do
+    ["Schema for then does not match#{at_path(path)}" | acc]
   end
 
-  defp error_messages(%{else: error}, path, acc) do
-    msg = ["Schema for else does not match#{at_path(path)}"]
-
-    error =
-      error
-      |> JsonXema.ValidationError.travers_errors([], &error_messages/3, path: path)
-      |> indent()
-
-    Enum.concat([error, msg, acc])
+  defp error_messages(%{else: _error}, path, acc) do
+    ["Schema for else does not match#{at_path(path)}" | acc]
   end
 
   defp error_messages(%{not: :ok, value: value}, path, acc) do
@@ -150,64 +117,20 @@ defmodule AshJsonApi.Error.SchemaErrors do
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{contains: errors}, path, acc) do
-    msg = ["No items match contains#{at_path(path)}"]
-
-    errors =
-      errors
-      |> Enum.map(fn {index, reason} ->
-        JsonXema.ValidationError.travers_errors(reason, [], &error_messages/3,
-          path: path ++ [index]
-        )
-      end)
-      |> Enum.reverse()
-      |> indent()
-
-    Enum.concat([errors, msg, acc])
+  defp error_messages(%{contains: _errors}, path, acc) do
+    ["No items match contains#{at_path(path)}" | acc]
   end
 
-  defp error_messages(%{anyOf: errors}, path, acc) do
-    msg = ["No match of any schema" <> at_path(path)]
-
-    errors =
-      errors
-      |> Enum.flat_map(fn reason ->
-        reason
-        |> JsonXema.ValidationError.travers_errors([], &error_messages/3, path: path)
-        |> Enum.reverse()
-      end)
-      |> Enum.reverse()
-      |> indent()
-
-    Enum.concat([errors, msg, acc])
+  defp error_messages(%{anyOf: _errors}, path, acc) do
+    ["No match of any schema" <> at_path(path) | acc]
   end
 
-  defp error_messages(%{allOf: errors}, path, acc) do
-    msg = ["No match of all schema#{at_path(path)}"]
-
-    errors =
-      errors
-      |> Enum.map(fn reason ->
-        JsonXema.ValidationError.travers_errors(reason, [], &error_messages/3, path: path)
-      end)
-      |> Enum.reverse()
-      |> indent()
-
-    Enum.concat([errors, msg, acc])
+  defp error_messages(%{allOf: _errors}, path, acc) do
+    ["No match of all schema#{at_path(path)}" | acc]
   end
 
-  defp error_messages(%{oneOf: {:error, errors}}, path, acc) do
-    msg = ["No match of any schema#{at_path(path)}"]
-
-    errors =
-      errors
-      |> Enum.map(fn reason ->
-        JsonXema.ValidationError.travers_errors(reason, [], &error_messages/3, path: path)
-      end)
-      |> Enum.reverse()
-      |> indent()
-
-    Enum.concat([errors, msg, acc])
+  defp error_messages(%{oneOf: {:error, _errors}}, path, acc) do
+    ["No match of any schema#{at_path(path)}" | acc]
   end
 
   defp error_messages(%{oneOf: {:ok, success}}, path, acc) do
@@ -215,50 +138,30 @@ defmodule AshJsonApi.Error.SchemaErrors do
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{required: required}, path, acc) do
-    msg = "Required properties are missing: #{inspect(required)}"
-    [msg <> at_path(path) | acc]
+  defp error_messages(%{required: _required}, _path, acc) do
+    # Handled specially in all_errors/2
+    acc
   end
 
   defp error_messages(%{propertyNames: errors, value: _value}, path, acc) do
-    msg = ["Invalid property names#{at_path(path)}"]
-
-    errors =
-      errors
-      |> Enum.map(fn {key, reason} ->
-        "#{inspect(key)} : #{error_messages(reason, [], [])}"
-      end)
-      |> Enum.reverse()
-      |> indent()
-
-    Enum.concat([errors, msg, acc])
+    errors
+    |> Enum.reduce(acc, fn {key, _reason}, acc ->
+      ["Invalid property name: #{inspect(key)}#{at_path(path)}" | acc]
+    end)
   end
 
   defp error_messages(%{dependencies: deps}, path, acc) do
-    msg =
-      deps
-      |> Enum.reduce([], fn
-        {key, reason}, acc when is_map(reason) ->
-          sub_msg =
-            reason
-            |> error_messages(path, [])
-            |> Enum.reverse()
-            |> indent()
-            |> Enum.join("\n")
+    deps
+    |> Enum.reduce(acc, fn
+      {key, reason}, acc when is_map(reason) ->
+        ["Dependencies for #{inspect(key)} failed#{at_path(path)}" | acc]
 
-          ["Dependencies for #{inspect(key)} failed#{at_path(path)}\n#{sub_msg}" | acc]
-
-        {key, reason}, acc ->
-          [
-            "Dependencies for #{inspect(key)} failed#{at_path(path)}" <>
-              " Missing required key #{inspect(reason)}."
-            | acc
-          ]
-      end)
-      |> Enum.reverse()
-      |> Enum.join("\n")
-
-    [msg | acc]
+      {key, reason}, acc ->
+        [
+          "Dependencies for #{inspect(key)} failed#{at_path(path)} - Missing required key #{inspect(reason)}."
+          | acc
+        ]
+    end)
   end
 
   defp error_messages(%{minItems: min, value: value}, path, acc) do
@@ -272,33 +175,34 @@ defmodule AshJsonApi.Error.SchemaErrors do
   end
 
   defp error_messages(%{uniqueItems: true, value: value}, path, acc) do
-    msg = "Expected unique items, got #{inspect(value)}"
+    msg = "Expected items to be unique, got #{inspect(value)}"
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{const: const, value: value}, path, acc) do
-    msg = "Expected #{inspect(const)}, got #{inspect(value)}"
+  defp error_messages(%{additionalItems: false}, path, acc) do
+    msg = "Schema does not allow additional items"
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{pattern: pattern, value: value}, path, acc) do
-    msg = "Pattern #{inspect(pattern)} does not match value #{inspect(value)}"
+  defp error_messages(%{additionalProperties: false}, path, acc) do
+    msg = "Expected only defined properties, got key #{inspect(path)}"
+    [msg <> "." | acc]
+  end
+
+  defp error_messages(%{properties: _properties}, _path, acc) do
+    # Skip nested properties errors to avoid duplicates
+    acc
+  end
+
+  defp error_messages(%{minProperties: min_properties, value: value}, path, acc) do
+    msg = "Expected at least #{min_properties} properties, got #{map_size(value)}"
     [msg <> at_path(path) | acc]
   end
 
-  defp error_messages(%{type: type, value: value}, path, acc) do
-    msg = "Expected #{inspect(type)}, got #{inspect(value)}"
+  defp error_messages(%{maxProperties: max_properties, value: value}, path, acc) do
+    msg = "Expected at most #{max_properties} properties, got #{map_size(value)}"
     [msg <> at_path(path) | acc]
   end
-
-  defp error_messages(%{type: false}, path, acc) do
-    msg = "Schema always fails validation"
-    [msg <> at_path(path) | acc]
-  end
-
-  defp error_messages(%{properties: _}, _path, acc), do: acc
-
-  defp error_messages(%{items: _}, _path, acc), do: acc
 
   defp error_messages(_error, path, acc) do
     msg = "Unexpected error"
@@ -309,5 +213,10 @@ defmodule AshJsonApi.Error.SchemaErrors do
 
   defp at_path(path), do: ", at #{inspect(path)}."
 
-  defp indent(list), do: Enum.map(list, fn str -> "  #{str}" end)
+  defp type_name(types) when is_list(types) do
+    Enum.map_join(types, " or ", &type_name/1)
+  end
+
+  defp type_name(type) when is_binary(type), do: type
+  defp type_name(type) when is_atom(type), do: Atom.to_string(type)
 end
