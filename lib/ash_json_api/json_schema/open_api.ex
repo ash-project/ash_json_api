@@ -50,6 +50,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
+    require Logger
+
     @typep content_type_format() :: :json | :multipart
     @typep acc() :: map()
 
@@ -57,7 +59,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     Creates an empty accumulator for schema generation.
     """
     def empty_acc do
-      %{schemas: %{}, seen_non_schema_types: []}
+      %{schemas: %{}, seen_non_schema_types: [], seen_input_types: []}
     end
 
     @dialyzer {:nowarn_function, {:action_description, 3}}
@@ -673,7 +675,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         ) do
       if instance_of = constraints[:instance_of] do
         if AshJsonApi.JsonSchema.embedded?(instance_of) && !constraints[:fields] do
-          embedded_type_input(attr, action_type, acc, format)
+          embedded_type_input(attr, resource, action_type, acc, format)
         else
           {schema, acc} =
             resource_write_attribute_type(
@@ -695,7 +697,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {schema, acc} =
         cond do
           AshJsonApi.JsonSchema.embedded?(type) ->
-            embedded_type_input(attr, action_type, acc)
+            embedded_type_input(attr, resource, action_type, acc)
 
           :erlang.function_exported(type, :json_write_schema, 1) ->
             {type.json_write_schema(attr.constraints), acc}
@@ -947,7 +949,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
               if type_key in acc.seen_non_schema_types do
                 # We're in a recursive loop, return $ref and warn
-                require Logger
+                # Recursive type detected, using $ref instead of inline definition
 
                 Logger.warning(
                   "Detected recursive embedded type with JSON API type: #{inspect(instance_of)}"
@@ -988,8 +990,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
             if type_key in acc.seen_non_schema_types do
               # We're in a recursive loop, return empty schema
-              require Logger
-              Logger.warning("Detected recursive embedded type: #{inspect(instance_of)}")
+              # Recursive type detected, returning empty schema to prevent infinite loop
               {%Schema{}, acc}
             else
               # Mark this type as seen and process it
@@ -1059,18 +1060,77 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp embedded_type_input(%{type: resource} = attribute, action_type, acc, format \\ :json) do
+    defp embedded_type_input(
+           %{type: embedded_resource} = attribute,
+           parent_resource,
+           action_type,
+           acc,
+           format \\ :json
+         ) do
       attribute = %{
         attribute
-        | constraints: Ash.Type.NewType.constraints(resource, attribute.constraints)
+        | constraints: Ash.Type.NewType.constraints(embedded_resource, attribute.constraints)
       }
 
-      resource =
+      embedded_resource =
         case attribute.constraints[:instance_of] do
-          nil -> Ash.Type.NewType.subtype_of(resource)
+          nil -> Ash.Type.NewType.subtype_of(embedded_resource)
           type -> type
         end
 
+      input_schema_name =
+        create_input_schema_name(attribute, parent_resource, action_type, embedded_resource)
+
+      type_key = {embedded_resource, action_type, attribute.constraints}
+
+      # Check for recursion
+      if type_key in acc.seen_input_types do
+        # We're in a recursive loop
+        if input_schema_name do
+          # Return $ref and unchanged accumulator (the schema will be created by the non-recursive path)
+          schema = %{"$ref" => "#/components/schemas/#{input_schema_name}"}
+          {schema, acc}
+        else
+          # No schema name, return empty schema to break recursion
+          {%Schema{}, acc}
+        end
+      else
+        # Not recursive, mark as seen and process normally
+        new_acc = %{acc | seen_input_types: [type_key | acc.seen_input_types]}
+
+        # Build the schema
+        embedded_type_input_impl(
+          attribute,
+          embedded_resource,
+          action_type,
+          new_acc,
+          format,
+          input_schema_name
+        )
+      end
+    end
+
+    defp create_input_schema_name(attribute, parent_resource, action_type, embedded_resource) do
+      # Check if this embedded resource has a JSON API type for input schema naming
+      json_api_type = AshJsonApi.Resource.Info.type(embedded_resource)
+
+      if json_api_type do
+        "#{json_api_type}-input-#{action_type}"
+      else
+        # Use parent resource type and attribute name for schema naming
+        # This matches the pattern used in the generated refs
+        parent_type = AshJsonApi.Resource.Info.type(parent_resource)
+        attribute_name = Map.get(attribute, :name)
+
+        if parent_type && attribute_name do
+          "#{parent_type}_#{attribute_name}-input-#{action_type}"
+        else
+          nil
+        end
+      end
+    end
+
+    defp embedded_type_input_impl(attribute, resource, action_type, acc, format, schema_name) do
       create_action =
         case attribute.constraints[:create_action] do
           nil ->
@@ -1145,7 +1205,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
         }
         |> add_null_for_non_required()
 
-      {schema, acc}
+      if schema_name do
+        # Store the schema in the accumulator
+        final_acc = %{acc | schemas: Map.put(acc.schemas, schema_name, schema)}
+        # Return a $ref to the schema
+        ref_schema = %{"$ref" => "#/components/schemas/#{schema_name}"}
+        {ref_schema, final_acc}
+      else
+        {schema, acc}
+      end
     end
 
     defp unwrap_any_of(%{"anyOf" => options} = schema) do
@@ -1478,6 +1546,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {parameters_list, acc} = parameters(route, resource, path_params, acc)
       {response, acc} = response_body(route, resource, acc)
 
+      {request_body_result, request_schemas} = request_body(route, resource)
+
+      acc_with_request_schemas = %{acc | schemas: Map.merge(acc.schemas, request_schemas)}
+
       operation = %Operation{
         description: action_description(action, route, resource),
         operationId: route.name,
@@ -1489,10 +1561,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
           },
           response_code => response
         },
-        requestBody: request_body(route, resource)
+        requestBody: request_body_result
       }
 
-      {operation, acc}
+      {operation, acc_with_request_schemas}
     end
 
     defp action_description(action, route, resource) do
@@ -1921,7 +1993,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> then(fn {params, acc} -> {Enum.reverse(params), acc} end)
     end
 
-    @spec request_body(Route.t(), resource :: module) :: nil | RequestBody.t()
+    @spec request_body(Route.t(), resource :: module) :: {nil | RequestBody.t(), map()}
     defp request_body(%{type: type}, _resource)
          when type not in [
                 :route,
@@ -1931,55 +2003,66 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 :patch_relationship,
                 :delete_from_relationship
               ] do
-      nil
+      {nil, %{}}
     end
 
     defp request_body(route, resource) do
-      {json_body_schema, _acc} = request_body_schema(route, resource, :json, %{})
-      {multipart_body_schema, _acc} = request_body_schema(route, resource, :multipart, %{})
+      {json_body_schema, json_acc} = request_body_schema(route, resource, :json, empty_acc())
 
-      if route.type == :route &&
-           (route.method == :delete || Enum.empty?(json_body_schema.properties.data.properties)) do
-        nil
-      else
-        body_required =
-          cond do
-            route.type in [:post_to_relationship, :delete_from_relationship, :patch_relationship] ->
-              true
+      {multipart_body_schema, multipart_acc} =
+        request_body_schema(route, resource, :multipart, empty_acc())
 
-            route.type == :route ->
-              json_body_schema.properties.data.required != []
+      all_schemas = Map.merge(json_acc.schemas, multipart_acc.schemas)
 
-            true ->
-              json_body_schema.properties.data.properties.attributes.required != [] ||
-                json_body_schema.properties.data.properties.relationships.required != []
-          end
+      body =
+        if route.type == :route &&
+             (route.method == :delete || Enum.empty?(json_body_schema.properties.data.properties)) do
+          nil
+        else
+          body_required =
+            cond do
+              route.type in [
+                :post_to_relationship,
+                :delete_from_relationship,
+                :patch_relationship
+              ] ->
+                true
 
-        content =
-          if json_body_schema == multipart_body_schema do
-            # No file inputs declared, multipart is not necessary
-            %{
-              "application/vnd.api+json" => %MediaType{schema: json_body_schema}
-            }
-          else
-            %{
-              "application/vnd.api+json" => %MediaType{schema: json_body_schema},
-              "multipart/x.ash+form-data" => %MediaType{
-                schema: %Schema{
-                  multipart_body_schema
-                  | additionalProperties: %{type: :string, format: :binary}
+              route.type == :route ->
+                json_body_schema.properties.data.required != []
+
+              true ->
+                json_body_schema.properties.data.properties.attributes.required != [] ||
+                  json_body_schema.properties.data.properties.relationships.required != []
+            end
+
+          content =
+            if json_body_schema == multipart_body_schema do
+              # No file inputs declared, multipart is not necessary
+              %{
+                "application/vnd.api+json" => %MediaType{schema: json_body_schema}
+              }
+            else
+              %{
+                "application/vnd.api+json" => %MediaType{schema: json_body_schema},
+                "multipart/x.ash+form-data" => %MediaType{
+                  schema: %Schema{
+                    multipart_body_schema
+                    | additionalProperties: %{type: :string, format: :binary}
+                  }
                 }
               }
-            }
-          end
+            end
 
-        %RequestBody{
-          description:
-            "Request body for the #{route.name || route.route} operation on #{AshJsonApi.Resource.Info.type(resource)} resource",
-          required: body_required,
-          content: content
-        }
-      end
+          %RequestBody{
+            description:
+              "Request body for the #{route.name || route.route} operation on #{AshJsonApi.Resource.Info.type(resource)} resource",
+            required: body_required,
+            content: content
+          }
+        end
+
+      {body, all_schemas}
     end
 
     @spec request_body_schema(

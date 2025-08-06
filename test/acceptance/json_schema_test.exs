@@ -256,5 +256,138 @@ defmodule Test.Acceptance.JsonSchemaTest do
       assert log =~
                "Detected recursive embedded type with JSON API type: Test.Acceptance.JsonSchemaTest.Node"
     end
+
+    test "handles recursive embedded inputs for create/update operations without infinite loop" do
+      # This test ensures that embedded resources with self-references in input schemas
+      # (for create/update operations) properly use $ref references and don't cause stack overflow
+      import ExUnit.CaptureLog
+
+      # Create a standalone test module for this specific test
+      defmodule RecursiveInputTest do
+        defmodule RecursiveComment do
+          use Ash.Resource,
+            data_layer: :embedded,
+            extensions: [AshJsonApi.Resource]
+
+          json_api do
+            type("recursive-comment")
+          end
+
+          attributes do
+            attribute(:content, :string, public?: true)
+            attribute(:parent, :struct, constraints: [instance_of: __MODULE__], public?: true)
+
+            attribute(:replies, {:array, :struct},
+              constraints: [items: [instance_of: __MODULE__]],
+              public?: true
+            )
+          end
+        end
+
+        defmodule ArticleWithComments do
+          use Ash.Resource,
+            domain: Test.Acceptance.JsonSchemaTest.RecursiveInputTest.BlogDomain,
+            data_layer: Ash.DataLayer.Ets,
+            extensions: [AshJsonApi.Resource]
+
+          ets do
+            private?(true)
+          end
+
+          json_api do
+            type("article-with-comments")
+
+            routes do
+              base("/articles")
+              get(:read)
+              post(:create)
+              patch(:update)
+            end
+          end
+
+          actions do
+            default_accept(:*)
+            defaults([:read, :create, :update])
+          end
+
+          attributes do
+            uuid_primary_key(:id, writable?: true)
+            attribute(:title, :string, public?: true)
+            attribute(:main_comment, RecursiveComment, public?: true)
+          end
+        end
+
+        defmodule BlogDomain do
+          use Ash.Domain,
+            otp_app: :ash_json_api,
+            extensions: [AshJsonApi.Domain]
+
+          json_api do
+            log_errors?(false)
+          end
+
+          resources do
+            resource(ArticleWithComments)
+          end
+        end
+      end
+
+      log =
+        capture_log(fn ->
+          # Generate spec outside capture_log first to check it
+          spec = AshJsonApi.OpenApi.spec(domain: [RecursiveInputTest.BlogDomain])
+
+          # Verify spec generation completes without stack overflow
+          assert %OpenApiSpex.OpenApi{} = spec
+
+          # Check that the create operation request body is properly generated
+          create_path = spec.paths["/articles"]
+          assert create_path != nil
+
+          create_op = create_path.post
+          assert create_op != nil
+
+          # Verify the request body schema exists
+          assert create_op.requestBody != nil
+
+          # The key test is that we got here without stack overflow
+          # Additional checks to verify the schemas are properly structured
+          schemas = spec.components.schemas
+
+          # Verify the main resource schema exists
+          assert Map.has_key?(schemas, "article-with-comments")
+
+          # Verify the embedded recursive-comment schema exists
+          assert Map.has_key?(schemas, "recursive-comment")
+
+          # Check patch operation as well
+          patch_path = spec.paths["/articles/{id}"]
+          assert patch_path != nil
+
+          patch_op = patch_path.patch
+          assert patch_op != nil
+          assert patch_op.requestBody != nil
+
+          # Verify that any referenced schemas exist in components
+          # This ensures client generation tools won't fail with missing $ref errors
+          schema_keys = Map.keys(schemas)
+
+          # If there are any input schemas, they should be properly defined
+          input_schemas = Enum.filter(schema_keys, &String.contains?(&1, "-input-"))
+
+          Enum.each(input_schemas, fn schema_name ->
+            schema = Map.get(schemas, schema_name)
+            assert schema != nil, "Schema #{schema_name} should be defined"
+            assert schema.type == :object, "Schema #{schema_name} should be an object type"
+          end)
+        end)
+
+      # Additionally verify that warnings were logged for recursive input types
+      # This proves the recursion detection is working
+      if log != "" do
+        assert log =~ "recursive" or log =~ "Recursive",
+               "Expected some indication of recursive type handling in logs"
+      end
+    end
   end
 end

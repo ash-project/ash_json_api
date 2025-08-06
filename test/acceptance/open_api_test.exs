@@ -401,23 +401,33 @@ defmodule Test.Acceptance.OpenApiTest do
                type: :object,
                required: [:bio],
                properties: %{
-                 bio: %Schema{
-                   type: :object,
-                   properties: %{
-                     history: %{
-                       "anyOf" => [
-                         %Schema{type: :string},
-                         %{"type" => "null"}
-                       ],
-                       "description" => "The history of the author"
-                     }
-                   },
-                   required: [],
-                   additionalProperties: false
+                 bio: %{
+                   "$ref" => "#/components/schemas/author_bio-input-create"
                  }
                },
                additionalProperties: false
              }
+
+    # Also verify that the referenced schema exists in components
+    # The action type for generic actions might be different, so let's check what's actually generated
+    bio_input_schemas =
+      api_spec.components.schemas
+      |> Map.keys()
+      |> Enum.filter(&String.contains?(&1, "bio-input"))
+
+    # There should be at least one bio input schema
+    assert length(bio_input_schemas) > 0,
+           "No bio input schemas found. Available schemas: #{inspect(Map.keys(api_spec.components.schemas))}"
+
+    # Check that the referenced schema name matches one of the generated ones
+    ref_name =
+      generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data.properties.bio[
+        "$ref"
+      ]
+
+    assert ref_name != nil
+    schema_name = String.replace_prefix(ref_name, "#/components/schemas/", "")
+    assert schema_name in bio_input_schemas
 
     # Now Foo is treated as a schema with JSON API type, so it gets referenced
     assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==
