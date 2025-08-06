@@ -332,44 +332,54 @@ defmodule Test.Acceptance.JsonSchemaTest do
         end
       end
 
-      # Generate spec outside capture_log first to check it
-      spec = AshJsonApi.OpenApi.spec(domain: [RecursiveInputTest.BlogDomain])
-
-      # Verify spec generation completes without stack overflow
-      assert %OpenApiSpex.OpenApi{} = spec
-
-      # Check that the create operation request body is properly generated
-      create_path = spec.paths["/articles"]
-      assert create_path != nil
-
-      create_op = create_path.post
-      assert create_op != nil
-
-      # Verify the request body schema exists
-      assert create_op.requestBody != nil
-
-      # The key test is that we got here without stack overflow
-      # Additional checks to verify the schemas are properly structured
-      schemas = spec.components.schemas
-
-      # Verify the main resource schema exists
-      assert Map.has_key?(schemas, "article-with-comments")
-
-      # Verify the embedded recursive-comment schema exists
-      assert Map.has_key?(schemas, "recursive-comment")
-
-      # Check patch operation as well
-      patch_path = spec.paths["/articles/{id}"]
-      assert patch_path != nil
-
-      patch_op = patch_path.patch
-      assert patch_op != nil
-      assert patch_op.requestBody != nil
-
-      # Now capture logs to verify warnings
       log =
         capture_log(fn ->
-          AshJsonApi.OpenApi.spec(domain: [RecursiveInputTest.BlogDomain])
+          # Generate spec outside capture_log first to check it
+          spec = AshJsonApi.OpenApi.spec(domain: [RecursiveInputTest.BlogDomain])
+
+          # Verify spec generation completes without stack overflow
+          assert %OpenApiSpex.OpenApi{} = spec
+
+          # Check that the create operation request body is properly generated
+          create_path = spec.paths["/articles"]
+          assert create_path != nil
+
+          create_op = create_path.post
+          assert create_op != nil
+
+          # Verify the request body schema exists
+          assert create_op.requestBody != nil
+
+          # The key test is that we got here without stack overflow
+          # Additional checks to verify the schemas are properly structured
+          schemas = spec.components.schemas
+
+          # Verify the main resource schema exists
+          assert Map.has_key?(schemas, "article-with-comments")
+
+          # Verify the embedded recursive-comment schema exists
+          assert Map.has_key?(schemas, "recursive-comment")
+
+          # Check patch operation as well
+          patch_path = spec.paths["/articles/{id}"]
+          assert patch_path != nil
+
+          patch_op = patch_path.patch
+          assert patch_op != nil
+          assert patch_op.requestBody != nil
+
+          # Verify that any referenced schemas exist in components
+          # This ensures client generation tools won't fail with missing $ref errors
+          schema_keys = Map.keys(schemas)
+
+          # If there are any input schemas, they should be properly defined
+          input_schemas = Enum.filter(schema_keys, &String.contains?(&1, "-input-"))
+
+          Enum.each(input_schemas, fn schema_name ->
+            schema = Map.get(schemas, schema_name)
+            assert schema != nil, "Schema #{schema_name} should be defined"
+            assert schema.type == :object, "Schema #{schema_name} should be an object type"
+          end)
         end)
 
       # Additionally verify that warnings were logged for recursive input types
@@ -378,19 +388,6 @@ defmodule Test.Acceptance.JsonSchemaTest do
         assert log =~ "recursive" or log =~ "Recursive",
                "Expected some indication of recursive type handling in logs"
       end
-
-      # Verify that any referenced schemas exist in components
-      # This ensures client generation tools won't fail with missing $ref errors
-      schema_keys = Map.keys(schemas)
-
-      # If there are any input schemas, they should be properly defined
-      input_schemas = Enum.filter(schema_keys, &String.contains?(&1, "-input-"))
-
-      Enum.each(input_schemas, fn schema_name ->
-        schema = Map.get(schemas, schema_name)
-        assert schema != nil, "Schema #{schema_name} should be defined"
-        assert schema.type == :object, "Schema #{schema_name} should be an object type"
-      end)
     end
   end
 end
