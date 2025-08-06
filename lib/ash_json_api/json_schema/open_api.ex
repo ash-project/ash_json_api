@@ -50,6 +50,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
+    require Logger
+
     @typep content_type_format() :: :json | :multipart
     @typep acc() :: map()
 
@@ -948,7 +950,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
               if type_key in acc.seen_non_schema_types do
                 # We're in a recursive loop, return $ref and warn
                 # Recursive type detected, using $ref instead of inline definition
-                require Logger
 
                 Logger.warning(
                   "Detected recursive embedded type with JSON API type: #{inspect(instance_of)}"
@@ -1080,9 +1081,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       input_schema_name =
         create_input_schema_name(attribute, parent_resource, action_type, embedded_resource)
 
-      # Check for recursion
       type_key = {embedded_resource, action_type, attribute.constraints}
 
+      # Check for recursion
       if type_key in acc.seen_input_types do
         # We're in a recursive loop
         if input_schema_name do
@@ -1545,10 +1546,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {parameters_list, acc} = parameters(route, resource, path_params, acc)
       {response, acc} = response_body(route, resource, acc)
 
-      # Get request body and any generated schemas
       {request_body_result, request_schemas} = request_body(route, resource)
 
-      # Merge request schemas into accumulator
       acc_with_request_schemas = %{acc | schemas: Map.merge(acc.schemas, request_schemas)}
 
       operation = %Operation{
@@ -2013,7 +2012,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {multipart_body_schema, multipart_acc} =
         request_body_schema(route, resource, :multipart, empty_acc())
 
-      # Collect all generated schemas
       all_schemas = Map.merge(json_acc.schemas, multipart_acc.schemas)
 
       body =
@@ -2064,7 +2062,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
           }
         end
 
-      # Return both the body and any generated schemas
       {body, all_schemas}
     end
 
