@@ -673,7 +673,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         ) do
       if instance_of = constraints[:instance_of] do
         if AshJsonApi.JsonSchema.embedded?(instance_of) && !constraints[:fields] do
-          embedded_type_input(attr, action_type, acc, format)
+          embedded_type_input(attr, resource, action_type, acc, format)
         else
           {schema, acc} =
             resource_write_attribute_type(
@@ -695,7 +695,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {schema, acc} =
         cond do
           AshJsonApi.JsonSchema.embedded?(type) ->
-            embedded_type_input(attr, action_type, acc)
+            embedded_type_input(attr, resource, action_type, acc)
 
           :erlang.function_exported(type, :json_write_schema, 1) ->
             {type.json_write_schema(attr.constraints), acc}
@@ -947,8 +947,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
               if type_key in acc.seen_non_schema_types do
                 # We're in a recursive loop, return $ref and warn
+                # Recursive type detected, using $ref instead of inline definition
                 require Logger
-
                 Logger.warning(
                   "Detected recursive embedded type with JSON API type: #{inspect(instance_of)}"
                 )
@@ -988,8 +988,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
             if type_key in acc.seen_non_schema_types do
               # We're in a recursive loop, return empty schema
-              require Logger
-              Logger.warning("Detected recursive embedded type: #{inspect(instance_of)}")
+              # Recursive type detected, returning empty schema to prevent infinite loop
               {%Schema{}, acc}
             else
               # Mark this type as seen and process it
@@ -1059,47 +1058,82 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp embedded_type_input(%{type: resource} = attribute, action_type, acc, format \\ :json) do
+    defp embedded_type_input(
+           %{type: embedded_resource} = attribute,
+           parent_resource,
+           action_type,
+           acc,
+           format \\ :json
+         ) do
       attribute = %{
         attribute
-        | constraints: Ash.Type.NewType.constraints(resource, attribute.constraints)
+        | constraints: Ash.Type.NewType.constraints(embedded_resource, attribute.constraints)
       }
 
-      resource =
+      embedded_resource =
         case attribute.constraints[:instance_of] do
-          nil -> Ash.Type.NewType.subtype_of(resource)
+          nil -> Ash.Type.NewType.subtype_of(embedded_resource)
           type -> type
         end
 
+      # Generate the schema name based on parent context when needed
+      parent_type = AshJsonApi.Resource.Info.type(parent_resource)
+      attribute_name = Map.get(attribute, :name)
+      
       # Check if this embedded resource has a JSON API type for input schema naming
-      json_api_type = AshJsonApi.Resource.Info.type(resource)
+      json_api_type = AshJsonApi.Resource.Info.type(embedded_resource)
 
-      if json_api_type do
-        input_schema_name = "#{json_api_type}-input-#{action_type}"
+      # Generate schema name - use parent context for embedded resources without their own type
+      input_schema_name = 
+        if json_api_type do
+          "#{json_api_type}-input-#{action_type}"
+        else
+          # Use parent resource type and attribute name for schema naming
+          # This matches the pattern used in the generated refs
+          if parent_type && attribute_name do
+            "#{parent_type}_#{attribute_name}-input-#{action_type}"
+          else
+            nil
+          end
+        end
+
+      if input_schema_name do
         # Check if we already have this input schema
         if Map.has_key?(acc.schemas, input_schema_name) do
           schema = %{"$ref" => "#/components/schemas/#{input_schema_name}"}
           {schema, acc}
         else
           # Check for recursion
-          type_key = {resource, action_type, attribute.constraints}
+          type_key = {embedded_resource, action_type, attribute.constraints}
 
           if type_key in acc.seen_input_types do
-            require Logger
+            # Recursive input type detected, using $ref instead of inline definition
 
-            Logger.warning(
-              "[SCHEMA] Detected recursive embedded input type: #{inspect(resource)}, action: #{action_type}"
-            )
+            # Create a minimal schema for the recursive type if it doesn't exist
+            # This ensures the $ref has something to point to
+            acc_with_schema = 
+              if Map.has_key?(acc.schemas, input_schema_name) do
+                acc
+              else
+                # Create a minimal schema to break the recursion
+                minimal_schema = %Schema{
+                  type: :object,
+                  additionalProperties: false,
+                  properties: %{},
+                  description: "Recursive embedded type - see parent schema for structure"
+                }
+                %{acc | schemas: Map.put(acc.schemas, input_schema_name, minimal_schema)}
+              end
 
             schema = %{"$ref" => "#/components/schemas/#{input_schema_name}"}
-            {schema, acc}
+            {schema, acc_with_schema}
           else
             # Mark this type as being processed
             new_acc = %{acc | seen_input_types: [type_key | acc.seen_input_types]}
             # Continue with normal processing
             embedded_type_input_impl(
               attribute,
-              resource,
+              embedded_resource,
               action_type,
               new_acc,
               format,
@@ -1108,20 +1142,23 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
         end
       else
-        # No JSON API type, check for simple recursion
-        type_key = {resource, action_type, attribute.constraints}
+        # No input schema name could be generated (no JSON API type and no parent context)
+        type_key = {embedded_resource, action_type, attribute.constraints}
 
         if type_key in acc.seen_input_types do
-          require Logger
+          # Recursive input type detected (no schema name), returning minimal schema
 
-          Logger.warning(
-            "[SCHEMA] Detected recursive embedded input type (no JSON API type): #{inspect(resource)}, action: #{action_type}"
-          )
-
-          {%Schema{}, acc}
+          # Return a minimal schema for resources without proper naming
+          minimal_schema = %Schema{
+            type: :object,
+            additionalProperties: false,
+            properties: %{},
+            description: "Recursive embedded type"
+          }
+          {minimal_schema, acc}
         else
           new_acc = %{acc | seen_input_types: [type_key | acc.seen_input_types]}
-          embedded_type_input_impl(attribute, resource, action_type, new_acc, format, nil)
+          embedded_type_input_impl(attribute, embedded_resource, action_type, new_acc, format, nil)
         end
       end
     end
@@ -1542,6 +1579,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {parameters_list, acc} = parameters(route, resource, path_params, acc)
       {response, acc} = response_body(route, resource, acc)
 
+      # Get request body and any generated schemas
+      {request_body_result, request_schemas} = request_body(route, resource)
+      
+      # Merge request schemas into accumulator
+      acc_with_request_schemas = %{acc | schemas: Map.merge(acc.schemas, request_schemas)}
+      
       operation = %Operation{
         description: action_description(action, route, resource),
         operationId: route.name,
@@ -1553,10 +1596,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
           },
           response_code => response
         },
-        requestBody: request_body(route, resource)
+        requestBody: request_body_result
       }
 
-      {operation, acc}
+      {operation, acc_with_request_schemas}
     end
 
     defp action_description(action, route, resource) do
@@ -1985,7 +2028,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> then(fn {params, acc} -> {Enum.reverse(params), acc} end)
     end
 
-    @spec request_body(Route.t(), resource :: module) :: nil | RequestBody.t()
+    @spec request_body(Route.t(), resource :: module) :: {nil | RequestBody.t(), map()}
     defp request_body(%{type: type}, _resource)
          when type not in [
                 :route,
@@ -1995,16 +2038,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 :patch_relationship,
                 :delete_from_relationship
               ] do
-      nil
+      {nil, %{}}
     end
 
     defp request_body(route, resource) do
-      {json_body_schema, _acc} = request_body_schema(route, resource, :json, empty_acc())
+      {json_body_schema, json_acc} = request_body_schema(route, resource, :json, empty_acc())
 
-      {multipart_body_schema, _acc} =
+      {multipart_body_schema, multipart_acc} =
         request_body_schema(route, resource, :multipart, empty_acc())
+      
+      # Collect all generated schemas
+      all_schemas = Map.merge(json_acc.schemas, multipart_acc.schemas)
 
-      if route.type == :route &&
+      body = if route.type == :route &&
            (route.method == :delete || Enum.empty?(json_body_schema.properties.data.properties)) do
         nil
       else
@@ -2046,6 +2092,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
           content: content
         }
       end
+      
+      # Return both the body and any generated schemas
+      {body, all_schemas}
     end
 
     @spec request_body_schema(
