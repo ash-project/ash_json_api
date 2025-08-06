@@ -1077,99 +1077,54 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type -> type
         end
 
-      # Generate the schema name based on parent context when needed
-      parent_type = AshJsonApi.Resource.Info.type(parent_resource)
-      attribute_name = Map.get(attribute, :name)
-
-      # Check if this embedded resource has a JSON API type for input schema naming
-      json_api_type = AshJsonApi.Resource.Info.type(embedded_resource)
-
-      # Generate schema name - use parent context for embedded resources without their own type
       input_schema_name =
-        if json_api_type do
-          "#{json_api_type}-input-#{action_type}"
-        else
-          # Use parent resource type and attribute name for schema naming
-          # This matches the pattern used in the generated refs
-          if parent_type && attribute_name do
-            "#{parent_type}_#{attribute_name}-input-#{action_type}"
-          else
-            nil
-          end
-        end
+        create_input_schema_name(attribute, parent_resource, action_type, embedded_resource)
 
-      if input_schema_name do
-        # Check if we already have this input schema
-        if Map.has_key?(acc.schemas, input_schema_name) do
+      # Check for recursion
+      type_key = {embedded_resource, action_type, attribute.constraints}
+
+      if type_key in acc.seen_input_types do
+        # We're in a recursive loop
+        if input_schema_name do
+          # Return $ref and unchanged accumulator (the schema will be created by the non-recursive path)
           schema = %{"$ref" => "#/components/schemas/#{input_schema_name}"}
           {schema, acc}
         else
-          # Check for recursion
-          type_key = {embedded_resource, action_type, attribute.constraints}
-
-          if type_key in acc.seen_input_types do
-            # Recursive input type detected, using $ref instead of inline definition
-
-            # Create a minimal schema for the recursive type if it doesn't exist
-            # This ensures the $ref has something to point to
-            acc_with_schema =
-              if Map.has_key?(acc.schemas, input_schema_name) do
-                acc
-              else
-                # Create a minimal schema to break the recursion
-                minimal_schema = %Schema{
-                  type: :object,
-                  additionalProperties: false,
-                  properties: %{},
-                  description: "Recursive embedded type - see parent schema for structure"
-                }
-
-                %{acc | schemas: Map.put(acc.schemas, input_schema_name, minimal_schema)}
-              end
-
-            schema = %{"$ref" => "#/components/schemas/#{input_schema_name}"}
-            {schema, acc_with_schema}
-          else
-            # Mark this type as being processed
-            new_acc = %{acc | seen_input_types: [type_key | acc.seen_input_types]}
-            # Continue with normal processing
-            embedded_type_input_impl(
-              attribute,
-              embedded_resource,
-              action_type,
-              new_acc,
-              format,
-              input_schema_name
-            )
-          end
+          # No schema name, return empty schema to break recursion
+          {%Schema{}, acc}
         end
       else
-        # No input schema name could be generated (no JSON API type and no parent context)
-        type_key = {embedded_resource, action_type, attribute.constraints}
+        # Not recursive, mark as seen and process normally
+        new_acc = %{acc | seen_input_types: [type_key | acc.seen_input_types]}
 
-        if type_key in acc.seen_input_types do
-          # Recursive input type detected (no schema name), returning minimal schema
+        # Build the schema
+        embedded_type_input_impl(
+          attribute,
+          embedded_resource,
+          action_type,
+          new_acc,
+          format,
+          input_schema_name
+        )
+      end
+    end
 
-          # Return a minimal schema for resources without proper naming
-          minimal_schema = %Schema{
-            type: :object,
-            additionalProperties: false,
-            properties: %{},
-            description: "Recursive embedded type"
-          }
+    defp create_input_schema_name(attribute, parent_resource, action_type, embedded_resource) do
+      # Check if this embedded resource has a JSON API type for input schema naming
+      json_api_type = AshJsonApi.Resource.Info.type(embedded_resource)
 
-          {minimal_schema, acc}
+      if json_api_type do
+        "#{json_api_type}-input-#{action_type}"
+      else
+        # Use parent resource type and attribute name for schema naming
+        # This matches the pattern used in the generated refs
+        parent_type = AshJsonApi.Resource.Info.type(parent_resource)
+        attribute_name = Map.get(attribute, :name)
+
+        if parent_type && attribute_name do
+          "#{parent_type}_#{attribute_name}-input-#{action_type}"
         else
-          new_acc = %{acc | seen_input_types: [type_key | acc.seen_input_types]}
-
-          embedded_type_input_impl(
-            attribute,
-            embedded_resource,
-            action_type,
-            new_acc,
-            format,
-            nil
-          )
+          nil
         end
       end
     end
