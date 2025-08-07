@@ -5,6 +5,25 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.40](https://github.com/ash-project/ash_json_api/compare/v1.4.39...v1.4.40) (2025-08-07)
+
+
+
+
+### Bug Fixes:
+
+* recursive input types (#371) by [@barnabasJ](https://github.com/barnabasJ)
+
+* include generic GET action arguments as query parameters in JSON schema (#368) by horberlan
+
+### Improvements:
+
+* use more idiomatic error messages on schema failures by [@zachdaniel](https://github.com/zachdaniel)
+
+* handle infinitely nested embeds via refs by [@zachdaniel](https://github.com/zachdaniel)
+
+* make error clearer for unused route params by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.39](https://github.com/ash-project/ash_json_api/compare/v1.4.38...v1.4.39) (2025-07-29)
 
 
