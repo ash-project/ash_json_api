@@ -180,7 +180,49 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
         |> assert_invalid_resource_objects("post", [post.id])
     end
 
-    test "in/not_in filter" do
+    test "equals array filter" do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo", narratives: [:novel, :legend]})
+        |> Ash.create!()
+
+      post2 =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "bar", narratives: [:legend]})
+        |> Ash.create!()
+
+      _conn =
+        Domain
+        |> get("/posts?filter[narratives][]=novel&filter[narratives][]=legend",
+          status: 200
+        )
+        |> assert_valid_resource_objects("post", [post.id])
+
+      # order of values matters
+      _conn =
+        Domain
+        |> get("/posts?filter[narratives][]=legend&filter[narratives][]=novel",
+          status: 200
+        )
+        |> assert_valid_resource_objects("post", [])
+
+      _conn =
+        Domain
+        |> get("/posts?filter[narratives][]=legend",
+          status: 200
+        )
+        |> assert_valid_resource_objects("post", [post2.id])
+
+      # it's not inclusion check
+      _conn =
+        Domain
+        |> get("/posts?filter[narratives][]=novel",
+          status: 200
+        )
+        |> assert_valid_resource_objects("post", [])
+    end
+
+    test "in/not_in array filter" do
       post =
         Post
         |> Ash.Changeset.for_create(:create, %{name: "foo", narratives: [:novel, :legend]})
@@ -194,7 +236,7 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
       # single value
       # _conn =
       #   Domain
-      #   |> get("/filter[narratives][in]=novel",
+      #   |> get("posts/filter[narratives][in]=novel",
       #     status: 200
       #   )
       #   |> assert_valid_resource_objects("post", [post.id, post2.id])
@@ -203,6 +245,17 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
       # _conn =
       #   Domain
       #   |> get("/posts?filter[narratives][in]=novel,legend",
+      #     status: 200
+      #   )
+      #   |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      # deep object
+      # _conn =
+      #   Domain
+      #   |> get(
+      #     URI.encode(
+      #       "/posts?filter=[{name:\"narratives\", op: \"in\", val: [\"novel\",\"legend\"]}]"
+      #     ),
       #     status: 200
       #   )
       #   |> assert_valid_resource_objects("post", [post.id, post2.id])
