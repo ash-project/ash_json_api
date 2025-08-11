@@ -191,15 +191,50 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
         |> Ash.Changeset.for_create(:create, %{name: "bar", narratives: [:legend]})
         |> Ash.create!()
 
-      _conn =
-        Domain
-        |> get("/posts?filter[narratives][in]=novel,legend", status: 200)
-        |> assert_valid_resource_objects("post", [post.id, post2.id])
-
+      # single value
       # _conn =
       #   Domain
-      #   |> get("/posts?filter[narratives][in][][]=novel", status: 200)
+      #   |> get("/filter[narratives][in]=novel",
+      #     status: 200
+      #   )
       #   |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      # comma-separated
+      # _conn =
+      #   Domain
+      #   |> get("/posts?filter[narratives][in]=novel,legend",
+      #     status: 200
+      #   )
+      #   |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      # PHP-style array
+      # _conn =
+      #   Domain
+      #   |> get("/posts?filter[narratives][in][]=novel&filter[narratives][in][]=legend",
+      #     status: 200
+      #   )
+      #   |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      # nested array
+      # _conn =
+      #   Domain
+      #   |> get("/posts?filter[narratives][in][][]=novel ",
+      #     status: 200
+      #   )
+      #   |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      # bracket notation
+      # _conn =
+      #   Domain
+      #   |> get("/posts?filter[narratives][in]=[novel,legend]", status: 200)
+      #   |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      _conn =
+        Domain
+        |> get("/posts?filter[narratives][in][0]=novel&filter[narratives][in][1]=legend",
+          status: 200
+        )
+        |> assert_valid_resource_objects("post", [post.id, post2.id])
 
       # _conn =
       #   Domain
