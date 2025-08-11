@@ -4,6 +4,19 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
 
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
 
+  defmodule Narrative do
+    use Ash.Type.Enum,
+      values: [
+        :novel,
+        :legend,
+        :myth,
+        :fable,
+        :tale,
+        :action,
+        :plot
+      ]
+  end
+
   defmodule Author do
     use Ash.Resource,
       domain: AshJsonApiTest.FetchingData.Filtering.Domain,
@@ -72,13 +85,18 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
       defaults([:read, :update, :destroy])
 
       create :create do
-        accept([:name, :author_id])
+        accept([:name, :author_id, :narratives])
       end
     end
 
     attributes do
       uuid_primary_key(:id)
       attribute(:name, :string, public?: true)
+
+      attribute(:narratives, {:array, Narrative},
+        default: [],
+        public?: true
+      )
     end
 
     relationships do
@@ -160,6 +178,33 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
         |> get("/posts?filter[name][not_equals]=foo", status: 200)
         |> assert_valid_resource_objects("post", [post2.id])
         |> assert_invalid_resource_objects("post", [post.id])
+    end
+
+    test "in/not_in filter" do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo", narratives: [:novel, :legend]})
+        |> Ash.create!()
+
+      post2 =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "bar", narratives: [:legend]})
+        |> Ash.create!()
+
+      _conn =
+        Domain
+        |> get("/posts?filter[narratives][in]=novel,legend", status: 200)
+        |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      # _conn =
+      #   Domain
+      #   |> get("/posts?filter[narratives][in][][]=novel", status: 200)
+      #   |> assert_valid_resource_objects("post", [post.id, post2.id])
+
+      # _conn =
+      #   Domain
+      #   |> get("/posts?filter[narratives][not_in]=novel,legend", status: 200)
+      #   |> assert_valid_resource_objects("post", [])
     end
 
     test "is_nil filter" do

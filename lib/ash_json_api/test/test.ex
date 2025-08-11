@@ -362,13 +362,16 @@ defmodule AshJsonApi.Test do
                "data" => results
              } = conn.resp_body
 
-      assert Enum.all?(results, fn
-               %{"type" => ^expected_type, "id" => maybe_known_id} ->
-                 Enum.member?(expected_ids, maybe_known_id)
+      # Extract actual IDs from results
+      actual_ids =
+        Enum.map(results, fn
+          %{"type" => ^expected_type, "id" => id} -> id
+          other -> flunk("Unexpected result: #{inspect(other)}")
+        end)
 
-               _ ->
-                 false
-             end)
+      # Check that we have exactly the expected IDs (order doesn't matter)
+      assert Enum.sort(actual_ids) == Enum.sort(expected_ids),
+             "Expected IDs #{inspect(expected_ids)}, but got #{inspect(actual_ids)}"
 
       conn
     end
