@@ -619,8 +619,8 @@ defmodule Test.Acceptance.OpenApiTest do
       %Schema{} = schema = fields.schema
       assert schema.type == :object
       assert schema.additionalProperties
-      assert schema.properties.post.type == :string
-      assert schema.properties.post.description =~ "field names for post"
+      assert schema.properties["post"].type == :string
+      assert schema.properties["post"].description =~ "field names for post"
     end
 
     test "Has no request body", %{open_api_spec: %OpenApi{} = api_spec} do
@@ -851,8 +851,8 @@ defmodule Test.Acceptance.OpenApiTest do
       %Schema{} = schema = fields.schema
       assert schema.type == :object
       assert schema.additionalProperties
-      assert schema.properties.post.type == :string
-      assert schema.properties.post.description =~ "field names for post"
+      assert schema.properties["post"].type == :string
+      assert schema.properties["post"].description =~ "field names for post"
     end
 
     test "Has no request body", %{open_api_spec: %OpenApi{} = api_spec} do
@@ -905,8 +905,8 @@ defmodule Test.Acceptance.OpenApiTest do
       %Schema{} = schema = fields.schema
       assert schema.type == :object
       assert schema.additionalProperties
-      assert schema.properties.post.type == :string
-      assert schema.properties.post.description =~ "field names for post"
+      assert schema.properties["post"].type == :string
+      assert schema.properties["post"].description =~ "field names for post"
     end
 
     test "Request body schema", %{open_api_spec: %OpenApi{} = api_spec} do

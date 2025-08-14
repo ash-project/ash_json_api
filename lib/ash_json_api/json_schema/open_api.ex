@@ -1919,6 +1919,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp fields_parameter(resource) do
       type = AshJsonApi.Resource.Info.type(resource)
 
+      example =
+        Enum.join(
+          AshJsonApi.Resource.Info.default_fields(resource) ||
+            Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name),
+          ","
+        )
+
       %Parameter{
         name: :fields,
         in: :query,
@@ -1929,21 +1936,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type: :object,
           additionalProperties: true,
           example: %{
-            type =>
-              Ash.Resource.Info.public_attributes(resource)
-              |> Enum.map_join(",", & &1.name)
+            type => example
           },
           properties: %{
-            # There is a static set of types (one per resource)
-            # so this is safe.
-            #
-            # sobelow_skip ["DOS.StringToAtom"]
-            String.to_atom(type) => %Schema{
+            type => %Schema{
               description: "Comma separated field names for #{type}",
               type: :string,
-              example:
-                Ash.Resource.Info.public_attributes(resource)
-                |> Enum.map_join(",", & &1.name)
+              example: example
             }
           }
         }
