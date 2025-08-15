@@ -37,22 +37,18 @@ defmodule AshJsonApi.Test do
   require ExUnit.Assertions
   import ExUnit.Assertions
 
-  defp conn(method, path, body \\ nil, opts) do
+  defp conn(method, path, opts) do
+    conn(method, path, nil, opts)
+  end
+
+  defp conn(method, path, body, opts) do
     case opts[:conn] do
       fun when is_function(fun) ->
-        if is_nil(body) do
-          conn(method, path)
-        else
-          conn(method, path, body)
-        end
+        Plug.Test.conn(method, path, body)
         |> fun.()
 
       nil ->
-        if is_nil(body) do
-          conn(method, path)
-        else
-          conn(method, path, body)
-        end
+        Plug.Test.conn(method, path, body)
 
       conn ->
         conn
