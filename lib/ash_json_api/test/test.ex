@@ -10,6 +10,7 @@ defmodule AshJsonApi.Test do
   - `:router`: The corresponding JsonApiRouter to go through. Can be set statically in config, see below for more.
   - `:actor`: Sets the provided actor as the actor for the request
   - `:tenant`: Sets the provided tenant as the tenant for the request
+  - `:conn`: A conn to use, or a function that will modify the conn. If not provided, a default conn is used.
 
   A standard test would look like this:
 
@@ -31,10 +32,32 @@ defmodule AshJsonApi.Test do
   ```
   """
   import Plug.Test
-  import Plug.Conn
+  import Plug.Conn, except: [conn: 4]
 
   require ExUnit.Assertions
   import ExUnit.Assertions
+
+  defp conn(method, path, body \\ nil, opts) do
+    case opts[:conn] do
+      fun when is_function(fun) ->
+        if is_nil(body) do
+          conn(method, path)
+        else
+          conn(method, path, body)
+        end
+        |> fun.()
+
+      nil ->
+        if is_nil(body) do
+          conn(method, path)
+        else
+          conn(method, path, body)
+        end
+
+      conn ->
+        conn
+    end
+  end
 
   @doc """
   Sends a GET request to the given path. See the module docs for more.
@@ -42,7 +65,7 @@ defmodule AshJsonApi.Test do
   def get(domain, path, opts \\ []) do
     result =
       :get
-      |> conn(path)
+      |> conn(path, opts)
       |> set_req_headers(opts)
       |> set_context_opts(opts)
       |> maybe_set_endpoint(opts)
@@ -86,7 +109,7 @@ defmodule AshJsonApi.Test do
   def post(domain, path, body, opts \\ []) do
     result =
       :post
-      |> conn(path, Jason.encode!(body))
+      |> conn(path, Jason.encode!(body), opts)
       |> set_req_headers(opts)
       |> set_context_opts(opts)
       |> set_content_type_request_header(opts)
@@ -137,7 +160,7 @@ defmodule AshJsonApi.Test do
 
       result =
         :post
-        |> conn(path, Multipart.body_binary(body))
+        |> conn(path, Multipart.body_binary(body), opts)
         |> set_req_headers(opts)
         |> set_context_opts(opts)
         |> put_req_header(
@@ -199,7 +222,7 @@ defmodule AshJsonApi.Test do
   def patch(domain, path, body, opts \\ []) do
     result =
       :patch
-      |> conn(path, Jason.encode!(body))
+      |> conn(path, Jason.encode!(body), opts)
       |> set_req_headers(opts)
       |> set_context_opts(opts)
       |> set_content_type_request_header(opts)
@@ -246,7 +269,7 @@ defmodule AshJsonApi.Test do
   def delete(domain, path, opts \\ []) do
     result =
       :delete
-      |> conn(path)
+      |> conn(path, opts)
       |> set_req_headers(opts)
       |> set_context_opts(opts)
       |> set_accept_request_header(opts)
