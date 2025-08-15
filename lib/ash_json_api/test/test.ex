@@ -31,8 +31,8 @@ defmodule AshJsonApi.Test do
   end
   ```
   """
-  import Plug.Test
-  import Plug.Conn, except: [conn: 4, conn: 3]
+  import Plug.Test, except: [conn: 4, conn: 3]
+  import Plug.Conn
 
   require ExUnit.Assertions
   import ExUnit.Assertions
