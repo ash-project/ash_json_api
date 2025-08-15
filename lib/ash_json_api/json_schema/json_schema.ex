@@ -819,9 +819,22 @@ defmodule AshJsonApi.JsonSchema do
     non_relationship_arguments =
       Enum.reject(action.arguments, &has_relationship_argument?(relationship_arguments, &1.name))
 
+    required_write_attributes =
+      required_write_attributes(resource, non_relationship_arguments, action, route)
+
+    required_relationship_attributes =
+      required_relationship_attributes(resource, relationship_arguments, action)
+
+    required_top_level_properties =
+      if Enum.empty?(required_write_attributes) && Enum.empty?(required_relationship_attributes) do
+        []
+      else
+        ["data"]
+      end
+
     %{
       "type" => "object",
-      "required" => ["data"],
+      "required" => required_top_level_properties,
       "additionalProperties" => false,
       "properties" => %{
         "data" => %{
@@ -835,16 +848,14 @@ defmodule AshJsonApi.JsonSchema do
               %{
                 "type" => "object",
                 "additionalProperties" => false,
-                "required" =>
-                  required_write_attributes(resource, non_relationship_arguments, action, route),
+                "required" => required_write_attributes,
                 "properties" =>
                   write_attributes(resource, non_relationship_arguments, action, route)
               }
               |> add_null_for_non_required(),
             "relationships" => %{
               "type" => "object",
-              "required" =>
-                required_relationship_attributes(resource, relationship_arguments, action),
+              "required" => required_relationship_attributes,
               "additionalProperties" => false,
               "properties" => write_relationships(resource, relationship_arguments, action)
             }
