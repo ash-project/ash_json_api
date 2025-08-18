@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.41](https://github.com/ash-project/ash_json_api/compare/v1.4.40...v1.4.41) (2025-08-18)
+
+
+
+
+### Improvements:
+
+* don't make `data` required unnecessarily by [@zachdaniel](https://github.com/zachdaniel)
+
+* support `conn` option in test request functions by [@zachdaniel](https://github.com/zachdaniel)
+
+* use default_fields as fields example by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.40](https://github.com/ash-project/ash_json_api/compare/v1.4.39...v1.4.40) (2025-08-07)
 
 
