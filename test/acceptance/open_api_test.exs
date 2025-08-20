@@ -402,7 +402,7 @@ defmodule Test.Acceptance.OpenApiTest do
                required: [:bio],
                properties: %{
                  bio: %{
-                   "$ref" => "#/components/schemas/author_bio-input-create"
+                   "$ref" => "#/components/schemas/author_bio-input-create-type"
                  }
                },
                additionalProperties: false
@@ -431,7 +431,7 @@ defmodule Test.Acceptance.OpenApiTest do
 
     # Now Foo is treated as a schema with JSON API type, so it gets referenced
     assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==
-             %{"$ref" => "#/components/schemas/foo"}
+             %{"$ref" => "#/components/schemas/foo-type"}
   end
 
   test "generic routes can omit returns, getting a `success/failure` response", %{

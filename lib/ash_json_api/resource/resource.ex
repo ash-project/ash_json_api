@@ -39,6 +39,11 @@ defmodule AshJsonApi.Resource do
       doc: "A list of action inputs to accept as query parameters.",
       default: []
     ],
+    action_names_in_schema: [
+      type: :keyword_list,
+      doc:
+        "A mapping of action names to how they should appear in the OpenAPI schema. You only need to set this if you see a warning during schema generation."
+    ],
     name: [
       type: :string,
       required: false,

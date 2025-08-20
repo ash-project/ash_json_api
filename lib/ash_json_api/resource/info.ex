@@ -23,6 +23,10 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :includes, [], false)
   end
 
+  def action_names_in_schema(resource) do
+    Extension.get_opt(resource, [:json_api], :action_names_in_schema, [], false)
+  end
+
   def base_route(resource) do
     Extension.get_opt(resource, [:json_api, :routes], :base, "/", false)
   end

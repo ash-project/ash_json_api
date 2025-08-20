@@ -941,7 +941,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             # Check if schema already exists
             if Map.has_key?(acc.schemas, json_api_type) do
               # Use $ref to existing schema
-              schema = %{"$ref" => "#/components/schemas/#{json_api_type}"}
+              schema = %{"$ref" => "#/components/schemas/#{json_api_type}-type"}
               {schema, acc}
             else
               # Check if we've already seen this type/constraints combination
@@ -955,7 +955,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                   "Detected recursive embedded type with JSON API type: #{inspect(instance_of)}"
                 )
 
-                schema = %{"$ref" => "#/components/schemas/#{json_api_type}"}
+                schema = %{"$ref" => "#/components/schemas/#{json_api_type}-type"}
                 {schema, acc}
               else
                 # Build the schema and add it to schemas map
@@ -976,11 +976,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 # Add to schemas map
                 final_acc = %{
                   final_acc
-                  | schemas: Map.put(final_acc.schemas, json_api_type, resource_schema)
+                  | schemas: Map.put(final_acc.schemas, "#{json_api_type}-type", resource_schema)
                 }
 
                 # Return $ref to the schema
-                schema = %{"$ref" => "#/components/schemas/#{json_api_type}"}
+                schema = %{"$ref" => "#/components/schemas/#{json_api_type}-type"}
                 {schema, final_acc}
               end
             end
@@ -1110,12 +1110,57 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
+    defp raise_action_names_in_schema_error(embedded_resource, action_name, action_type) do
+      raise """
+      The embedded resource #{inspect(embedded_resource)} has a non-primary #{action_type} action #{inspect(action_name)}.
+
+      You need to configure the `action_names_in_schema` option in the embedded resource to disambiguate between action types.
+
+      Example:
+
+        json_api do
+          action_names_in_schema [
+            #{action_name}: "#{action_name}_#{action_type}"
+          ]
+        end
+      """
+    end
+
     defp create_input_schema_name(attribute, parent_resource, action_type, embedded_resource) do
-      # Check if this embedded resource has a JSON API type for input schema naming
       json_api_type = AshJsonApi.Resource.Info.type(embedded_resource)
+      create_action = attribute.constraints[:create_action]
+      update_action = attribute.constraints[:update_action]
+      destroy_action = attribute.constraints[:destroy_action]
+
+      action_identifier =
+        cond do
+          action_type == :create &&
+              (create_action &&
+                 create_action !=
+                   Ash.Resource.Info.primary_action!(embedded_resource, :create).name) ->
+            AshJsonApi.Resource.Info.action_names_in_schema(embedded_resource)[create_action] ||
+              raise_action_names_in_schema_error(embedded_resource, create_action, :create)
+
+          action_type == :update &&
+              (update_action &&
+                 update_action !=
+                   Ash.Resource.Info.primary_action!(embedded_resource, :update).name) ->
+            AshJsonApi.Resource.Info.action_names_in_schema(embedded_resource)[update_action] ||
+              raise_action_names_in_schema_error(embedded_resource, update_action, :update)
+
+          action_type == :destroy &&
+              (destroy_action &&
+                 destroy_action !=
+                   Ash.Resource.Info.primary_action!(embedded_resource, :destroy).name) ->
+            AshJsonApi.Resource.Info.action_names_in_schema(embedded_resource)[destroy_action] ||
+              raise_action_names_in_schema_error(embedded_resource, destroy_action, :destroy)
+
+          true ->
+            to_string(action_type)
+        end
 
       if json_api_type do
-        "#{json_api_type}-input-#{action_type}"
+        "#{json_api_type}-input-#{action_identifier}-type"
       else
         # Use parent resource type and attribute name for schema naming
         # This matches the pattern used in the generated refs
@@ -1123,7 +1168,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         attribute_name = Map.get(attribute, :name)
 
         if parent_type && attribute_name do
-          "#{parent_type}_#{attribute_name}-input-#{action_type}"
+          "#{parent_type}_#{attribute_name}-input-#{action_identifier}-type"
         else
           nil
         end

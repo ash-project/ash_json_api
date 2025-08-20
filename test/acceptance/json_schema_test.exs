@@ -210,8 +210,8 @@ defmodule Test.Acceptance.JsonSchemaTest do
           assert is_map(schemas)
 
           # Verify that the embedded resource with JSON API type gets its own schema
-          assert Map.has_key?(schemas, "node")
-          node_schema = schemas["node"]
+          assert Map.has_key?(schemas, "node-type")
+          node_schema = schemas["node-type"]
           assert node_schema.type == :object
 
           # Verify that tree resource uses $ref to reference the node schema
@@ -241,7 +241,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
 
           # Find the $ref in the child's anyOf
           ref_schema = Enum.find(child_any_of, &Map.has_key?(&1, "$ref"))
-          assert ref_schema["$ref"] == "#/components/schemas/node"
+          assert ref_schema["$ref"] == "#/components/schemas/node-type"
 
           # Second item should be null type
           null_schema =
@@ -358,7 +358,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
           assert Map.has_key?(schemas, "article-with-comments")
 
           # Verify the embedded recursive-comment schema exists
-          assert Map.has_key?(schemas, "recursive-comment")
+          assert Map.has_key?(schemas, "recursive-comment-type")
 
           # Check patch operation as well
           patch_path = spec.paths["/articles/{id}"]
