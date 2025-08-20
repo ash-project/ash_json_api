@@ -45,6 +45,12 @@ defmodule AshJsonApi.Resource do
       doc:
         "A globally unique name for this route, to be used when generating docs and open api specifications"
     ],
+    description: [
+      type: :string,
+      required: false,
+      doc:
+        "A human-friendly description of this specific route to use in generated documentation and OpenAPI. If provided, this overrides the action description."
+    ],
     derive_sort?: [
       type: :boolean,
       doc:
