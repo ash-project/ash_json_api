@@ -16,6 +16,7 @@ spark_locals_without_parens = [
   delimiter: 1,
   derive_filter?: 1,
   derive_sort?: 1,
+  description: 1,
   get: 1,
   get: 2,
   get: 3,
