@@ -1613,7 +1613,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp action_description(action, route, resource) do
-      action.description || default_description(route, resource)
+      route.description || (action && action.description) || default_description(route, resource)
     end
 
     defp default_description(route, resource) do

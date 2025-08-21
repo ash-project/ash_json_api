@@ -60,7 +60,7 @@ defmodule Test.Acceptance.OpenApiTest do
         route :post, "/trigger_job/:job_id", :trigger_job
         route :post, "/path_with_enum/:enum", :takes_enum
         route(:get, "returns_map", :returns_map)
-        route(:get, "/get_foo", :get_foo)
+        route(:get, "/get_foo", :get_foo, description: "Fetch a Foo wrapper.")
         post_to_relationship :posts
       end
     end
@@ -503,6 +503,12 @@ defmodule Test.Acceptance.OpenApiTest do
 
     assert %Operation{description: "/authors/:id operation on author resource"} =
              api_spec.paths["/authors/{id}"].get
+  end
+
+  test "Route-level description overrides action description", %{
+    open_api_spec: %OpenApi{} = api_spec
+  } do
+    assert %Operation{description: "Fetch a Foo wrapper."} = api_spec.paths["/authors/get_foo"].get
   end
 
   describe "Index route" do
