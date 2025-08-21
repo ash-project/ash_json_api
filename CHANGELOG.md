@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.42](https://github.com/ash-project/ash_json_api/compare/v1.4.41...v1.4.42) (2025-08-21)
+
+
+
+
+### Bug Fixes:
+
+* handle conflicting generated schema refs by [@zachdaniel](https://github.com/zachdaniel)
+
+### Improvements:
+
+* provide descriptions for routes #202 (#377) by [@marinakr](https://github.com/marinakr)
+
+* support disambiguating embedded resource input type names by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.41](https://github.com/ash-project/ash_json_api/compare/v1.4.40...v1.4.41) (2025-08-18)
 
 
