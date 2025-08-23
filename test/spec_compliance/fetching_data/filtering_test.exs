@@ -231,6 +231,30 @@ defmodule AshJsonApiTest.FetchingData.Filtering do
         |> assert_valid_resource_objects("author", [author2.id])
         |> assert_invalid_resource_objects("author", [author.id])
     end
+
+    test "in filter" do
+      post_foo =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      post_bar =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "bar"})
+        |> Ash.create!()
+
+      post_baz =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "baz"})
+        |> Ash.create!()
+
+      # Use multiple indexed params to express an `in` list
+      _conn =
+        Domain
+        |> get("/posts?filter[name][in][0]=foo&filter[name][in][1]=baz", status: 200)
+        |> assert_valid_resource_objects("post", [post_foo.id, post_baz.id])
+        |> assert_invalid_resource_objects("post", [post_bar.id])
+    end
   end
 
   # Note: JSON:API is agnostic about the strategies supported by a server. The filter query parameter can be used as the basis for any number of filtering strategies.
