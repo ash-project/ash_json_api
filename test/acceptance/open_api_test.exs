@@ -508,7 +508,8 @@ defmodule Test.Acceptance.OpenApiTest do
   test "Route-level description overrides action description", %{
     open_api_spec: %OpenApi{} = api_spec
   } do
-    assert %Operation{description: "Fetch a Foo wrapper."} = api_spec.paths["/authors/get_foo"].get
+    assert %Operation{description: "Fetch a Foo wrapper."} =
+             api_spec.paths["/authors/get_foo"].get
   end
 
   describe "Index route" do
