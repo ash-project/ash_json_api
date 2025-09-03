@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.43](https://github.com/ash-project/ash_json_api/compare/v1.4.42...v1.4.43) (2025-09-03)
+
+
+
+
+### Bug Fixes:
+
+* don't use request bodies for get requests by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.42](https://github.com/ash-project/ash_json_api/compare/v1.4.41...v1.4.42) (2025-08-21)
 
 
