@@ -368,6 +368,18 @@ defmodule Test.Acceptance.OpenApiTest do
              %Schema{type: :string}
   end
 
+  test "custom GET actions have no request body", %{
+    open_api_spec: %OpenApi{} = api_spec
+  } do
+    # Custom GET action without arguments should have no request body
+    assert returns_map_schema = api_spec.paths["/authors/returns_map"].get
+    refute returns_map_schema.requestBody
+
+    # Custom GET action with arguments should also have no request body
+    assert get_foo_schema = api_spec.paths["/authors/get_foo"].get
+    refute get_foo_schema.requestBody
+  end
+
   test "generic routes have properly specified returns in the case of maps", %{
     open_api_spec: %OpenApi{} = api_spec
   } do
@@ -396,38 +408,8 @@ defmodule Test.Acceptance.OpenApiTest do
 
     assert [] = generic_action_schema.parameters
 
-    assert generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data ==
-             %Schema{
-               type: :object,
-               required: [:bio],
-               properties: %{
-                 bio: %{
-                   "$ref" => "#/components/schemas/author_bio-input-create-type"
-                 }
-               },
-               additionalProperties: false
-             }
-
-    # Also verify that the referenced schema exists in components
-    # The action type for generic actions might be different, so let's check what's actually generated
-    bio_input_schemas =
-      api_spec.components.schemas
-      |> Map.keys()
-      |> Enum.filter(&String.contains?(&1, "bio-input"))
-
-    # There should be at least one bio input schema
-    assert length(bio_input_schemas) > 0,
-           "No bio input schemas found. Available schemas: #{inspect(Map.keys(api_spec.components.schemas))}"
-
-    # Check that the referenced schema name matches one of the generated ones
-    ref_name =
-      generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data.properties.bio[
-        "$ref"
-      ]
-
-    assert ref_name != nil
-    schema_name = String.replace_prefix(ref_name, "#/components/schemas/", "")
-    assert schema_name in bio_input_schemas
+    # Custom GET actions should not have a request body as per the fix
+    refute generic_action_schema.requestBody
 
     # Now Foo is treated as a schema with JSON API type, so it gets referenced
     assert generic_action_schema.responses[200].content["application/vnd.api+json"].schema ==

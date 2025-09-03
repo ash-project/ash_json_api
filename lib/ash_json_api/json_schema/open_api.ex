@@ -1681,20 +1681,33 @@ if Code.ensure_loaded?(OpenApiSpex) do
           action = Ash.Resource.Info.action(resource, route.action)
 
           {query_params, _unused_schema} =
-            route.query_params
-            |> Enum.map(fn name ->
-              argument = Enum.find(action.arguments, &(&1.name == name))
-
-              if argument do
-                argument
-              else
-                if name in Map.get(action, :accept, []) do
-                  Ash.Resource.Info.attribute(resource, name)
+            if route.method == :get do
+              Enum.flat_map(Ash.Resource.Info.action_inputs(resource, route.action), fn input ->
+                with true <- is_atom(input),
+                     arg when not is_nil(arg) <-
+                       Enum.find(action.arguments, &(&1.name == input)) ||
+                         Ash.Resource.Info.attribute(resource, input) do
+                  [arg]
                 else
-                  nil
+                  _ ->
+                    []
                 end
-              end
-            end)
+              end)
+            else
+              Enum.map(route.query_params, fn name ->
+                argument = Enum.find(action.arguments, &(&1.name == name))
+
+                if argument do
+                  argument
+                else
+                  if name in Map.get(action, :accept, []) do
+                    Ash.Resource.Info.attribute(resource, name)
+                  else
+                    nil
+                  end
+                end
+              end)
+            end
             |> Enum.concat(
               Enum.map(route_params, fn route_param ->
                 case Enum.find(action.arguments, &(to_string(&1.name) == route_param)) do
@@ -2060,7 +2073,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       body =
         if route.type == :route &&
-             (route.method == :delete || Enum.empty?(json_body_schema.properties.data.properties)) do
+             (route.method in [:delete, :get] ||
+                Enum.empty?(json_body_schema.properties.data.properties)) do
           nil
         else
           body_required =
