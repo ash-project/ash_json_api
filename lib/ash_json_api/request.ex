@@ -462,6 +462,13 @@ defmodule AshJsonApi.Request do
                   |> Ash.Domain.Info.resources()
                   |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
               end)
+              |> then(fn
+                nil ->
+                  add_error(request, InvalidType.exception(type: type), request.route.type)
+
+                resource ->
+                  add_fields(request, resource, fields, true)
+              end)
           end
 
         resource ->
