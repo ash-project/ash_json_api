@@ -406,7 +406,7 @@ defmodule Test.Acceptance.OpenApiTest do
   } do
     assert generic_action_schema = api_spec.paths["/authors/get_foo"].get
 
-    assert [] = generic_action_schema.parameters
+    assert [%{name: "bio", in: :query, required: true}] = generic_action_schema.parameters
 
     # Custom GET actions should not have a request body as per the fix
     refute generic_action_schema.requestBody

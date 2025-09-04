@@ -1736,7 +1736,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 end
 
               style =
-                if schema.type == :object && location == :query do
+                if (Map.get(schema, :type) == :object || Map.has_key?(schema, "$ref")) &&
+                     location == :query do
                   :deepObject
                 else
                   :form
