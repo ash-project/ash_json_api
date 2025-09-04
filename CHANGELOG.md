@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.44](https://github.com/ash-project/ash_json_api/compare/v1.4.43...v1.4.44) (2025-09-04)
+
+
+
+
+### Bug Fixes:
+
+* handle $ref type schemas by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.43](https://github.com/ash-project/ash_json_api/compare/v1.4.42...v1.4.43) (2025-09-03)
 
 
