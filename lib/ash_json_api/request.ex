@@ -447,7 +447,22 @@ defmodule AshJsonApi.Request do
       |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
       |> case do
         nil ->
-          add_error(request, InvalidType.exception(type: type), request.route.type)
+          request.domain
+          |> Spark.otp_app()
+          |> case do
+            nil ->
+              add_error(request, InvalidType.exception(type: type), request.route.type)
+
+            otp_app ->
+              otp_app
+              |> Application.get_env(:ash_domains, [])
+              |> Enum.find_value(fn domain ->
+                domain != request.domain &&
+                  domain
+                  |> Ash.Domain.Info.resources()
+                  |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
+              end)
+          end
 
         resource ->
           add_fields(request, resource, fields, true)
