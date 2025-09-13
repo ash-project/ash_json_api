@@ -29,8 +29,6 @@ defmodule AshJsonApi.Includes.Parser do
     |> to_nested_map()
   end
 
-  defp to_nested_map([]), do: true
-
   defp to_nested_map(list) when is_list(list) do
     list
     |> Enum.map(fn
