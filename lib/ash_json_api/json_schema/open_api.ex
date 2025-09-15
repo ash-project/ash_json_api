@@ -183,7 +183,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {Map.merge(definitions, Map.new(all_schemas)), final_acc}
         end)
 
-      Map.merge(final_schemas, final_acc.schemas)
+      final_schemas
+      |> Map.merge(final_acc.schemas)
+      |> Enum.sort_by(&elem(&1, 0))
+      |> Enum.into(%{})
     end
 
     def schemas(domain) do
@@ -1496,7 +1499,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           paths(domain, all_domains, opts, acc)
         end)
 
-      merged_paths = Enum.reduce(all_paths, %{}, &Map.merge/2)
+      merged_paths =
+        Enum.reduce(all_paths, %{}, &Map.merge/2)
+        |> Enum.sort_by(&elem(&1, 0))
+        |> Enum.into(%{})
+
       {merged_paths, final_acc}
     end
 
@@ -1519,6 +1526,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
         paths_list
         |> Enum.group_by(fn {path, _route_op} -> path end, fn {_path, route_op} -> route_op end)
         |> Map.new(fn {path, route_ops} -> {path, struct!(PathItem, route_ops)} end)
+        |> Enum.sort_by(&elem(&1, 0))
+        |> Enum.into(%{})
 
       {final_paths, final_acc}
     end

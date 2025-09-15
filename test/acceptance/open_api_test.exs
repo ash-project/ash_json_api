@@ -345,6 +345,16 @@ defmodule Test.Acceptance.OpenApiTest do
     assert nil == api_spec.paths["/posts/{id}"].patch
   end
 
+  test "API routes are sorted in alphabetical order", %{open_api_spec: %OpenApi{} = api_spec} do
+    paths = api_spec.paths |> Map.keys()
+    assert Enum.sort(paths) == paths
+  end
+
+  test "schemas are sorted in alphabetical order", %{open_api_spec: %OpenApi{} = api_spec} do
+    schemas = api_spec.components.schemas |> Map.keys()
+    assert Enum.sort(schemas) == schemas
+  end
+
   test "generic routes have properly specified returns", %{open_api_spec: %OpenApi{} = api_spec} do
     assert generic_action_schema = api_spec.paths["/authors/say_hello/{to}"].post
 
