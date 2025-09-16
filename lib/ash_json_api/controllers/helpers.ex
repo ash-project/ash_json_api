@@ -432,12 +432,11 @@ defmodule AshJsonApi.Controllers.Helpers do
   def add_to_relationship(request, relationship_name) do
     chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
+      values = normalize_relationship_identifiers(request)
 
       result
       |> Ash.Changeset.new()
-      |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
-        type: :append
-      )
+      |> Ash.Changeset.manage_relationship(relationship_name, values, type: :append)
       |> Ash.Changeset.set_context(request.context)
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.load(fields(request, request.resource))
@@ -456,12 +455,11 @@ defmodule AshJsonApi.Controllers.Helpers do
   def replace_relationship(request, relationship_name) do
     chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
+      values = normalize_relationship_identifiers(request)
 
       result
       |> Ash.Changeset.new()
-      |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
-        type: :append_and_remove
-      )
+      |> Ash.Changeset.manage_relationship(relationship_name, values, type: :append_and_remove)
       |> Ash.Changeset.set_context(request.context)
       |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.Changeset.load(fields(request, request.resource))
@@ -480,12 +478,11 @@ defmodule AshJsonApi.Controllers.Helpers do
   def delete_from_relationship(request, relationship_name) do
     chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
+      values = normalize_relationship_identifiers(request)
 
       result
       |> Ash.Changeset.new()
-      |> Ash.Changeset.manage_relationship(relationship_name, request.resource_identifiers,
-        type: :remove
-      )
+      |> Ash.Changeset.manage_relationship(relationship_name, values, type: :remove)
       |> Ash.Changeset.set_context(request.context)
       |> Ash.Changeset.for_update(action, Request.opts(request))
       |> Ash.update(Request.opts(request))
@@ -1011,8 +1008,9 @@ defmodule AshJsonApi.Controllers.Helpers do
       if map_type?(argument.type) do
         request.resource_identifiers
       else
-        Enum.map(request.resource_identifiers, fn identifier ->
-          identifier["id"]
+        Enum.map(request.resource_identifiers, fn
+          %{:id => id} -> id
+          {%{:id => id}, _meta} -> id
         end)
       end
 
@@ -1032,6 +1030,20 @@ defmodule AshJsonApi.Controllers.Helpers do
       Ash.Type.Struct -> true
       :struct -> true
       type -> Ash.Type.embedded_type?(type)
+    end
+  end
+
+  defp normalize_relationship_identifiers(request) do
+    case request.resource_identifiers do
+      nil -> nil
+
+      list when is_list(list) ->
+        Enum.map(list, fn
+          {%{id: id}, _meta} -> id
+          %{id: id} -> id
+        end)
+
+      %{id: id} -> id
     end
   end
 end
