@@ -484,7 +484,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Changeset.new()
       |> Ash.Changeset.manage_relationship(relationship_name, values, type: :remove)
       |> Ash.Changeset.set_context(request.context)
-      |> Ash.Changeset.for_update(action, Request.opts(request))
+      |> Ash.Changeset.for_update(action, %{}, Request.opts(request))
       |> Ash.update(Request.opts(request))
       |> case do
         {:ok, record} ->
@@ -1035,7 +1035,8 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   defp normalize_relationship_identifiers(request) do
     case request.resource_identifiers do
-      nil -> nil
+      nil ->
+        nil
 
       list when is_list(list) ->
         Enum.map(list, fn
@@ -1043,7 +1044,8 @@ defmodule AshJsonApi.Controllers.Helpers do
           %{id: id} -> id
         end)
 
-      %{id: id} -> id
+      %{id: id} ->
+        id
     end
   end
 end
