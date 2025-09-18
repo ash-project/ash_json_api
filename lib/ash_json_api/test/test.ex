@@ -261,11 +261,22 @@ defmodule AshJsonApi.Test do
 
   @doc """
   Sends a DELETE request to the given path. See the module docs for more.
+  If `body:` is provided in opts, it is JSON encoded and sent.
   """
   def delete(domain, path, opts \\ []) do
+    {conn_builder, opts} =
+      case Keyword.pop(opts, :body) do
+        {nil, opts} ->
+          {:delete |> conn(path, opts), opts}
+
+        {body, opts} ->
+          {:delete
+           |> conn(path, Jason.encode!(body), opts)
+           |> set_content_type_request_header(opts), opts}
+      end
+
     result =
-      :delete
-      |> conn(path, opts)
+      conn_builder
       |> set_req_headers(opts)
       |> set_context_opts(opts)
       |> set_accept_request_header(opts)
