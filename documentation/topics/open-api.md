@@ -74,6 +74,7 @@ To customize the main values of the OpenAPI spec, a few options are available:
 ```elixir
   use AshJsonApi.Router,
     domains: [...],
+    prefix: "/api/v1",
     open_api: "/open_api",
     open_api_title: "Title",
     open_api_version: "1.0.0",
@@ -81,6 +82,8 @@ To customize the main values of the OpenAPI spec, a few options are available:
 ```
 
 If `:open_api_servers` is not specified, a default server is automatically derived from your app's Phoenix endpoint, as retrieved from inbound connections on the `open_api` HTTP route.
+
+The `:prefix` is usually automatically inferred, but when generating files or using swaggerui you'll need to set it manually.
 
 In case an active connection is not available, for example when generating the OpenAPI spec via CLI, you can explicitely specify a reference to the Phoenix endpoint:
 
@@ -105,6 +108,25 @@ To override any value in the OpenApi documentation you can use the `:modify_open
       | info: %{spec.info | title: "MyApp Title JSON API", version: Application.spec(:my_app, :vsn) |> to_string()}
     }
   end
+```
+
+A common use case for modifying the open api spec is using a security scheme other that authBearer with a JWT token
+which requires adding the SecurityScheme and specifying where it is used.
+
+```elixir
+    def modify_open_api(spec, _, _) do
+      %{
+        spec
+        | components: %{spec.components | securitySchemes:
+        %{
+          "basicAuth" => %OpenApiSpex.SecurityScheme{
+            type: "http",
+            description: "Basic HTTP Authentication using username and password",
+            scheme: "basic"
+          }
+        }
+      }, security: [%{"basicAuth" => []}] }
+    end
 ```
 
 ## Generate spec files via CLI
