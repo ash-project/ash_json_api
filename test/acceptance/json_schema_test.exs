@@ -198,63 +198,54 @@ defmodule Test.Acceptance.JsonSchemaTest do
     test "handles self-referential embedded resources in OpenAPI schema without infinite loop" do
       # This should complete without timing out
       # If it loops infinitely, the test will timeout
-      import ExUnit.CaptureLog
+      open_api_spec = AshJsonApi.OpenApi.spec(domain: [Blogs])
 
-      log =
-        capture_log(fn ->
-          open_api_spec = AshJsonApi.OpenApi.spec(domain: [Blogs])
+      # Basic assertion to ensure schema was generated
+      assert %OpenApiSpex.OpenApi{} = open_api_spec
+      schemas = open_api_spec.components.schemas
+      assert is_map(schemas)
 
-          # Basic assertion to ensure schema was generated
-          assert %OpenApiSpex.OpenApi{} = open_api_spec
-          schemas = open_api_spec.components.schemas
-          assert is_map(schemas)
+      # Verify that the embedded resource with JSON API type gets its own schema
+      assert Map.has_key?(schemas, "node-type")
+      node_schema = schemas["node-type"]
+      assert node_schema.type == :object
 
-          # Verify that the embedded resource with JSON API type gets its own schema
-          assert Map.has_key?(schemas, "node-type")
-          node_schema = schemas["node-type"]
-          assert node_schema.type == :object
+      # Verify that tree resource uses $ref to reference the node schema
+      tree_schema = schemas["tree"]
+      assert tree_schema.type == :object
+      tree_attributes = tree_schema.properties.attributes
+      root_property = tree_attributes.properties.root
 
-          # Verify that tree resource uses $ref to reference the node schema
-          tree_schema = schemas["tree"]
-          assert tree_schema.type == :object
-          tree_attributes = tree_schema.properties.attributes
-          root_property = tree_attributes.properties.root
+      # Should be an anyOf with the reference and null (because the attribute allows nil)
+      assert Map.has_key?(root_property, "anyOf")
+      any_of = root_property["anyOf"]
+      assert length(any_of) == 2
 
-          # Should be an anyOf with the reference and null (because the attribute allows nil)
-          assert Map.has_key?(root_property, "anyOf")
-          any_of = root_property["anyOf"]
-          assert length(any_of) == 2
-
-          # First item should be the node schema (inline)
-          node_schema =
-            Enum.find(any_of, fn item ->
-              match?(%OpenApiSpex.Schema{}, item) && item.type == :object
-            end)
-
-          assert node_schema != nil
-          assert node_schema.type == :object
-
-          # The child property within the node schema should reference the node schema
-          child_property = node_schema.properties.child
-          assert Map.has_key?(child_property, "anyOf")
-          child_any_of = child_property["anyOf"]
-
-          # Find the $ref in the child's anyOf
-          ref_schema = Enum.find(child_any_of, &Map.has_key?(&1, "$ref"))
-          assert ref_schema["$ref"] == "#/components/schemas/node-type"
-
-          # Second item should be null type
-          null_schema =
-            Enum.find(any_of, fn item ->
-              is_map(item) && not match?(%OpenApiSpex.Schema{}, item) && item["type"] == "null"
-            end)
-
-          assert null_schema["type"] == "null"
+      # First item should be the node schema (inline)
+      node_schema =
+        Enum.find(any_of, fn item ->
+          match?(%OpenApiSpex.Schema{}, item) && item.type == :object
         end)
 
-      # Verify that the warning was logged for recursive type
-      assert log =~
-               "Detected recursive embedded type with JSON API type: Test.Acceptance.JsonSchemaTest.Node"
+      assert node_schema != nil
+      assert node_schema.type == :object
+
+      # The child property within the node schema should reference the node schema
+      child_property = node_schema.properties.child
+      assert Map.has_key?(child_property, "anyOf")
+      child_any_of = child_property["anyOf"]
+
+      # Find the $ref in the child's anyOf
+      ref_schema = Enum.find(child_any_of, &Map.has_key?(&1, "$ref"))
+      assert ref_schema["$ref"] == "#/components/schemas/node-type"
+
+      # Second item should be null type
+      null_schema =
+        Enum.find(any_of, fn item ->
+          is_map(item) && not match?(%OpenApiSpex.Schema{}, item) && item["type"] == "null"
+        end)
+
+      assert null_schema["type"] == "null"
     end
 
     test "handles recursive embedded inputs for create/update operations without infinite loop" do

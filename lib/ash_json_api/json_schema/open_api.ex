@@ -948,13 +948,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
               type_key = {instance_of, nil, constraints}
 
               if type_key in acc.seen_non_schema_types do
-                # We're in a recursive loop, return $ref and warn
+                # We're in a recursive loop, return $ref
                 # Recursive type detected, using $ref instead of inline definition
-
-                Logger.warning(
-                  "Detected recursive embedded type with JSON API type: #{inspect(instance_of)}"
-                )
-
                 schema = %{"$ref" => "#/components/schemas/#{json_api_type}-type"}
                 {schema, acc}
               else
