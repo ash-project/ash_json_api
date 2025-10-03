@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.4.45](https://github.com/ash-project/ash_json_api/compare/v1.4.44...v1.4.45) (2025-10-03)
+
+
+
+
+### Bug Fixes:
+
+* remove unnecessary warning for recursive embedded types (#386) by Scott Bennett [(#386)](https://github.com/ash-project/ash_json_api/pull/386)
+
+* allow posting through related properly (#385) by Geoffrey Lessel [(#385)](https://github.com/ash-project/ash_json_api/pull/385)
+
+* return correct id when posting through related by Geoffrey Lessel [(#385)](https://github.com/ash-project/ash_json_api/pull/385)
+
+* empty includes should not crash (#383) by Cyprien Poisson [(#383)](https://github.com/ash-project/ash_json_api/pull/383)
+
+* handle cross-domain fields[{type}] requests by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.4.44](https://github.com/ash-project/ash_json_api/compare/v1.4.43...v1.4.44) (2025-09-04)
 
 
