@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Test.Acceptance.JsonSchemaTest do
   use ExUnit.Case, async: true
 

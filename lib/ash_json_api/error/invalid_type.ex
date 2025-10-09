@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Error.InvalidType do
   @moduledoc """
   Returned when a field is requested for a type that does not exist or is invalid

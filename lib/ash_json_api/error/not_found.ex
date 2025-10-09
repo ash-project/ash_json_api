@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Error.NotFound do
   @moduledoc """
   Returned when a record was explicitly requested, but could not be found.

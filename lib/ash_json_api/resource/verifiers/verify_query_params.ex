@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Resource.Verifiers.VerifyQueryParams do
   @moduledoc "Verify query params are not reserved or shadowed by the route"
   use Spark.Dsl.Verifier

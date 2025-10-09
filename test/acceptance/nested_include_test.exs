@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Test.Acceptance.NestedIncludeTest do
   @moduledoc """
   This test assert that nested includes definition are wrapped in list automatically.

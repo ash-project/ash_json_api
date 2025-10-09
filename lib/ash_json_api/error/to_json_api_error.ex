@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defprotocol AshJsonApi.ToJsonApiError do
   @moduledoc """
   A protocol for turning an Ash exception into an AshJsonApi.Error

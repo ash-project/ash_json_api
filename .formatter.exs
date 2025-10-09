@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 spark_locals_without_parens = [
   action_names_in_schema: 1,
   always_include_linkage: 1,

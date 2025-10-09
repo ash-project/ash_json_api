@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Type do
   @moduledoc """
   The behaviour for customizing how a datatype is rendered and written in AshJsonApi.

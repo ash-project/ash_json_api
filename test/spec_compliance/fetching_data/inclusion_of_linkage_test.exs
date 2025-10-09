@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApiTest.FetchingData.InclusionOfLinkage do
   use ExUnit.Case
   @moduletag :json_api_spec_1_0

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Resource.Route do
   @moduledoc "Represents a route for a resource"
   defstruct [

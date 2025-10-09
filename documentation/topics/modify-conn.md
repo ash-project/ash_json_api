@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # Using modify_conn to Customize HTTP Responses
 
 The `modify_conn` option in AshJsonApi allows you to customize the HTTP response by modifying the Plug connection before it's sent to the client. This is useful for setting custom headers, cookies, or making any other modifications to the response based on the action's result.

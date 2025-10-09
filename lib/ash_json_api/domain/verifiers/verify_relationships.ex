@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Domain.Verifiers.VerifyRelationships do
   @moduledoc "Verifies that any routes that reference a relationship reference a public one"
   use Spark.Dsl.Verifier

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Resource.Verifiers.VerifyActions do
   @moduledoc "Verifies that all actions are valid for each route."
   use Spark.Dsl.Verifier

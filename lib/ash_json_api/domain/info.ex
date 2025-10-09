@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Domain.Info do
   @moduledoc "Introspection helpers for AshJsonApi.Domain"
   alias Spark.Dsl.Extension

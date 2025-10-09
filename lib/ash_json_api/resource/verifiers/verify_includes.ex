@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Resource.Verifiers.VerifyIncludes do
   @moduledoc "Verifies that all includes are valid public relationships"
   use Spark.Dsl.Verifier

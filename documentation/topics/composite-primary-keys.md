@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # Composite Primary Keys
 
 When working with resources that have composite primary keys (multiple fields that together form the unique identifier), AshJsonApi provides special support for encoding and decoding these keys in URLs.

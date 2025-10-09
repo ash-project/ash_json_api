@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # Relationships
 
 You can specify which arguments will modify relationships using `relationship_arguments`, but there are some things to keep in mind.
