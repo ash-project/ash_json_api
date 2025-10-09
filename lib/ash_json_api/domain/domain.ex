@@ -60,7 +60,7 @@ defmodule AshJsonApi.Domain do
 
   defmodule BaseRoute do
     @moduledoc "Introspection target for base routes in `AshJsonApi.Domain`"
-    defstruct [:route, :routes, :resource]
+    defstruct [:route, :routes, :resource, :__spark_metadata__]
   end
 
   @base_route %Spark.Dsl.Entity{
