@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # What is AshJsonApi
 
 AshJsonApi allows you to expose your resource actions over a [JSON:API](https://jsonapi.org]). This API supports all of the features of JSON:API and Ash, like sorting, filtering, pagination, and side loading.

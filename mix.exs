@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.MixProject do
   use Mix.Project
 
@@ -30,12 +34,20 @@ defmodule AshJsonApi.MixProject do
 
   defp package do
     [
-      name: :ash_json_api,
+      maintainers: [
+        "Zach Daniel <zach@zachdaniel.dev>"
+      ],
       licenses: ["MIT"],
       files: ~w(lib .formatter.exs mix.exs README* LICENSE*
       CHANGELOG* documentation usage-rules.md),
       links: %{
-        GitHub: "https://github.com/ash-project/ash_json_api"
+        "GitHub" => "https://github.com/ash-project/ash_json_api",
+        "Changelog" => "https://github.com/ash-project/ash_json_api/blob/main/CHANGELOG.md",
+        "Discord" => "https://discord.gg/HTHRaaVPUc",
+        "Website" => "https://ash-hq.org",
+        "Forum" => "https://elixirforum.com/c/elixir-framework-forums/ash-framework-forum",
+        "REUSE Compliance" =>
+          "https://api.reuse.software/info/github.com/ash-project/ash_json_api"
       }
     ]
   end

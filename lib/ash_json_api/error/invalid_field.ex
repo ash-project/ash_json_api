@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Error.InvalidField do
   @moduledoc """
   Returned when a field is requested that does not exist or is invalid

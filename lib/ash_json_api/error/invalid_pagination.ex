@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Error.InvalidPagination do
   @moduledoc """
   Returned when one of the nested parameters provided in the query parameter `page` is invalid

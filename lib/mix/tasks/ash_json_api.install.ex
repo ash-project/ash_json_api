@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 if Code.ensure_loaded?(Igniter) do
   defmodule Mix.Tasks.AshJsonApi.Install do
     @moduledoc "Installs AshJsonApi. Should be run with `mix igniter.install ash_json_api`"

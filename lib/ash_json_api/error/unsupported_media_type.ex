@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Error.UnsupportedMediaType do
   @moduledoc """
   Returned when the client does not accept (via the `Accept` header) the json API media type: application/vnd.api+json

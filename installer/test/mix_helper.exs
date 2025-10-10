@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 # Get Mix output sent to the current
 # process to avoid polluting tests.
 Mix.shell(Mix.Shell.Process)

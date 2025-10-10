@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApiTest.DocumentStructure do
   @moduledoc """
   https://jsonapi.org/format/#document-structure

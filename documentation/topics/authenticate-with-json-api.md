@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # Authenticating with AshJsonApi
 
 Authenticating with AshJsonApi requires a few things. The first thing to note is that this is not something that is provided for you out of the box by `ash_authentication`.

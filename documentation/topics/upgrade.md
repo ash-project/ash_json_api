@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # Upgrading to AshJsonApi to 1.0
 
 Two major things have changed in `AshJsonApi` 1.0.

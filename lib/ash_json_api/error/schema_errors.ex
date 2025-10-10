@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Error.SchemaErrors do
   @moduledoc false
   def all_errors(%{reason: reason}, format \\ :parameter) do

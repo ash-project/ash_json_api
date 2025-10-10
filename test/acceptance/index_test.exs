@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Test.Acceptance.IndexTest do
   use ExUnit.Case, async: true
 

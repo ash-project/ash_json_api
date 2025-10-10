@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # Non-Spec query parameters
 
 AshJsonApi supports a few non-spec query parameters that enhance

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Controllers.Post do
   @moduledoc false
   alias AshJsonApi.Controllers.{Helpers, Response}

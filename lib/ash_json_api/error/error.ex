@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Error do
   @moduledoc "Represents an AshJsonApi Error"
   defstruct id: :undefined,

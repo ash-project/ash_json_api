@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Test.Acceptance.IncludeNilValuesTest do
   @moduledoc """
   This test tries to assert that the following things apply:

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshJsonApi.Domain.Verifiers.VerifyHasType do
   @moduledoc "Verifies that a resource has a type if it has any routes that need it."
   use Spark.Dsl.Verifier
