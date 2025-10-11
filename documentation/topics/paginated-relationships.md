@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2020 Zach Daniel
+
+SPDX-License-Identifier: MIT
+-->
+
 # Paginated Relationships
 
 AshJsonApi supports pagination for included relationships, allowing you to limit the number of related resources returned when using the `include` query parameter.
