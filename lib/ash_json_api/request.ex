@@ -458,7 +458,9 @@ defmodule AshJsonApi.Request do
         nil ->
           add_error(
             request,
-            InvalidPagination.exception(detail: "Invalid relationship path: #{relationship_path}"),
+            InvalidPagination.exception(
+              detail: "Invalid relationship path: #{relationship_path}"
+            ),
             request.route.type
           )
 
@@ -490,8 +492,10 @@ defmodule AshJsonApi.Request do
     Enum.any?(paginated_includes, fn
       allowed_path when is_list(allowed_path) ->
         allowed_path == path_atoms
+
       allowed_path when is_atom(allowed_path) ->
         [allowed_path] == path_atoms
+
       _ ->
         false
     end)
@@ -799,11 +803,29 @@ defmodule AshJsonApi.Request do
     )
   end
 
-  defp set_include_queries(includes, fields, field_inputs, filters, sorts, page_params, resource, path \\ [])
+  defp set_include_queries(
+         includes,
+         fields,
+         field_inputs,
+         filters,
+         sorts,
+         page_params,
+         resource,
+         path \\ []
+       )
 
   defp set_include_queries(:linkage_only, _, _, _, _, _, _, _), do: []
 
-  defp set_include_queries(includes, fields, field_inputs, filters, sorts, page_params, resource, path) do
+  defp set_include_queries(
+         includes,
+         fields,
+         field_inputs,
+         filters,
+         sorts,
+         page_params,
+         resource,
+         path
+       ) do
     includes =
       Enum.reduce(
         AshJsonApi.Resource.Info.always_include_linkage(resource),
@@ -821,7 +843,16 @@ defmodule AshJsonApi.Request do
       related = public_related(resource, key)
 
       nested_queries =
-        set_include_queries(nested, fields, field_inputs, filters, sorts, page_params, related, path ++ [key])
+        set_include_queries(
+          nested,
+          fields,
+          field_inputs,
+          filters,
+          sorts,
+          page_params,
+          related,
+          path ++ [key]
+        )
 
       related_field_inputs = Map.get(field_inputs, related, %{})
 
