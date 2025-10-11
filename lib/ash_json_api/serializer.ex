@@ -601,21 +601,65 @@ defmodule AshJsonApi.Serializer do
       %{__linkage__: %{^name => linkage}} ->
         type = AshJsonApi.Resource.Info.type(destination)
 
-        Map.put(
-          payload,
-          :data,
-          linkage
-          |> Enum.map(
-            &(%{id: AshJsonApi.Resource.encode_primary_key(&1), type: type}
-              |> add_relationship_meta(&1, record, relationship))
+        payload_with_data =
+          Map.put(
+            payload,
+            :data,
+            linkage
+            |> Enum.map(
+              &(%{id: AshJsonApi.Resource.encode_primary_key(&1), type: type}
+                |> add_relationship_meta(&1, record, relationship))
+            )
+            |> Enum.uniq_by(& &1.id)
           )
-          |> Enum.uniq_by(& &1.id)
-        )
+
+        # Add pagination meta if this relationship was paginated
+        case Map.get(record, :__pagination__, %{}) do
+          %{^name => page} ->
+            add_pagination_meta_to_relationship(payload_with_data, page)
+
+          _ ->
+            payload_with_data
+        end
 
       _ ->
         payload
     end
   end
+
+  # Add pagination metadata to relationship object if it's a paginated result
+  defp add_pagination_meta_to_relationship(payload, %Ash.Page.Offset{} = page) do
+    page_meta =
+      %{}
+      |> maybe_add(:limit, page.limit)
+      |> maybe_add(:offset, page.offset)
+      |> maybe_add(:count, page.count)
+
+    if map_size(page_meta) > 0 do
+      Map.update(payload, :meta, page_meta, &Map.merge(&1, page_meta))
+    else
+      payload
+    end
+  end
+
+  defp add_pagination_meta_to_relationship(payload, %Ash.Page.Keyset{} = page) do
+    page_meta =
+      %{}
+      |> maybe_add(:limit, page.limit)
+      |> maybe_add(:more?, page.more?)
+      |> maybe_add(:count, page.count)
+
+    if map_size(page_meta) > 0 do
+      Map.update(payload, :meta, page_meta, &Map.merge(&1, page_meta))
+    else
+      payload
+    end
+  end
+
+  defp add_pagination_meta_to_relationship(payload, _), do: payload
+
+  defp maybe_add(map, _key, nil), do: map
+  defp maybe_add(map, key, value), do: Map.put(map, key, value)
 
   defp with_path_params(request, params) do
     Map.update!(request, :path_params, &Map.merge(&1, params))
