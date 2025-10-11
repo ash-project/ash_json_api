@@ -29,7 +29,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
 
       # Configure paginated includes for nested paths
       # Note: Nested paths are specified as lists like [:posts, :comments]
-      paginated_includes [:posts, [:posts, :comments]]
+      paginated_includes([:posts, [:posts, :comments]])
 
       routes do
         base("/authors")
@@ -72,7 +72,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
       includes [:comments, :author]
 
       # Configure which relationships can be paginated
-      paginated_includes [:comments, [:author, :posts]]
+      paginated_includes([:comments, [:author, :posts]])
 
       routes do
         base("/posts")
