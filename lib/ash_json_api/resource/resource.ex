@@ -532,11 +532,8 @@ defmodule AshJsonApi.Resource do
       paginated_includes: [
         type: {:list, {:or, [:atom, {:list, :atom}]}},
         default: [],
-        doc: """
-        A list of relationship paths that can be paginated when included via the `included_page` query parameter.
-        Each entry can be either an atom (for top-level relationships) or a list of atoms (for nested paths).
-        Examples: `[:comments]`, `[:comments, :author]`, `[comments: [:author]]`
-        """
+        doc:
+          "A list of relationship paths that can be paginated when included via the `included_page` query parameter. Each entry can be either an atom (for top-level relationships) or a list of atoms (for nested paths)."
       ],
       include_nil_values?: [
         type: :any,
