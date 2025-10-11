@@ -64,6 +64,7 @@ end
 | [`type`](#json_api-type){: #json_api-type } | `String.t` |  | The resource identifier type of this resource in JSON:API |
 | [`always_include_linkage`](#json_api-always_include_linkage){: #json_api-always_include_linkage } | `list(atom)` | `[]` | A list of relationships that should always have their linkage included in the resource |
 | [`includes`](#json_api-includes){: #json_api-includes } | `any \| list(any)` | `[]` | A keyword list of all paths that are includable from this resource |
+| [`paginated_includes`](#json_api-paginated_includes){: #json_api-paginated_includes } | `list(atom \| list(atom))` | `[]` | A list of relationship paths that can be paginated when included via the `included_page` query parameter. Each entry can be either an atom (for top-level relationships) or a list of atoms (for nested paths). |
 | [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | `any` |  | Whether or not to include properties for values that are nil in the JSON output |
 | [`default_fields`](#json_api-default_fields){: #json_api-default_fields } | `list(atom)` |  | The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public |
 | [`derive_sort?`](#json_api-derive_sort?){: #json_api-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
