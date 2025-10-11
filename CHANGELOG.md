@@ -11,6 +11,30 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [Unreleased]
+
+### Features:
+
+* **Paginated Relationships** - Add support for paginating included relationships via `included_page` query parameter
+
+  You can now paginate relationships when including them in responses using the new `included_page[relationship.path][limit]` query parameter syntax. This helps manage response sizes when relationships contain many records.
+
+  Configuration:
+  ```elixir
+  json_api do
+    paginated_includes [:comments, [:author, :posts]]
+  end
+  ```
+
+  Usage:
+  ```
+  GET /posts/1?include=comments&included_page[comments][limit]=10&included_page[comments][offset]=5
+  ```
+
+  The response will include pagination metadata in the relationship's `meta` object with fields like `limit`, `offset`, `count`, and `more?` depending on the pagination strategy used.
+
+  See the [Paginated Relationships guide](documentation/topics/paginated-relationships.md) for complete documentation.
+
 ## [v1.4.45](https://github.com/ash-project/ash_json_api/compare/v1.4.44...v1.4.45) (2025-10-03)
 
 
