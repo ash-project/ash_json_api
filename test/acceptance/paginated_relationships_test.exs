@@ -305,4 +305,117 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
       assert comments_rel["meta"]["count"] == 10
     end
   end
+
+  describe "parameter validation for included_page" do
+    test "returns error for invalid limit (non-integer)", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=abc",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "limit must be an integer"
+    end
+
+    test "returns error for invalid limit (zero)", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=0",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "limit must be a positive integer"
+    end
+
+    test "returns error for invalid limit (negative)", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=-5",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "limit must be a positive integer"
+    end
+
+    test "returns error for invalid offset (non-integer)", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=5&included_page[comments][offset]=xyz",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "offset must be an integer"
+    end
+
+    test "returns error for invalid offset (negative)", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=5&included_page[comments][offset]=-3",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "offset must be a non-negative integer"
+    end
+
+    test "returns error for invalid count value", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=5&included_page[comments][count]=yes",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "count must be 'true' or 'false'"
+    end
+
+    test "returns error for unknown pagination parameter", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][unknown_param]=value",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "unknown pagination parameter"
+    end
+
+    test "accepts valid offset of zero", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=5&included_page[comments][offset]=0",
+          status: 200
+        )
+
+      post_data = response.resp_body["data"]
+      comments_rel = post_data["relationships"]["comments"]
+      assert comments_rel["meta"]["offset"] == 0
+    end
+  end
 end

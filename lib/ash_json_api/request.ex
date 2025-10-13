@@ -470,8 +470,20 @@ defmodule AshJsonApi.Request do
           path_atoms = Enum.map(path, &String.to_existing_atom/1)
 
           if path_allowed_for_pagination?(path_atoms, paginated_includes) do
-            page_opts = parse_page_params_for_included(page_params)
-            %{request | included_page: Map.put(request.included_page, path_atoms, page_opts)}
+            case parse_page_params_for_included(page_params) do
+              {:ok, page_opts} ->
+                %{request | included_page: Map.put(request.included_page, path_atoms, page_opts)}
+
+              {:error, error_message} ->
+                add_error(
+                  request,
+                  InvalidPagination.exception(
+                    detail:
+                      "Invalid pagination parameters for relationship #{relationship_path}: #{error_message}"
+                  ),
+                  request.route.type
+                )
+            end
           else
             add_error(
               request,
@@ -503,34 +515,61 @@ defmodule AshJsonApi.Request do
 
   defp parse_page_params_for_included(page_params) when is_map(page_params) do
     page_params
-    |> Enum.reduce([], fn
-      {"limit", value}, acc ->
+    |> Enum.reduce_while({:ok, []}, fn
+      {"limit", value}, {:ok, acc} ->
         case Integer.parse(to_string(value)) do
-          {int, ""} -> [{:limit, int} | acc]
-          _ -> acc
+          {int, ""} when int > 0 ->
+            {:cont, {:ok, [{:limit, int} | acc]}}
+
+          {int, ""} ->
+            {:halt, {:error, "limit must be a positive integer, got: #{int}"}}
+
+          _ ->
+            {:halt, {:error, "limit must be an integer, got: #{inspect(value)}"}}
         end
 
-      {"offset", value}, acc ->
+      {"offset", value}, {:ok, acc} ->
         case Integer.parse(to_string(value)) do
-          {int, ""} -> [{:offset, int} | acc]
-          _ -> acc
+          {int, ""} when int >= 0 ->
+            {:cont, {:ok, [{:offset, int} | acc]}}
+
+          {int, ""} ->
+            {:halt, {:error, "offset must be a non-negative integer, got: #{int}"}}
+
+          _ ->
+            {:halt, {:error, "offset must be an integer, got: #{inspect(value)}"}}
         end
 
-      {"after", value}, acc ->
-        [{:after, value} | acc]
+      {"after", value}, {:ok, acc} when is_binary(value) ->
+        {:cont, {:ok, [{:after, value} | acc]}}
 
-      {"before", value}, acc ->
-        [{:before, value} | acc]
+      {"after", value}, {:ok, _acc} ->
+        {:halt, {:error, "after must be a string, got: #{inspect(value)}"}}
 
-      {"count", "true"}, acc ->
-        [{:count, true} | acc]
+      {"before", value}, {:ok, acc} when is_binary(value) ->
+        {:cont, {:ok, [{:before, value} | acc]}}
 
-      {"count", "false"}, acc ->
-        [{:count, false} | acc]
+      {"before", value}, {:ok, _acc} ->
+        {:halt, {:error, "before must be a string, got: #{inspect(value)}"}}
 
-      _other, acc ->
-        acc
+      {"count", "true"}, {:ok, acc} ->
+        {:cont, {:ok, [{:count, true} | acc]}}
+
+      {"count", "false"}, {:ok, acc} ->
+        {:cont, {:ok, [{:count, false} | acc]}}
+
+      {"count", value}, {:ok, _acc} ->
+        {:halt, {:error, "count must be 'true' or 'false', got: #{inspect(value)}"}}
+
+      {key, _value}, {:ok, _acc} ->
+        {:halt,
+         {:error,
+          "unknown pagination parameter: #{key}. Valid parameters are: limit, offset, after, before, count"}}
     end)
+    |> case do
+      {:ok, params} -> {:ok, Enum.reverse(params)}
+      {:error, _} = error -> error
+    end
   end
 
   defp parse_fields(%{resource: resource, query_params: %{"fields" => fields}} = request)
