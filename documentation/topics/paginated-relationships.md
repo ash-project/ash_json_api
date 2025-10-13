@@ -194,9 +194,7 @@ If you attempt to paginate a relationship that is not configured in `paginated_i
 
 ## Best Practices
 
-1. **Security**: Only add relationships to `paginated_includes` if you expect them to potentially have many records. This prevents clients from paginating relationships unnecessarily.
-
-2. **Performance**: Consider adding default limits at the action level for relationships that are commonly included:
+1. **Performance**: Consider adding default limits at the action level for relationships that are commonly included:
 
    ```elixir
    read :read do
@@ -205,11 +203,11 @@ If you attempt to paginate a relationship that is not configured in `paginated_i
    end
    ```
 
-3. **Client Implementation**: Clients should check the `meta` object on relationships to determine if pagination is active and what the current page parameters are.
+2. **Client Implementation**: Clients should check the `meta` object on relationships to determine if pagination is active and what the current page parameters are.
 
-4. **Nested Pagination**: Be cautious with nested pagination - paginating both `posts` and `posts.comments` can result in complex queries. Consider whether you really need both levels paginated.
+3. **Nested Pagination**: Be cautious with nested pagination - paginating both `posts` and `posts.comments` can result in complex queries. Consider whether you really need both levels paginated.
 
-5. **Backwards Compatibility**: Non-paginated includes continue to work as before, so adding `paginated_includes` configuration is backwards compatible. Clients that don't use `included_page` parameters will receive all related resources as usual.
+4. **Backwards Compatibility**: Non-paginated includes continue to work as before, so adding `paginated_includes` configuration is backwards compatible. Clients that don't use `included_page` parameters will receive all related resources as usual.
 
 ## Example: Complete Flow
 

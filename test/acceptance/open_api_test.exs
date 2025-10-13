@@ -52,6 +52,7 @@ defmodule Test.Acceptance.OpenApiTest do
     json_api do
       type("author")
       includes posts: [:tags]
+      paginated_includes [:posts, [:posts, :tags]]
 
       routes do
         base("/authors")
@@ -601,6 +602,63 @@ defmodule Test.Acceptance.OpenApiTest do
       %Schema{} = schema = include.schema
       assert schema.type == :string
       assert schema.pattern == "^(tags)(,(tags))*$"
+    end
+
+    test "included_page parameter is present when resource has paginated_includes", %{
+      open_api_spec: %OpenApi{} = api_spec
+    } do
+      %Operation{} = operation = api_spec.paths["/authors/{id}"].get
+
+      %Parameter{} =
+        included_page = operation.parameters |> Enum.find(&(&1.name == "included_page"))
+
+      assert included_page.in == :query
+      assert included_page.required == false
+      assert included_page.style == :deepObject
+      %Schema{} = schema = included_page.schema
+      assert schema.type == :object
+      assert schema.additionalProperties == true
+      assert included_page.description =~ "Paginates included relationships"
+      assert included_page.description =~ "posts"
+      assert included_page.description =~ "posts.tags"
+    end
+
+    test "included_page parameter is not present when resource has no paginated_includes", %{
+      open_api_spec: %OpenApi{} = api_spec
+    } do
+      %Operation{} = operation = api_spec.paths["/posts"].get
+
+      refute Enum.any?(operation.parameters, &(&1.name == "included_page"))
+    end
+
+    test "included_page parameter is present on index endpoint when resource has paginated_includes",
+         %{
+           open_api_spec: %OpenApi{} = api_spec
+         } do
+      %Operation{} = operation = api_spec.paths["/authors"].get
+
+      %Parameter{} =
+        included_page = operation.parameters |> Enum.find(&(&1.name == "included_page"))
+
+      assert included_page.in == :query
+      assert included_page.required == false
+      assert included_page.style == :deepObject
+      %Schema{} = schema = included_page.schema
+      assert schema.type == :object
+      assert schema.additionalProperties == true
+
+      # Verify the description mentions the available paginated relationships
+      assert included_page.description =~ "Paginates included relationships"
+      assert included_page.description =~ "posts"
+      assert included_page.description =~ "posts.tags"
+
+      # Verify example structure
+      assert schema.example == %{
+               "comments" => %{
+                 limit: 10,
+                 offset: 0
+               }
+             }
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do
