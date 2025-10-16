@@ -285,6 +285,50 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         end
       end)
     end
+
+    test "index route works without included_page parameter", %{author: _author} do
+      response =
+        Domain
+        |> get("/posts?include=comments", status: 200)
+
+      # Should return multiple posts
+      assert is_list(response.resp_body["data"])
+      posts = response.resp_body["data"]
+      assert length(posts) > 1
+
+      # Find the post with 10 comments (the first post created in setup)
+      post_with_many_comments =
+        Enum.find(posts, fn post_data ->
+          length(post_data["relationships"]["comments"]["data"]) == 10
+        end)
+
+      # Should include all 10 comments without pagination
+      assert post_with_many_comments != nil
+      comments_rel = post_with_many_comments["relationships"]["comments"]
+      assert length(comments_rel["data"]) == 10
+      refute Map.has_key?(comments_rel["meta"] || %{}, "limit")
+    end
+
+    test "index route works without include parameter", %{author: _author} do
+      response =
+        Domain
+        |> get("/posts", status: 200)
+
+      # Should return multiple posts
+      assert is_list(response.resp_body["data"])
+      posts = response.resp_body["data"]
+      assert length(posts) > 1
+
+      # Should have relationship metadata but no included resources
+      Enum.each(posts, fn post_data ->
+        # Relationships should exist in the response
+        assert Map.has_key?(post_data, "relationships")
+        assert Map.has_key?(post_data["relationships"], "comments")
+      end)
+
+      # Should not have any included section
+      refute Map.has_key?(response.resp_body, "included")
+    end
   end
 
   describe "pagination with count parameter" do
