@@ -1764,11 +1764,20 @@ if Code.ensure_loaded?(OpenApiSpex) do
             if route.type == :route do
               []
             else
-              [
-                include_parameter(resource),
-                included_page_parameter(resource),
-                fields_parameter(resource)
-              ]
+              # included_page_parameter is only for routes that return collections (index, get, related)
+              # include and fields can be used on any route to control response format
+              if route.type in [:index, :get, :related, :get_related] do
+                [
+                  include_parameter(resource),
+                  included_page_parameter(resource),
+                  fields_parameter(resource)
+                ]
+              else
+                [
+                  include_parameter(resource),
+                  fields_parameter(resource)
+                ]
+              end
             end
             |> Enum.filter(& &1)
 

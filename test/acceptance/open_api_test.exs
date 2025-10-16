@@ -960,6 +960,14 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties["post"].description =~ "field names for post"
     end
 
+    test "does not include included_page parameter", %{open_api_spec: %OpenApi{} = api_spec} do
+      %Operation{} = operation = api_spec.paths["/posts"].post
+
+      # POST routes should NOT have included_page parameter
+      included_page = operation.parameters |> Enum.find(&(&1.name == "included_page"))
+      assert included_page == nil
+    end
+
     test "Request body schema", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts"].post
       %RequestBody{} = body = operation.requestBody
