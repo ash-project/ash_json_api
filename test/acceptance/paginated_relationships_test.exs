@@ -94,6 +94,11 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
     relationships do
       belongs_to(:author, Author, public?: true)
       has_many(:comments, Test.Acceptance.PaginatedRelationshipsTest.Comment, public?: true)
+      # Private relationship - should not be accessible via API
+      has_many(:private_comments, Test.Acceptance.PaginatedRelationshipsTest.Comment,
+        destination_attribute: :post_id,
+        public?: false
+      )
     end
   end
 
@@ -249,6 +254,22 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
 
       # Should get an error because 'author' is not in paginated_includes
       assert response.resp_body["errors"]
+    end
+
+    test "returns error for non-public relationship with included_page", %{post: post} do
+      # Try to include and paginate a private relationship
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=private_comments&included_page[private_comments][limit]=5",
+          status: 400
+        )
+
+      # Should get an error because 'private_comments' is not public
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      # Error should indicate the relationship is invalid/not included
+      assert List.first(errors)["code"] in ["invalid_includes", "invalid_relationship"]
     end
 
     test "includes without pagination still works normally", %{post: post} do
