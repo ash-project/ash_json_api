@@ -513,6 +513,19 @@ defmodule AshJsonApi.Request do
     end)
   end
 
+  defp parse_page_params_for_included(page_params) when is_binary(page_params) do
+    case Jason.decode(page_params) do
+      {:ok, decoded} when is_map(decoded) ->
+        parse_page_params_for_included(decoded)
+
+      {:ok, _other} ->
+        {:error, "page_params must be a JSON object, got: #{inspect(page_params)}"}
+
+      {:error, _} ->
+        {:error, "invalid JSON in page_params: #{inspect(page_params)}"}
+    end
+  end
+
   defp parse_page_params_for_included(page_params) when is_map(page_params) do
     page_params
     |> Enum.reduce_while({:ok, []}, fn

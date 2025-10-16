@@ -482,5 +482,59 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
       comments_rel = post_data["relationships"]["comments"]
       assert comments_rel["meta"]["offset"] == 0
     end
+
+    test "handles JSON string encoded pagination parameters", %{post: post} do
+      # Simulate query parameters coming in as JSON strings
+      # This can happen with certain URL encoding methods where the client
+      # JSON-encodes the pagination object before sending
+      json_params = URI.encode_www_form(Jason.encode!(%{"limit" => 5, "offset" => 3}))
+
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments]=#{json_params}",
+          status: 200
+        )
+
+      post_data = response.resp_body["data"]
+      comments_rel = post_data["relationships"]["comments"]
+      assert comments_rel["meta"]["limit"] == 5
+      assert comments_rel["meta"]["offset"] == 3
+      assert length(comments_rel["data"]) == 5
+    end
+
+    test "returns error for malformed JSON string in pagination parameters", %{post: post} do
+      # Test with invalid JSON
+      json_params = URI.encode_www_form("{invalid json}")
+
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments]=#{json_params}",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "invalid JSON"
+    end
+
+    test "returns error for non-object JSON in pagination parameters", %{post: post} do
+      # Test with JSON array instead of object
+      json_params = URI.encode_www_form(Jason.encode!(["limit", 5]))
+
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments]=#{json_params}",
+          status: 400
+        )
+
+      errors = response.resp_body["errors"]
+      assert length(errors) > 0
+      assert List.first(errors)["code"] == "invalid_pagination"
+      assert List.first(errors)["detail"] =~ "must be a JSON object"
+    end
   end
 end
