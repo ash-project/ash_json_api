@@ -2013,13 +2013,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           style: :deepObject,
           schema: %Schema{
             type: :object,
-            additionalProperties: true,
-            example: %{
-              "comments" => %{
-                limit: 10,
-                offset: 0
-              }
-            }
+            additionalProperties: true
           }
         }
       end

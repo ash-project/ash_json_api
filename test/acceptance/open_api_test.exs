@@ -651,14 +651,6 @@ defmodule Test.Acceptance.OpenApiTest do
       assert included_page.description =~ "Paginates included relationships"
       assert included_page.description =~ "posts"
       assert included_page.description =~ "posts.tags"
-
-      # Verify example structure
-      assert schema.example == %{
-               "comments" => %{
-                 limit: 10,
-                 offset: 0
-               }
-             }
     end
 
     test "fields parameter", %{open_api_spec: %OpenApi{} = api_spec} do

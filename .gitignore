@@ -33,6 +33,3 @@ ash_json_api-*.tar
 
 # Mac OS stuff
 .DS_Store
-
-# Claude Code local settings
-.claude/settings.local.json
