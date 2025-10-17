@@ -11,6 +11,7 @@ defmodule AshJsonApi.Request do
     InvalidField,
     InvalidHeader,
     InvalidIncludes,
+    InvalidPagination,
     InvalidQuery,
     InvalidRelationshipInput,
     InvalidType,
@@ -49,6 +50,7 @@ defmodule AshJsonApi.Request do
     arguments: %{},
     filter_included: %{},
     sort_included: %{},
+    included_page: %{},
     sort: [],
     fields: %{},
     field_inputs: %{},
@@ -113,6 +115,7 @@ defmodule AshJsonApi.Request do
     |> parse_field_inputs()
     |> parse_filter_included()
     |> parse_sort_included()
+    |> parse_included_page()
     |> parse_includes()
     |> parse_filter()
     |> parse_sort()
@@ -437,6 +440,151 @@ defmodule AshJsonApi.Request do
 
   defp parse_sort_included(request), do: request
 
+  defp parse_included_page(%{query_params: %{"included_page" => included_page}} = request)
+       when is_binary(included_page) do
+    parse_included_page(
+      put_in(request.query_params["included_page"], Plug.Conn.Query.decode(included_page))
+    )
+  end
+
+  defp parse_included_page(
+         %{resource: resource, query_params: %{"included_page" => included_page}} = request
+       )
+       when is_map(included_page) do
+    Enum.reduce(included_page, request, fn {relationship_path, page_params}, request ->
+      path = String.split(relationship_path, ".")
+
+      case public_related(resource, path) do
+        nil ->
+          add_error(
+            request,
+            InvalidPagination.exception(
+              detail: "Invalid relationship path: #{relationship_path}"
+            ),
+            request.route.type
+          )
+
+        _related ->
+          # Verify this path is allowed to be paginated
+          paginated_includes = AshJsonApi.Resource.Info.paginated_includes(resource)
+          path_atoms = Enum.map(path, &String.to_existing_atom/1)
+
+          if path_allowed_for_pagination?(path_atoms, paginated_includes) do
+            case parse_page_params_for_included(page_params) do
+              {:ok, page_opts} ->
+                %{request | included_page: Map.put(request.included_page, path_atoms, page_opts)}
+
+              {:error, error_message} ->
+                add_error(
+                  request,
+                  InvalidPagination.exception(
+                    detail:
+                      "Invalid pagination parameters for relationship #{relationship_path}: #{error_message}"
+                  ),
+                  request.route.type
+                )
+            end
+          else
+            add_error(
+              request,
+              InvalidPagination.exception(
+                detail:
+                  "Relationship path #{relationship_path} is not configured for pagination. Add it to paginated_includes in the resource."
+              ),
+              request.route.type
+            )
+          end
+      end
+    end)
+  end
+
+  defp parse_included_page(request), do: request
+
+  defp path_allowed_for_pagination?(path_atoms, paginated_includes) do
+    Enum.any?(paginated_includes, fn
+      allowed_path when is_list(allowed_path) ->
+        allowed_path == path_atoms
+
+      allowed_path when is_atom(allowed_path) ->
+        [allowed_path] == path_atoms
+
+      _ ->
+        false
+    end)
+  end
+
+  defp parse_page_params_for_included(page_params) when is_binary(page_params) do
+    case Jason.decode(page_params) do
+      {:ok, decoded} when is_map(decoded) ->
+        parse_page_params_for_included(decoded)
+
+      {:ok, _other} ->
+        {:error, "page_params must be a JSON object, got: #{inspect(page_params)}"}
+
+      {:error, _} ->
+        {:error, "invalid JSON in page_params: #{inspect(page_params)}"}
+    end
+  end
+
+  defp parse_page_params_for_included(page_params) when is_map(page_params) do
+    page_params
+    |> Enum.reduce_while({:ok, []}, fn
+      {"limit", value}, {:ok, acc} ->
+        case Integer.parse(to_string(value)) do
+          {int, ""} when int > 0 ->
+            {:cont, {:ok, [{:limit, int} | acc]}}
+
+          {int, ""} ->
+            {:halt, {:error, "limit must be a positive integer, got: #{int}"}}
+
+          _ ->
+            {:halt, {:error, "limit must be an integer, got: #{inspect(value)}"}}
+        end
+
+      {"offset", value}, {:ok, acc} ->
+        case Integer.parse(to_string(value)) do
+          {int, ""} when int >= 0 ->
+            {:cont, {:ok, [{:offset, int} | acc]}}
+
+          {int, ""} ->
+            {:halt, {:error, "offset must be a non-negative integer, got: #{int}"}}
+
+          _ ->
+            {:halt, {:error, "offset must be an integer, got: #{inspect(value)}"}}
+        end
+
+      {"after", value}, {:ok, acc} when is_binary(value) ->
+        {:cont, {:ok, [{:after, value} | acc]}}
+
+      {"after", value}, {:ok, _acc} ->
+        {:halt, {:error, "after must be a string, got: #{inspect(value)}"}}
+
+      {"before", value}, {:ok, acc} when is_binary(value) ->
+        {:cont, {:ok, [{:before, value} | acc]}}
+
+      {"before", value}, {:ok, _acc} ->
+        {:halt, {:error, "before must be a string, got: #{inspect(value)}"}}
+
+      {"count", "true"}, {:ok, acc} ->
+        {:cont, {:ok, [{:count, true} | acc]}}
+
+      {"count", "false"}, {:ok, acc} ->
+        {:cont, {:ok, [{:count, false} | acc]}}
+
+      {"count", value}, {:ok, _acc} ->
+        {:halt, {:error, "count must be 'true' or 'false', got: #{inspect(value)}"}}
+
+      {key, _value}, {:ok, _acc} ->
+        {:halt,
+         {:error,
+          "unknown pagination parameter: #{key}. Valid parameters are: limit, offset, after, before, count"}}
+    end)
+    |> case do
+      {:ok, params} -> {:ok, Enum.reverse(params)}
+      {:error, _} = error -> error
+    end
+  end
+
   defp parse_fields(%{resource: resource, query_params: %{"fields" => fields}} = request)
        when is_binary(fields) do
     add_fields(request, resource, fields, false)
@@ -702,15 +850,34 @@ defmodule AshJsonApi.Request do
       request.field_inputs,
       request.filter_included,
       request.sort_included,
+      request.included_page,
       request.resource
     )
   end
 
-  defp set_include_queries(includes, fields, field_inputs, filters, sorts, resource, path \\ [])
+  defp set_include_queries(
+         includes,
+         fields,
+         field_inputs,
+         filters,
+         sorts,
+         page_params,
+         resource,
+         path \\ []
+       )
 
-  defp set_include_queries(:linkage_only, _, _, _, _, _, _), do: []
+  defp set_include_queries(:linkage_only, _, _, _, _, _, _, _), do: []
 
-  defp set_include_queries(includes, fields, field_inputs, filters, sorts, resource, path) do
+  defp set_include_queries(
+         includes,
+         fields,
+         field_inputs,
+         filters,
+         sorts,
+         page_params,
+         resource,
+         path
+       ) do
     includes =
       Enum.reduce(
         AshJsonApi.Resource.Info.always_include_linkage(resource),
@@ -728,7 +895,16 @@ defmodule AshJsonApi.Request do
       related = public_related(resource, key)
 
       nested_queries =
-        set_include_queries(nested, fields, field_inputs, filters, sorts, related, path ++ [key])
+        set_include_queries(
+          nested,
+          fields,
+          field_inputs,
+          filters,
+          sorts,
+          page_params,
+          related,
+          path ++ [key]
+        )
 
       related_field_inputs = Map.get(field_inputs, related, %{})
 
@@ -773,7 +949,17 @@ defmodule AshJsonApi.Request do
             filtered_query
         end
 
-      {key, sorted_query}
+      # Apply pagination if configured for this path
+      final_query =
+        case Map.fetch(page_params, path ++ [key]) do
+          {:ok, pagination_opts} when pagination_opts != [] ->
+            Ash.Query.page(sorted_query, pagination_opts)
+
+          _ ->
+            sorted_query
+        end
+
+      {key, final_query}
     end)
   end
 

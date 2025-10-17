@@ -36,6 +36,7 @@ spark_locals_without_parens = [
   modify_conn: 1,
   name: 1,
   paginate?: 1,
+  paginated_includes: 1,
   patch: 1,
   patch: 2,
   patch: 3,

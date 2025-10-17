@@ -27,6 +27,10 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :includes, [], false)
   end
 
+  def paginated_includes(resource) do
+    Extension.get_opt(resource, [:json_api], :paginated_includes, [], false)
+  end
+
   def action_names_in_schema(resource) do
     Extension.get_opt(resource, [:json_api], :action_names_in_schema, [], false)
   end

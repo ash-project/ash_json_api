@@ -1638,6 +1638,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 sort_parameter(resource, route),
                 page_parameter(Ash.Resource.Info.action(resource, route.action)),
                 include_parameter(resource),
+                included_page_parameter(resource),
                 fields_parameter(resource)
               ],
               & &1
@@ -1657,7 +1658,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
         type when type in [:get, :related] ->
           static_params =
-            [include_parameter(resource), fields_parameter(resource)]
+            [
+              include_parameter(resource),
+              included_page_parameter(resource),
+              fields_parameter(resource)
+            ]
             |> Enum.filter(& &1)
 
           {read_params, acc} = read_argument_parameters(route, resource, route_params, acc)
@@ -1759,7 +1764,20 @@ if Code.ensure_loaded?(OpenApiSpex) do
             if route.type == :route do
               []
             else
-              [include_parameter(resource), fields_parameter(resource)]
+              # included_page_parameter is only for routes that return collections (index, get, related)
+              # include and fields can be used on any route to control response format
+              if route.type in [:index, :get, :related, :get_related] do
+                [
+                  include_parameter(resource),
+                  included_page_parameter(resource),
+                  fields_parameter(resource)
+                ]
+              else
+                [
+                  include_parameter(resource),
+                  fields_parameter(resource)
+                ]
+              end
             end
             |> Enum.filter(& &1)
 
@@ -1971,6 +1989,34 @@ if Code.ensure_loaded?(OpenApiSpex) do
           pattern: csv_regex(all_includes)
         }
       }
+    end
+
+    @spec included_page_parameter(resource :: Ash.Resource.t()) :: Parameter.t() | nil
+    defp included_page_parameter(resource) do
+      paginated_includes = AshJsonApi.Resource.Info.paginated_includes(resource)
+
+      if paginated_includes != [] do
+        # Get all paginated relationship paths
+        paginated_paths =
+          paginated_includes
+          |> Enum.map(fn
+            path when is_list(path) -> Enum.join(path, ".")
+            atom when is_atom(atom) -> to_string(atom)
+          end)
+
+        %Parameter{
+          name: :included_page,
+          in: :query,
+          required: false,
+          description:
+            "Paginates included relationships. Use included_page[relationship.path][limit], included_page[relationship.path][offset], or included_page[relationship.path][after] to paginate specific relationships. Available for: #{Enum.join(paginated_paths, ", ")}",
+          style: :deepObject,
+          schema: %Schema{
+            type: :object,
+            additionalProperties: true
+          }
+        }
+      end
     end
 
     @spec fields_parameter(resource :: module) :: Parameter.t()

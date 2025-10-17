@@ -53,7 +53,7 @@ defmodule AshJsonApi.Includes.Includer do
           |> Enum.flat_map(fn record ->
             record
             |> Map.get(relationship, [])
-            |> List.wrap()
+            |> extract_records_from_relationship()
           end)
           |> get_includes_map(further, includes_map)
 
@@ -61,12 +61,13 @@ defmodule AshJsonApi.Includes.Includer do
           Enum.map(
             preloaded_without_linkage,
             fn record ->
-              related =
-                record
-                |> Map.get(relationship, [])
-                |> List.wrap()
+              relationship_value = Map.get(record, relationship, [])
+              related = extract_records_from_relationship(relationship_value)
 
-              add_linkage(record, relationship, related)
+              # Store both the extracted records and the original value (which might be a Page)
+              record
+              |> add_linkage(relationship, related)
+              |> add_page_info(relationship, relationship_value)
             end
           )
 
@@ -96,6 +97,16 @@ defmodule AshJsonApi.Includes.Includer do
     end)
   end
 
+  # Extract records from relationship value, handling both plain lists and Page structs
+  defp extract_records_from_relationship(%{__struct__: struct, results: results})
+       when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
+    List.wrap(results)
+  end
+
+  defp extract_records_from_relationship(value) do
+    List.wrap(value)
+  end
+
   defp add_linkage(record, relationship, related) do
     record
     |> Map.put_new(:__linkage__, %{})
@@ -103,6 +114,18 @@ defmodule AshJsonApi.Includes.Includer do
       Map.put(linkage, relationship, related)
     end)
   end
+
+  # Store pagination info for relationships that were paginated
+  defp add_page_info(record, relationship, %{__struct__: struct} = page)
+       when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
+    record
+    |> Map.put_new(:__pagination__, %{})
+    |> Map.update!(:__pagination__, fn pagination_info ->
+      Map.put(pagination_info, relationship, page)
+    end)
+  end
+
+  defp add_page_info(record, _relationship, _value), do: record
 
   defp merge_linkages(record, to_merge) do
     linkage_to_merge = Map.get(to_merge, :__linkage__, %{})

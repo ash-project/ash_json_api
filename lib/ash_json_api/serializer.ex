@@ -529,6 +529,7 @@ defmodule AshJsonApi.Serializer do
     %{}
     |> add_relationship_link(request, record, relationship)
     |> add_related_link(request, record, relationship)
+    |> add_relationship_pagination_links(request, record, relationship)
   end
 
   defp add_relationship_link(links, request, %resource{} = record, relationship) do
@@ -573,6 +574,297 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
+  # Add pagination links for to-many relationships that have been paginated
+  defp add_relationship_pagination_links(links, request, record, %{cardinality: :many, name: name}) do
+    # Check if this relationship was paginated by looking for pagination info
+    case Map.get(record, :__pagination__, %{}) do
+      %{^name => page} ->
+        # Use the current request URL as the base for pagination links
+        # This is because paginated includes use the same endpoint with included_page params
+        add_pagination_links_to_relationship(links, request.url, page, name)
+
+      _ ->
+        links
+    end
+  end
+
+  # For to-one relationships, don't add pagination links
+  defp add_relationship_pagination_links(links, _request, _record, _relationship), do: links
+
+  # Build pagination links for a paginated relationship
+  defp add_pagination_links_to_relationship(links, base_url, page, relationship_name) do
+    uri = URI.parse(base_url)
+
+    query =
+      if uri.query do
+        Conn.Query.decode(uri.query)
+      else
+        %{}
+      end
+
+    links
+    |> add_relationship_first_link(uri, query, page, relationship_name)
+    |> add_relationship_next_link(uri, query, page, relationship_name)
+    |> add_relationship_prev_link(uri, query, page, relationship_name)
+    |> add_relationship_last_link(uri, query, page, relationship_name)
+  end
+
+  # First link for relationship pagination
+  defp add_relationship_first_link(links, uri, query, page, relationship_name) do
+    page =
+      case page do
+        %Ash.Page.Keyset{} = p -> %{p | after: nil, before: nil}
+        %Ash.Page.Offset{} = p -> %{p | offset: nil}
+      end
+
+    new_query =
+      query
+      |> put_relationship_page_params(page, relationship_name)
+      |> Conn.Query.encode()
+
+    first_url =
+      uri
+      |> put_query(new_query)
+      |> URI.to_string()
+      |> encode_link()
+
+    Map.put(links, "first", first_url)
+  end
+
+  # Next link for offset pagination
+  defp add_relationship_next_link(links, uri, query, %Ash.Page.Offset{} = page, relationship_name) do
+    %{results: results, count: count, offset: offset, limit: limit} = page
+
+    cond do
+      not is_nil(count) and not is_nil(offset) and offset + limit >= count ->
+        Map.put(links, "next", nil)
+
+      not is_nil(count) and is_nil(offset) and limit >= count ->
+        Map.put(links, "next", nil)
+
+      Enum.count(results) < limit ->
+        Map.put(links, "next", nil)
+
+      true ->
+        next_page = %{page | offset: limit + (offset || 0)}
+
+        new_query =
+          query
+          |> put_relationship_page_params(next_page, relationship_name)
+          |> Conn.Query.encode()
+
+        next_url =
+          uri
+          |> put_query(new_query)
+          |> URI.to_string()
+          |> encode_link()
+
+        Map.put(links, "next", next_url)
+    end
+  end
+
+  # Next link for keyset pagination
+  defp add_relationship_next_link(links, uri, query, %Ash.Page.Keyset{} = page, relationship_name) do
+    case page do
+      %{results: results, after: nil, before: nil, more?: true} ->
+        next_page = %{page | after: List.last(results).__metadata__.keyset}
+
+        new_query =
+          query
+          |> put_relationship_page_params(next_page, relationship_name)
+          |> Conn.Query.encode()
+
+        next_url =
+          uri
+          |> put_query(new_query)
+          |> URI.to_string()
+          |> encode_link()
+
+        Map.put(links, "next", next_url)
+
+      %{after: nil, before: nil, more?: false} ->
+        Map.put(links, "next", nil)
+
+      %{results: [], after: _, before: nil, more?: false} ->
+        Map.put(links, "next", nil)
+
+      %{results: results, after: _, before: nil, more?: true} ->
+        next_page = %{page | after: List.last(results).__metadata__.keyset}
+
+        new_query =
+          query
+          |> put_relationship_page_params(next_page, relationship_name)
+          |> Conn.Query.encode()
+
+        next_url =
+          uri
+          |> put_query(new_query)
+          |> URI.to_string()
+          |> encode_link()
+
+        Map.put(links, "next", next_url)
+
+      %{results: results, after: nil} ->
+        next_page = %{page | after: List.last(results).__metadata__.keyset}
+
+        new_query =
+          query
+          |> put_relationship_page_params(next_page, relationship_name)
+          |> Conn.Query.encode()
+
+        next_url =
+          uri
+          |> put_query(new_query)
+          |> URI.to_string()
+          |> encode_link()
+
+        Map.put(links, "next", next_url)
+
+      _ ->
+        Map.put(links, "next", nil)
+    end
+  end
+
+  # Prev link for offset pagination
+  defp add_relationship_prev_link(links, uri, query, %Ash.Page.Offset{} = page, relationship_name) do
+    if page.offset in [0, nil] do
+      Map.put(links, "prev", nil)
+    else
+      offset = max(page.offset - (page.limit || 0), 0)
+      prev_page = %{page | offset: offset}
+
+      new_query =
+        query
+        |> put_relationship_page_params(prev_page, relationship_name)
+        |> Conn.Query.encode()
+
+      prev_url =
+        uri
+        |> put_query(new_query)
+        |> URI.to_string()
+        |> encode_link()
+
+      Map.put(links, "prev", prev_url)
+    end
+  end
+
+  # Prev link for keyset pagination
+  defp add_relationship_prev_link(links, uri, query, %Ash.Page.Keyset{} = page, relationship_name) do
+    case page do
+      %{before: nil, after: nil} ->
+        Map.put(links, "prev", nil)
+
+      %{results: [], before: _, after: nil} ->
+        Map.put(links, "prev", nil)
+
+      %{results: results, more?: true, after: nil} ->
+        prev_page = Map.put(page, :before, List.first(results).__metadata__.keyset)
+
+        new_query =
+          query
+          |> put_relationship_page_params(prev_page, relationship_name)
+          |> Conn.Query.encode()
+
+        prev_url =
+          uri
+          |> put_query(new_query)
+          |> URI.to_string()
+          |> encode_link()
+
+        Map.put(links, "prev", prev_url)
+
+      %{results: results, before: nil} ->
+        prev_page =
+          page
+          |> Map.put(:before, List.first(results).__metadata__.keyset)
+          |> Map.put(:after, nil)
+
+        new_query =
+          query
+          |> put_relationship_page_params(prev_page, relationship_name)
+          |> Conn.Query.encode()
+
+        prev_url =
+          uri
+          |> put_query(new_query)
+          |> URI.to_string()
+          |> encode_link()
+
+        Map.put(links, "prev", prev_url)
+
+      _ ->
+        Map.put(links, "prev", nil)
+    end
+  end
+
+  # Last link (only for offset pagination with count)
+  defp add_relationship_last_link(
+         links,
+         uri,
+         query,
+         %Ash.Page.Offset{count: count, limit: limit},
+         relationship_name
+       )
+       when not is_nil(count) and not is_nil(limit) do
+    last_offset = max(count - limit, 0)
+    last_page = %Ash.Page.Offset{limit: limit, offset: last_offset, count: count, results: []}
+
+    new_query =
+      query
+      |> put_relationship_page_params(last_page, relationship_name)
+      |> Conn.Query.encode()
+
+    last_url =
+      uri
+      |> put_query(new_query)
+      |> URI.to_string()
+      |> encode_link()
+
+    Map.put(links, "last", last_url)
+  end
+
+  defp add_relationship_last_link(links, _uri, _query, _page, _relationship_name), do: links
+
+  # Put page parameters for a specific relationship into query params
+  defp put_relationship_page_params(query, %Ash.Page.Offset{} = page, relationship_name) do
+    %{limit: limit, offset: offset, count: count} = page
+    rel_name = to_string(relationship_name)
+
+    page_params =
+      %{}
+      |> maybe_add(:limit, limit)
+      |> maybe_add(:offset, offset)
+      |> maybe_add(:count, if(is_integer(count), do: true, else: nil))
+
+    if map_size(page_params) > 0 do
+      Map.update(query, "included_page", %{rel_name => page_params}, fn existing ->
+        Map.put(existing, rel_name, page_params)
+      end)
+    else
+      query
+    end
+  end
+
+  defp put_relationship_page_params(query, %Ash.Page.Keyset{} = page, relationship_name) do
+    %{after: after_cursor, before: before_cursor, limit: limit, count: count} = page
+    rel_name = to_string(relationship_name)
+
+    page_params =
+      %{}
+      |> maybe_add(:after, after_cursor)
+      |> maybe_add(:before, before_cursor)
+      |> maybe_add(:limit, limit)
+      |> maybe_add(:count, if(is_integer(count), do: true, else: nil))
+
+    if map_size(page_params) > 0 do
+      Map.update(query, "included_page", %{rel_name => page_params}, fn existing ->
+        Map.put(existing, rel_name, page_params)
+      end)
+    else
+      query
+    end
+  end
+
   defp add_linkage(payload, record, %{destination: destination, cardinality: :one, name: name}) do
     case record do
       %{__linkage__: %{^name => [record | _]}} ->
@@ -601,21 +893,65 @@ defmodule AshJsonApi.Serializer do
       %{__linkage__: %{^name => linkage}} ->
         type = AshJsonApi.Resource.Info.type(destination)
 
-        Map.put(
-          payload,
-          :data,
-          linkage
-          |> Enum.map(
-            &(%{id: AshJsonApi.Resource.encode_primary_key(&1), type: type}
-              |> add_relationship_meta(&1, record, relationship))
+        payload_with_data =
+          Map.put(
+            payload,
+            :data,
+            linkage
+            |> Enum.map(
+              &(%{id: AshJsonApi.Resource.encode_primary_key(&1), type: type}
+                |> add_relationship_meta(&1, record, relationship))
+            )
+            |> Enum.uniq_by(& &1.id)
           )
-          |> Enum.uniq_by(& &1.id)
-        )
+
+        # Add pagination meta if this relationship was paginated
+        case Map.get(record, :__pagination__, %{}) do
+          %{^name => page} ->
+            add_pagination_meta_to_relationship(payload_with_data, page)
+
+          _ ->
+            payload_with_data
+        end
 
       _ ->
         payload
     end
   end
+
+  # Add pagination metadata to relationship object if it's a paginated result
+  defp add_pagination_meta_to_relationship(payload, %Ash.Page.Offset{} = page) do
+    page_meta =
+      %{}
+      |> maybe_add(:limit, page.limit)
+      |> maybe_add(:offset, page.offset)
+      |> maybe_add(:count, page.count)
+
+    if map_size(page_meta) > 0 do
+      Map.update(payload, :meta, page_meta, &Map.merge(&1, page_meta))
+    else
+      payload
+    end
+  end
+
+  defp add_pagination_meta_to_relationship(payload, %Ash.Page.Keyset{} = page) do
+    page_meta =
+      %{}
+      |> maybe_add(:limit, page.limit)
+      |> maybe_add(:more?, page.more?)
+      |> maybe_add(:count, page.count)
+
+    if map_size(page_meta) > 0 do
+      Map.update(payload, :meta, page_meta, &Map.merge(&1, page_meta))
+    else
+      payload
+    end
+  end
+
+  defp add_pagination_meta_to_relationship(payload, _), do: payload
+
+  defp maybe_add(map, _key, nil), do: map
+  defp maybe_add(map, key, value), do: Map.put(map, key, value)
 
   defp with_path_params(request, params) do
     Map.update!(request, :path_params, &Map.merge(&1, params))
