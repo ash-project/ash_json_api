@@ -113,7 +113,9 @@ This paginates the comments included for each post.
 
 ## Response Format
 
-When a relationship is paginated, the response includes pagination metadata in the relationship's `meta` object:
+When a relationship is paginated, the response includes:
+1. Pagination metadata in the relationship's `meta` object
+2. Pagination links in the relationship's `links` object
 
 ```json
 {
@@ -131,7 +133,11 @@ When a relationship is paginated, the response includes pagination metadata in t
         ],
         "links": {
           "self": "/posts/1/relationships/comments",
-          "related": "/posts/1/comments"
+          "related": "/posts/1/comments",
+          "first": "/posts/1?include=comments&included_page[comments][limit]=10",
+          "next": "/posts/1?include=comments&included_page[comments][limit]=10&included_page[comments][offset]=10",
+          "prev": null,
+          "last": "/posts/1?include=comments&included_page[comments][limit]=10&included_page[comments][offset]=40"
         },
         "meta": {
           "limit": 10,
@@ -159,6 +165,19 @@ When a relationship is paginated, the response includes pagination metadata in t
   ]
 }
 ```
+
+### Pagination Links
+
+The `links` object in a paginated relationship includes:
+
+- `first`: Link to the first page of the relationship
+- `next`: Link to the next page (null if on the last page)
+- `prev`: Link to the previous page (null if on the first page)
+- `last`: Link to the last page (only for offset pagination with count)
+- `self`: Link to the relationship endpoint (if configured)
+- `related`: Link to the related resources endpoint (if configured)
+
+These links allow clients to navigate through paginated relationships without manually constructing URLs.
 
 ### Metadata Fields
 
@@ -203,11 +222,17 @@ If you attempt to paginate a relationship that is not configured in `paginated_i
    end
    ```
 
-2. **Client Implementation**: Clients should check the `meta` object on relationships to determine if pagination is active and what the current page parameters are.
+2. **Client Implementation**:
+   - Use the pagination `links` in the relationship object to navigate pages instead of manually constructing URLs
+   - Check the `meta` object to understand pagination state (limit, offset, count, etc.)
+   - Check if `next` link is `null` to determine if you're on the last page
+   - Check if `prev` link is `null` to determine if you're on the first page
 
 3. **Nested Pagination**: Be cautious with nested pagination - paginating both `posts` and `posts.comments` can result in complex queries. Consider whether you really need both levels paginated.
 
 4. **Backwards Compatibility**: Non-paginated includes continue to work as before, so adding `paginated_includes` configuration is backwards compatible. Clients that don't use `included_page` parameters will receive all related resources as usual.
+
+5. **JSON:API Compliance**: The pagination links in relationships follow the JSON:API specification, which states that "A relationship object that represents a to-many relationship MAY also contain pagination links under the links member."
 
 ## Example: Complete Flow
 
@@ -253,6 +278,7 @@ The response will include:
 - The post data in `data`
 - Up to 5 comments in `included`
 - Pagination metadata in `data.relationships.comments.meta`
+- Pagination links in `data.relationships.comments.links`
 - The linkage (comment IDs) in `data.relationships.comments.data`
 
 ### 4. Navigate to the next page

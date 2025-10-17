@@ -212,6 +212,12 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
       comments_rel = post_data["relationships"]["comments"]
       assert comments_rel["meta"]["limit"] == 5
       assert length(comments_rel["data"]) == 5
+
+      # Check that pagination links are present
+      assert Map.has_key?(comments_rel["links"], "first")
+      assert Map.has_key?(comments_rel["links"], "next")
+      assert is_binary(comments_rel["links"]["first"])
+      assert is_binary(comments_rel["links"]["next"])
     end
 
     test "paginate included comments with limit and offset", %{post: post} do
@@ -231,6 +237,30 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
       comments_rel = post_data["relationships"]["comments"]
       assert comments_rel["meta"]["limit"] == 3
       assert comments_rel["meta"]["offset"] == 5
+
+      # Check that pagination links include prev (since offset > 0)
+      assert Map.has_key?(comments_rel["links"], "prev")
+      assert is_binary(comments_rel["links"]["prev"])
+      assert String.contains?(comments_rel["links"]["prev"], "included_page[comments][offset]=2")
+    end
+
+    test "pagination links with count include last link", %{post: post} do
+      response =
+        Domain
+        |> get(
+          "/posts/#{post.id}?include=comments&included_page[comments][limit]=3&included_page[comments][count]=true",
+          status: 200
+        )
+
+      post_data = response.resp_body["data"]
+      comments_rel = post_data["relationships"]["comments"]
+
+      # When count is requested, we should have last link
+      assert Map.has_key?(comments_rel["links"], "last")
+      assert is_binary(comments_rel["links"]["last"])
+
+      # First page should have no prev link
+      refute comments_rel["links"]["prev"]
     end
 
     test "paginate nested relationship path", %{author: author} do
