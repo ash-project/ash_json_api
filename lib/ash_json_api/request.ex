@@ -349,15 +349,21 @@ defmodule AshJsonApi.Request do
   end
 
   defp validate_params(%{query_params: query_params, path_params: path_params} = request) do
-    if Enum.any?(Map.keys(query_params), &Map.has_key?(path_params, &1)) do
-      add_error(request, "conflict path and query params", request.route.type)
+    conflicting_keys = Enum.filter(Map.keys(query_params), &Map.has_key?(path_params, &1))
+
+    if conflicting_keys != [] do
+      add_error(
+        request,
+        AshJsonApi.Error.ConflictingParams.exception(conflicting_keys: conflicting_keys),
+        request.route.type
+      )
     else
       request
     end
   end
 
   defp validate_href_schema(%{schema: nil} = request) do
-    add_error(request, "no schema found", request.route.type)
+    add_error(request, AshJsonApi.Error.MissingSchema.exception([]), request.route.type)
   end
 
   defp validate_href_schema(
@@ -394,14 +400,22 @@ defmodule AshJsonApi.Request do
 
       case public_related(resource, path) do
         nil ->
-          add_error(request, "Invalid filter included", request.route.type)
+          add_error(
+            request,
+            AshJsonApi.Error.InvalidFilter.exception(filter: relationship_path),
+            request.route.type
+          )
 
         related ->
           if AshJsonApi.Resource.Info.derive_filter?(related) do
             path = Enum.map(path, &String.to_existing_atom/1)
             %{request | filter_included: Map.put(request.filter_included, path, filter_statement)}
           else
-            add_error(request, "Invalid filter included", request.route.type)
+            add_error(
+              request,
+              AshJsonApi.Error.InvalidFilter.exception(filter: relationship_path),
+              request.route.type
+            )
           end
       end
     end)
@@ -425,14 +439,22 @@ defmodule AshJsonApi.Request do
 
       case public_related(resource, path) do
         nil ->
-          add_error(request, "Invalid sort included", request.route.type)
+          add_error(
+            request,
+            AshJsonApi.Error.InvalidSort.exception(sort: relationship_path),
+            request.route.type
+          )
 
         related ->
           if AshJsonApi.Resource.Info.derive_sort?(related) do
             path = Enum.map(path, &String.to_existing_atom/1)
             %{request | sort_included: Map.put(request.sort_included, path, sort_included)}
           else
-            add_error(request, "Invalid sort included", request.route.type)
+            add_error(
+              request,
+              AshJsonApi.Error.InvalidSort.exception(sort: relationship_path),
+              request.route.type
+            )
           end
       end
     end)
@@ -765,7 +787,7 @@ defmodule AshJsonApi.Request do
   defp parse_filter(%{query_params: %{"filter" => filter}} = request) do
     if request.action.type == :read && request.route.derive_filter? &&
          AshJsonApi.Resource.Info.derive_filter?(request.resource) do
-      add_error(request, "invalid filter", request.route.type)
+      add_error(request, AshJsonApi.Error.InvalidFilter.exception([]), request.route.type)
     else
       %{request | arguments: Map.put(request.arguments, :filter, filter)}
     end
@@ -800,7 +822,11 @@ defmodule AshJsonApi.Request do
                 %{request | sort: [{calc.name, order} | request.sort]}
 
               true ->
-                add_error(request, "invalid sort #{field}", request.route.type)
+                add_error(
+                  request,
+                  AshJsonApi.Error.InvalidSort.exception(field: field),
+                  request.route.type
+                )
             end
           end)
       end
@@ -812,7 +838,7 @@ defmodule AshJsonApi.Request do
   defp parse_sort(%{query_params: %{"sort" => sort}} = request) do
     if request.action.type == :read && request.route.derive_sort? &&
          AshJsonApi.Resource.Info.derive_sort?(request.resource) do
-      add_error(request, "invalid sort string", request.route.type)
+      add_error(request, AshJsonApi.Error.InvalidSort.exception(sort: sort), request.route.type)
     else
       %{request | arguments: Map.put(request.arguments, :sort, sort)}
     end

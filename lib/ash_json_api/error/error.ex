@@ -35,6 +35,11 @@ defmodule AshJsonApi.Error do
     [error]
   end
 
+  def to_json_api_errors(domain, resource, error, type) when is_binary(error) do
+    unknown_error = AshJsonApi.Error.UnknownError.exception(message: error)
+    to_json_api_errors(domain, resource, unknown_error, type)
+  end
+
   def to_json_api_errors(domain, resource, error, type) do
     if AshJsonApi.ToJsonApiError.impl_for(error) do
       error

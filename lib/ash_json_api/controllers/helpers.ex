@@ -924,7 +924,7 @@ defmodule AshJsonApi.Controllers.Helpers do
         _ ->
           Request.add_error(
             request,
-            "id path parameter not present in get route: #{request.url}",
+            AshJsonApi.Error.InvalidPathParam.exception(parameter: "id", url: request.url),
             :id_path_param
           )
       end

@@ -136,4 +136,26 @@ defmodule Test.Acceptance.RouteTest do
     assert String.contains?(source_pointer, "from"),
            "Expected source pointer '#{source_pointer}' to contain field name 'from'"
   end
+
+  test "conflict path and query params should return proper JSON API error" do
+    # This triggers the "conflict path and query params" string error
+    # by having both a path param (:to) and query param (?to=) with the same name
+    response =
+      Domain
+      |> get("/say_hello/fred?to=john", status: 400)
+
+    assert %{"errors" => errors} = response.resp_body
+    assert is_list(errors)
+    assert length(errors) > 0
+
+    # Find the conflict error
+    conflict_error = Enum.find(errors, &(&1["code"] == "invalid_query"))
+    assert conflict_error, "Expected to find an 'invalid_query' error"
+
+    # Verify the error details
+    assert conflict_error["title"] == "InvalidQuery"
+    assert conflict_error["detail"] == "conflict path and query params"
+    assert conflict_error["status"] == "400"
+    assert is_binary(conflict_error["id"])
+  end
 end
