@@ -11,6 +11,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.5.0](https://github.com/ash-project/ash_json_api/compare/v1.4.45...v1.5.0) (2025-11-05)
+
+
+
+
+### Features:
+
+* Add pagination support for included relationships (#392) by srikanthkyatham
+
+### Bug Fixes:
+
+* skip forbidden fields during JSON:API serialization (#397) by [@shahryarjb](https://github.com/shahryarjb)
+
+* implement Splode errors intead of using strings (#395) by Daniel Gollings
+
 ## [Unreleased]
 
 ### Features:
