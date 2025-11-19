@@ -11,6 +11,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.5.1](https://github.com/ash-project/ash_json_api/compare/v1.5.0...v1.5.1) (2025-11-19)
+
+
+
+
+### Bug Fixes:
+
+* ensure action inputs are sorted by [@zachdaniel](https://github.com/zachdaniel)
+
+* fixing keyerror in GET /:id with includes (#400) by srikanthkyatham [(#400)](https://github.com/ash-project/ash_json_api/pull/400)
+
+* fixing keyerror in GET /:id with includes by srikanthkyatham [(#400)](https://github.com/ash-project/ash_json_api/pull/400)
+
 ## [v1.5.0](https://github.com/ash-project/ash_json_api/compare/v1.4.45...v1.5.0) (2025-11-05)
 
 

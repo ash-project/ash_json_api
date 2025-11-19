@@ -9,7 +9,7 @@ defmodule AshJsonApi.MixProject do
   The JSON:API extension for the Ash Framework.
   """
 
-  @version "1.5.0"
+  @version "1.5.1"
 
   def project do
     [
