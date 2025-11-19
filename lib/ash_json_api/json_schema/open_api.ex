@@ -1686,15 +1686,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
           {query_params, _unused_schema} =
             if route.method == :get do
-              Enum.flat_map(Ash.Resource.Info.action_inputs(resource, route.action), fn input ->
-                with true <- is_atom(input),
-                     arg when not is_nil(arg) <-
-                       Enum.find(action.arguments, &(&1.name == input)) ||
-                         Ash.Resource.Info.attribute(resource, input) do
+              resource
+              |> Ash.Resource.Info.action_inputs(route.action)
+              |> Enum.filter(&is_atom/1)
+              |> Enum.sort()
+              |> Enum.flat_map(fn input ->
+                arg =
+                  Enum.find(action.arguments, &(&1.name == input)) ||
+                    Ash.Resource.Info.attribute(resource, input)
+
+                if arg do
                   [arg]
                 else
-                  _ ->
-                    []
+                  []
                 end
               end)
             else
