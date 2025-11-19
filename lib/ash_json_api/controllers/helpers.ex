@@ -689,7 +689,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         case query do
           {:error, error} ->
-            {:error, Request.add_error(request, error, :filter)}
+            Request.add_error(request, error, :filter)
 
           {:ok, query} ->
             query =
@@ -787,7 +787,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
             case query do
               {:error, error} ->
-                {:error, Request.add_error(request, error, :filter)}
+                Request.add_error(request, error, :filter)
 
               {:ok, query} ->
                 query =

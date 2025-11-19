@@ -154,6 +154,97 @@ defmodule Test.Acceptance.GetRelatedTest do
     :ok
   end
 
+  describe "GET /:id with invalid filter and includes" do
+    test "returns JSON:API error document instead of crashing with KeyError" do
+      # Create a post with comments
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "John Doe", content: "Test post"})
+        |> Ash.create!()
+
+      _comment =
+        Comment
+        |> Ash.Changeset.for_create(:create, %{
+          name: "Test comment",
+          content: "comment",
+          post_id: post.id
+        })
+        |> Ash.create!()
+
+      # This request triggers a filter error in fetch_record_from_path when the ID
+      # format is invalid. The bug would cause a KeyError because fetch_record_from_path
+      # returned {:error, request} instead of just request, and chain/3 would try to
+      # access request.errors on the tuple.
+      #
+      # With the fix, this returns a proper 404 error document
+      response =
+        Domain
+        |> get("/posts/invalid-id-format/comments?include=post", status: 404)
+
+      # Verify we get a proper JSON:API error response, not a crash
+      assert is_map(response.resp_body)
+      assert Map.has_key?(response.resp_body, "errors")
+      errors = response.resp_body["errors"]
+      assert is_list(errors)
+      assert length(errors) > 0
+
+      # Verify the error has proper JSON:API structure
+      error = hd(errors)
+      assert is_map(error)
+      assert Map.has_key?(error, "code")
+      assert Map.has_key?(error, "title")
+      assert Map.has_key?(error, "detail")
+      assert Map.has_key?(error, "status")
+
+      # The key point: we got a proper error response (404), not a 500 crash
+      assert error["status"] == "404"
+      assert error["code"] == "not_found"
+    end
+
+    test "returns JSON:API error for non-existent ID with includes" do
+      # Use a valid UUID format but non-existent ID
+      non_existent_id = Ash.UUID.generate()
+
+      response =
+        Domain
+        |> get("/posts/#{non_existent_id}/comments?include=post", status: 404)
+
+      # Verify we get a proper 404 JSON:API error response
+      assert is_map(response.resp_body)
+      assert Map.has_key?(response.resp_body, "errors")
+      errors = response.resp_body["errors"]
+      assert is_list(errors)
+      assert length(errors) > 0
+
+      error = hd(errors)
+      assert error["status"] == "404"
+      assert error["code"] == "not_found"
+    end
+
+    test "handles non-existent ID with complex includes gracefully" do
+      # Use a non-existent ID to trigger the error path in fetch_record_from_path
+      # This exercises the code path where the lookup fails and we need to add an error
+      non_existent_id = Ash.UUID.generate()
+
+      # Before the fix, this would crash with KeyError when chain/3 tried to access
+      # request.errors on {:error, request}. After the fix, it returns proper 404.
+      response =
+        Domain
+        |> get("/posts/#{non_existent_id}/comments?include=post", status: 404)
+
+      # Should return error document, not crash
+      assert is_map(response.resp_body)
+      assert Map.has_key?(response.resp_body, "errors")
+      errors = response.resp_body["errors"]
+      assert is_list(errors)
+      assert length(errors) > 0
+
+      error = hd(errors)
+      assert error["status"] == "404"
+      assert error["code"] == "not_found"
+    end
+  end
+
   describe "index endpoint" do
     setup do
       post =

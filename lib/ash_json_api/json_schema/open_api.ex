@@ -34,8 +34,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
         end
     """
     alias Ash.Query.Aggregate
-    alias AshJsonApi.Resource.Route
     alias Ash.Resource.{Actions, Relationships}
+    alias AshJsonApi.Resource.Route
 
     alias OpenApiSpex.{
       Info,
