@@ -186,7 +186,7 @@ defmodule Test.Acceptance.GetRelatedTest do
       assert Map.has_key?(response.resp_body, "errors")
       errors = response.resp_body["errors"]
       assert is_list(errors)
-      assert length(errors) > 0
+      assert errors != []
 
       # Verify the error has proper JSON:API structure
       error = hd(errors)
@@ -214,7 +214,7 @@ defmodule Test.Acceptance.GetRelatedTest do
       assert Map.has_key?(response.resp_body, "errors")
       errors = response.resp_body["errors"]
       assert is_list(errors)
-      assert length(errors) > 0
+      assert errors != []
 
       error = hd(errors)
       assert error["status"] == "404"
@@ -237,7 +237,7 @@ defmodule Test.Acceptance.GetRelatedTest do
       assert Map.has_key?(response.resp_body, "errors")
       errors = response.resp_body["errors"]
       assert is_list(errors)
-      assert length(errors) > 0
+      assert errors != []
 
       error = hd(errors)
       assert error["status"] == "404"

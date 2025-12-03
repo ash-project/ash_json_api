@@ -297,7 +297,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
 
       # Should get an error because 'private_comments' is not public
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       # Error should indicate the relationship is invalid/not included
       assert List.first(errors)["code"] in ["invalid_includes", "invalid_relationship"]
     end
@@ -324,14 +324,14 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
 
       # Multiple posts in the response
       assert is_list(response.resp_body["data"])
-      assert length(response.resp_body["data"]) > 0
+      assert response.resp_body["data"] != []
 
       # Each post that has comments should have pagination metadata
       Enum.each(response.resp_body["data"], fn post_data ->
         comments_rel = post_data["relationships"]["comments"]
 
         # If there are comments, check for pagination metadata
-        if length(comments_rel["data"]) > 0 do
+        if comments_rel["data"] != [] do
           assert comments_rel["meta"]["limit"] == 3
         end
       end)
@@ -411,7 +411,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "limit must be an integer"
     end
@@ -425,7 +425,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "limit must be a positive integer"
     end
@@ -439,7 +439,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "limit must be a positive integer"
     end
@@ -453,7 +453,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "offset must be an integer"
     end
@@ -467,7 +467,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "offset must be a non-negative integer"
     end
@@ -481,7 +481,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "count must be 'true' or 'false'"
     end
@@ -495,7 +495,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "unknown pagination parameter"
     end
@@ -545,7 +545,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "invalid JSON"
     end
@@ -562,7 +562,7 @@ defmodule Test.Acceptance.PaginatedRelationshipsTest do
         )
 
       errors = response.resp_body["errors"]
-      assert length(errors) > 0
+      assert errors != []
       assert List.first(errors)["code"] == "invalid_pagination"
       assert List.first(errors)["detail"] =~ "must be a JSON object"
     end

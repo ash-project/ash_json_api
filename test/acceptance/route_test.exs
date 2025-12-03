@@ -123,7 +123,7 @@ defmodule Test.Acceptance.RouteTest do
 
     assert %{"errors" => errors} = response.resp_body
     assert is_list(errors)
-    assert length(errors) > 0
+    assert errors != []
 
     # Find the "required" error for the missing "from" argument
     required_error = Enum.find(errors, &(&1["code"] == "required"))
@@ -146,7 +146,7 @@ defmodule Test.Acceptance.RouteTest do
 
     assert %{"errors" => errors} = response.resp_body
     assert is_list(errors)
-    assert length(errors) > 0
+    assert errors != []
 
     # Find the conflict error
     conflict_error = Enum.find(errors, &(&1["code"] == "invalid_query"))

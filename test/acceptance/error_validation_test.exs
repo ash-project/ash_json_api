@@ -87,7 +87,7 @@ defmodule Test.Acceptance.ErrorValidationTest do
 
       errors = response.resp_body["errors"]
       assert is_list(errors)
-      assert length(errors) > 0
+      assert errors != []
 
       error = Enum.find(errors, &(&1["code"] == "invalid_filter"))
       assert error, "Expected to find an 'invalid_filter' error"
@@ -107,7 +107,7 @@ defmodule Test.Acceptance.ErrorValidationTest do
 
       errors = response.resp_body["errors"]
       assert is_list(errors)
-      assert length(errors) > 0
+      assert errors != []
 
       error = Enum.find(errors, &(&1["code"] == "invalid_sort"))
       assert error, "Expected to find an 'invalid_sort' error"
@@ -124,7 +124,7 @@ defmodule Test.Acceptance.ErrorValidationTest do
 
       errors = response.resp_body["errors"]
       assert is_list(errors)
-      assert length(errors) > 0
+      assert errors != []
 
       error = Enum.find(errors, &(&1["code"] == "invalid_sort"))
       assert error, "Expected to find an 'invalid_sort' error"

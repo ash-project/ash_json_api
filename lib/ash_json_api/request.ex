@@ -1024,13 +1024,14 @@ defmodule AshJsonApi.Request do
        )
        when is_map(attributes) do
     Enum.reduce(attributes, request, fn {key, value}, request ->
-      if arg =
-           Enum.find(action.arguments, fn argument ->
+      case Enum.find(action.arguments, fn argument ->
              to_string(argument.name) == key
            end) do
-        %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
-      else
-        request
+        nil ->
+          request
+
+        arg ->
+          %{request | arguments: Map.put(request.arguments || %{}, arg.name, value)}
       end
     end)
   end

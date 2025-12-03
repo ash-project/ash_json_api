@@ -382,7 +382,7 @@ defmodule Test.Acceptance.ForbiddenFieldTest do
       result = AshJsonApi.Error.to_json_api_errors(Domain, Dashboard, forbidden_error, :read)
 
       assert is_list(result)
-      assert length(result) >= 1
+      assert result != []
 
       json_error = hd(result)
       assert json_error.status_code == 403

@@ -134,7 +134,7 @@ defmodule Test.Acceptance.GenericActionIndexTest do
 
     assert %{"errors" => errors} = response.resp_body
     assert is_list(errors)
-    assert length(errors) > 0
+    assert errors != []
 
     required_error =
       Enum.find(
