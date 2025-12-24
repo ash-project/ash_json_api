@@ -69,6 +69,7 @@ defmodule AshJsonApi.MixProject do
         "documentation/topics/authorize-with-json-api.md",
         "documentation/topics/authenticate-with-json-api.md",
         "documentation/topics/paginated-relationships.md",
+        "documentation/topics/modify-conn.md",
         {"documentation/dsls/DSL-AshJsonApi.Resource.md",
          search_data: Spark.Docs.search_data_for(AshJsonApi.Resource)},
         {"documentation/dsls/DSL-AshJsonApi.Domain.md",
