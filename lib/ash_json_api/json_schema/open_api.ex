@@ -168,6 +168,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {resource_schemas, acc} =
             domain
             |> resources()
+            |> with_all_related_resources()
             |> Enum.reduce({[], acc}, fn resource, {schemas, acc} ->
               {schema, acc} = resource_object_schema(resource, nil, acc)
               schema_entry = {AshJsonApi.Resource.Info.type(resource), schema}
