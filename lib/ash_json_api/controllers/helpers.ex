@@ -933,6 +933,17 @@ defmodule AshJsonApi.Controllers.Helpers do
 
   # This doesn't need to use chain, because its stateless and safe to
   # do anytime. Returning multiple errors is a nice feature of JSON API
+  def fetch_pagination_parameters(%{query_params: %{"page" => page}} = request)
+      when is_binary(page) do
+    Request.add_error(
+      request,
+      Error.InvalidPagination.exception(
+        detail: "page parameter must use bracket notation (e.g., page[limit]=10&page[offset]=0)"
+      ),
+      :read
+    )
+  end
+
   def fetch_pagination_parameters(request) do
     if request.action.type == :read do
       request

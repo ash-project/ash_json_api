@@ -116,5 +116,20 @@ defmodule Test.Acceptance.IndexPaginationTest do
       data = response.resp_body["data"]
       assert length(data) == 5
     end
+
+    @tag capture_log: true
+    test "returns 400 when page parameter is not using bracket notation" do
+      # Clients must use page[limit]=10 format, not page={"limit":10} or similar
+      # URL-encoded: %7B%22limit%22%3A1%7D = {"limit":1}
+      response =
+        Domain
+        |> get("/posts?page=%7B%22limit%22%3A1%7D", status: 400)
+
+      errors = response.resp_body["errors"]
+
+      assert Enum.any?(errors, fn error ->
+               error["code"] == "invalid_pagination" and error["detail"] =~ "bracket notation"
+             end)
+    end
   end
 end
