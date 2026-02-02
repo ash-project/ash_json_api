@@ -500,7 +500,9 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   describe "Index route" do
-    test "filter parameter", %{open_api_spec: %OpenApi{} = api_spec} do
+    test "filter parameter uses :deepObject type by default", %{
+      open_api_spec: %OpenApi{} = api_spec
+    } do
       %Operation{} = operation = api_spec.paths["/posts"].get
       %Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == "filter"))
       assert api_spec.components.schemas["author-filter-name"].properties[:contains]
@@ -553,6 +555,27 @@ defmodule Test.Acceptance.OpenApiTest do
 
       %Operation{} = operation = api_spec.paths["/authors_no_filter"].get
       refute Enum.any?(operation.parameters, &(&1.name == :filter))
+    end
+
+    test "filter schema type uses :object when correct_filter_schema_type? config is true" do
+      original_value = Application.get_env(:ash_json_api, :correct_filter_schema_type?)
+      Application.put_env(:ash_json_api, :correct_filter_schema_type?, true)
+
+      try do
+        api_spec =
+          AshJsonApi.Controllers.OpenApi.spec(%{private: %{}},
+            domains: [Blogs]
+          )
+
+        assert schema = api_spec.components.schemas["post-filter"]
+        assert schema.type == :object
+      after
+        if original_value == nil do
+          Application.delete_env(:ash_json_api, :correct_filter_schema_type?)
+        else
+          Application.put_env(:ash_json_api, :correct_filter_schema_type?, original_value)
+        end
+      end
     end
 
     test "sort parameter", %{open_api_spec: %OpenApi{} = api_spec} do
