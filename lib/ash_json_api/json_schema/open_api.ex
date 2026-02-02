@@ -256,10 +256,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {field_types, acc} = filter_field_types(resource, acc)
 
       filter_schema_type =
-        if Application.get_env(:ash_json_api, :correct_filter_schema_type?, false) do
-          :object
-        else
+        if Application.get_env(:ash_json_api, :use_deep_object_for_filter_type?, true) do
           :deepObject
+        else
+          :object
         end
 
       schemas =

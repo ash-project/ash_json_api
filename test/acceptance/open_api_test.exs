@@ -557,9 +557,9 @@ defmodule Test.Acceptance.OpenApiTest do
       refute Enum.any?(operation.parameters, &(&1.name == :filter))
     end
 
-    test "filter schema type uses :object when correct_filter_schema_type? config is true" do
-      original_value = Application.get_env(:ash_json_api, :correct_filter_schema_type?)
-      Application.put_env(:ash_json_api, :correct_filter_schema_type?, true)
+    test "filter schema type uses :object when use_deep_object_for_filter_type? config is false" do
+      original_value = Application.get_env(:ash_json_api, :use_deep_object_for_filter_type?)
+      Application.put_env(:ash_json_api, :use_deep_object_for_filter_type?, false)
 
       try do
         api_spec =
@@ -571,9 +571,9 @@ defmodule Test.Acceptance.OpenApiTest do
         assert schema.type == :object
       after
         if original_value == nil do
-          Application.delete_env(:ash_json_api, :correct_filter_schema_type?)
+          Application.delete_env(:ash_json_api, :use_deep_object_for_filter_type?)
         else
-          Application.put_env(:ash_json_api, :correct_filter_schema_type?, original_value)
+          Application.put_env(:ash_json_api, :use_deep_object_for_filter_type?, original_value)
         end
       end
     end

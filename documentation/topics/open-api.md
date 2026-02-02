@@ -180,10 +180,10 @@ use AshJsonApi.Router,
 
 ### Filter Schema Type
 
-By default, the filter schema uses `deepObject` as its type, which works well with Swagger UI but is technically invalid per the OpenAPI spec (`deepObject` is only valid for the `style` property, not `type`). If you need a spec-compliant schema, you can opt-in to use the correct `object` type:
+By default, the filter schema uses `deepObject` as its type, which works well with Swagger UI but is technically invalid per the OpenAPI spec (`deepObject` is only valid for the `style` property, not `type`). If you need a spec-compliant schema, you can disable this:
 
 ```elixir
-config :ash_json_api, correct_filter_schema_type?: true
+config :ash_json_api, use_deep_object_for_filter_type?: false
 ```
 
 ## Known issues/limitations
