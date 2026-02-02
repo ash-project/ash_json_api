@@ -150,7 +150,7 @@ defmodule AshJsonApi.MixProject do
       {:jason, "~> 1.1"},
       {:phoenix, "~> 1.6"},
       {:json_xema, "~> 0.4"},
-      {:multipart, "~> 0.4.0", only: [:dev, :test]},
+      {:multipart, "~> 0.6.0", only: [:dev, :test]},
       {:open_api_spex, "~> 3.16", optional: true},
       {:git_ops, "~> 2.4", only: [:dev, :test]},
       {:ex_doc, "~> 0.37-rc", only: [:dev, :test]},
