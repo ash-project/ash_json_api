@@ -255,12 +255,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_filter_schemas(domains, resource, acc) do
       {field_types, acc} = filter_field_types(resource, acc)
 
+      filter_schema_type =
+        if Application.get_env(:ash_json_api, :use_deep_object_for_filter_type?, true) do
+          :deepObject
+        else
+          :object
+        end
+
       schemas =
         [
           {
             "#{AshJsonApi.Resource.Info.type(resource)}-filter",
             %Schema{
-              type: :deepObject,
+              type: filter_schema_type,
               properties: resource_filter_fields(resource, domains),
               example: "",
               additionalProperties: false,
