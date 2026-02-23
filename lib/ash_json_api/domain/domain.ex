@@ -161,6 +161,12 @@ defmodule AshJsonApi.Domain do
         type: :boolean,
         doc: "Whether or not to include properties for values that are nil in the JSON output",
         default: true
+      ],
+      require_type_on_create?: [
+        type: :boolean,
+        default: false,
+        doc:
+          "When true, POST create requests MUST include type in data. Default false for backwards compatibility; in a future major version may default to true."
       ]
     ],
     sections: [@open_api, @routes]
