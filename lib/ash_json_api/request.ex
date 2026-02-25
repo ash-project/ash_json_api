@@ -1008,13 +1008,53 @@ defmodule AshJsonApi.Request do
     String.to_existing_atom(string)
   end
 
+  defp parse_query_params(
+         %{route: %{type: :route, method: method} = route, action: action} = request
+       )
+       when method in [:get, "GET"] do
+    path_param_names =
+      route.route
+      |> Path.split()
+      |> Enum.filter(&String.starts_with?(&1, ":"))
+      |> Enum.map(&String.trim_leading(&1, ":"))
+
+    action_arg_entries =
+      action.arguments
+      |> Enum.filter(& &1.public?)
+      |> Enum.reject(fn arg -> to_string(arg.name) in path_param_names end)
+      |> Enum.map(fn arg -> {arg.name, to_string(arg.name)} end)
+
+    route_param_entries =
+      route.query_params
+      |> List.wrap()
+      |> Enum.map(fn qp -> {qp, to_string(qp)} end)
+
+    effective_entries =
+      Enum.uniq_by(route_param_entries ++ action_arg_entries, fn {atom, _} -> atom end)
+
+    Enum.reduce(effective_entries, request, fn {atom_key, string_key}, request ->
+      case Map.fetch(request.query_params, string_key) do
+        {:ok, value} ->
+          args = request.arguments || %{}
+          %{request | arguments: Map.put(args, atom_key, value)}
+
+        :error ->
+          request
+      end
+    end)
+  end
+
   defp parse_query_params(%{route: route} = request) do
     route.query_params
     |> List.wrap()
     |> Enum.reduce(request, fn query_param, request ->
       case Map.fetch(request.query_params, to_string(query_param)) do
-        {:ok, value} -> %{request | arguments: Map.put(request.arguments, query_param, value)}
-        :error -> request
+        {:ok, value} ->
+          args = request.arguments || %{}
+          %{request | arguments: Map.put(args, query_param, value)}
+
+        :error ->
+          request
       end
     end)
   end

@@ -65,6 +65,67 @@ defmodule Test.Acceptance.GenericActionIndexTest do
     end
   end
 
+  defmodule SearchResultImplicitQueryParams do
+    use Ash.Resource,
+      domain: Test.Acceptance.GenericActionIndexTest.Domain,
+      extensions: [AshJsonApi.Resource]
+
+    resource do
+      require_primary_key?(false)
+    end
+
+    json_api do
+      type("search_result_implicit")
+
+      routes do
+        base("/search_implicit")
+        # Intentionally no query_params: [...]
+        route(:get, "/", :search)
+      end
+    end
+
+    actions do
+      action :search, {:array, :struct} do
+        constraints(items: [instance_of: __MODULE__])
+        argument(:query, :string, allow_nil?: false)
+        argument(:category, :string, allow_nil?: true)
+
+        run(fn input, _ ->
+          query = input.arguments.query
+          category = Map.get(input.arguments, :category)
+
+          results =
+            case category do
+              nil ->
+                [
+                  %__MODULE__{title: "Result 1 for #{query}", content: "Content 1"},
+                  %__MODULE__{title: "Result 2 for #{query}", content: "Content 2"}
+                ]
+
+              category ->
+                [
+                  %__MODULE__{
+                    title: "#{category} Result 1 for #{query}",
+                    content: "Category content 1"
+                  },
+                  %__MODULE__{
+                    title: "#{category} Result 2 for #{query}",
+                    content: "Category content 2"
+                  }
+                ]
+            end
+
+          {:ok, results}
+        end)
+      end
+    end
+
+    attributes do
+      attribute(:title, :string, public?: true)
+      attribute(:content, :string, public?: true)
+    end
+  end
+
   defmodule Domain do
     use Ash.Domain,
       otp_app: :ash_json_api,
@@ -78,6 +139,7 @@ defmodule Test.Acceptance.GenericActionIndexTest do
 
     resources do
       resource(SearchResult)
+      resource(SearchResultImplicitQueryParams)
     end
   end
 
@@ -149,6 +211,23 @@ defmodule Test.Acceptance.GenericActionIndexTest do
 
     assert source_pointer == "/query",
            "Expected source pointer '#{source_pointer}' to be /query"
+  end
+
+  test "generic action index route accepts optional argument without query_params configured" do
+    response =
+      Domain
+      |> get("/search_implicit?query=elixir&category=tutorial", status: 200)
+
+    assert response.resp_body == [
+             %{
+               "title" => "tutorial Result 1 for elixir",
+               "content" => "Category content 1"
+             },
+             %{
+               "title" => "tutorial Result 2 for elixir",
+               "content" => "Category content 2"
+             }
+           ]
   end
 
   test "generic GET actions include arguments as query parameters in JSON schema" do
