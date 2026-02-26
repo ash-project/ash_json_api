@@ -4,6 +4,20 @@
 
 defmodule AshJsonApi.Controllers.Helpers do
   @moduledoc false
+
+  # These functions call Ash.ActionInput.set_context/2 after Ash.ActionInput.new/1.
+  # Dialyzer incorrectly infers the concrete MapSet representation from new/1, causing
+  # a false-positive call_without_opaque warning. The type is correct per Ash's @type t.
+  @dialyzer {:no_opaque,
+             [
+               fetch_records: 1,
+               run_action: 1,
+               create_record: 1,
+               update_record: 2,
+               destroy_record: 1,
+               fetch_record_from_path: 3
+             ]}
+
   require Logger
   alias AshJsonApi.Controllers.Response
   alias AshJsonApi.{Error, Request}
