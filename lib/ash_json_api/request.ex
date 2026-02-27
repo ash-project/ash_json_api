@@ -15,6 +15,7 @@ defmodule AshJsonApi.Request do
     InvalidQuery,
     InvalidRelationshipInput,
     InvalidType,
+    MissingTypeOnCreate,
     UnacceptableMediaType,
     UnsupportedMediaType
   }
@@ -111,6 +112,7 @@ defmodule AshJsonApi.Request do
     |> validate_href_schema()
     |> validate_req_headers()
     |> validate_body()
+    |> validate_require_type_on_create()
     |> parse_fields()
     |> parse_field_inputs()
     |> parse_filter_included()
@@ -196,6 +198,29 @@ defmodule AshJsonApi.Request do
       %{request | errors: new_errors}
     end)
   end
+
+  defp validate_require_type_on_create(
+         %{
+           route: %{type: :post},
+           body: %{"data" => data},
+           domain: domain
+         } = request
+       )
+       when is_map(data) do
+    if AshJsonApi.Domain.Info.require_type_on_create?(domain) do
+      type_value = Map.get(data, "type")
+
+      if type_value in [nil, ""] do
+        add_error(request, MissingTypeOnCreate.exception([]), request.route.type)
+      else
+        request
+      end
+    else
+      request
+    end
+  end
+
+  defp validate_require_type_on_create(request), do: request
 
   defp validate_body(%{body: body, schema: %{"schema" => schema}} = request) do
     json_xema = JsonXema.new(schema)
