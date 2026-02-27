@@ -25,6 +25,7 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
 
       routes do
         base "/articles"
+        index :read
         post :create
       end
     end
@@ -35,7 +36,12 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
     end
 
     actions do
-      defaults([:read, :create, :update, :destroy])
+      defaults([:read, :update, :destroy])
+
+      create :create do
+        primary? true
+        accept [:title]
+      end
     end
   end
 
@@ -55,6 +61,7 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
 
       routes do
         base "/articles"
+        index :read
         post :create
       end
     end
@@ -65,7 +72,12 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
     end
 
     actions do
-      defaults([:read, :create, :update, :destroy])
+      defaults([:read, :update, :destroy])
+
+      create :create do
+        primary? true
+        accept [:title]
+      end
     end
   end
 
