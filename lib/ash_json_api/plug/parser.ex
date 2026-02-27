@@ -146,6 +146,7 @@ defmodule AshJsonApi.Plug.Parser do
        )
        when data == %{} do
     %Plug.Conn{} = conn
+
     with {:ok, type, subtype, _params} <- extract_part_type(part_headers),
          {:ok, content} <- File.read(path),
          {:ok, data, conn} <-
