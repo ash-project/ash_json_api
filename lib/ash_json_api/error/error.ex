@@ -31,8 +31,8 @@ defmodule AshJsonApi.Error do
     Enum.flat_map(errors, &to_json_api_errors(domain, resource, &1, type))
   end
 
-  def to_json_api_errors(_domain, _resource, %__MODULE__{} = error, _type) do
-    [error]
+  def to_json_api_errors(domain, resource, %__MODULE__{} = error, _type) do
+    apply_error_handler([error], domain, resource)
   end
 
   def to_json_api_errors(domain, resource, error, type) when is_binary(error) do
@@ -41,60 +41,77 @@ defmodule AshJsonApi.Error do
   end
 
   def to_json_api_errors(domain, resource, error, type) do
-    if AshJsonApi.ToJsonApiError.impl_for(error) do
-      error
-      |> AshJsonApi.ToJsonApiError.to_json_api_error()
-      |> List.wrap()
-      |> Enum.flat_map(&with_source_pointer(&1, error, resource, type))
-    else
-      uuid = Ash.UUID.generate()
-
-      stacktrace =
-        case error do
-          %{stacktrace: %{stacktrace: v}} ->
-            v
-
-          _ ->
-            nil
-        end
-
-      Logger.warning(
-        "`#{uuid}`: AshJsonApi.Error not implemented for error:\n\n#{Exception.format(:error, error, stacktrace)}"
-      )
-
-      code = if error.class == :forbidden, do: "forbidden", else: "something_went_wrong"
-      title = if error.class == :forbidden, do: "Forbidden", else: "SomethingWentWrong"
-
-      detail =
-        if error.class == :forbidden,
-          do: "forbidden",
-          else: "Something went wrong. Error id: #{uuid}"
-
-      if AshJsonApi.Domain.Info.show_raised_errors?(domain) do
-        [
-          %__MODULE__{
-            id: uuid,
-            status_code: class_to_status(error.class),
-            code: code,
-            title: title,
-            detail: """
-            Raised error: #{uuid}
-
-            #{Exception.format(:error, error, stacktrace)}"
-            """
-          }
-        ]
+    errors =
+      if AshJsonApi.ToJsonApiError.impl_for(error) do
+        error
+        |> AshJsonApi.ToJsonApiError.to_json_api_error()
+        |> List.wrap()
+        |> Enum.flat_map(&with_source_pointer(&1, error, resource, type))
       else
-        [
-          %__MODULE__{
-            id: uuid,
-            status_code: class_to_status(error.class),
-            code: code,
-            title: title,
-            detail: detail
-          }
-        ]
+        uuid = Ash.UUID.generate()
+
+        stacktrace =
+          case error do
+            %{stacktrace: %{stacktrace: v}} ->
+              v
+
+            _ ->
+              nil
+          end
+
+        Logger.warning(
+          "`#{uuid}`: AshJsonApi.Error not implemented for error:\n\n#{Exception.format(:error, error, stacktrace)}"
+        )
+
+        code = if error.class == :forbidden, do: "forbidden", else: "something_went_wrong"
+        title = if error.class == :forbidden, do: "Forbidden", else: "SomethingWentWrong"
+
+        detail =
+          if error.class == :forbidden,
+            do: "forbidden",
+            else: "Something went wrong. Error id: #{uuid}"
+
+        if AshJsonApi.Domain.Info.show_raised_errors?(domain) do
+          [
+            %__MODULE__{
+              id: uuid,
+              status_code: class_to_status(error.class),
+              code: code,
+              title: title,
+              detail: """
+              Raised error: #{uuid}
+
+              #{Exception.format(:error, error, stacktrace)}"
+              """
+            }
+          ]
+        else
+          [
+            %__MODULE__{
+              id: uuid,
+              status_code: class_to_status(error.class),
+              code: code,
+              title: title,
+              detail: detail
+            }
+          ]
+        end
       end
+
+    apply_error_handler(errors, domain, resource)
+  end
+
+  defp apply_error_handler(errors, nil, _resource), do: errors
+
+  defp apply_error_handler(errors, domain, resource) do
+    case AshJsonApi.Domain.Info.error_handler(domain) do
+      nil ->
+        errors
+
+      {m, f, a} ->
+        Enum.map(errors, fn error ->
+          apply(m, f, [error, %{domain: domain, resource: resource} | a])
+        end)
     end
   end
 
