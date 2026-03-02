@@ -47,6 +47,10 @@ defmodule AshJsonApi.Domain.Info do
     Extension.get_opt(domain, [:json_api], :include_nil_values?, true, true)
   end
 
+  def error_handler(domain) do
+    Extension.get_opt(domain, [:json_api], :error_handler, nil, true)
+  end
+
   def require_type_on_create?(domain) do
     Extension.get_opt(domain, [:json_api], :require_type_on_create?, false, true)
   end

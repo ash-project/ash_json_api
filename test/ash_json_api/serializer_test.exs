@@ -95,7 +95,7 @@ defmodule AshJsonApi.SerializerTest do
                [instance_of: Post],
                Blogs
              ) ==
-               %{id: nil, title: "title"}
+               %{"id" => nil, "title" => "title"}
     end
 
     test "serializes a resource" do
@@ -107,7 +107,7 @@ defmodule AshJsonApi.SerializerTest do
         |> Ash.create!()
 
       assert Serializer.serialize_value(post, Post, [], Blogs) ==
-               %{id: post_id, title: "title"}
+               %{"id" => post_id, "title" => "title"}
     end
 
     test "serializes a resource with load opt" do
@@ -128,15 +128,15 @@ defmodule AshJsonApi.SerializerTest do
 
       assert Serializer.serialize_value(author, Author, [], Blogs, load: load) ==
                %{
-                 id: author_id,
-                 name: "name",
-                 posts_count: 1,
-                 posts: [
+                 "id" => author_id,
+                 "name" => "name",
+                 "posts_count" => 1,
+                 "posts" => [
                    %{
-                     id: post_id,
-                     title: "title",
-                     calc: "calc",
-                     author: %{id: author_id, name: "name"}
+                     "id" => post_id,
+                     "title" => "title",
+                     "calc" => "calc",
+                     "author" => %{"id" => author_id, "name" => "name"}
                    }
                  ]
                }

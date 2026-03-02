@@ -1132,7 +1132,8 @@ defmodule AshJsonApi.Serializer do
             )
 
           if not is_nil(value) or include_nil_values?(request, record) do
-            Map.put(acc, field.name, value)
+            json_key = AshJsonApi.Resource.Info.field_to_json_key(resource, field.name)
+            Map.put(acc, json_key, value)
           else
             acc
           end

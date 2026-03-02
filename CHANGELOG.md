@@ -11,6 +11,47 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.0-rc.2](https://github.com/ash-project/ash_json_api/compare/v1.6.0-rc.1...v1.6.0-rc.2) (2026-03-02)
+
+
+
+
+### Improvements:
+
+* add dedicated calculation argument transformer by [@zachdaniel](https://github.com/zachdaniel)
+
+## [v1.6.0-rc.1](https://github.com/ash-project/ash_json_api/compare/v1.6.0-rc.0...v1.6.0-rc.1) (2026-03-02)
+
+
+
+
+### Improvements:
+
+* add builtin transformers `:camelize` and `:dasherize` by [@zachdaniel](https://github.com/zachdaniel)
+
+## [v1.6.0-rc.0](https://github.com/ash-project/ash_json_api/compare/v1.5.1...v1.6.0-rc.0) (2026-03-02)
+
+
+
+
+### Features:
+
+* add field mapping utilities by [@zachdaniel](https://github.com/zachdaniel)
+
+* add config to use correct `object` type for filter schemas by olivermt [(#413)](https://github.com/ash-project/ash_json_api/pull/413)
+
+### Bug Fixes:
+
+* object type + config for backwards compat + a regression in deps update (#413) by olivermt [(#413)](https://github.com/ash-project/ash_json_api/pull/413)
+
+* BadMapError when page param is not using bracket notation (#407) by olivermt [(#407)](https://github.com/ash-project/ash_json_api/pull/407)
+
+* Add with_all_related_resources to resource schemas (#406) by m0rt3nlund [(#406)](https://github.com/ash-project/ash_json_api/pull/406)
+
+### Improvements:
+
+* add an `error_handler` option by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.5.1](https://github.com/ash-project/ash_json_api/compare/v1.5.0...v1.5.1) (2025-11-19)
 
 
