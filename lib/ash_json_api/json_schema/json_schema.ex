@@ -279,7 +279,7 @@ defmodule AshJsonApi.JsonSchema do
     resource
     |> Ash.Resource.Info.public_attributes()
     |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
-    |> Enum.map(&to_string(&1.name))
+    |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))
   end
 
   defp resource_attributes(resource) do
@@ -292,7 +292,11 @@ defmodule AshJsonApi.JsonSchema do
     )
     |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
     |> Enum.reduce(%{}, fn attr, acc ->
-      Map.put(acc, to_string(attr.name), resource_attribute_type(attr))
+      Map.put(
+        acc,
+        AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name),
+        resource_attribute_type(attr)
+      )
     end)
   end
 
@@ -735,16 +739,15 @@ defmodule AshJsonApi.JsonSchema do
       action.arguments
       |> Enum.filter(& &1.public?)
       |> Enum.reduce(props, fn argument, props ->
-        Map.put(
-          props,
-          to_string(argument.name),
-          resource_write_attribute_type(argument, argument.type)
-        )
+        json_key =
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name)
+
+        Map.put(props, json_key, resource_write_attribute_type(argument, argument.type))
       end),
       action.arguments
       |> Enum.filter(& &1.public?)
       |> Enum.reject(& &1.allow_nil?)
-      |> Enum.map(&"#{&1.name}")
+      |> Enum.map(&AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, &1.name))
     }
   end
 
@@ -759,7 +762,7 @@ defmodule AshJsonApi.JsonSchema do
   defp sort_format(resource) do
     sorts = sortable_fields(resource)
 
-    "(#{Enum.map_join(sorts, "|", & &1.name)}),*"
+    "(#{Enum.map_join(sorts, "|", &AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))}),*"
   end
 
   defp page_props(_domain, _resource) do
@@ -972,7 +975,14 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_write_attributes(resource, arguments, action, route \\ nil) do
     AshJsonApi.OpenApi.required_write_attributes(resource, arguments, action, route)
-    |> Enum.map(&to_string/1)
+    |> Enum.map(fn atom_name ->
+      # Try argument first, then attribute
+      if Enum.any?(arguments, &(&1.name == atom_name)) do
+        AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, atom_name)
+      else
+        AshJsonApi.Resource.Info.field_to_json_key(resource, atom_name)
+      end
+    end)
   end
 
   defp write_attributes(resource, arguments, action, route \\ nil) do
@@ -986,7 +996,7 @@ defmodule AshJsonApi.JsonSchema do
         |> Enum.reduce(%{}, fn attribute, acc ->
           Map.put(
             acc,
-            to_string(attribute.name),
+            AshJsonApi.Resource.Info.field_to_json_key(resource, attribute.name),
             resource_write_attribute_type(attribute, action.type)
           )
         end)
@@ -997,7 +1007,7 @@ defmodule AshJsonApi.JsonSchema do
     |> Enum.reduce(attributes, fn argument, attributes ->
       Map.put(
         attributes,
-        to_string(argument.name),
+        AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name),
         resource_write_attribute_type(argument, :create)
       )
     end)
@@ -1018,11 +1028,11 @@ defmodule AshJsonApi.JsonSchema do
 
   defp without_path_arguments(arguments, _, _), do: arguments
 
-  defp required_relationship_attributes(_resource, relationship_arguments, action) do
+  defp required_relationship_attributes(resource, relationship_arguments, action) do
     action.arguments
     |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
     |> Enum.reject(& &1.allow_nil?)
-    |> Enum.map(&to_string(&1.name))
+    |> Enum.map(&AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, &1.name))
   end
 
   defp write_relationships(resource, relationship_arguments, action) do
@@ -1035,7 +1045,7 @@ defmodule AshJsonApi.JsonSchema do
 
       Map.put(
         acc,
-        to_string(argument.name),
+        AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name),
         object
       )
     end)

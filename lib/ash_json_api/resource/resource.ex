@@ -556,6 +556,64 @@ defmodule AshJsonApi.Resource do
         doc:
           "Whether or not to derive a filter parameter based on the sortable fields of the resource",
         default: true
+      ],
+      field_names: [
+        type: {:or, [:keyword_list, {:fun, 1}]},
+        doc: """
+        Renames fields (attributes, relationships, calculations, and aggregates) in the
+        JSON:API output and input.
+
+        Can be a keyword list of `[ash_name: :json_api_name]` mappings, or a 1-arity function
+        that receives an atom field name and returns the desired JSON:API name (atom or string).
+
+        The function form is useful for applying a blanket transformation such as camelCase:
+
+        ```elixir
+        field_names fn name ->
+          camelized = name |> to_string() |> Macro.camelize()
+          {first, rest} = String.split_at(camelized, 1)
+          String.downcase(first) <> rest
+        end
+        ```
+
+        Or with a keyword list:
+
+        ```elixir
+        field_names [
+          first_name: :firstName,
+          last_name: :lastName
+        ]
+        ```
+
+        Names are applied consistently across serialization, request parsing,
+        sort/filter parameters, field selection, error source pointers, relationship
+        keys, and schema generation.
+        """
+      ],
+      argument_names: [
+        type: {:or, [:keyword_list, {:fun, 2}]},
+        doc: """
+        Renames action arguments in the JSON:API request body and schema.
+
+        Can be a nested keyword list of `[action_name: [ash_name: :json_api_name]]` mappings,
+        or a 2-arity function that receives `(action_name, argument_name)` atoms and returns
+        the desired JSON:API name (atom or string).
+
+        ```elixir
+        argument_names [
+          create: [my_arg: :myArg],
+          update: [my_arg: :myArg]
+        ]
+        ```
+
+        Or with a function:
+
+        ```elixir
+        argument_names fn _action, name ->
+          name |> to_string() |> Macro.camelize() |> String.downcase_first()
+        end
+        ```
+        """
       ]
     ]
   }

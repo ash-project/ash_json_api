@@ -56,7 +56,7 @@ defmodule Test.Acceptance.ErrorHandlerTest do
     json_api do
       authorize? false
       log_errors? false
-      error_handler {ErrorHandler, :handle_error, []}
+      error_handler({ErrorHandler, :handle_error, []})
     end
 
     resources do
@@ -168,7 +168,8 @@ defmodule Test.Acceptance.ErrorHandlerTest do
           :create
         )
 
-      assert result.meta[:captured_domain] == Test.Acceptance.ErrorHandlerTest.DomainWithContextHandler
+      assert result.meta[:captured_domain] ==
+               Test.Acceptance.ErrorHandlerTest.DomainWithContextHandler
     end
 
     test "without error_handler, errors pass through unchanged" do
@@ -198,7 +199,7 @@ defmodule Test.Acceptance.ErrorHandlerTest do
     json_api do
       authorize? false
       log_errors? false
-      error_handler {ContextCapturingHandler, :handle_error, []}
+      error_handler({ContextCapturingHandler, :handle_error, []})
     end
 
     resources do

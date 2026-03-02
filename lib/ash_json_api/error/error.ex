@@ -188,8 +188,9 @@ defmodule AshJsonApi.Error do
     [built_error]
   end
 
-  defp source_pointer(_resource, field, path, :action) do
-    "/data/attributes/#{Enum.join(List.wrap(path) ++ [field], "/")}"
+  defp source_pointer(resource, field, path, :action) do
+    json_key = AshJsonApi.Resource.Info.field_to_json_key(resource, field)
+    "/data/attributes/#{Enum.join(List.wrap(path) ++ [json_key], "/")}"
   end
 
   defp source_pointer(resource, field, path, type)
@@ -197,7 +198,8 @@ defmodule AshJsonApi.Error do
     if path == [] && Ash.Resource.Info.public_relationship(resource, field) do
       "/data/relationships/#{field}"
     else
-      "/data/attributes/#{Enum.join(List.wrap(path) ++ [field], "/")}"
+      json_key = AshJsonApi.Resource.Info.field_to_json_key(resource, field)
+      "/data/attributes/#{Enum.join(List.wrap(path) ++ [json_key], "/")}"
     end
   end
 

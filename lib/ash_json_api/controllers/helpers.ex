@@ -90,11 +90,19 @@ defmodule AshJsonApi.Controllers.Helpers do
               other
           end
 
-        query =
+        base_query =
           request.resource
           |> Ash.Query.load(request.includes_keyword)
           |> Ash.Query.set_context(request.context)
-          |> Ash.Query.do_filter(filter)
+
+        query =
+          if filter do
+            Ash.Query.filter_input(base_query, filter,
+              ref_transformer: AshJsonApi.Resource.Info.filter_ref_transformer()
+            )
+          else
+            base_query
+          end
           |> Ash.Query.sort(request.sort)
           |> Ash.Query.load(fields(request, request.resource))
           |> Ash.Query.for_read(request.action.name, request.arguments, Request.opts(request))
@@ -690,7 +698,9 @@ defmodule AshJsonApi.Controllers.Helpers do
 
         query =
           if filter do
-            case Ash.Filter.parse_input(resource, filter) do
+            case Ash.Filter.parse_input(resource, filter,
+                   ref_transformer: AshJsonApi.Resource.Info.filter_ref_transformer()
+                 ) do
               {:ok, parsed} ->
                 {:ok, Ash.Query.filter(resource, ^parsed)}
 
@@ -788,7 +798,9 @@ defmodule AshJsonApi.Controllers.Helpers do
 
             query =
               if filter do
-                case Ash.Filter.parse_input(resource, filter) do
+                case Ash.Filter.parse_input(resource, filter,
+                       ref_transformer: AshJsonApi.Resource.Info.filter_ref_transformer()
+                     ) do
                   {:ok, parsed} ->
                     {:ok, Ash.Query.filter(resource, ^parsed)}
 
