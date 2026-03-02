@@ -218,7 +218,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
       tree_schema = schemas["tree"]
       assert tree_schema.type == :object
       tree_attributes = tree_schema.properties.attributes
-      root_property = tree_attributes.properties.root
+      root_property = tree_attributes.properties["root"]
 
       # Should be an anyOf with the reference and null (because the attribute allows nil)
       assert Map.has_key?(root_property, "anyOf")
@@ -235,7 +235,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
       assert node_schema.type == :object
 
       # The child property within the node schema should reference the node schema
-      child_property = node_schema.properties.child
+      child_property = node_schema.properties["child"]
       assert Map.has_key?(child_property, "anyOf")
       child_any_of = child_property["anyOf"]
 

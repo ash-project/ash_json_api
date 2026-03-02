@@ -975,14 +975,6 @@ defmodule AshJsonApi.JsonSchema do
 
   defp required_write_attributes(resource, arguments, action, route \\ nil) do
     AshJsonApi.OpenApi.required_write_attributes(resource, arguments, action, route)
-    |> Enum.map(fn atom_name ->
-      # Try argument first, then attribute
-      if Enum.any?(arguments, &(&1.name == atom_name)) do
-        AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, atom_name)
-      else
-        AshJsonApi.Resource.Info.field_to_json_key(resource, atom_name)
-      end
-    end)
   end
 
   defp write_attributes(resource, arguments, action, route \\ nil) do

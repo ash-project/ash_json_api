@@ -12,6 +12,15 @@ These options affect **every** place a field or argument name appears: serializa
 
 ## Renaming fields
 
+### Built-in transformers
+
+Use `:camelize` or `:dasherize` for common conventions:
+
+```elixir
+field_names :camelize  # first_name → firstName
+field_names :dasherize # first_name → first-name
+```
+
 ### Keyword list
 
 Use a keyword list to rename specific fields:
@@ -116,16 +125,7 @@ You can use `field_names` and `argument_names` together. A common pattern is to 
 json_api do
   type "user"
 
-  field_names fn name ->
-    camelized = name |> to_string() |> Macro.camelize()
-    {first, rest} = String.split_at(camelized, 1)
-    String.downcase(first) <> rest
-  end
-
-  argument_names fn _action, name ->
-    camelized = name |> to_string() |> Macro.camelize()
-    {first, rest} = String.split_at(camelized, 1)
-    String.downcase(first) <> rest
-  end
+  field_names :camelize
+  argument_names :camelize
 end
 ```

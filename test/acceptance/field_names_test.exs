@@ -185,6 +185,92 @@ defmodule Test.Acceptance.FieldNamesTest do
     end
   end
 
+  # ─── Resource with :camelize atom ─────────────────────────────────────────────
+
+  defmodule CamelPost do
+    use Ash.Resource,
+      domain: Test.Acceptance.FieldNamesTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type "camel_post"
+
+      field_names :camelize
+      argument_names :camelize
+
+      routes do
+        base "/camel_posts"
+        get :read
+        index :read
+        post :create
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:post_title, :string, allow_nil?: false, public?: true)
+      attribute(:body_text, :string, public?: true)
+    end
+
+    actions do
+      default_accept([])
+      defaults([:read, :destroy])
+
+      create :create do
+        argument(:tag_name, :string)
+        accept([:post_title, :body_text])
+      end
+    end
+  end
+
+  # ─── Resource with :dasherize atom ──────────────────────────────────────────
+
+  defmodule DashPost do
+    use Ash.Resource,
+      domain: Test.Acceptance.FieldNamesTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type "dash_post"
+
+      field_names :dasherize
+      argument_names :dasherize
+
+      routes do
+        base "/dash_posts"
+        get :read
+        index :read
+        post :create
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:post_title, :string, allow_nil?: false, public?: true)
+      attribute(:body_text, :string, public?: true)
+    end
+
+    actions do
+      default_accept([])
+      defaults([:read, :destroy])
+
+      create :create do
+        argument(:tag_name, :string)
+        accept([:post_title, :body_text])
+      end
+    end
+  end
+
   # ─── Resource without any name remapping (baseline) ──────────────────────────
 
   defmodule Widget do
@@ -238,6 +324,8 @@ defmodule Test.Acceptance.FieldNamesTest do
       resource Article
       resource Comment
       resource Tag
+      resource CamelPost
+      resource DashPost
       resource Widget
     end
   end
@@ -741,6 +829,175 @@ defmodule Test.Acceptance.FieldNamesTest do
     test "json_key_to_argument/3 reverses 2-arity function mapping" do
       assert AshJsonApi.Resource.Info.json_key_to_argument(Tag, :create, "labelValue") ==
                :label_value
+    end
+  end
+
+  # ─── :camelize atom shorthand ────────────────────────────────────────────────
+
+  describe ":camelize field_names – serialization" do
+    test "snake_case attributes become camelCase in response" do
+      post =
+        CamelPost
+        |> Ash.Changeset.for_create(:create, %{post_title: "Hello", body_text: "World"})
+        |> Ash.create!()
+
+      response = Domain |> get("/camel_posts/#{post.id}", status: 200)
+      attrs = response.resp_body["data"]["attributes"]
+
+      assert attrs["postTitle"] == "Hello"
+      assert attrs["bodyText"] == "World"
+      refute Map.has_key?(attrs, "post_title")
+      refute Map.has_key?(attrs, "body_text")
+    end
+
+    test "index response uses camelCase keys" do
+      CamelPost
+      |> Ash.Changeset.for_create(:create, %{post_title: "T1"})
+      |> Ash.create!()
+
+      response = Domain |> get("/camel_posts", status: 200)
+      attrs = response.resp_body["data"] |> List.first() |> Map.fetch!("attributes")
+
+      assert Map.has_key?(attrs, "postTitle")
+      refute Map.has_key?(attrs, "post_title")
+    end
+  end
+
+  describe ":camelize field_names – request parsing" do
+    test "create with camelCase keys succeeds" do
+      response =
+        Domain
+        |> post("/camel_posts", %{
+          data: %{type: "camel_post", attributes: %{postTitle: "New"}}
+        })
+
+      assert response.status == 201
+      assert response.resp_body["data"]["attributes"]["postTitle"] == "New"
+    end
+  end
+
+  describe ":camelize argument_names – request parsing" do
+    test "create argument sent under camelCase key succeeds" do
+      response =
+        Domain
+        |> post("/camel_posts", %{
+          data: %{type: "camel_post", attributes: %{postTitle: "P", tagName: "elixir"}}
+        })
+
+      assert response.status == 201
+    end
+  end
+
+  describe ":camelize – filter and sort" do
+    setup do
+      CamelPost
+      |> Ash.Changeset.for_create(:create, %{post_title: "AAA"})
+      |> Ash.create!()
+
+      CamelPost
+      |> Ash.Changeset.for_create(:create, %{post_title: "BBB"})
+      |> Ash.create!()
+
+      :ok
+    end
+
+    test "sort with camelCase key" do
+      response = Domain |> get("/camel_posts?sort=postTitle", status: 200)
+      titles = Enum.map(response.resp_body["data"], & &1["attributes"]["postTitle"])
+      assert titles == Enum.sort(titles)
+    end
+
+    test "filter with camelCase key" do
+      response = Domain |> get("/camel_posts?filter[postTitle]=AAA", status: 200)
+      data = response.resp_body["data"]
+      assert length(data) == 1
+      assert List.first(data)["attributes"]["postTitle"] == "AAA"
+    end
+  end
+
+  # ─── :dasherize atom shorthand ───────────────────────────────────────────────
+
+  describe ":dasherize field_names – serialization" do
+    test "snake_case attributes become dash-case in response" do
+      post =
+        DashPost
+        |> Ash.Changeset.for_create(:create, %{post_title: "Hello", body_text: "World"})
+        |> Ash.create!()
+
+      response = Domain |> get("/dash_posts/#{post.id}", status: 200)
+      attrs = response.resp_body["data"]["attributes"]
+
+      assert attrs["post-title"] == "Hello"
+      assert attrs["body-text"] == "World"
+      refute Map.has_key?(attrs, "post_title")
+      refute Map.has_key?(attrs, "body_text")
+    end
+
+    test "index response uses dash-case keys" do
+      DashPost
+      |> Ash.Changeset.for_create(:create, %{post_title: "T1"})
+      |> Ash.create!()
+
+      response = Domain |> get("/dash_posts", status: 200)
+      attrs = response.resp_body["data"] |> List.first() |> Map.fetch!("attributes")
+
+      assert Map.has_key?(attrs, "post-title")
+      refute Map.has_key?(attrs, "post_title")
+    end
+  end
+
+  describe ":dasherize field_names – request parsing" do
+    test "create with dash-case keys succeeds" do
+      response =
+        Domain
+        |> post("/dash_posts", %{
+          data: %{type: "dash_post", attributes: %{"post-title" => "New"}}
+        })
+
+      assert response.status == 201
+      assert response.resp_body["data"]["attributes"]["post-title"] == "New"
+    end
+  end
+
+  describe ":dasherize argument_names – request parsing" do
+    test "create argument sent under dash-case key succeeds" do
+      response =
+        Domain
+        |> post("/dash_posts", %{
+          data: %{
+            type: "dash_post",
+            attributes: %{"post-title" => "P", "tag-name" => "elixir"}
+          }
+        })
+
+      assert response.status == 201
+    end
+  end
+
+  describe ":dasherize – filter and sort" do
+    setup do
+      DashPost
+      |> Ash.Changeset.for_create(:create, %{post_title: "AAA"})
+      |> Ash.create!()
+
+      DashPost
+      |> Ash.Changeset.for_create(:create, %{post_title: "BBB"})
+      |> Ash.create!()
+
+      :ok
+    end
+
+    test "sort with dash-case key" do
+      response = Domain |> get("/dash_posts?sort=post-title", status: 200)
+      titles = Enum.map(response.resp_body["data"], & &1["attributes"]["post-title"])
+      assert titles == Enum.sort(titles)
+    end
+
+    test "filter with dash-case key" do
+      response = Domain |> get("/dash_posts?filter[post-title]=AAA", status: 200)
+      data = response.resp_body["data"]
+      assert length(data) == 1
+      assert List.first(data)["attributes"]["post-title"] == "AAA"
     end
   end
 end

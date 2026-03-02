@@ -70,20 +70,38 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :default_fields, nil, true)
   end
 
-  @doc """
-  Returns the raw `field_names` config for the resource: either a keyword list or a
-  1-arity function.
-  """
-  def field_names(resource) do
-    Extension.get_opt(resource, [:json_api], :field_names, [], true)
+  defp camelize(name) do
+    camelized = name |> to_string() |> Macro.camelize()
+    {first, rest} = String.split_at(camelized, 1)
+    String.downcase(first) <> rest
+  end
+
+  defp dasherize(name) do
+    name |> to_string() |> String.replace("_", "-")
   end
 
   @doc """
-  Returns the raw `argument_names` config for the resource: either a keyword list or a
-  1-arity function.
+  Returns the `field_names` config for the resource: a keyword list, a 1-arity function,
+  or one of the atoms `:camelize` / `:dasherize` (resolved to the corresponding function).
+  """
+  def field_names(resource) do
+    case Extension.get_opt(resource, [:json_api], :field_names, [], true) do
+      :camelize -> &camelize/1
+      :dasherize -> &dasherize/1
+      other -> other
+    end
+  end
+
+  @doc """
+  Returns the `argument_names` config for the resource: a keyword list, a 2-arity function,
+  or one of the atoms `:camelize` / `:dasherize` (resolved to the corresponding function).
   """
   def argument_names(resource) do
-    Extension.get_opt(resource, [:json_api], :argument_names, [], true)
+    case Extension.get_opt(resource, [:json_api], :argument_names, [], true) do
+      :camelize -> fn _action, name -> camelize(name) end
+      :dasherize -> fn _action, name -> dasherize(name) end
+      other -> other
+    end
   end
 
   @doc """

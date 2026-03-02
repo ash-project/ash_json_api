@@ -401,9 +401,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Ash.Resource.Info.public_attributes()
       |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
       |> Enum.map(fn attr ->
-        resource
-        |> AshJsonApi.Resource.Info.field_to_json_key(attr.name)
-        |> String.to_existing_atom()
+        AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name)
       end)
     end
 
@@ -476,9 +474,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> with_comment_on_included(attr, fields)
 
         json_key =
-          resource
-          |> AshJsonApi.Resource.Info.field_to_json_key(attr.name)
-          |> String.to_existing_atom()
+          AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name)
 
         {Map.put(attrs, json_key, schema), acc}
       end)
@@ -2409,29 +2405,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
                   &1.generated? ||
                   &1.name in Map.get(action, :allow_nil_input, []))
             )
-            |> Enum.map(
-              &(resource
-                |> AshJsonApi.Resource.Info.field_to_json_key(&1.name)
-                |> String.to_existing_atom())
-            )
+            |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))
         end
 
       argument_names =
         filtered_arguments
         |> Enum.reject(& &1.allow_nil?)
         |> Enum.map(fn arg ->
-          resource
-          |> AshJsonApi.Resource.Info.argument_to_json_key(action.name, arg.name)
-          |> String.to_existing_atom()
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
         end)
 
       require_attributes =
         Map.get(action, :require_attributes, [])
-        |> Enum.map(
-          &(resource
-            |> AshJsonApi.Resource.Info.field_to_json_key(&1)
-            |> String.to_existing_atom())
-        )
+        |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
 
       Enum.uniq(attribute_names ++ argument_names ++ require_attributes)
     end
@@ -2457,9 +2443,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
               resource_write_attribute_type(attribute, resource, action.type, acc, format)
 
             json_key =
-              resource
-              |> AshJsonApi.Resource.Info.field_to_json_key(attribute.name)
-              |> String.to_existing_atom()
+              AshJsonApi.Resource.Info.field_to_json_key(resource, attribute.name)
 
             {Map.put(attrs, json_key, schema), acc}
           end)
@@ -2473,9 +2457,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         {schema, acc} = resource_write_attribute_type(argument, resource, :create, acc, format)
 
         json_key =
-          resource
-          |> AshJsonApi.Resource.Info.argument_to_json_key(action.name, argument.name)
-          |> String.to_existing_atom()
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name)
 
         {Map.put(attributes, json_key, schema), acc}
       end)
@@ -2512,9 +2494,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
       |> Enum.reject(& &1.allow_nil?)
       |> Enum.map(fn arg ->
-        resource
-        |> AshJsonApi.Resource.Info.argument_to_json_key(action.name, arg.name)
-        |> String.to_existing_atom()
+        AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
       end)
     end
 
@@ -2536,9 +2516,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         }
 
         json_key =
-          resource
-          |> AshJsonApi.Resource.Info.argument_to_json_key(action.name, argument.name)
-          |> String.to_existing_atom()
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name)
 
         {json_key, schema}
       end)
