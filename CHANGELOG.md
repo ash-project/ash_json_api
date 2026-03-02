@@ -11,6 +11,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.0-rc.2](https://github.com/ash-project/ash_json_api/compare/v1.6.0-rc.1...v1.6.0-rc.2) (2026-03-02)
+
+
+
+
+### Improvements:
+
+* add dedicated calculation argument transformer by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.6.0-rc.1](https://github.com/ash-project/ash_json_api/compare/v1.6.0-rc.0...v1.6.0-rc.1) (2026-03-02)
 
 
