@@ -61,6 +61,7 @@ end
 | [`authorize?`](#json_api-authorize?){: #json_api-authorize? } | `boolean` | `true` | Whether or not to perform authorization on requests. |
 | [`log_errors?`](#json_api-log_errors?){: #json_api-log_errors? } | `boolean` | `true` | Whether or not to log any errors produced |
 | [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | `boolean` | `true` | Whether or not to include properties for values that are nil in the JSON output |
+| [`error_handler`](#json_api-error_handler){: #json_api-error_handler } | `mfa` |  | Set an MFA to intercept/handle any errors that are generated. The function will be called with a `AshJsonApi.Error` struct and a context map, and should return a modified `AshJsonApi.Error` struct. The context map contains `:domain` and `:resource`. For example: ```elixir defmodule MyApp.ErrorHandler do   def handle_error(error, _context) do     %{error \| detail: "Something went wrong"}   end end ``` And in your domain: ```elixir json_api do   error_handler {MyApp.ErrorHandler, :handle_error, []} end ``` |
 
 
 ### json_api.open_api

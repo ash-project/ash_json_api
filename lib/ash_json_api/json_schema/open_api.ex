@@ -400,7 +400,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       resource
       |> Ash.Resource.Info.public_attributes()
       |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
-      |> Enum.map(& &1.name)
+      |> Enum.map(fn attr ->
+        AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name)
+      end)
     end
 
     @spec resource_attributes(
@@ -471,7 +473,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> with_attribute_nullability(attr)
           |> with_comment_on_included(attr, fields)
 
-        {Map.put(attrs, attr.name, schema), acc}
+        json_key =
+          AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name)
+
+        {Map.put(attrs, json_key, schema), acc}
       end)
     end
 
@@ -1855,7 +1860,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           resource
           |> AshJsonApi.JsonSchema.sortable_fields()
           |> Enum.flat_map(fn attr ->
-            name = to_string(attr.name)
+            name = AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name)
             [name, "-" <> name, "\\+\\+" <> name, "--" <> name]
           end)
 
@@ -2377,13 +2382,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     @doc false
     def required_write_attributes(resource, arguments, action, route \\ nil) do
-      arguments =
+      filtered_arguments =
         arguments
         |> Enum.filter(& &1.public?)
         |> without_path_arguments(route)
         |> without_query_params(route)
 
-      attributes =
+      attribute_names =
         case action.type do
           type when type in [:action, :read] ->
             []
@@ -2396,18 +2401,25 @@ if Code.ensure_loaded?(OpenApiSpex) do
             |> Ash.Resource.Info.attributes()
             |> Enum.filter(&(&1.name in action.accept && &1.writable?))
             |> Enum.reject(
-              &(&1.name in arguments || &1.allow_nil? || not is_nil(&1.default) || &1.generated? ||
+              &(&1.name in filtered_arguments || &1.allow_nil? || not is_nil(&1.default) ||
+                  &1.generated? ||
                   &1.name in Map.get(action, :allow_nil_input, []))
             )
-            |> Enum.map(& &1.name)
+            |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))
         end
 
-      arguments =
-        arguments
+      argument_names =
+        filtered_arguments
         |> Enum.reject(& &1.allow_nil?)
-        |> Enum.map(& &1.name)
+        |> Enum.map(fn arg ->
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
+        end)
 
-      Enum.uniq(attributes ++ arguments ++ Map.get(action, :require_attributes, []))
+      require_attributes =
+        Map.get(action, :require_attributes, [])
+        |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
+
+      Enum.uniq(attribute_names ++ argument_names ++ require_attributes)
     end
 
     @spec write_attributes(
@@ -2430,7 +2442,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
             {schema, acc} =
               resource_write_attribute_type(attribute, resource, action.type, acc, format)
 
-            {Map.put(attrs, attribute.name, schema), acc}
+            json_key =
+              AshJsonApi.Resource.Info.field_to_json_key(resource, attribute.name)
+
+            {Map.put(attrs, json_key, schema), acc}
           end)
         end
 
@@ -2440,7 +2455,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> without_query_params(route)
       |> Enum.reduce({attributes, acc}, fn argument, {attributes, acc} ->
         {schema, acc} = resource_write_attribute_type(argument, resource, :create, acc, format)
-        {Map.put(attributes, argument.name, schema), acc}
+
+        json_key =
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name)
+
+        {Map.put(attributes, json_key, schema), acc}
       end)
     end
 
@@ -2470,11 +2489,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
             [Actions.Argument.t()],
             Actions.action()
           ) :: [atom()]
-    defp required_relationship_attributes(_resource, relationship_arguments, action) do
+    defp required_relationship_attributes(resource, relationship_arguments, action) do
       action.arguments
       |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
       |> Enum.reject(& &1.allow_nil?)
-      |> Enum.map(& &1.name)
+      |> Enum.map(fn arg ->
+        AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
+      end)
     end
 
     @spec write_relationships(resource :: module, [Actions.Argument.t()], Actions.action()) ::
@@ -2494,7 +2515,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
           }
         }
 
-        {argument.name, schema}
+        json_key =
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name)
+
+        {json_key, schema}
       end)
     end
 
@@ -2823,7 +2847,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {inputs, acc} =
             Enum.reduce(calculation.arguments, {[], acc}, fn argument, {inputs, acc} ->
               {schema, acc} = resource_write_attribute_type(argument, resource, :create, acc)
-              {[{argument.name, schema} | inputs], acc}
+
+              json_key =
+                AshJsonApi.Resource.Info.calculation_argument_to_json_key(
+                  resource,
+                  calculation.name,
+                  argument.name
+                )
+
+              {[{json_key, schema} | inputs], acc}
             end)
 
           inputs = Enum.reverse(inputs)
@@ -2833,7 +2865,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
               if argument.allow_nil? do
                 []
               else
-                [argument.name]
+                [
+                  AshJsonApi.Resource.Info.calculation_argument_to_json_key(
+                    resource,
+                    calculation.name,
+                    argument.name
+                  )
+                ]
               end
             end)
 

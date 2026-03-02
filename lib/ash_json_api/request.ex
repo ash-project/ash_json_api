@@ -688,7 +688,15 @@ defmodule AshJsonApi.Request do
       |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
 
     Enum.reduce(field_inputs, request, fn {calculation_name, arguments}, request ->
-      case Ash.Resource.Info.public_calculation(resource, calculation_name) do
+      resolved_name =
+        if resource do
+          AshJsonApi.Resource.Info.json_key_to_field(resource, calculation_name) ||
+            calculation_name
+        else
+          calculation_name
+        end
+
+      case Ash.Resource.Info.public_calculation(resource, resolved_name) do
         nil ->
           add_error(
             request,
@@ -698,9 +706,15 @@ defmodule AshJsonApi.Request do
 
         calculation ->
           Enum.reduce(arguments, request, fn {arg_name, arg_value}, request ->
+            calc_arg_names = AshJsonApi.Resource.Info.calculation_argument_names(resource)
+
             calculation_arg =
               Enum.find(calculation.arguments, fn argument ->
-                to_string(argument.name) == arg_name
+                AshJsonApi.Resource.Info.apply_argument_name_mapping(
+                  calc_arg_names,
+                  calculation.name,
+                  argument.name
+                ) == arg_name
               end)
 
             case calculation_arg do
@@ -739,12 +753,18 @@ defmodule AshJsonApi.Request do
 
   defp add_fields(request, resource, fields, parameter?) do
     type = AshJsonApi.Resource.Info.type(resource)
+    attr_names = AshJsonApi.Resource.Info.field_names(resource)
 
     fields
     |> String.split(",")
     |> Enum.reduce(request, fn key, request ->
       cond do
-        attr = Ash.Resource.Info.public_attribute(resource, key) ->
+        attr =
+            resource
+            |> Ash.Resource.Info.public_attributes()
+            |> Enum.find(fn a ->
+              AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) == key
+            end) ->
           fields = Map.update(request.fields, resource, [attr.name], &[attr.name | &1])
           %{request | fields: fields}
 
@@ -752,11 +772,21 @@ defmodule AshJsonApi.Request do
           fields = Map.update(request.fields, resource, [rel.name], &[rel.name | &1])
           %{request | fields: fields}
 
-        agg = Ash.Resource.Info.public_aggregate(resource, key) ->
+        agg =
+            resource
+            |> Ash.Resource.Info.public_aggregates()
+            |> Enum.find(fn a ->
+              AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) == key
+            end) ->
           fields = Map.update(request.fields, resource, [agg.name], &[agg.name | &1])
           %{request | fields: fields}
 
-        calc = Ash.Resource.Info.public_calculation(resource, key) ->
+        calc =
+            resource
+            |> Ash.Resource.Info.public_calculations()
+            |> Enum.find(fn c ->
+              AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, c.name) == key
+            end) ->
           fields = Map.update(request.fields, resource, [calc.name], &[calc.name | &1])
           %{request | fields: fields}
 
@@ -806,19 +836,39 @@ defmodule AshJsonApi.Request do
           request
 
         sort ->
+          attr_names = AshJsonApi.Resource.Info.field_names(resource)
+
           sort
           |> Enum.reverse()
           |> Enum.reduce(request, fn field, request ->
             {order, field_name} = trim_sort_order(field)
 
             cond do
-              attr = Ash.Resource.Info.public_attribute(resource, field_name) ->
+              attr =
+                  resource
+                  |> Ash.Resource.Info.public_attributes()
+                  |> Enum.find(fn a ->
+                    AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) ==
+                        field_name
+                  end) ->
                 %{request | sort: [{attr.name, order} | request.sort]}
 
-              agg = Ash.Resource.Info.public_aggregate(resource, field_name) ->
+              agg =
+                  resource
+                  |> Ash.Resource.Info.public_aggregates()
+                  |> Enum.find(fn a ->
+                    AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) ==
+                        field_name
+                  end) ->
                 %{request | sort: [{agg.name, order} | request.sort]}
 
-              calc = Ash.Resource.Info.public_calculation(resource, field_name) ->
+              calc =
+                  resource
+                  |> Ash.Resource.Info.public_calculations()
+                  |> Enum.find(fn c ->
+                    AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, c.name) ==
+                        field_name
+                  end) ->
                 %{request | sort: [{calc.name, order} | request.sort]}
 
               true ->
@@ -960,7 +1010,9 @@ defmodule AshJsonApi.Request do
       filtered_query =
         case Map.fetch(filters, path ++ [key]) do
           {:ok, filter} ->
-            Ash.Query.filter_input(new_query, filter)
+            Ash.Query.filter_input(new_query, filter,
+              ref_transformer: AshJsonApi.Resource.Info.filter_ref_transformer()
+            )
 
           :error ->
             new_query
@@ -1020,12 +1072,24 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_attributes(
-         %{route: %{type: :route}, action: action, body: %{"data" => attributes}} = request
+         %{
+           route: %{type: :route},
+           action: action,
+           resource: resource,
+           body: %{"data" => attributes}
+         } =
+           request
        )
        when is_map(attributes) do
+    arg_names = AshJsonApi.Resource.Info.argument_names(resource)
+
     Enum.reduce(attributes, request, fn {key, value}, request ->
       case Enum.find(action.arguments, fn argument ->
-             to_string(argument.name) == key
+             AshJsonApi.Resource.Info.apply_argument_name_mapping(
+               arg_names,
+               action.name,
+               argument.name
+             ) == key
            end) do
         nil ->
           request
@@ -1037,13 +1101,27 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_attributes(
-         %{action: action, body: %{"data" => %{"attributes" => attributes}}} =
+         %{action: action, resource: resource, body: %{"data" => %{"attributes" => attributes}}} =
            request
        )
        when is_map(attributes) do
+    arg_names = AshJsonApi.Resource.Info.argument_names(resource)
+    attr_names = AshJsonApi.Resource.Info.field_names(resource)
+
     Enum.reduce(attributes, request, fn {key, value}, request ->
-      matching_argument = Enum.find(action.arguments, &(to_string(&1.name) == key))
-      matching_accept = action |> Map.get(:accept, []) |> Enum.find(&(to_string(&1) == key))
+      matching_argument =
+        Enum.find(
+          action.arguments,
+          &(AshJsonApi.Resource.Info.apply_argument_name_mapping(arg_names, action.name, &1.name) ==
+              key)
+        )
+
+      matching_accept =
+        action
+        |> Map.get(:accept, [])
+        |> Enum.find(fn attr_name ->
+          AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, attr_name) == key
+        end)
 
       case {matching_argument || matching_accept, value} do
         {%Ash.Resource.Actions.Argument{name: name, type: Ash.Type.File}, value}
@@ -1079,11 +1157,18 @@ defmodule AshJsonApi.Request do
 
   defp parse_attributes(request), do: %{request | attributes: %{}, arguments: %{}}
 
-  defp parse_action_arguments(%{action: %{type: :read} = action} = request) do
+  defp parse_action_arguments(%{action: %{type: :read} = action, resource: resource} = request) do
+    arg_names = AshJsonApi.Resource.Info.argument_names(resource)
+
     action.arguments
     |> Enum.filter(& &1.public?)
     |> Enum.reduce(request, fn argument, request ->
-      name = to_string(argument.name)
+      name =
+        AshJsonApi.Resource.Info.apply_argument_name_mapping(
+          arg_names,
+          action.name,
+          argument.name
+        )
 
       with :error <- Map.fetch(request.query_params, name),
            :error <- Map.fetch(request.path_params, name) do

@@ -364,8 +364,8 @@ defmodule Test.Acceptance.OpenApiTest do
     assert generic_action_schema.requestBody.content["application/vnd.api+json"].schema.properties.data ==
              %Schema{
                type: :object,
-               required: [:from],
-               properties: %{from: %Schema{type: :string}},
+               required: ["from"],
+               properties: %{"from" => %Schema{type: :string}},
                additionalProperties: false
              }
 
@@ -712,7 +712,7 @@ defmodule Test.Acceptance.OpenApiTest do
                      required: [],
                      type: :object,
                      properties: %{
-                       name: %{
+                       "name" => %{
                          "anyOf" => [
                            %Schema{
                              type: :string,
@@ -722,13 +722,13 @@ defmodule Test.Acceptance.OpenApiTest do
                          ],
                          "description" => "The name of the author. Field included by default."
                        },
-                       bio: %{
+                       "bio" => %{
                          "anyOf" => [
                            %Schema{
                              required: [],
                              type: :object,
                              properties: %{
-                               history: %{
+                               "history" => %{
                                  "anyOf" => [
                                    %Schema{
                                      type: :string,
@@ -803,10 +803,10 @@ defmodule Test.Acceptance.OpenApiTest do
                type: :object,
                properties: %{
                  attributes: %Schema{
-                   required: [:name, :author_id],
+                   required: ["name", "author_id"],
                    type: :object,
                    properties: %{
-                     hidden: %{
+                     "hidden" => %{
                        "anyOf" => [
                          %Schema{
                            type: :string,
@@ -817,22 +817,22 @@ defmodule Test.Acceptance.OpenApiTest do
                        "description" =>
                          "description of attribute :hidden. Field included by default."
                      },
-                     name: %Schema{
+                     "name" => %Schema{
                        type: :string,
                        description: "description of attribute :name. Field included by default."
                      },
-                     name_twice: %{
+                     "name_twice" => %{
                        "anyOf" => [
                          %Schema{type: :string, nullable: true},
                          %{"type" => "null"}
                        ]
                      },
-                     author_id: %Schema{
+                     "author_id" => %Schema{
                        type: :string,
                        description: "Field included by default.",
                        format: "uuid"
                      },
-                     email: %{
+                     "email" => %{
                        "anyOf" => [
                          %Schema{
                            type: :string,
@@ -842,7 +842,7 @@ defmodule Test.Acceptance.OpenApiTest do
                        ],
                        "description" => "Field included by default."
                      },
-                     count_of_tags: %{
+                     "count_of_tags" => %{
                        "anyOf" => [%Schema{type: :integer}, %{"type" => "null"}]
                      }
                    },
@@ -988,7 +988,7 @@ defmodule Test.Acceptance.OpenApiTest do
       %RequestBody{} = body = operation.requestBody
       schema = body.content["application/vnd.api+json"].schema
       assert schema.properties.data.type == :object
-      assert schema.properties.data.properties.attributes.required == [:name]
+      assert schema.properties.data.properties.attributes.required == ["name"]
       assert schema.properties.data.properties.attributes.type == :object
     end
 

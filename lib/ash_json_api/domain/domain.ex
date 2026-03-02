@@ -161,6 +161,33 @@ defmodule AshJsonApi.Domain do
         type: :boolean,
         doc: "Whether or not to include properties for values that are nil in the JSON output",
         default: true
+      ],
+      error_handler: [
+        type: :mfa,
+        doc: """
+        Set an MFA to intercept/handle any errors that are generated.
+
+        The function will be called with a `AshJsonApi.Error` struct and a context map, and should
+        return a modified `AshJsonApi.Error` struct. The context map contains `:domain` and `:resource`.
+
+        For example:
+
+        ```elixir
+        defmodule MyApp.ErrorHandler do
+          def handle_error(error, _context) do
+            %{error | detail: "Something went wrong"}
+          end
+        end
+        ```
+
+        And in your domain:
+
+        ```elixir
+        json_api do
+          error_handler {MyApp.ErrorHandler, :handle_error, []}
+        end
+        ```
+        """
       ]
     ],
     sections: [@open_api, @routes]
