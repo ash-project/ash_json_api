@@ -47,6 +47,14 @@ end
 
 ```
 
+```elixir
+# Enforce JSON:API `type` on POST create requests
+json_api do
+  require_type_on_create? true
+end
+
+```
+
 
 
 
@@ -61,6 +69,7 @@ end
 | [`authorize?`](#json_api-authorize?){: #json_api-authorize? } | `boolean` | `true` | Whether or not to perform authorization on requests. |
 | [`log_errors?`](#json_api-log_errors?){: #json_api-log_errors? } | `boolean` | `true` | Whether or not to log any errors produced |
 | [`include_nil_values?`](#json_api-include_nil_values?){: #json_api-include_nil_values? } | `boolean` | `true` | Whether or not to include properties for values that are nil in the JSON output |
+| [`require_type_on_create?`](#json_api-require_type_on_create?){: #json_api-require_type_on_create? } | `boolean` | `false` | When true, POST create requests MUST include type in data. Default false for backwards compatibility; in a future major version may default to true. |
 
 
 ### json_api.open_api

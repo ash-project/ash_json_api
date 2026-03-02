@@ -198,7 +198,7 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
 
       errors = response.resp_body["errors"]
       assert is_list(errors)
-      assert length(errors) >= 1
+      refute errors == []
 
       error = Enum.find(errors, &(&1["code"] == "missing_type"))
       assert error, "Expected one error with code missing_type, got: #{inspect(Enum.map(errors, & &1["code"]))}"
