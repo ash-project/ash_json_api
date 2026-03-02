@@ -631,6 +631,44 @@ defmodule AshJsonApi.Resource do
         end
         ```
         """
+      ],
+      calculation_argument_names: [
+        type: {:or, [{:literal, :camelize}, {:literal, :dasherize}, :keyword_list, {:fun, 2}]},
+        doc: """
+        Renames calculation arguments in the JSON:API request and schema.
+
+        Works the same way as `argument_names` but applies to calculation arguments
+        instead of action arguments. The 2-arity function receives
+        `(calculation_name, argument_name)`.
+
+        Can be one of the atoms `:camelize` or `:dasherize` for automatic conversion,
+        a nested keyword list of `[calc_name: [ash_name: :json_api_name]]` mappings,
+        or a 2-arity function that receives `(calculation_name, argument_name)` atoms and
+        returns the desired JSON:API name (atom or string).
+
+        ```elixir
+        calculation_argument_names :camelize  # publish_at → publishAt
+        calculation_argument_names :dasherize # publish_at → publish-at
+        ```
+
+        Or with a keyword list:
+
+        ```elixir
+        calculation_argument_names [
+          full_name: [separator: :sep]
+        ]
+        ```
+
+        Or with a function:
+
+        ```elixir
+        calculation_argument_names fn _calc, name ->
+          camelized = name |> to_string() |> Macro.camelize()
+          {first, rest} = String.split_at(camelized, 1)
+          String.downcase(first) <> rest
+        end
+        ```
+        """
       ]
     ]
   }

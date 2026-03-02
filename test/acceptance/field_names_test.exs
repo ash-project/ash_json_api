@@ -271,6 +271,95 @@ defmodule Test.Acceptance.FieldNamesTest do
     end
   end
 
+  # ─── Resource with keyword-list calculation_argument_names ───────────────────
+
+  defmodule CalcPost do
+    use Ash.Resource,
+      domain: Test.Acceptance.FieldNamesTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type "calc_post"
+
+      calculation_argument_names(full_name: [use_separator: :sep])
+
+      routes do
+        base "/calc_posts"
+        get :read
+        index :read
+        post :create
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:first_name, :string, allow_nil?: false, public?: true)
+      attribute(:last_name, :string, allow_nil?: false, public?: true)
+    end
+
+    actions do
+      default_accept([:first_name, :last_name])
+      defaults([:read, :create, :destroy])
+    end
+
+    calculations do
+      calculate :full_name, :string, expr(first_name <> ^arg(:use_separator) <> last_name) do
+        argument(:use_separator, :string, allow_nil?: false, default: " ")
+        public?(true)
+      end
+    end
+  end
+
+  # ─── Resource with :camelize calculation_argument_names ─────────────────────
+
+  defmodule CamelCalcPost do
+    use Ash.Resource,
+      domain: Test.Acceptance.FieldNamesTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type "camel_calc_post"
+
+      field_names :camelize
+      calculation_argument_names :camelize
+
+      routes do
+        base "/camel_calc_posts"
+        get :read
+        index :read
+        post :create
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:first_name, :string, allow_nil?: false, public?: true)
+      attribute(:last_name, :string, allow_nil?: false, public?: true)
+    end
+
+    actions do
+      default_accept([:first_name, :last_name])
+      defaults([:read, :create, :destroy])
+    end
+
+    calculations do
+      calculate :full_name, :string, expr(first_name <> ^arg(:join_string) <> last_name) do
+        argument(:join_string, :string, allow_nil?: false, default: " ")
+        public?(true)
+      end
+    end
+  end
+
   # ─── Resource without any name remapping (baseline) ──────────────────────────
 
   defmodule Widget do
@@ -326,6 +415,8 @@ defmodule Test.Acceptance.FieldNamesTest do
       resource Tag
       resource CamelPost
       resource DashPost
+      resource CalcPost
+      resource CamelCalcPost
       resource Widget
     end
   end
@@ -998,6 +1089,95 @@ defmodule Test.Acceptance.FieldNamesTest do
       data = response.resp_body["data"]
       assert length(data) == 1
       assert List.first(data)["attributes"]["post-title"] == "AAA"
+    end
+  end
+
+  # ─── calculation_argument_names: keyword list ──────────────────────────────
+
+  describe "calculation_argument_names (keyword list)" do
+    test "calculation argument sent under renamed key via field_inputs" do
+      post =
+        CalcPost
+        |> Ash.Changeset.for_create(:create, %{first_name: "Ada", last_name: "Lovelace"})
+        |> Ash.create!()
+
+      response =
+        Domain
+        |> get(
+          "/calc_posts/#{post.id}?fields[calc_post]=first_name,last_name,full_name&field_inputs[calc_post][full_name][sep]=-",
+          status: 200
+        )
+
+      attrs = response.resp_body["data"]["attributes"]
+      assert attrs["full_name"] == "Ada-Lovelace"
+    end
+
+    test "info helpers use calculation_argument_names not argument_names" do
+      assert AshJsonApi.Resource.Info.calculation_argument_to_json_key(
+               CalcPost,
+               :full_name,
+               :use_separator
+             ) == "sep"
+
+      # argument_to_json_key should NOT rename calc args (it uses argument_names, not calculation_argument_names)
+      assert AshJsonApi.Resource.Info.argument_to_json_key(
+               CalcPost,
+               :full_name,
+               :use_separator
+             ) == "use_separator"
+    end
+
+    test "json_key_to_calculation_argument reverses the mapping" do
+      assert AshJsonApi.Resource.Info.json_key_to_calculation_argument(
+               CalcPost,
+               :full_name,
+               "sep"
+             ) == :use_separator
+    end
+
+    test "json_key_to_calculation_argument returns nil for unknown key" do
+      assert AshJsonApi.Resource.Info.json_key_to_calculation_argument(
+               CalcPost,
+               :full_name,
+               "nonexistent"
+             ) == nil
+    end
+  end
+
+  # ─── calculation_argument_names: :camelize ─────────────────────────────────
+
+  describe "calculation_argument_names (:camelize)" do
+    test "calculation argument sent under camelCase key via field_inputs" do
+      post =
+        CamelCalcPost
+        |> Ash.Changeset.for_create(:create, %{first_name: "Grace", last_name: "Hopper"})
+        |> Ash.create!()
+
+      response =
+        Domain
+        |> get(
+          "/camel_calc_posts/#{post.id}?fields[camel_calc_post]=firstName,lastName,fullName&field_inputs[camel_calc_post][fullName][joinString]=-",
+          status: 200
+        )
+
+      attrs = response.resp_body["data"]["attributes"]
+      assert attrs["fullName"] == "Grace-Hopper"
+    end
+
+    test "info helpers apply camelize to calculation arguments" do
+      assert AshJsonApi.Resource.Info.calculation_argument_to_json_key(
+               CamelCalcPost,
+               :full_name,
+               :join_string
+             ) == "joinString"
+    end
+
+    test "json_key_to_calculation_argument reverses camelize mapping" do
+      assert AshJsonApi.Resource.Info.json_key_to_calculation_argument(
+               CamelCalcPost,
+               :full_name,
+               "joinString"
+             ) == :join_string
     end
   end
 end

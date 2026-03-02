@@ -105,6 +105,18 @@ defmodule AshJsonApi.Resource.Info do
   end
 
   @doc """
+  Returns the `calculation_argument_names` config for the resource: a keyword list, a 2-arity function,
+  or one of the atoms `:camelize` / `:dasherize` (resolved to the corresponding function).
+  """
+  def calculation_argument_names(resource) do
+    case Extension.get_opt(resource, [:json_api], :calculation_argument_names, [], true) do
+      :camelize -> fn _calc, name -> camelize(name) end
+      :dasherize -> fn _calc, name -> dasherize(name) end
+      other -> other
+    end
+  end
+
+  @doc """
   Converts an Ash atom field name (attribute, calculation, aggregate) to its JSON:API
   string key, applying any `field_names` mapping configured on the resource.
   """
@@ -160,11 +172,20 @@ defmodule AshJsonApi.Resource.Info do
   end
 
   @doc """
+  Converts an Ash calculation argument atom name to its JSON:API string key, applying any
+  `calculation_argument_names` mapping configured on the resource for the given calculation.
+  """
+  def calculation_argument_to_json_key(resource, calc_name, arg_name) do
+    names = calculation_argument_names(resource)
+    apply_argument_name_mapping(names, calc_name, arg_name)
+  end
+
+  @doc """
   Converts a JSON:API string key to an Ash argument atom name for the given calculation,
-  applying the reverse of any `argument_names` mapping. Returns `nil` if not found.
+  applying the reverse of any `calculation_argument_names` mapping. Returns `nil` if not found.
   """
   def json_key_to_calculation_argument(resource, calc_name, json_key) do
-    names = argument_names(resource)
+    names = calculation_argument_names(resource)
 
     case Ash.Resource.Info.public_calculation(resource, calc_name) do
       %{arguments: args} ->

@@ -11,6 +11,7 @@ spark_locals_without_parens = [
   base_route: 1,
   base_route: 2,
   base_route: 3,
+  calculation_argument_names: 1,
   default_fields: 1,
   delete: 1,
   delete: 2,

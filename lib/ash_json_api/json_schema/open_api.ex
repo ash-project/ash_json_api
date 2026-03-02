@@ -2847,7 +2847,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {inputs, acc} =
             Enum.reduce(calculation.arguments, {[], acc}, fn argument, {inputs, acc} ->
               {schema, acc} = resource_write_attribute_type(argument, resource, :create, acc)
-              {[{argument.name, schema} | inputs], acc}
+
+              json_key =
+                AshJsonApi.Resource.Info.calculation_argument_to_json_key(
+                  resource,
+                  calculation.name,
+                  argument.name
+                )
+
+              {[{json_key, schema} | inputs], acc}
             end)
 
           inputs = Enum.reverse(inputs)
@@ -2857,7 +2865,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
               if argument.allow_nil? do
                 []
               else
-                [argument.name]
+                [
+                  AshJsonApi.Resource.Info.calculation_argument_to_json_key(
+                    resource,
+                    calculation.name,
+                    argument.name
+                  )
+                ]
               end
             end)
 

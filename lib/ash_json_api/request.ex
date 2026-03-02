@@ -688,7 +688,15 @@ defmodule AshJsonApi.Request do
       |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
 
     Enum.reduce(field_inputs, request, fn {calculation_name, arguments}, request ->
-      case Ash.Resource.Info.public_calculation(resource, calculation_name) do
+      resolved_name =
+        if resource do
+          AshJsonApi.Resource.Info.json_key_to_field(resource, calculation_name) ||
+            calculation_name
+        else
+          calculation_name
+        end
+
+      case Ash.Resource.Info.public_calculation(resource, resolved_name) do
         nil ->
           add_error(
             request,
@@ -698,12 +706,12 @@ defmodule AshJsonApi.Request do
 
         calculation ->
           Enum.reduce(arguments, request, fn {arg_name, arg_value}, request ->
-            arg_names = AshJsonApi.Resource.Info.argument_names(resource)
+            calc_arg_names = AshJsonApi.Resource.Info.calculation_argument_names(resource)
 
             calculation_arg =
               Enum.find(calculation.arguments, fn argument ->
                 AshJsonApi.Resource.Info.apply_argument_name_mapping(
-                  arg_names,
+                  calc_arg_names,
                   calculation.name,
                   argument.name
                 ) == arg_name
