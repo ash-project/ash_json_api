@@ -188,6 +188,12 @@ defmodule AshJsonApi.Domain do
         end
         ```
         """
+      ],
+      require_type_on_create?: [
+        type: :boolean,
+        default: false,
+        doc:
+          "When true, POST create requests MUST include type in data. Default false for backwards compatibility; in a future major version may default to true."
       ]
     ],
     sections: [@open_api, @routes]
