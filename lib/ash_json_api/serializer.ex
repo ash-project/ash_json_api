@@ -383,7 +383,7 @@ defmodule AshJsonApi.Serializer do
 
   defp add_prev_link(links, uri, query, %Ash.Page.Keyset{} = paginator) do
     case paginator do
-      # First page in request, there should be no previous links since its fetching the latest data at the point in time
+      # First page: no previous link (fetching latest data at this point in time)
       %{before: nil, after: nil} ->
         Map.put(links, :prev, nil)
 

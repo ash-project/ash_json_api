@@ -40,7 +40,7 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
 
       create :create do
         primary? true
-        accept [:title]
+        accept([:title])
       end
     end
   end
@@ -76,7 +76,7 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
 
       create :create do
         primary? true
-        accept [:title]
+        accept([:title])
       end
     end
   end
@@ -159,18 +159,24 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
       if response.status == 400 do
         errors = response.resp_body["errors"] || []
         codes = Enum.map(errors, & &1["code"])
-        refute "missing_type" in codes, "Expected no missing_type when require_type_on_create? is false"
+
+        refute "missing_type" in codes,
+               "Expected no missing_type when require_type_on_create? is false"
       end
     end
 
     test "POST with data and type succeeds" do
       DefaultDomain
-      |> post("/articles", %{
-        data: %{
-          type: "article",
-          attributes: %{title: "With type"}
-        }
-      }, status: 201)
+      |> post(
+        "/articles",
+        %{
+          data: %{
+            type: "article",
+            attributes: %{title: "With type"}
+          }
+        },
+        status: 201
+      )
       |> assert_attribute_equals("title", "With type")
     end
   end
@@ -178,30 +184,41 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
   describe "require_type_on_create? true (strict domain)" do
     test "POST with data and valid type succeeds" do
       StrictDomain
-      |> post("/articles", %{
-        data: %{
-          type: "article",
-          attributes: %{title: "Valid"}
-        }
-      }, status: 201)
+      |> post(
+        "/articles",
+        %{
+          data: %{
+            type: "article",
+            attributes: %{title: "Valid"}
+          }
+        },
+        status: 201
+      )
       |> assert_attribute_equals("title", "Valid")
     end
 
     test "POST with data but no type key returns 400 with missing_type error" do
       response =
         StrictDomain
-        |> post("/articles", %{
-          data: %{
-            attributes: %{title: "Missing type"}
-          }
-        }, status: 400)
+        |> post(
+          "/articles",
+          %{
+            data: %{
+              attributes: %{title: "Missing type"}
+            }
+          },
+          status: 400
+        )
 
       errors = response.resp_body["errors"]
       assert is_list(errors)
       refute errors == []
 
       error = Enum.find(errors, &(&1["code"] == "missing_type"))
-      assert error, "Expected one error with code missing_type, got: #{inspect(Enum.map(errors, & &1["code"]))}"
+
+      assert error,
+             "Expected one error with code missing_type, got: #{inspect(Enum.map(errors, & &1["code"]))}"
+
       assert error["title"] == "Invalid resource object"
       assert error["detail"] == "The resource object MUST contain at least a type member."
       assert error["source"]["pointer"] == "/data"
@@ -211,12 +228,16 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
     test "POST with data and empty string type returns 400 with missing_type error" do
       response =
         StrictDomain
-        |> post("/articles", %{
-          data: %{
-            type: "",
-            attributes: %{title: "Empty type"}
-          }
-        }, status: 400)
+        |> post(
+          "/articles",
+          %{
+            data: %{
+              type: "",
+              attributes: %{title: "Empty type"}
+            }
+          },
+          status: 400
+        )
 
       errors = response.resp_body["errors"]
       assert is_list(errors)
@@ -264,9 +285,13 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
     test "non-POST requests are not affected by require_type_on_create?" do
       # Create one article first so we can index
       StrictDomain
-      |> post("/articles", %{
-        data: %{type: "article", attributes: %{title: "One"}}
-      }, status: 201)
+      |> post(
+        "/articles",
+        %{
+          data: %{type: "article", attributes: %{title: "One"}}
+        },
+        status: 201
+      )
 
       # GET index does not validate body type
       response = StrictDomain |> get("/articles")
@@ -278,7 +303,9 @@ defmodule Test.Acceptance.RequireTypeOnCreateTest do
   describe "MissingTypeOnCreate error module" do
     test "exception has correct message" do
       error = AshJsonApi.Error.MissingTypeOnCreate.exception([])
-      assert Exception.message(error) == "The resource object MUST contain at least a type member."
+
+      assert Exception.message(error) ==
+               "The resource object MUST contain at least a type member."
     end
 
     test "ToJsonApiError returns 400 with code, title, detail, source_pointer" do
