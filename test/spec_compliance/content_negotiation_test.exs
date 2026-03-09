@@ -204,11 +204,16 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
     @tag capture_log: true
     test "request Content-Type header includes two instances of JSON:API modified with a param" do
-      post(Domain, "/posts", @create_body,
+      Domain
+      |> post("/posts", @create_body,
         req_content_type_header:
           "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test",
-        status: 406
+        status: 415
       )
+      |> assert_has_error(%{
+        "code" => "unsupported_media_type",
+        "title" => "Unsupported Media Type"
+      })
     end
 
     test "request Content-Type header is a random value" do
@@ -219,10 +224,15 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
     @tag capture_log: true
     test "request Content-Type header is a valid media type other than JSON:API" do
-      post(Domain, "/posts", @create_body,
+      Domain
+      |> post("/posts", @create_body,
         req_content_type_header: "application/vnd.api+json; charset=\"utf-8\"",
-        status: 406
+        status: 415
       )
+      |> assert_has_error(%{
+        "code" => "unsupported_media_type",
+        "title" => "Unsupported Media Type"
+      })
     end
   end
 
@@ -269,11 +279,16 @@ defmodule AshJsonApi.ContentNegotiationTest do
     test "request Accept header includes two instances of JSON:API modified with a param", %{
       post: post
     } do
-      get(Domain, "/posts/#{post.id}",
+      Domain
+      |> get("/posts/#{post.id}",
         req_accept_header:
           "application/vnd.api+json; charset=test, application/vnd.api+json; charset=test",
-        status: 415
+        status: 406
       )
+      |> assert_has_error(%{
+        "code" => "unacceptable_media_type",
+        "title" => "Unacceptable Media Type"
+      })
     end
 
     test "request Accept header is a random value", %{post: post} do
@@ -290,10 +305,15 @@ defmodule AshJsonApi.ContentNegotiationTest do
 
     @tag capture_log: true
     test "request Accept header is a valid media type other than JSON:API", %{post: post} do
-      get(Domain, "/posts/#{post.id}",
+      Domain
+      |> get("/posts/#{post.id}",
         req_accept_header: "application/vnd.api+json; charset=\"utf-8\"",
-        status: 415
+        status: 406
       )
+      |> assert_has_error(%{
+        "code" => "unacceptable_media_type",
+        "title" => "Unacceptable Media Type"
+      })
     end
 
     test "request Accept header is a valid media type other than JSON:API with bypass config", %{

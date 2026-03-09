@@ -4,7 +4,8 @@
 
 defmodule AshJsonApi.Error.UnsupportedMediaType do
   @moduledoc """
-  Returned when the client does not accept (via the `Accept` header) the json API media type: application/vnd.api+json
+  Returned when the client does not provide (via the `Content-Type` header) the
+  correct JSON:API media type: application/vnd.api+json
   """
   use Splode.Error, class: :invalid
 
