@@ -277,7 +277,7 @@ defmodule AshJsonApi.Request do
         if any_content_type_supported? || json_api_content_type_supported? do
           request
         else
-          add_error(request, UnacceptableMediaType.exception([]), request.route.type)
+          add_error(request, UnsupportedMediaType.exception([]), request.route.type)
         end
     end
   end
@@ -314,7 +314,7 @@ defmodule AshJsonApi.Request do
     if accepts_json_api? do
       request
     else
-      add_error(request, UnsupportedMediaType.exception([]), request.route.type)
+      add_error(request, UnacceptableMediaType.exception([]), request.route.type)
     end
   end
 
