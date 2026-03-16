@@ -458,7 +458,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def add_to_relationship(request, relationship_name) do
     chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
-      values = normalize_relationship_identifiers(request)
+      values = relationship_change_values(request, relationship_name)
 
       result
       |> Ash.Changeset.new()
@@ -469,8 +469,24 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.update(Request.opts(request))
       |> case do
         {:ok, updated} ->
+          identifier_meta =
+            case request.resource_identifiers do
+              list when is_list(list) ->
+                Enum.reduce(list, %{}, fn
+                  {%{id: id}, meta}, acc when is_map(meta) ->
+                    Map.put(acc, id, meta)
+
+                  _, acc ->
+                    acc
+                end)
+
+              _ ->
+                %{}
+            end
+
           request
           |> Request.assign(:result, Map.get(updated, relationship_name))
+          |> Request.assign(:relationship_identifier_meta, identifier_meta)
 
         {:error, error} ->
           Request.add_error(request, error, :add_to_relationship)
@@ -481,7 +497,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def replace_relationship(request, relationship_name) do
     chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
-      values = normalize_relationship_identifiers(request)
+      values = relationship_change_values(request, relationship_name)
 
       result
       |> Ash.Changeset.new()
@@ -504,7 +520,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   def delete_from_relationship(request, relationship_name) do
     chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name
-      values = normalize_relationship_identifiers(request)
+      values = relationship_change_values(request, relationship_name)
 
       result
       |> Ash.Changeset.new()
@@ -1089,4 +1105,45 @@ defmodule AshJsonApi.Controllers.Helpers do
         id
     end
   end
+
+  defp relationship_change_values(request, relationship_name) do
+    relationship = Ash.Resource.Info.relationship(request.resource, relationship_name)
+
+    meta_mapping =
+      AshJsonApi.Resource.Info.relationship_meta_mapping(request.resource, relationship_name)
+
+    if match?(%Ash.Resource.Relationships.ManyToMany{}, relationship) and meta_mapping != [] do
+      build_many_to_many_values(request.resource_identifiers, relationship, meta_mapping)
+    else
+      normalize_relationship_identifiers(request)
+    end
+  end
+
+  defp build_many_to_many_values(nil, _relationship, _meta_mapping), do: nil
+
+  defp build_many_to_many_values(list, relationship, meta_mapping) when is_list(list) do
+    destination_field = relationship.destination_attribute
+
+    Enum.map(list, fn
+      {%{id: id}, meta} ->
+        attrs =
+          Enum.reduce(meta_mapping, %{}, fn {meta_key, join_attr}, acc ->
+            case Map.fetch(meta, to_string(meta_key)) do
+              {:ok, value} -> Map.put(acc, join_attr, value)
+              :error -> acc
+            end
+          end)
+
+        if map_size(attrs) == 0 do
+          id
+        else
+          Map.put(attrs, destination_field, id)
+        end
+
+      %{id: id} ->
+        id
+    end)
+  end
+
+  defp build_many_to_many_values(%{id: id}, _relationship, _meta_mapping), do: id
 end

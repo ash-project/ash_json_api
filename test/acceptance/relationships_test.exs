@@ -5,6 +5,8 @@
 defmodule AshJsonApi.Acceptance.RelationshipsTest do
   use ExUnit.Case, async: true
 
+  require Ash.Query
+
   defmodule Tag do
     use Ash.Resource,
       domain: AshJsonApi.Acceptance.RelationshipsTest.Domain,
@@ -55,10 +57,15 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
 
     actions do
       defaults([:create, :read, :destroy])
+
+      update :update do
+        accept([:note])
+      end
     end
 
     attributes do
       uuid_primary_key(:id)
+      attribute(:note, :string)
     end
 
     relationships do
@@ -79,6 +86,10 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
 
     json_api do
       type("person")
+
+      relationship_meta [
+        tags: [note: :note]
+      ]
 
       routes do
         base("/people")
@@ -202,22 +213,28 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
       ]
     }
 
-    @domain
-    |> post(
-      "/people/#{person.id}/relationships/tags",
-      body,
-      router: @router,
-      status: 200
-    )
-    |> assert_valid_resource_objects("tag", [tag.id])
+    response =
+      @domain
+      |> post(
+        "/people/#{person.id}/relationships/tags",
+        body,
+        router: @router,
+        status: 200
+      )
 
-    @domain
-    |> get(
-      "/people/#{person.id}/relationships/tags",
-      router: @router,
-      status: 200
-    )
-    |> assert_valid_resource_objects("tag", [tag.id])
+    assert_valid_resource_objects(response, "tag", [tag.id])
+
+    assert %{
+             "data" => [
+               %{
+                 "id" => id,
+                 "type" => "tag",
+                 "meta" => %{"note" => "any"}
+               }
+             ]
+           } = response.resp_body
+
+    assert id == tag.id
   end
 
   test "post_to_relationship accepts multiple identifiers" do

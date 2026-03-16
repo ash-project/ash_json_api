@@ -12,13 +12,24 @@ defmodule AshJsonApi.Serializer do
       %{self: at_host(request, request.url)}
       |> add_related_link(request, source_record, relationship)
 
+    identifier_meta =
+      Map.get(request.assigns, :relationship_identifier_meta, %{})
+
     %{
       links: links,
       data:
-        Enum.map(
-          List.wrap(records),
-          &serialize_relationship_data(&1, source_record, relationship)
-        ),
+        Enum.map(List.wrap(records), fn record ->
+          payload = serialize_relationship_data(record, source_record, relationship)
+
+          case Map.fetch(identifier_meta, AshJsonApi.Resource.encode_primary_key(record)) do
+            {:ok, meta_for_identifier} when is_map(meta_for_identifier) and
+                                             map_size(meta_for_identifier) > 0 ->
+              Map.put(payload, :meta, meta_for_identifier)
+
+            _ ->
+              payload
+          end
+        end),
       meta: meta
     }
     |> Jason.encode!()
@@ -160,6 +171,56 @@ defmodule AshJsonApi.Serializer do
       type: AshJsonApi.Resource.Info.type(relationship.destination)
     }
     |> add_relationship_meta(record, source_record, relationship)
+  end
+
+  defp add_relationship_meta(
+         payload,
+         row,
+         source_record,
+         %Ash.Resource.Relationships.ManyToMany{} = relationship
+       ) do
+    source_resource = source_record.__struct__
+
+    meta_mapping =
+      AshJsonApi.Resource.Info.relationship_meta_mapping(source_resource, relationship.name)
+
+    if meta_mapping == [] do
+      payload
+    else
+      join_rows = Map.get(source_record, relationship.join_relationship)
+
+      if match?(%Ash.NotLoaded{}, join_rows) do
+        payload
+      else
+        destination_value = Map.get(row, relationship.destination_attribute)
+
+        meta =
+          join_rows
+          |> List.wrap()
+          |> Enum.find(fn join_row ->
+            Map.get(join_row, relationship.destination_attribute_on_join_resource) ==
+              destination_value
+          end)
+          |> case do
+            nil ->
+              %{}
+
+            join_row ->
+              Enum.reduce(meta_mapping, %{}, fn {meta_key, join_attr}, acc ->
+                case Map.fetch(join_row, join_attr) do
+                  {:ok, value} -> Map.put(acc, meta_key, value)
+                  :error -> acc
+                end
+              end)
+          end
+
+        if map_size(meta) == 0 do
+          payload
+        else
+          Map.put(payload, :meta, meta)
+        end
+      end
+    end
   end
 
   defp add_relationship_meta(payload, _row, _source_record, _relationship) do

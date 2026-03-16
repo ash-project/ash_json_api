@@ -557,6 +557,27 @@ defmodule AshJsonApi.Resource do
           "Whether or not to derive a filter parameter based on the sortable fields of the resource",
         default: true
       ],
+      relationship_meta: [
+        type: :keyword_list,
+        default: [],
+        doc: """
+        Configures how join-table fields are exposed via JSON:API `meta` on relationship
+        resource identifiers for many_to_many relationships.
+
+        The value is a keyword list keyed by relationship name, where each value is
+        another keyword list mapping JSON:API meta keys to join resource attributes.
+
+        For example, to expose a `:note` attribute on the join resource for the
+        `:tags` relationship:
+
+            relationship_meta [
+              tags: [note: :note]
+            ]
+
+        This enables both reading and writing join-table fields via the `meta` object
+        on relationship resource identifiers for that relationship.
+        """
+      ],
       field_names: [
         type: {:or, [{:literal, :camelize}, {:literal, :dasherize}, :keyword_list, {:fun, 1}]},
         doc: """

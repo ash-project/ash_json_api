@@ -70,6 +70,26 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :default_fields, nil, true)
   end
 
+  @doc """
+  Returns the `relationship_meta` config for the resource.
+
+  This is a keyword list keyed by relationship name, where each value is
+  another keyword list mapping JSON:API meta keys to join resource attributes.
+  """
+  def relationship_meta(resource) do
+    Extension.get_opt(resource, [:json_api], :relationship_meta, [], true)
+  end
+
+  @doc """
+  Returns the meta-to-join-attribute mapping for the given relationship name.
+
+  The result is a keyword list like `[note: :note_on_join]`, where the key is the
+  JSON:API meta key (as an atom) and the value is the join resource attribute.
+  """
+  def relationship_meta_mapping(resource, relationship_name) do
+    relationship_meta(resource)[relationship_name] || []
+  end
+
   defp camelize(name) do
     camelized = name |> to_string() |> Macro.camelize()
     {first, rest} = String.split_at(camelized, 1)
