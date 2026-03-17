@@ -352,7 +352,7 @@ These options are available on all route types:
 - `default_fields` — a list of fields to include in the response attributes
 - `primary?` (default `false`) — whether this is the default route for link generation
 - `metadata` — a function `fn subject, result, request -> map end` for top-level response metadata
-- `modify_conn` — a function to modify the Plug conn before responding. See the [modify_conn guide](/documentation/topics/modify-conn.md).
+- `modify_conn` — a function to modify the Plug conn before responding.
 - `query_params` — action arguments to accept as query parameters
 - `name` — a globally unique name for this route, used in docs and OpenAPI
 - `description` — a human-friendly description for generated documentation (overrides the action description)
