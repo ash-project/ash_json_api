@@ -71,6 +71,7 @@ defmodule AshJsonApi.MixProject do
         "documentation/topics/errors.md",
         "documentation/topics/field-names.md",
         "documentation/topics/paginated-relationships.md",
+        "documentation/topics/routing.md",
         {"documentation/dsls/DSL-AshJsonApi.Resource.md",
          search_data: Spark.Docs.search_data_for(AshJsonApi.Resource)},
         {"documentation/dsls/DSL-AshJsonApi.Domain.md",
