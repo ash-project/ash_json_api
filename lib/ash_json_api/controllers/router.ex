@@ -155,6 +155,10 @@ defmodule AshJsonApi.Controllers.Router do
             |> Map.update!(:path_params, fn path_params ->
               path_params
               |> Kernel.||(%{})
+              # Filter out glob params injected by Plug.Router's `forward` macro,
+              # which are always lists (e.g. %{"glob" => ["path", "segments"]}).
+              # Legitimate path params from the outer router are strings.
+              |> Map.reject(fn {_k, v} -> is_list(v) end)
               |> Map.merge(params)
             end)
             |> then(fn conn ->
