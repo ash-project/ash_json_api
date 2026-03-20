@@ -27,7 +27,7 @@ defmodule AshJsonApi.Error do
   end
 
   def to_json_api_errors(domain, resource, %mod{errors: errors}, type)
-      when mod in [Forbidden, Framework, Invalid, Unknown] do
+      when mod in [Forbidden, Framework, Invalid, Unknown] and errors != [] do
     Enum.flat_map(errors, &to_json_api_errors(domain, resource, &1, type))
   end
 
@@ -334,6 +334,19 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.Required do
       title: "Required",
       detail: "is required",
       meta: Map.new(error.vars)
+    }
+  end
+end
+
+defimpl AshJsonApi.ToJsonApiError,
+  for: [Ash.Error.Forbidden, Ash.Error.Framework, Ash.Error.Invalid, Ash.Error.Unknown] do
+  def to_json_api_error(error) do
+    %AshJsonApi.Error{
+      id: Ash.UUID.generate(),
+      status_code: AshJsonApi.Error.class_to_status(error.class),
+      code: to_string(error.class),
+      title: error.class |> to_string() |> String.capitalize(),
+      detail: to_string(error.class)
     }
   end
 end
