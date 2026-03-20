@@ -200,6 +200,10 @@ defmodule Test.Acceptance.PatchTest do
           route "/fake_update/:id"
         end
 
+        patch :forbidden_update do
+          route "/forbidden_update/:id"
+        end
+
         related :author, :read
         patch_relationship :author
       end
@@ -234,6 +238,15 @@ defmodule Test.Acceptance.PatchTest do
         run(fn %{arguments: %{id: id}}, _ ->
           updating = Ash.get!(__MODULE__, id)
           {:ok, %{updating | name: updating.name <> "_fake"}}
+        end)
+      end
+
+      action :forbidden_update, :struct do
+        constraints(instance_of: __MODULE__)
+        argument(:id, :uuid, allow_nil?: false)
+
+        run(fn _input, _ ->
+          {:error, Ash.Error.Forbidden.exception([])}
         end)
       end
 
@@ -712,6 +725,35 @@ defmodule Test.Acceptance.PatchTest do
                },
                "language" => "EN"
              }
+    end
+  end
+
+  describe "patch with generic action returning forbidden" do
+    setup do
+      id = Ecto.UUID.generate()
+
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+        |> Ash.create!()
+
+      %{post: post}
+    end
+
+    test "returns 403 when generic action returns Forbidden error", %{post: post} do
+      response =
+        Domain
+        |> patch(
+          "/posts/forbidden_update/#{post.id}",
+          %{
+            data: %{attributes: %{}}
+          },
+          status: 403
+        )
+
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "forbidden"
+      assert error["status"] == "403"
     end
   end
 
