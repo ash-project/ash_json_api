@@ -47,6 +47,36 @@ defmodule AshJsonApi.Domain.Verifiers.VerifyActions do
           """
       end
 
+      unless Map.get(action, :public?, true) do
+        raise Spark.Error.DslError,
+          module: module,
+          path: [:json_api, :routes, route.type, route.action],
+          message: """
+          Action #{inspect(action.name)} on #{inspect(resource)} is not `public?`.
+
+          Only `public?` actions can be used in AshJsonApi routes.
+
+          Route: #{route.route}
+          """
+      end
+
+      if route.read_action do
+        read_action = Ash.Resource.Info.action(resource, route.read_action)
+
+        if read_action && !Map.get(read_action, :public?, true) do
+          raise Spark.Error.DslError,
+            module: module,
+            path: [:json_api, :routes, route.type, route.action],
+            message: """
+            Read action #{inspect(read_action.name)} on #{inspect(resource)} is not `public?`.
+
+            Only `public?` actions can be used in AshJsonApi routes.
+
+            Route: #{route.route}
+            """
+        end
+      end
+
       if action.type == :action do
         AshJsonApi.Resource.Verifiers.VerifyActions.verify_return_type!(
           module,
