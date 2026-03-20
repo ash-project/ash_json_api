@@ -200,6 +200,10 @@ defmodule Test.Acceptance.PatchTest do
           route "/fake_update/:id"
         end
 
+        patch :fake_update_error do
+          route "/fake_update_error/:id"
+        end
+
         related :author, :read
         patch_relationship :author
       end
@@ -234,6 +238,15 @@ defmodule Test.Acceptance.PatchTest do
         run(fn %{arguments: %{id: id}}, _ ->
           updating = Ash.get!(__MODULE__, id)
           {:ok, %{updating | name: updating.name <> "_fake"}}
+        end)
+      end
+
+      action :fake_update_error, :struct do
+        constraints(instance_of: __MODULE__)
+        argument(:id, :uuid, allow_nil?: false)
+
+        run(fn _input, _context ->
+          {:error, Ash.Error.Forbidden.exception([])}
         end)
       end
 
@@ -420,6 +433,18 @@ defmodule Test.Acceptance.PatchTest do
         "relationships" => %{"author" => %{"links" => %{}, "meta" => %{}}},
         "type" => "post"
       })
+    end
+
+    test "patch returns error for generic action that returns an error", %{post: post} do
+      Domain
+      |> patch(
+        "/posts/fake_update_error/#{post.id}",
+        %{
+          data: %{attributes: %{}}
+        },
+        status: 403
+      )
+      |> assert_has_error(%{"code" => "forbidden", "status" => "403"})
     end
 
     @tag :attributes
