@@ -9,7 +9,7 @@ defmodule AshJsonApi.MixProject do
   The JSON:API extension for the Ash Framework.
   """
 
-  @version "1.6.0-rc.2"
+  @version "1.6.1"
 
   def project do
     [
@@ -71,6 +71,7 @@ defmodule AshJsonApi.MixProject do
         "documentation/topics/errors.md",
         "documentation/topics/field-names.md",
         "documentation/topics/paginated-relationships.md",
+        "documentation/topics/routing.md",
         {"documentation/dsls/DSL-AshJsonApi.Resource.md",
          search_data: Spark.Docs.search_data_for(AshJsonApi.Resource)},
         {"documentation/dsls/DSL-AshJsonApi.Domain.md",

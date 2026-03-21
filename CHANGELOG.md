@@ -11,6 +11,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.1](https://github.com/ash-project/ash_json_api/compare/v1.6.0-rc.2...v1.6.1) (2026-03-17)
+
+
+
+
+### Bug Fixes:
+
+* content-negotiation: correct 406 and 415 error mapping (#418) by Victor [(#418)](https://github.com/ash-project/ash_json_api/pull/418)
+
+* extract params from routes for GET actions (#416) by ascogeno [(#416)](https://github.com/ash-project/ash_json_api/pull/416)
+
 ## [v1.6.0-rc.2](https://github.com/ash-project/ash_json_api/compare/v1.6.0-rc.1...v1.6.0-rc.2) (2026-03-02)
 
 

@@ -37,6 +37,34 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyRelationships do
       end
     end)
 
+    resource
+    |> Ash.Resource.Info.public_relationships()
+    |> Enum.each(fn relationship ->
+      destination = relationship.destination
+
+      if AshJsonApi.Resource in Spark.extensions(destination) do
+        read_action =
+          if relationship.read_action do
+            Ash.Resource.Info.action(destination, relationship.read_action)
+          else
+            Ash.Resource.Info.primary_action(destination, :read)
+          end
+
+        if read_action && !Map.get(read_action, :public?, true) do
+          raise Spark.Error.DslError,
+            module: resource,
+            path: [:json_api],
+            message: """
+            Relationship #{inspect(resource)}.#{relationship.name} points to \
+            #{inspect(destination)}, whose read action #{inspect(read_action.name)} is not `public?`.
+
+            Public relationships on JSON:API resources must have `public?` read actions \
+            on their destination resources.
+            """
+        end
+      end
+    end)
+
     :ok
   end
 end
