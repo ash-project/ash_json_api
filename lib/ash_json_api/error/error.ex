@@ -31,6 +31,17 @@ defmodule AshJsonApi.Error do
     Enum.flat_map(errors, &to_json_api_errors(domain, resource, &1, type))
   end
 
+  def to_json_api_errors(
+        domain,
+        resource,
+        %Reactor.Error.Invalid.RunStepError{error: inner_error},
+        type
+      ) do
+    inner_error
+    |> Ash.Error.to_error_class()
+    |> then(&to_json_api_errors(domain, resource, &1, type))
+  end
+
   def to_json_api_errors(domain, resource, %__MODULE__{} = error, _type) do
     apply_error_handler([error], domain, resource)
   end

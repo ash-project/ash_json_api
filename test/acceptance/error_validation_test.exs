@@ -191,6 +191,58 @@ defmodule Test.Acceptance.ErrorValidationTest do
       assert is_binary(json_error.id)
     end
 
+    test "RunStepError delegates to inner error with ToJsonApiError implementation" do
+      inner_error = Ash.Error.Changes.InvalidChanges.exception(message: "bad input")
+
+      run_step_error =
+        Reactor.Error.Invalid.RunStepError.exception(
+          error: inner_error,
+          step: %Reactor.Step{name: :test_step}
+        )
+
+      result = AshJsonApi.Error.to_json_api_errors(nil, nil, run_step_error, :create)
+
+      assert [json_error] = result
+      assert json_error.code == "invalid"
+      assert json_error.title == "Invalid"
+      assert json_error.detail == "bad input"
+    end
+
+    test "RunStepError delegates to inner Ash wrapper error" do
+      inner_error =
+        Ash.Error.Changes.InvalidChanges.exception(message: "wrapped error")
+        |> Ash.Error.to_error_class()
+
+      run_step_error =
+        Reactor.Error.Invalid.RunStepError.exception(
+          error: inner_error,
+          step: %Reactor.Step{name: :test_step}
+        )
+
+      result = AshJsonApi.Error.to_json_api_errors(nil, nil, run_step_error, :create)
+
+      assert [json_error] = result
+      assert json_error.code == "invalid"
+      assert json_error.detail == "wrapped error"
+    end
+
+    @tag capture_log: true
+    test "RunStepError falls back to generic error for unknown inner errors" do
+      inner_error = RuntimeError.exception("something unexpected")
+
+      run_step_error =
+        Reactor.Error.Invalid.RunStepError.exception(
+          error: inner_error,
+          step: %Reactor.Step{name: :test_step}
+        )
+
+      result = AshJsonApi.Error.to_json_api_errors(Domain, TestPost, run_step_error, :create)
+
+      assert [json_error] = result
+      assert json_error.status_code == 500
+      assert json_error.code == "something_went_wrong"
+    end
+
     test "Binary error fallback uses UnknownError" do
       # Test the binary error handler directly
       domain = nil
