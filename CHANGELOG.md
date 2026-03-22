@@ -11,6 +11,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.2](https://github.com/ash-project/ash_json_api/compare/v1.6.1...v1.6.2) (2026-03-22)
+
+
+
+
+### Bug Fixes:
+
+* handle wrapper errors with empty inner errors list (#423) by [@barnabasJ](https://github.com/barnabasJ) [(#423)](https://github.com/ash-project/ash_json_api/pull/423)
+
+### Improvements:
+
+* support the new `public?` option on actions by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.6.1](https://github.com/ash-project/ash_json_api/compare/v1.6.0-rc.2...v1.6.1) (2026-03-17)
 
 
