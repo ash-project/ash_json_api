@@ -11,6 +11,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.3](https://github.com/ash-project/ash_json_api/compare/v1.6.2...v1.6.3) (2026-03-23)
+
+
+
+
+### Improvements:
+
+* support `field? :false` calculations by [@zachdaniel](https://github.com/zachdaniel)
+
+* handle Reactor.Error.Invalid.RunStepError in error conversion (#424) by [@Torkan](https://github.com/Torkan) [(#424)](https://github.com/ash-project/ash_json_api/pull/424)
+
 ## [v1.6.2](https://github.com/ash-project/ash_json_api/compare/v1.6.1...v1.6.2) (2026-03-22)
 
 
