@@ -81,13 +81,55 @@ defmodule AshJsonApi.Resource.Info do
   end
 
   @doc """
+  Returns the `relationship_meta_in` config for the resource.
+  Falls back to `relationship_meta` when not set.
+  """
+  def relationship_meta_in(resource) do
+    Extension.get_opt(
+      resource,
+      [:json_api],
+      :relationship_meta_in,
+      relationship_meta(resource),
+      true
+    )
+  end
+
+  @doc """
+  Returns the `relationship_meta_out` config for the resource.
+  Falls back to `relationship_meta` when not set.
+  """
+  def relationship_meta_out(resource) do
+    Extension.get_opt(
+      resource,
+      [:json_api],
+      :relationship_meta_out,
+      relationship_meta(resource),
+      true
+    )
+  end
+
+  @doc """
+  Returns the incoming meta-to-join-attribute mapping for the given relationship name.
+  """
+  def relationship_meta_in_mapping(resource, relationship_name) do
+    relationship_meta_in(resource)[relationship_name] || []
+  end
+
+  @doc """
+  Returns the outgoing meta-to-join-attribute mapping for the given relationship name.
+  """
+  def relationship_meta_out_mapping(resource, relationship_name) do
+    relationship_meta_out(resource)[relationship_name] || []
+  end
+
+  @doc """
   Returns the meta-to-join-attribute mapping for the given relationship name.
 
   The result is a keyword list like `[note: :note_on_join]`, where the key is the
   JSON:API meta key (as an atom) and the value is the join resource attribute.
   """
   def relationship_meta_mapping(resource, relationship_name) do
-    relationship_meta(resource)[relationship_name] || []
+    relationship_meta_in_mapping(resource, relationship_name)
   end
 
   defp camelize(name) do

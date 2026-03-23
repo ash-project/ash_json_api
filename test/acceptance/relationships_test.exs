@@ -87,9 +87,9 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
     json_api do
       type("person")
 
-      relationship_meta [
-        tags: [note: :note]
-      ]
+      relationship_meta_in(tags: [note: :note])
+
+      relationship_meta_out(tags: [note_out: :note])
 
       routes do
         base("/people")
@@ -209,7 +209,7 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
 
     body = %{
       "data" => [
-        %{"type" => "tag", "id" => tag.id, "meta" => %{"note" => "any"}}
+        %{"type" => "tag", "id" => tag.id, "meta" => %{"note" => "any", "ignored" => "value"}}
       ]
     }
 
@@ -229,12 +229,16 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
                %{
                  "id" => id,
                  "type" => "tag",
-                 "meta" => %{"note" => "any"}
+                 "meta" => meta
                }
              ]
            } = response.resp_body
 
     assert id == tag.id
+    assert Map.has_key?(meta, "note_out")
+    refute Map.get(meta, "note_out") == "any"
+    refute Map.has_key?(meta, "ignored")
+    refute Map.has_key?(meta, "note")
   end
 
   test "post_to_relationship accepts multiple identifiers" do

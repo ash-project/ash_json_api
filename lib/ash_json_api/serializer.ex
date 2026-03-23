@@ -12,24 +12,13 @@ defmodule AshJsonApi.Serializer do
       %{self: at_host(request, request.url)}
       |> add_related_link(request, source_record, relationship)
 
-    identifier_meta =
-      Map.get(request.assigns, :relationship_identifier_meta, %{})
-
     %{
       links: links,
       data:
-        Enum.map(List.wrap(records), fn record ->
-          payload = serialize_relationship_data(record, source_record, relationship)
-
-          case Map.fetch(identifier_meta, AshJsonApi.Resource.encode_primary_key(record)) do
-            {:ok, meta_for_identifier} when is_map(meta_for_identifier) and
-                                             map_size(meta_for_identifier) > 0 ->
-              Map.put(payload, :meta, meta_for_identifier)
-
-            _ ->
-              payload
-          end
-        end),
+        Enum.map(
+          List.wrap(records),
+          &serialize_relationship_data(&1, source_record, relationship)
+        ),
       meta: meta
     }
     |> Jason.encode!()
@@ -182,7 +171,7 @@ defmodule AshJsonApi.Serializer do
     source_resource = source_record.__struct__
 
     meta_mapping =
-      AshJsonApi.Resource.Info.relationship_meta_mapping(source_resource, relationship.name)
+      AshJsonApi.Resource.Info.relationship_meta_out_mapping(source_resource, relationship.name)
 
     if meta_mapping == [] do
       payload

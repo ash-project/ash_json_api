@@ -561,7 +561,10 @@ defmodule AshJsonApi.Resource do
         type: :keyword_list,
         default: [],
         doc: """
-        Configures how join-table fields are exposed via JSON:API `meta` on relationship
+        Backward-compatible shorthand for setting both `relationship_meta_in` and
+        `relationship_meta_out` to the same mapping.
+
+        Configures how join-table fields are mapped via JSON:API `meta` on relationship
         resource identifiers for many_to_many relationships.
 
         The value is a keyword list keyed by relationship name, where each value is
@@ -576,6 +579,22 @@ defmodule AshJsonApi.Resource do
 
         This enables both reading and writing join-table fields via the `meta` object
         on relationship resource identifiers for that relationship.
+        """
+      ],
+      relationship_meta_in: [
+        type: :keyword_list,
+        default: [],
+        doc: """
+        Configures how incoming JSON:API `meta` keys on relationship resource identifiers
+        map to join resource attributes for many_to_many relationship writes.
+        """
+      ],
+      relationship_meta_out: [
+        type: :keyword_list,
+        default: [],
+        doc: """
+        Configures how join resource attributes map to outgoing JSON:API `meta` keys on
+        relationship resource identifiers for many_to_many relationship reads.
         """
       ],
       field_names: [
