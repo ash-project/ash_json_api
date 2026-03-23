@@ -94,6 +94,11 @@ defmodule Test.Acceptance.IndexTest do
       end
 
       calculate(:literal_calc, :string, expr("calc"))
+
+      calculate :non_field_calc, :string, expr("nf: " <> name) do
+        public?(true)
+        field?(false)
+      end
     end
   end
 
@@ -225,6 +230,24 @@ defmodule Test.Acceptance.IndexTest do
         %{
           "attributes" => %{
             "name" => "foo"
+          },
+          "id" => post.id,
+          "links" => %{},
+          "meta" => %{},
+          "relationships" => %{},
+          "type" => "post"
+        }
+      ])
+    end
+
+    test "field?: false calculations can be returned when requested", %{post: post} do
+      Domain
+      |> get("/posts?fields=name,non_field_calc", status: 200)
+      |> assert_data_equals([
+        %{
+          "attributes" => %{
+            "name" => "foo",
+            "non_field_calc" => "nf: foo"
           },
           "id" => post.id,
           "links" => %{},

@@ -1102,14 +1102,14 @@ defmodule AshJsonApi.Serializer do
           acc
 
         match?(%Ash.Resource.Calculation{}, field) &&
-            match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
+            match?(%Ash.NotLoaded{}, get_field_value(record, field)) ->
           acc
 
         match?(%Ash.Resource.Aggregate{}, field) &&
             match?(%Ash.NotLoaded{}, Map.get(record, field.name)) ->
           acc
 
-        match?(%Ash.ForbiddenField{}, Map.get(record, field.name)) ->
+        match?(%Ash.ForbiddenField{}, get_field_value(record, field)) ->
           acc
 
         true ->
@@ -1124,7 +1124,7 @@ defmodule AshJsonApi.Serializer do
 
           value =
             serialize_value(
-              Map.get(record, field.name),
+              get_field_value(record, field),
               type,
               constraints,
               request.domain,
@@ -1228,4 +1228,15 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp parse_error(error), do: error
+
+  defp get_field_value(record, %Ash.Resource.Calculation{field?: false, name: name}) do
+    case Map.fetch(record.calculations, name) do
+      {:ok, value} -> value
+      :error -> %Ash.NotLoaded{type: :calculation, field: name}
+    end
+  end
+
+  defp get_field_value(record, field) do
+    Map.get(record, field.name)
+  end
 end
