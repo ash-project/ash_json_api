@@ -162,6 +162,56 @@ defmodule AshJsonApi.Serializer do
     |> add_relationship_meta(record, source_record, relationship)
   end
 
+  defp add_relationship_meta(
+         payload,
+         row,
+         source_record,
+         %Ash.Resource.Relationships.ManyToMany{} = relationship
+       ) do
+    source_resource = source_record.__struct__
+
+    meta_mapping =
+      AshJsonApi.Resource.Info.relationship_meta_out_mapping(source_resource, relationship.name)
+
+    if meta_mapping == [] do
+      payload
+    else
+      join_rows = Map.get(source_record, relationship.join_relationship)
+
+      if match?(%Ash.NotLoaded{}, join_rows) do
+        payload
+      else
+        destination_value = Map.get(row, relationship.destination_attribute)
+
+        meta =
+          join_rows
+          |> List.wrap()
+          |> Enum.find(fn join_row ->
+            Map.get(join_row, relationship.destination_attribute_on_join_resource) ==
+              destination_value
+          end)
+          |> case do
+            nil ->
+              %{}
+
+            join_row ->
+              Enum.reduce(meta_mapping, %{}, fn {meta_key, join_attr}, acc ->
+                case Map.fetch(join_row, join_attr) do
+                  {:ok, value} -> Map.put(acc, meta_key, value)
+                  :error -> acc
+                end
+              end)
+          end
+
+        if map_size(meta) == 0 do
+          payload
+        else
+          Map.put(payload, :meta, meta)
+        end
+      end
+    end
+  end
+
   defp add_relationship_meta(payload, _row, _source_record, _relationship) do
     payload
     # case relationship.join_attributes do

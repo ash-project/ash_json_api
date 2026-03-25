@@ -557,6 +557,28 @@ defmodule AshJsonApi.Resource do
           "Whether or not to derive a filter parameter based on the sortable fields of the resource",
         default: true
       ],
+      relationship_meta_in: [
+        type: :keyword_list,
+        default: [],
+        doc: """
+        Configures how incoming JSON:API `meta` keys on relationship resource identifiers
+        map to join resource attributes for many_to_many relationship writes.
+
+        Use together with `relationship_meta_out` for reads. Each relationship you want to
+        support must declare both mappings explicitly.
+        """
+      ],
+      relationship_meta_out: [
+        type: :keyword_list,
+        default: [],
+        doc: """
+        Configures how join resource attributes map to outgoing JSON:API `meta` keys on
+        relationship resource identifiers for many_to_many relationship reads.
+
+        Use together with `relationship_meta_in` for writes. Each relationship you want to
+        support must declare both mappings explicitly.
+        """
+      ],
       field_names: [
         type: {:or, [{:literal, :camelize}, {:literal, :dasherize}, :keyword_list, {:fun, 1}]},
         doc: """

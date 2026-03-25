@@ -70,6 +70,34 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :default_fields, nil, true)
   end
 
+  @doc """
+  Returns the `relationship_meta_in` config for the resource.
+  """
+  def relationship_meta_in(resource) do
+    Extension.get_opt(resource, [:json_api], :relationship_meta_in, [], true)
+  end
+
+  @doc """
+  Returns the `relationship_meta_out` config for the resource.
+  """
+  def relationship_meta_out(resource) do
+    Extension.get_opt(resource, [:json_api], :relationship_meta_out, [], true)
+  end
+
+  @doc """
+  Returns the incoming meta-to-join-attribute mapping for the given relationship name.
+  """
+  def relationship_meta_in_mapping(resource, relationship_name) do
+    relationship_meta_in(resource)[relationship_name] || []
+  end
+
+  @doc """
+  Returns the outgoing meta-to-join-attribute mapping for the given relationship name.
+  """
+  def relationship_meta_out_mapping(resource, relationship_name) do
+    relationship_meta_out(resource)[relationship_name] || []
+  end
+
   defp camelize(name) do
     camelized = name |> to_string() |> Macro.camelize()
     {first, rest} = String.split_at(camelized, 1)
