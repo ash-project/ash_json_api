@@ -557,36 +557,15 @@ defmodule AshJsonApi.Resource do
           "Whether or not to derive a filter parameter based on the sortable fields of the resource",
         default: true
       ],
-      relationship_meta: [
-        type: :keyword_list,
-        default: [],
-        doc: """
-        Backward-compatible shorthand for setting both `relationship_meta_in` and
-        `relationship_meta_out` to the same mapping.
-
-        Configures how join-table fields are mapped via JSON:API `meta` on relationship
-        resource identifiers for many_to_many relationships.
-
-        The value is a keyword list keyed by relationship name, where each value is
-        another keyword list mapping JSON:API meta keys to join resource attributes.
-
-        For example, to expose a `:note` attribute on the join resource for the
-        `:tags` relationship:
-
-            relationship_meta [
-              tags: [note: :note]
-            ]
-
-        This enables both reading and writing join-table fields via the `meta` object
-        on relationship resource identifiers for that relationship.
-        """
-      ],
       relationship_meta_in: [
         type: :keyword_list,
         default: [],
         doc: """
         Configures how incoming JSON:API `meta` keys on relationship resource identifiers
         map to join resource attributes for many_to_many relationship writes.
+
+        Use together with `relationship_meta_out` for reads. Each relationship you want to
+        support must declare both mappings explicitly.
         """
       ],
       relationship_meta_out: [
@@ -595,6 +574,9 @@ defmodule AshJsonApi.Resource do
         doc: """
         Configures how join resource attributes map to outgoing JSON:API `meta` keys on
         relationship resource identifiers for many_to_many relationship reads.
+
+        Use together with `relationship_meta_in` for writes. Each relationship you want to
+        support must declare both mappings explicitly.
         """
       ],
       field_names: [
