@@ -878,7 +878,6 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.load(request.includes_keyword)
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.set_context(request.context)
-      |> Ash.Query.for_read(request.action.name, request.arguments, read_opts)
 
     destination_query =
       if request.action.pagination && Keyword.get(read_opts, :page) do
