@@ -28,7 +28,8 @@ defmodule AshJsonApi.Resource.Route do
     wrap_in_result?: false,
     relationship_arguments: [],
     metadata: nil,
-    path_param_is_composite_key: nil
+    path_param_is_composite_key: nil,
+    hide_private?: false
   ]
 
   @type t :: %__MODULE__{}

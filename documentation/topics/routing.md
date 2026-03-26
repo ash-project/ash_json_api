@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2019 ash_json_api contributors <https://github.com/ash-project/ash_json_api/graphs/contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
 # Routing
 
 AshJsonApi provides a set of route helpers that map HTTP requests to Ash actions. Routes are defined inside the `json_api do routes do ... end end` block on either a resource or a domain.

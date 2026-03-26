@@ -2399,7 +2399,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           _ ->
             resource
             |> Ash.Resource.Info.attributes()
-            |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+            |> Enum.filter(&write_attribute?(&1, action, route))
             |> Enum.reject(
               &(&1.name in filtered_arguments || &1.allow_nil? || not is_nil(&1.default) ||
                   &1.generated? ||
@@ -2437,7 +2437,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         else
           resource
           |> Ash.Resource.Info.attributes()
-          |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+          |> Enum.filter(&write_attribute?(&1, action, route))
           |> Enum.reduce({%{}, acc}, fn attribute, {attrs, acc} ->
             {schema, acc} =
               resource_write_attribute_type(attribute, resource, action.type, acc, format)
@@ -2461,6 +2461,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
         {Map.put(attributes, json_key, schema), acc}
       end)
+    end
+
+    defp write_attribute?(attr, action, route) do
+      attr.writable? && attr.name in action.accept &&
+        (is_nil(route) || !route.hide_private? || attr.public?)
     end
 
     defp without_path_arguments(arguments, %{route: route}) do

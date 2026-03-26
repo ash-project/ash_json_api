@@ -77,6 +77,12 @@ defmodule AshJsonApi.Resource do
       doc:
         "The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details.",
       default: nil
+    ],
+    hide_private?: [
+      type: :boolean,
+      default: false,
+      doc:
+        "When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically."
     ]
   ]
 

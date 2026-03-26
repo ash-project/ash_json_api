@@ -235,6 +235,7 @@ get :read, path_param_is_composite_key: :id
 | [`derive_sort?`](#json_api-routes-base_route-get-derive_sort?){: #json_api-routes-base_route-get-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-get-derive_filter?){: #json_api-routes-base_route-get-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-get-path_param_is_composite_key){: #json_api-routes-base_route-get-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-get-hide_private?){: #json_api-routes-base_route-get-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -283,6 +284,7 @@ index :read
 | [`derive_sort?`](#json_api-routes-base_route-index-derive_sort?){: #json_api-routes-base_route-index-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-index-derive_filter?){: #json_api-routes-base_route-index-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-index-path_param_is_composite_key){: #json_api-routes-base_route-index-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-index-hide_private?){: #json_api-routes-base_route-index-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -331,6 +333,7 @@ post :create
 | [`derive_sort?`](#json_api-routes-base_route-post-derive_sort?){: #json_api-routes-base_route-post-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-post-derive_filter?){: #json_api-routes-base_route-post-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-post-path_param_is_composite_key){: #json_api-routes-base_route-post-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-post-hide_private?){: #json_api-routes-base_route-post-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 | [`relationship_arguments`](#json_api-routes-base_route-post-relationship_arguments){: #json_api-routes-base_route-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
 | [`upsert?`](#json_api-routes-base_route-post-upsert?){: #json_api-routes-base_route-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
 | [`upsert_identity`](#json_api-routes-base_route-post-upsert_identity){: #json_api-routes-base_route-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
@@ -388,6 +391,7 @@ patch :update, path_param_is_composite_key: :id
 | [`derive_sort?`](#json_api-routes-base_route-patch-derive_sort?){: #json_api-routes-base_route-patch-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-patch-derive_filter?){: #json_api-routes-base_route-patch-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-patch-path_param_is_composite_key){: #json_api-routes-base_route-patch-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-patch-hide_private?){: #json_api-routes-base_route-patch-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -441,6 +445,7 @@ delete :destroy, path_param_is_composite_key: :id
 | [`derive_sort?`](#json_api-routes-base_route-delete-derive_sort?){: #json_api-routes-base_route-delete-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-delete-derive_filter?){: #json_api-routes-base_route-delete-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-delete-path_param_is_composite_key){: #json_api-routes-base_route-delete-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-delete-hide_private?){: #json_api-routes-base_route-delete-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -490,6 +495,7 @@ related :comments, :read
 | [`derive_sort?`](#json_api-routes-base_route-related-derive_sort?){: #json_api-routes-base_route-related-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-related-derive_filter?){: #json_api-routes-base_route-related-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-related-path_param_is_composite_key){: #json_api-routes-base_route-related-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-related-hide_private?){: #json_api-routes-base_route-related-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -539,6 +545,7 @@ relationship :comments, :read
 | [`derive_sort?`](#json_api-routes-base_route-relationship-derive_sort?){: #json_api-routes-base_route-relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-relationship-derive_filter?){: #json_api-routes-base_route-relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-relationship-path_param_is_composite_key){: #json_api-routes-base_route-relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-relationship-hide_private?){: #json_api-routes-base_route-relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -587,6 +594,7 @@ post_to_relationship :comments
 | [`derive_sort?`](#json_api-routes-base_route-post_to_relationship-derive_sort?){: #json_api-routes-base_route-post_to_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-post_to_relationship-derive_filter?){: #json_api-routes-base_route-post_to_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-post_to_relationship-path_param_is_composite_key){: #json_api-routes-base_route-post_to_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-post_to_relationship-hide_private?){: #json_api-routes-base_route-post_to_relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -635,6 +643,7 @@ patch_relationship :comments
 | [`derive_sort?`](#json_api-routes-base_route-patch_relationship-derive_sort?){: #json_api-routes-base_route-patch_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-patch_relationship-derive_filter?){: #json_api-routes-base_route-patch_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-patch_relationship-path_param_is_composite_key){: #json_api-routes-base_route-patch_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-patch_relationship-hide_private?){: #json_api-routes-base_route-patch_relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -683,6 +692,7 @@ delete_from_relationship :comments
 | [`derive_sort?`](#json_api-routes-base_route-delete_from_relationship-derive_sort?){: #json_api-routes-base_route-delete_from_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-delete_from_relationship-derive_filter?){: #json_api-routes-base_route-delete_from_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-delete_from_relationship-path_param_is_composite_key){: #json_api-routes-base_route-delete_from_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-delete_from_relationship-hide_private?){: #json_api-routes-base_route-delete_from_relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -733,6 +743,7 @@ route :get, "say_hi/:name", :say_hello
 | [`derive_sort?`](#json_api-routes-base_route-route-derive_sort?){: #json_api-routes-base_route-route-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-base_route-route-derive_filter?){: #json_api-routes-base_route-route-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-base_route-route-path_param_is_composite_key){: #json_api-routes-base_route-route-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-base_route-route-hide_private?){: #json_api-routes-base_route-route-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -791,6 +802,7 @@ get :read, path_param_is_composite_key: :id
 | [`derive_sort?`](#json_api-routes-get-derive_sort?){: #json_api-routes-get-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-get-derive_filter?){: #json_api-routes-get-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-get-path_param_is_composite_key){: #json_api-routes-get-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-get-hide_private?){: #json_api-routes-get-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -839,6 +851,7 @@ index :read
 | [`derive_sort?`](#json_api-routes-index-derive_sort?){: #json_api-routes-index-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-index-derive_filter?){: #json_api-routes-index-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-index-path_param_is_composite_key){: #json_api-routes-index-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-index-hide_private?){: #json_api-routes-index-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -887,6 +900,7 @@ post :create
 | [`derive_sort?`](#json_api-routes-post-derive_sort?){: #json_api-routes-post-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-post-derive_filter?){: #json_api-routes-post-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-post-path_param_is_composite_key){: #json_api-routes-post-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-post-hide_private?){: #json_api-routes-post-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 | [`relationship_arguments`](#json_api-routes-post-relationship_arguments){: #json_api-routes-post-relationship_arguments } | `list(atom \| {:id, atom})` | `[]` | Arguments to be used to edit relationships. See the [relationships guide](/documentation/topics/relationships.md) for more. |
 | [`upsert?`](#json_api-routes-post-upsert?){: #json_api-routes-post-upsert? } | `boolean` | `false` | Whether or not to use the `upsert?: true` option when calling `Ash.create/2`. |
 | [`upsert_identity`](#json_api-routes-post-upsert_identity){: #json_api-routes-post-upsert_identity } | `atom` | `false` | Which identity to use for the upsert |
@@ -944,6 +958,7 @@ patch :update, path_param_is_composite_key: :id
 | [`derive_sort?`](#json_api-routes-patch-derive_sort?){: #json_api-routes-patch-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-patch-derive_filter?){: #json_api-routes-patch-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-patch-path_param_is_composite_key){: #json_api-routes-patch-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-patch-hide_private?){: #json_api-routes-patch-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -997,6 +1012,7 @@ delete :destroy, path_param_is_composite_key: :id
 | [`derive_sort?`](#json_api-routes-delete-derive_sort?){: #json_api-routes-delete-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-delete-derive_filter?){: #json_api-routes-delete-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-delete-path_param_is_composite_key){: #json_api-routes-delete-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-delete-hide_private?){: #json_api-routes-delete-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -1046,6 +1062,7 @@ related :comments, :read
 | [`derive_sort?`](#json_api-routes-related-derive_sort?){: #json_api-routes-related-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-related-derive_filter?){: #json_api-routes-related-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-related-path_param_is_composite_key){: #json_api-routes-related-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-related-hide_private?){: #json_api-routes-related-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -1095,6 +1112,7 @@ relationship :comments, :read
 | [`derive_sort?`](#json_api-routes-relationship-derive_sort?){: #json_api-routes-relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-relationship-derive_filter?){: #json_api-routes-relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-relationship-path_param_is_composite_key){: #json_api-routes-relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-relationship-hide_private?){: #json_api-routes-relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -1143,6 +1161,7 @@ post_to_relationship :comments
 | [`derive_sort?`](#json_api-routes-post_to_relationship-derive_sort?){: #json_api-routes-post_to_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-post_to_relationship-derive_filter?){: #json_api-routes-post_to_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-post_to_relationship-path_param_is_composite_key){: #json_api-routes-post_to_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-post_to_relationship-hide_private?){: #json_api-routes-post_to_relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -1191,6 +1210,7 @@ patch_relationship :comments
 | [`derive_sort?`](#json_api-routes-patch_relationship-derive_sort?){: #json_api-routes-patch_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-patch_relationship-derive_filter?){: #json_api-routes-patch_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-patch_relationship-path_param_is_composite_key){: #json_api-routes-patch_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-patch_relationship-hide_private?){: #json_api-routes-patch_relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -1239,6 +1259,7 @@ delete_from_relationship :comments
 | [`derive_sort?`](#json_api-routes-delete_from_relationship-derive_sort?){: #json_api-routes-delete_from_relationship-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-delete_from_relationship-derive_filter?){: #json_api-routes-delete_from_relationship-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-delete_from_relationship-path_param_is_composite_key){: #json_api-routes-delete_from_relationship-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-delete_from_relationship-hide_private?){: #json_api-routes-delete_from_relationship-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
@@ -1289,6 +1310,7 @@ route :get, "say_hi/:name", :say_hello
 | [`derive_sort?`](#json_api-routes-route-derive_sort?){: #json_api-routes-route-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-route-derive_filter?){: #json_api-routes-route-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-route-path_param_is_composite_key){: #json_api-routes-route-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`hide_private?`](#json_api-routes-route-hide_private?){: #json_api-routes-route-hide_private? } | `boolean` | `false` | When `true`, attributes with `public? false` are excluded from the write schema (request body) even if they appear in the action's `accept` list. Useful for hiding internal/system attributes from the API surface while still allowing them to be set programmatically. |
 
 
 
