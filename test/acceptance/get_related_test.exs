@@ -352,4 +352,141 @@ defmodule Test.Acceptance.GetRelatedTest do
              ] = includes
     end
   end
+
+  describe "related endpoint with pagination" do
+    defmodule PaginatedComment do
+      use Ash.Resource,
+        domain: Test.Acceptance.GetRelatedTest.PaginationDomain,
+        data_layer: Ash.DataLayer.Ets,
+        extensions: [AshJsonApi.Resource]
+
+      ets do
+        private?(true)
+      end
+
+      json_api do
+        type("paginated_comment")
+      end
+
+      actions do
+        default_accept(:*)
+        defaults([:create, :update, :destroy])
+
+        read :read do
+          primary? true
+          pagination(offset?: true, countable: true, default_limit: 10)
+        end
+      end
+
+      attributes do
+        uuid_primary_key(:id)
+        attribute(:name, :string, public?: true)
+        attribute(:content, :string, public?: true)
+        attribute(:pagination_post_id, :uuid, public?: true)
+      end
+
+      relationships do
+        belongs_to(:post, Test.Acceptance.GetRelatedTest.PaginationPost) do
+          public?(true)
+        end
+      end
+    end
+
+    defmodule PaginationPost do
+      use Ash.Resource,
+        domain: Test.Acceptance.GetRelatedTest.PaginationDomain,
+        data_layer: Ash.DataLayer.Ets,
+        extensions: [AshJsonApi.Resource]
+
+      ets do
+        private?(true)
+      end
+
+      json_api do
+        type("pagination_post")
+      end
+
+      actions do
+        default_accept(:*)
+        defaults([:create, :read, :update, :destroy])
+      end
+
+      attributes do
+        uuid_primary_key(:id)
+        attribute(:name, :string, public?: true)
+      end
+
+      relationships do
+        has_many(:comments, PaginatedComment) do
+          public?(true)
+        end
+      end
+    end
+
+    defmodule PaginationDomain do
+      use Ash.Domain,
+        otp_app: :ash_json_api,
+        extensions: [AshJsonApi.Domain]
+
+      json_api do
+        log_errors?(false)
+
+        routes do
+          base_route "/pagination_posts", PaginationPost do
+            get :read
+            related :comments, :read
+          end
+        end
+      end
+
+      resources do
+        resource(PaginationPost)
+        resource(PaginatedComment)
+      end
+    end
+
+    defmodule PaginationRouter do
+      use AshJsonApi.Router, domain: PaginationDomain
+    end
+
+    setup do
+      Application.put_env(:ash_json_api, PaginationDomain,
+        json_api: [test_router: PaginationRouter]
+      )
+
+      post = Ash.Changeset.for_create(PaginationPost, :create, %{name: "parent"}) |> Ash.create!()
+
+      Enum.map(1..5, fn i ->
+        Ash.Changeset.for_create(PaginatedComment, :create, %{
+          name: "comment#{i}",
+          content: "content",
+          pagination_post_id: post.id
+        })
+        |> Ash.create!()
+      end)
+
+      %{post: post}
+    end
+
+    test "returns paginated related resources when page params are given", %{post: post} do
+      response =
+        PaginationDomain
+        |> get("/pagination_posts/#{post.id}/comments?page[limit]=2&page[offset]=0", status: 200)
+
+      data = response.resp_body["data"]
+      assert length(data) == 2
+
+      assert Map.has_key?(response.resp_body, "meta")
+      assert Map.has_key?(response.resp_body["meta"], "page")
+    end
+
+    test "respects page offset for related resources", %{post: post} do
+      response =
+        PaginationDomain
+        |> get("/pagination_posts/#{post.id}/comments?page[limit]=2&page[offset]=2", status: 200)
+
+      data = response.resp_body["data"]
+      assert length(data) == 2
+    end
+  end
 end

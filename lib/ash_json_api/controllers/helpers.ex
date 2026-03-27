@@ -892,12 +892,7 @@ defmodule AshJsonApi.Controllers.Helpers do
 
     sort = request.sort || default_sort(request.resource)
 
-    load_params =
-      if Map.get(request.assigns, :page) do
-        [page: request.assigns.page]
-      else
-        []
-      end
+    read_opts = Request.opts(request)
 
     destination_query =
       relationship.destination
@@ -907,7 +902,13 @@ defmodule AshJsonApi.Controllers.Helpers do
       |> Ash.Query.load(request.includes_keyword)
       |> Ash.Query.load(fields(request, request.resource))
       |> Ash.Query.set_context(request.context)
-      |> Ash.Query.put_context(:override_domain_params, load_params)
+
+    destination_query =
+      if request.action.pagination && Keyword.get(read_opts, :page) do
+        Ash.Query.page(destination_query, Keyword.get(read_opts, :page))
+      else
+        destination_query
+      end
 
     request = Request.assign(request, :query, destination_query)
 
