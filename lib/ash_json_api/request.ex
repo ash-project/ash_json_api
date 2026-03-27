@@ -1150,11 +1150,12 @@ defmodule AshJsonApi.Request do
 
     Enum.reduce(attributes, request, fn {key, value}, request ->
       case Enum.find(action.arguments, fn argument ->
-             AshJsonApi.Resource.Info.apply_argument_name_mapping(
-               arg_names,
-               action.name,
-               argument.name
-             ) == key
+             argument.public? &&
+               AshJsonApi.Resource.Info.apply_argument_name_mapping(
+                 arg_names,
+                 action.name,
+                 argument.name
+               ) == key
            end) do
         nil ->
           request
@@ -1177,8 +1178,9 @@ defmodule AshJsonApi.Request do
       matching_argument =
         Enum.find(
           action.arguments,
-          &(AshJsonApi.Resource.Info.apply_argument_name_mapping(arg_names, action.name, &1.name) ==
-              key)
+          &(&1.public? &&
+              AshJsonApi.Resource.Info.apply_argument_name_mapping(arg_names, action.name, &1.name) ==
+                key)
         )
 
       matching_accept =

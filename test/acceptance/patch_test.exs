@@ -204,6 +204,10 @@ defmodule Test.Acceptance.PatchTest do
           route "/forbidden_update/:id"
         end
 
+        patch :private_arg_update do
+          route "/private_arg_update/:id"
+        end
+
         related :author, :read
         patch_relationship :author
       end
@@ -239,6 +243,14 @@ defmodule Test.Acceptance.PatchTest do
           updating = Ash.get!(__MODULE__, id)
           {:ok, %{updating | name: updating.name <> "_fake"}}
         end)
+      end
+
+      update :private_arg_update do
+        accept([:name])
+
+        argument :email, :string do
+          public?(false)
+        end
       end
 
       action :forbidden_update, :struct do
@@ -433,6 +445,22 @@ defmodule Test.Acceptance.PatchTest do
         "relationships" => %{"author" => %{"links" => %{}, "meta" => %{}}},
         "type" => "post"
       })
+    end
+
+    test "public?: false arguments on update actions cannot be set via PATCH", %{post: post} do
+      response =
+        Domain
+        |> patch(
+          "/posts/private_arg_update/#{post.id}",
+          %{
+            data: %{attributes: %{email: "should_not_work@test.com"}}
+          },
+          status: 422
+        )
+
+      assert Enum.any?(response.resp_body["errors"], fn error ->
+               error["code"] == "no_such_input"
+             end)
     end
 
     @tag :attributes
