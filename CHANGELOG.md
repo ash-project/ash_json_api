@@ -11,6 +11,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.4](https://github.com/ash-project/ash_json_api/compare/v1.6.3...v1.6.4) (2026-03-27)
+
+
+
+
+### Bug Fixes:
+
+* don't accept private arguments over JSON:API endpoints by [@zachdaniel](https://github.com/zachdaniel)
+
+* fix pagination for JSON:API related routes (#425) by Dgoz101 [(#425)](https://github.com/ash-project/ash_json_api/pull/425)
+
+### Improvements:
+
+* support mapping join resource keys to meta (#419) by lincolnhuls [(#419)](https://github.com/ash-project/ash_json_api/pull/419)
+
 ## [v1.6.3](https://github.com/ash-project/ash_json_api/compare/v1.6.2...v1.6.3) (2026-03-23)
 
 
