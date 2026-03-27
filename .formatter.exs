@@ -65,6 +65,8 @@ spark_locals_without_parens = [
   relationship: 3,
   relationship: 4,
   relationship_arguments: 1,
+  relationship_meta_in: 1,
+  relationship_meta_out: 1,
   require_type_on_create?: 1,
   resource: 1,
   route: 1,
