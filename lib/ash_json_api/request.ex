@@ -1179,7 +1179,11 @@ defmodule AshJsonApi.Request do
         Enum.find(
           action.arguments,
           &(&1.public? &&
-              AshJsonApi.Resource.Info.apply_argument_name_mapping(arg_names, action.name, &1.name) ==
+              AshJsonApi.Resource.Info.apply_argument_name_mapping(
+                arg_names,
+                action.name,
+                &1.name
+              ) ==
                 key)
         )
 
