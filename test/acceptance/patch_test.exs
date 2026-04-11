@@ -208,6 +208,10 @@ defmodule Test.Acceptance.PatchTest do
           route "/private_arg_update/:id"
         end
 
+        patch :validated_update do
+          route "/validated_update/:id"
+        end
+
         related :author, :read
         patch_relationship :author
       end
@@ -251,6 +255,23 @@ defmodule Test.Acceptance.PatchTest do
         argument :email, :string do
           public?(false)
         end
+      end
+
+      update :validated_update do
+        accept([:name])
+        require_atomic?(false)
+
+        validate(fn changeset, _context ->
+          if Ash.Changeset.changing_attribute?(changeset, :name) do
+            {:error,
+             Ash.Error.Changes.InvalidAttribute.exception(
+               field: :name,
+               message: "cannot be changed"
+             )}
+          else
+            :ok
+          end
+        end)
       end
 
       action :forbidden_update, :struct do
@@ -883,6 +904,46 @@ defmodule Test.Acceptance.PatchTest do
       assert %{"data" => %{"attributes" => %{"bio" => bio_content}}} = response.resp_body
       # Should find the original bio
       assert bio_content == bio.bio
+    end
+  end
+
+  describe "single-record error source pointers" do
+    setup do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "Test Post"})
+        |> Ash.create!()
+
+      %{post: post}
+    end
+
+    test "validation errors do not include bulk index in source pointer", %{post: post} do
+      # This test verifies the fix for the bug where single-record operations
+      # would include a `/0/` bulk index in error source pointers.
+      # Before the fix: source pointer was "/data/attributes/0/name"
+      # After the fix: source pointer is "/data/attributes/name"
+      response =
+        Domain
+        |> patch(
+          "/posts/validated_update/#{post.id}",
+          %{
+            data: %{
+              type: "post",
+              attributes: %{
+                name: "new_name"
+              }
+            }
+          },
+          status: 400
+        )
+
+      assert %{"errors" => [error]} = response.resp_body
+      assert error["code"] == "invalid_attribute"
+
+      # The source pointer should NOT contain "/0/" - that's the bulk index
+      # which should be filtered out for single-record operations
+      assert error["source"]["pointer"] == "/data/attributes/name"
+      refute error["source"]["pointer"] =~ ~r"/\d+/"
     end
   end
 end
