@@ -109,8 +109,8 @@ defmodule AshJsonApi.OpenApiTest do
                     greater_than: %OpenApiSpex.Schema{type: :integer},
                     less_than_or_equal: %OpenApiSpex.Schema{type: :integer},
                     greater_than_or_equal: %OpenApiSpex.Schema{type: :integer},
-                    is_distinct_from: %OpenApiSpex.Schema{type: :string},
-                    is_not_distinct_from: %OpenApiSpex.Schema{type: :string}
+                    is_distinct_from: %OpenApiSpex.Schema{type: :integer},
+                    is_not_distinct_from: %OpenApiSpex.Schema{type: :integer}
                   },
                   additionalProperties: false
                 }}
@@ -140,8 +140,8 @@ defmodule AshJsonApi.OpenApiTest do
                      greater_than: %OpenApiSpex.Schema{type: :integer},
                      less_than_or_equal: %OpenApiSpex.Schema{type: :integer},
                      greater_than_or_equal: %OpenApiSpex.Schema{type: :integer},
-                     is_distinct_from: %OpenApiSpex.Schema{type: :string},
-                     is_not_distinct_from: %OpenApiSpex.Schema{type: :string}
+                     is_distinct_from: %OpenApiSpex.Schema{type: :integer},
+                     is_not_distinct_from: %OpenApiSpex.Schema{type: :integer}
                    },
                    additionalProperties: false,
                    description: "Count of posts"
@@ -203,8 +203,8 @@ defmodule AshJsonApi.OpenApiTest do
                  greater_than: %OpenApiSpex.Schema{type: :integer},
                  less_than_or_equal: %OpenApiSpex.Schema{type: :integer},
                  greater_than_or_equal: %OpenApiSpex.Schema{type: :integer},
-                 is_distinct_from: %OpenApiSpex.Schema{type: :string},
-                 is_not_distinct_from: %OpenApiSpex.Schema{type: :string}
+                 is_distinct_from: %OpenApiSpex.Schema{type: :integer},
+                 is_not_distinct_from: %OpenApiSpex.Schema{type: :integer}
                },
                additionalProperties: false
              }
@@ -227,8 +227,8 @@ defmodule AshJsonApi.OpenApiTest do
                  less_than: %OpenApiSpex.Schema{type: :integer},
                  less_than_or_equal: %OpenApiSpex.Schema{type: :integer},
                  greater_than_or_equal: %OpenApiSpex.Schema{type: :integer},
-                 is_distinct_from: %OpenApiSpex.Schema{type: :string},
-                 is_not_distinct_from: %OpenApiSpex.Schema{type: :string}
+                 is_distinct_from: %OpenApiSpex.Schema{type: :integer},
+                 is_not_distinct_from: %OpenApiSpex.Schema{type: :integer}
                },
                additionalProperties: false,
                description: "Count of posts"
