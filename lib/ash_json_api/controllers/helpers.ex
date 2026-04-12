@@ -448,7 +448,7 @@ defmodule AshJsonApi.Controllers.Helpers do
                 Request.add_error(request, error, :fetch_from_path)
 
               %Ash.BulkResult{status: :error, errors: errors} ->
-                Request.add_error(request, errors, :update)
+                Request.add_error(request, strip_bulk_index_from_errors(errors), :update)
             end
         end
       end
@@ -635,7 +635,7 @@ defmodule AshJsonApi.Controllers.Helpers do
                 Request.add_error(request, error, :fetch_from_path)
 
               %Ash.BulkResult{status: :error, errors: errors} ->
-                Request.add_error(request, errors, :update)
+                Request.add_error(request, strip_bulk_index_from_errors(errors), :destroy)
             end
         end
       end
@@ -1163,6 +1163,36 @@ defmodule AshJsonApi.Controllers.Helpers do
 
       _ ->
         {:ok, updated}
+    end
+  end
+
+  # Strips the bulk operation index (0) from error paths.
+  # When using Ash.bulk_update/bulk_destroy for single-record operations,
+  # errors include a leading 0 index that should not appear in JSON:API responses.
+  defp strip_bulk_index_from_errors(errors) do
+    Enum.map(errors, &strip_bulk_index_from_single_error/1)
+  end
+
+  defp strip_bulk_index_from_single_error(error) do
+    error
+    |> strip_path_from_error()
+    |> strip_path_from_inner_errors()
+  end
+
+  defp strip_path_from_error(error) do
+    case Map.get(error, :path) do
+      [0 | rest] -> %{error | path: rest}
+      _ -> error
+    end
+  end
+
+  defp strip_path_from_inner_errors(error) do
+    case Map.get(error, :errors) do
+      errors when is_list(errors) and errors != [] ->
+        %{error | errors: Enum.map(errors, &strip_bulk_index_from_single_error/1)}
+
+      _ ->
+        error
     end
   end
 end
