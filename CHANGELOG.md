@@ -11,6 +11,24 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.5](https://github.com/ash-project/ash_json_api/compare/v1.6.4...v1.6.5) (2026-04-13)
+
+
+
+
+### Bug Fixes:
+
+* remove '0' bulk index in error source pointers (#430) by gcugnet
+
+## [v1.6.5](https://github.com/ash-project/ash_json_api/compare/v1.6.4...v1.6.5) (2026-04-13)
+
+
+
+
+### Bug Fixes:
+
+* remove '0' bulk index in error source pointers (#430) by gcugnet
+
 ## [v1.6.4](https://github.com/ash-project/ash_json_api/compare/v1.6.3...v1.6.4) (2026-03-27)
 
 
