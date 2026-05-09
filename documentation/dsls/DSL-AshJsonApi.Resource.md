@@ -381,7 +381,12 @@ related relationship, action
 ```
 
 
-A GET route to read the related resources of a relationship
+A GET route to read the related resources of a relationship.
+
+The `:action` argument is the read action used to fetch the source
+record. The action used to load the relationship itself is configured
+on the relationship (e.g. `has_many :comments, Comment, read_action: :foo`).
+
 
 
 
@@ -430,6 +435,11 @@ relationship relationship, action
 
 
 A READ route to read the relationship, returns resource identifiers.
+
+The `:action` argument is the read action used to fetch the source
+record. The action used to load the relationship itself is configured
+on the relationship (e.g. `has_many :comments, Comment, read_action: :foo`).
+
 
 
 
