@@ -766,7 +766,7 @@ defmodule AshJsonApi.Controllers.Helpers do
       resource = through_resource || request_resource
 
       action =
-        if request.route.type != :get && (through_resource || request.action.type != :read) do
+        if request.route.type != :get && request.action.type != :read do
           if request.route.read_action do
             Ash.Resource.Info.action(request.resource, request.route.read_action)
           else

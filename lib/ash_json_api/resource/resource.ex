@@ -218,7 +218,13 @@ defmodule AshJsonApi.Resource do
   @related %Spark.Dsl.Entity{
     name: :related,
     args: [:relationship, :action],
-    describe: "A GET route to read the related resources of a relationship",
+    describe: """
+    A GET route to read the related resources of a relationship.
+
+    The `:action` argument is the read action used to fetch the source
+    record. The action used to load the relationship itself is configured
+    on the relationship (e.g. `has_many :comments, Comment, read_action: :foo`).
+    """,
     examples: [
       "related :comments, :read"
     ],
@@ -243,7 +249,13 @@ defmodule AshJsonApi.Resource do
   @relationship %Spark.Dsl.Entity{
     name: :relationship,
     args: [:relationship, :action],
-    describe: "A READ route to read the relationship, returns resource identifiers.",
+    describe: """
+    A READ route to read the relationship, returns resource identifiers.
+
+    The `:action` argument is the read action used to fetch the source
+    record. The action used to load the relationship itself is configured
+    on the relationship (e.g. `has_many :comments, Comment, read_action: :foo`).
+    """,
     examples: [
       "relationship :comments, :read"
     ],
