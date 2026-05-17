@@ -174,6 +174,8 @@ defmodule AshJsonApi.OpenApiTest do
                     less_than_or_equal: %OpenApiSpex.Schema{type: :string},
                     greater_than_or_equal: %OpenApiSpex.Schema{type: :string},
                     contains: %OpenApiSpex.Schema{type: :string},
+                    string_ends_with: %OpenApiSpex.Schema{type: :string},
+                    string_starts_with: %OpenApiSpex.Schema{type: :string},
                     is_distinct_from: %OpenApiSpex.Schema{type: :string},
                     is_not_distinct_from: %OpenApiSpex.Schema{type: :string}
                   },
@@ -254,6 +256,8 @@ defmodule AshJsonApi.OpenApiTest do
                  less_than_or_equal: %OpenApiSpex.Schema{type: :string},
                  greater_than_or_equal: %OpenApiSpex.Schema{type: :string},
                  contains: %OpenApiSpex.Schema{type: :string},
+                 string_ends_with: %OpenApiSpex.Schema{type: :string},
+                 string_starts_with: %OpenApiSpex.Schema{type: :string},
                  is_distinct_from: %OpenApiSpex.Schema{type: :string},
                  is_not_distinct_from: %OpenApiSpex.Schema{type: :string}
                },
