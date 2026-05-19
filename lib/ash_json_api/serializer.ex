@@ -63,17 +63,25 @@ defmodule AshJsonApi.Serializer do
     Enum.map(data, &serialize_one_record(request, &1))
   end
 
-  # Adds page level metadata, like total count of records
-  defp add_page_metadata(meta, %struct{} = page)
-       when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
+  # Adds page level metadata: total count, limit, and offset/more?
+  defp add_page_metadata(meta, %Ash.Page.Offset{} = page) do
     page_meta =
-      if page.count do
-        %{page: %{total: page.count}}
-      else
-        %{page: %{}}
-      end
+      %{}
+      |> maybe_add(:total, page.count)
+      |> maybe_add(:limit, page.limit)
+      |> maybe_add(:offset, page.offset)
 
-    Map.merge(meta, page_meta)
+    Map.merge(meta, %{page: page_meta})
+  end
+
+  defp add_page_metadata(meta, %Ash.Page.Keyset{} = page) do
+    page_meta =
+      %{}
+      |> maybe_add(:total, page.count)
+      |> maybe_add(:limit, page.limit)
+      |> maybe_add(:more?, page.more?)
+
+    Map.merge(meta, %{page: page_meta})
   end
 
   # This is added because some tests on `Test.Acceptance.IndexTest` fail
