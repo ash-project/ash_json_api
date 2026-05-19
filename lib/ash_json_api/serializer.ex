@@ -79,7 +79,6 @@ defmodule AshJsonApi.Serializer do
       %{}
       |> maybe_add(:total, page.count)
       |> maybe_add(:limit, page.limit)
-      |> maybe_add(:more?, page.more?)
 
     Map.merge(meta, %{page: page_meta})
   end
