@@ -111,10 +111,24 @@ defmodule Test.Acceptance.IndexPaginationTest do
       response =
         Domain
         |> get("/posts?page[offset]=5&page[limit]=10", status: 200)
-        |> assert_meta_equals(%{"baz" => "baz", "page" => %{}})
+        |> assert_meta_equals(%{
+          "baz" => "baz",
+          "page" => %{"limit" => 10, "offset" => 5}
+        })
 
       data = response.resp_body["data"]
       assert length(data) == 5
+    end
+
+    test "meta.page includes total, limit, and offset when count is requested" do
+      response =
+        Domain
+        |> get("/posts?page[count]=true&page[limit]=2", status: 200)
+
+      page_meta = response.resp_body["meta"]["page"]
+      assert page_meta["total"] == 10
+      assert page_meta["limit"] == 2
+      assert page_meta["offset"] == 0
     end
 
     @tag capture_log: true
