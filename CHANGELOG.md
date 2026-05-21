@@ -11,6 +11,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.6.6](https://github.com/ash-project/ash_json_api/compare/v1.6.5...v1.6.6) (2026-05-21)
+
+
+
+
+### Bug Fixes:
+
+* handle Union types in serialization by [@zachdaniel](https://github.com/zachdaniel)
+
+* honor read action on related routes by [@zachdaniel](https://github.com/zachdaniel)
+
+### Improvements:
+
+* Expand page metadata with limit/offset (#434) by Kenneth Kostrešević [(#434)](https://github.com/ash-project/ash_json_api/pull/434)
+
 ## [v1.6.5](https://github.com/ash-project/ash_json_api/compare/v1.6.4...v1.6.5) (2026-04-13)
 
 
