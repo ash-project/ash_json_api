@@ -1211,10 +1211,40 @@ defmodule AshJsonApi.Serializer do
     Decimal.to_string(value)
   end
 
+  def serialize_value(
+        %Ash.Union{type: name, value: inner_value},
+        Ash.Type.Union,
+        constraints,
+        domain,
+        opts
+      ) do
+    case constraints[:types][name] do
+      nil ->
+        inner_value
+
+      config ->
+        serialize_value(
+          inner_value,
+          Ash.Type.get_type(config[:type]),
+          config[:constraints] || [],
+          domain,
+          opts
+        )
+    end
+  end
+
   def serialize_value(value, type, constraints, domain, opts) do
     {type, constraints} = flatten_new_type(type, constraints || [])
     opts = [skip_only_primary_key?: false, top_level?: false] |> Keyword.merge(opts)
 
+    if type == Ash.Type.Union and match?(%Ash.Union{}, value) do
+      serialize_value(value, Ash.Type.Union, constraints, domain, opts)
+    else
+      do_serialize_value(value, type, constraints, domain, opts)
+    end
+  end
+
+  defp do_serialize_value(value, type, constraints, domain, opts) do
     with Ash.Type.Struct <- type,
          instance_of when not is_nil(instance_of) <- constraints[:instance_of],
          true <- Ash.Resource.Info.resource?(instance_of) do

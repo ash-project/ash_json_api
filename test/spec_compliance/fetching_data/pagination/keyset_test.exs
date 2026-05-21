@@ -552,7 +552,7 @@ defmodule AshJsonApiTest.FetchingData.Pagination.Keyset do
 
       assert %{"meta" => meta} = conn.resp_body
 
-      assert meta == %{"page" => %{"total" => 15, "limit" => 5, "more?" => true}}
+      assert meta == %{"page" => %{"total" => 15, "limit" => 5}}
     end
 
     test "collection total is not present when count is false" do
