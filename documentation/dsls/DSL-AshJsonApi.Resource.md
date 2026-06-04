@@ -15,6 +15,7 @@ Configure the resource's behavior in the JSON:API
    * index
    * post
    * patch
+   * bulk_update
    * delete
    * related
    * relationship
@@ -84,6 +85,7 @@ Configure the routes that will be exposed via the JSON:API
  * [index](#json_api-routes-index)
  * [post](#json_api-routes-post)
  * [patch](#json_api-routes-patch)
+ * [bulk_update](#json_api-routes-bulk_update)
  * [delete](#json_api-routes-delete)
  * [related](#json_api-routes-related)
  * [relationship](#json_api-routes-relationship)
@@ -314,6 +316,65 @@ patch :update, path_param_is_composite_key: :id
 | [`derive_sort?`](#json_api-routes-patch-derive_sort?){: #json_api-routes-patch-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
 | [`derive_filter?`](#json_api-routes-patch-derive_filter?){: #json_api-routes-patch-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
 | [`path_param_is_composite_key`](#json_api-routes-patch-path_param_is_composite_key){: #json_api-routes-patch-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+
+
+
+
+
+### Introspection
+
+Target: `AshJsonApi.Resource.Route`
+
+### json_api.routes.bulk_update
+```elixir
+bulk_update action
+```
+
+
+A route to bulk-update records from an array request body. Supports per-record (non-atomic, partial success) and transactional batch (all-or-nothing) updates.
+
+
+
+### Examples
+```
+bulk_update :update
+```
+
+```
+bulk_update :update, transaction: :all
+```
+
+```
+bulk_update :update, route: "/bulk"
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`action`](#json_api-routes-bulk_update-action){: #json_api-routes-bulk_update-action .spark-required} | `atom` |  | The action to call when this route is hit |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`route`](#json_api-routes-bulk_update-route){: #json_api-routes-bulk_update-route } | `String.t` | `"/bulk"` | The path of the route |
+| [`default_fields`](#json_api-routes-bulk_update-default_fields){: #json_api-routes-bulk_update-default_fields } | `list(atom)` |  | A list of fields to be shown in the attributes of the called route |
+| [`primary?`](#json_api-routes-bulk_update-primary?){: #json_api-routes-bulk_update-primary? } | `boolean` | `false` | Whether or not this is the route that should be linked to by default when rendering links to this type of route |
+| [`metadata`](#json_api-routes-bulk_update-metadata){: #json_api-routes-bulk_update-metadata } | `(any, any, any -> any)` |  | A function to generate arbitrary top-level metadata for the JSON:API response |
+| [`modify_conn`](#json_api-routes-bulk_update-modify_conn){: #json_api-routes-bulk_update-modify_conn } | `(any, any, any, any -> any)` |  | A function to modify the conn before responding. Used for things like setting headers based on the response. Takes `conn, subject, result, request`. See the modify_conn guide for more details and examples. |
+| [`action_names_in_schema`](#json_api-routes-bulk_update-action_names_in_schema){: #json_api-routes-bulk_update-action_names_in_schema } | `keyword` |  | A mapping of action names to how they should appear in the OpenAPI schema. You only need to set this if you see a warning during schema generation. |
+| [`name`](#json_api-routes-bulk_update-name){: #json_api-routes-bulk_update-name } | `String.t` |  | A globally unique name for this route, to be used when generating docs and open api specifications |
+| [`description`](#json_api-routes-bulk_update-description){: #json_api-routes-bulk_update-description } | `String.t` |  | A human-friendly description of this specific route to use in generated documentation and OpenAPI. If provided, this overrides the action description. |
+| [`derive_sort?`](#json_api-routes-bulk_update-derive_sort?){: #json_api-routes-bulk_update-derive_sort? } | `boolean` | `true` | Whether or not to derive a sort parameter based on the sortable fields of the resource |
+| [`derive_filter?`](#json_api-routes-bulk_update-derive_filter?){: #json_api-routes-bulk_update-derive_filter? } | `boolean` | `true` | Whether or not to derive a filter parameter based on the sortable fields of the resource |
+| [`path_param_is_composite_key`](#json_api-routes-bulk_update-path_param_is_composite_key){: #json_api-routes-bulk_update-path_param_is_composite_key } | `atom` |  | The path parameter that should be parsed as a composite primary key. When specified (e.g., :id), the parameter will be split using the resource's primary key delimiter and mapped to individual primary key fields. This is required for resources with composite primary keys to work correctly with GET, PATCH, and DELETE operations. See the composite primary keys documentation for more details. |
+| [`transaction`](#json_api-routes-bulk_update-transaction){: #json_api-routes-bulk_update-transaction } | `:per_record \| :batch \| :all \| false` | `:per_record` | How to wrap the bulk update. `:per_record`/`false` are non-atomic — each record commits independently so successes persist when other records fail (partial success → multi-status). `:batch`/`:all` are atomic — any failure rolls the whole request back (all-or-nothing). |
+| [`batch_size`](#json_api-routes-bulk_update-batch_size){: #json_api-routes-bulk_update-batch_size } | `pos_integer` |  | The number of records to update per batch, passed through to `Ash.update_all/3`. |
+| [`success_status`](#json_api-routes-bulk_update-success_status){: #json_api-routes-bulk_update-success_status } | `integer` | `200` | The HTTP status code to use when every record succeeds. |
+| [`partial_success_status`](#json_api-routes-bulk_update-partial_success_status){: #json_api-routes-bulk_update-partial_success_status } | `integer` | `207` | The HTTP status code to use when some records succeed and some fail (per-record mode only). |
+| [`read_action`](#json_api-routes-bulk_update-read_action){: #json_api-routes-bulk_update-read_action } | `atom` |  | The read action to use to look the records up before updating |
 
 
 
