@@ -1607,17 +1607,27 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       acc_with_request_schemas = %{acc | schemas: Map.merge(acc.schemas, request_schemas)}
 
+      responses =
+        %{
+          :default => %Reference{
+            "$ref": "#/components/responses/errors"
+          },
+          response_code => response
+        }
+        |> then(fn responses ->
+          if route.type == :bulk_update do
+            Map.put(responses, 207, bulk_multi_status_response(route, resource))
+          else
+            responses
+          end
+        end)
+
       operation = %Operation{
         description: action_description(action, route, resource),
         operationId: route.name,
         tags: [to_string(AshJsonApi.Resource.Info.type(resource))],
         parameters: parameters_list,
-        responses: %{
-          :default => %Reference{
-            "$ref": "#/components/responses/errors"
-          },
-          response_code => response
-        },
+        responses: responses,
         requestBody: request_body_result
       }
 
@@ -2119,6 +2129,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 :route,
                 :post,
                 :patch,
+                :bulk_update,
                 :post_to_relationship,
                 :patch_relationship,
                 :delete_from_relationship
@@ -2151,6 +2162,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
               route.type == :route ->
                 json_body_schema.properties.data.required != []
+
+              route.type == :bulk_update ->
+                true
 
               true ->
                 json_body_schema.properties.data.properties.attributes.required != [] ||
@@ -2366,6 +2380,82 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp request_body_schema(
+           %{
+             type: :bulk_update,
+             action: action,
+             relationship_arguments: relationship_arguments
+           } = route,
+           resource,
+           format,
+           acc
+         ) do
+      action = Ash.Resource.Info.action(resource, action)
+
+      non_relationship_arguments =
+        Enum.reject(
+          action.arguments,
+          &has_relationship_argument?(relationship_arguments, &1.name)
+        )
+
+      {properties, acc} =
+        write_attributes(
+          resource,
+          non_relationship_arguments,
+          action,
+          route,
+          acc,
+          format
+        )
+
+      schema = %Schema{
+        type: :object,
+        required: [:data],
+        additionalProperties: false,
+        properties: %{
+          data: %Schema{
+            type: :array,
+            items: %Schema{
+              type: :object,
+              additionalProperties: false,
+              required: [:id],
+              properties: %{
+                id: %Schema{
+                  type: :string
+                },
+                type: %Schema{
+                  enum: [AshJsonApi.Resource.Info.type(resource)]
+                },
+                attributes:
+                  %Schema{
+                    type: :object,
+                    additionalProperties: false,
+                    properties: properties,
+                    required:
+                      required_write_attributes(
+                        resource,
+                        non_relationship_arguments,
+                        action,
+                        route
+                      )
+                  }
+                  |> add_null_for_non_required(),
+                relationships: %Schema{
+                  type: :object,
+                  additionalProperties: false,
+                  properties: write_relationships(resource, relationship_arguments, action),
+                  required:
+                    required_relationship_attributes(resource, relationship_arguments, action)
+                }
+              }
+            }
+          }
+        }
+      }
+
+      {schema, acc}
+    end
+
+    defp request_body_schema(
            %{type: type, relationship: relationship},
            resource,
            _format,
@@ -2555,6 +2645,44 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {response, acc}
     end
 
+    defp bulk_multi_status_response(route, resource) do
+      schema = %Schema{
+        type: :object,
+        additionalProperties: false,
+        properties: %{
+          data: %Schema{
+            description:
+              "An array of successfully updated #{AshJsonApi.Resource.Info.type(resource)} resource objects",
+            type: :array,
+            items: item_reference(route, resource),
+            uniqueItems: true
+          },
+          included: included_resource_schemas(resource),
+          errors: %Schema{
+            description: "Errors for inputs that failed, correlated by index via source.pointer",
+            type: :array,
+            items: %Schema{type: :object, additionalProperties: true}
+          },
+          meta: %Schema{
+            type: :object,
+            additionalProperties: true,
+            properties: %{
+              total_requested: %Schema{type: :integer},
+              successful: %Schema{type: :integer},
+              failed: %Schema{type: :integer}
+            }
+          }
+        }
+      }
+
+      %Response{
+        description: "Multi-Status — some inputs succeeded and some failed",
+        content: %{
+          "application/vnd.api+json" => %MediaType{schema: schema}
+        }
+      }
+    end
+
     @spec response_schema(Route.t(), resource :: module, acc :: acc()) :: {Schema.t(), acc()}
     defp response_schema(route, resource, acc) do
       case route.type do
@@ -2621,6 +2749,28 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
         :delete ->
           {nil, acc}
+
+        :bulk_update ->
+          schema = %Schema{
+            type: :object,
+            additionalProperties: false,
+            properties: %{
+              data: %Schema{
+                description:
+                  "An array of updated #{AshJsonApi.Resource.Info.type(resource)} resource objects",
+                type: :array,
+                items: item_reference(route, resource),
+                uniqueItems: true
+              },
+              included: included_resource_schemas(resource),
+              meta: %Schema{
+                type: :object,
+                additionalProperties: true
+              }
+            }
+          }
+
+          {schema, acc}
 
         type
         when type in [:post_to_relationship, :patch_relationship, :delete_from_relationship] ->

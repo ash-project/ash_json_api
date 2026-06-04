@@ -190,6 +190,57 @@ defmodule AshJsonApi.Resource do
     ]
   }
 
+  @bulk_update %Spark.Dsl.Entity{
+    name: :bulk_update,
+    args: [:action],
+    describe:
+      "A route to bulk-update records from an array request body. Supports per-record (non-atomic, partial success) and transactional batch (all-or-nothing) updates.",
+    examples: [
+      "bulk_update :update",
+      "bulk_update :update, transaction: :all",
+      "bulk_update :update, route: \"/bulk\""
+    ],
+    schema:
+      @route_schema
+      |> Spark.Options.Helpers.set_default!(:route, "/bulk")
+      |> Keyword.delete(:query_params)
+      |> Keyword.merge(
+        transaction: [
+          type: {:one_of, [:per_record, :batch, :all, false]},
+          default: :per_record,
+          doc:
+            "How to wrap the bulk update. `:per_record`/`false` are non-atomic — each record commits independently so successes persist when other records fail (partial success → multi-status). `:batch`/`:all` are atomic — any failure rolls the whole request back (all-or-nothing)."
+        ],
+        batch_size: [
+          type: :pos_integer,
+          doc: "The number of records to update per batch, passed through to `Ash.update_all/3`."
+        ],
+        success_status: [
+          type: :integer,
+          default: 200,
+          doc: "The HTTP status code to use when every record succeeds."
+        ],
+        partial_success_status: [
+          type: :integer,
+          default: 207,
+          doc:
+            "The HTTP status code to use when some records succeed and some fail (per-record mode only)."
+        ],
+        read_action: [
+          type: :atom,
+          default: nil,
+          doc: "The read action to use to look the records up before updating"
+        ]
+      ),
+    target: AshJsonApi.Resource.Route,
+    auto_set_fields: [
+      method: :patch,
+      controller: AshJsonApi.Controllers.BulkUpdate,
+      action_type: :update,
+      type: :bulk_update
+    ]
+  }
+
   @delete %Spark.Dsl.Entity{
     name: :delete,
     args: [:action],
@@ -425,6 +476,7 @@ defmodule AshJsonApi.Resource do
       @index,
       @post,
       @patch,
+      @bulk_update,
       @delete,
       @related,
       @relationship,

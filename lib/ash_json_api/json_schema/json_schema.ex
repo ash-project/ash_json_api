@@ -925,6 +925,65 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp route_in_schema(
+         %{
+           type: :bulk_update,
+           action: action,
+           relationship_arguments: relationship_arguments
+         } = route,
+         _domain,
+         resource
+       ) do
+    action = Ash.Resource.Info.action(resource, action)
+
+    non_relationship_arguments =
+      Enum.reject(action.arguments, &has_relationship_argument?(relationship_arguments, &1.name))
+
+    %{
+      "type" => "object",
+      "required" => ["data"],
+      "additionalProperties" => false,
+      "properties" => %{
+        "data" => %{
+          "type" => "array",
+          "items" => %{
+            "type" => "object",
+            "additionalProperties" => false,
+            "properties" =>
+              %{
+                "type" => %{
+                  "const" => AshJsonApi.Resource.Info.type(resource)
+                },
+                "attributes" =>
+                  %{
+                    "type" => "object",
+                    "additionalProperties" => false,
+                    "required" =>
+                      required_write_attributes(
+                        resource,
+                        non_relationship_arguments,
+                        action,
+                        route
+                      ),
+                    "properties" =>
+                      write_attributes(resource, non_relationship_arguments, action, route)
+                  }
+                  |> add_null_for_non_required(),
+                "relationships" => %{
+                  "type" => "object",
+                  "additionalProperties" => false,
+                  "required" =>
+                    required_relationship_attributes(resource, relationship_arguments, action),
+                  "properties" => write_relationships(resource, relationship_arguments, action)
+                }
+              }
+              |> add_id_field(resource)
+          }
+        }
+      }
+    }
+  end
+
+  defp route_in_schema(
          %{type: type, relationship: relationship},
          _domain,
          resource
