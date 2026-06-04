@@ -103,6 +103,14 @@ defmodule AshJsonApi.Controllers.Response do
   end
 
   # sobelow_skip ["XSS.SendResp"]
+  def render_bulk_update(conn, request, includes) do
+    status = request.route.partial_success_status || 207
+    serialized = AshJsonApi.Serializer.serialize_bulk_result(request, includes)
+
+    send_resp(conn, status, serialized)
+  end
+
+  # sobelow_skip ["XSS.SendResp"]
   def render_one_relationship(conn, request, status, relationship) do
     serialized =
       AshJsonApi.Serializer.serialize_to_one_relationship(
