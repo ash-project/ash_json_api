@@ -557,6 +557,17 @@ defmodule AshJsonApi.Resource do
         doc:
           "The fields to include in the object if the `fields` query parameter does not specify. Defaults to all public"
       ],
+      hide_fields: [
+        type: {:list, :atom},
+        default: [],
+        doc:
+          "A list of fields to hide from the generated OpenAPI specification. Applies to attributes, relationships, calculations, and aggregates."
+      ],
+      show_fields: [
+        type: {:list, :atom},
+        doc:
+          "A list of fields to show in the generated OpenAPI specification. If not specified, all public fields are shown except those in `hide_fields`."
+      ],
       derive_sort?: [
         type: :boolean,
         doc:
@@ -722,6 +733,7 @@ defmodule AshJsonApi.Resource do
     AshJsonApi.Resource.Verifiers.VerifyIncludes,
     AshJsonApi.Resource.Verifiers.VerifyActions,
     AshJsonApi.Resource.Verifiers.VerifyHasType,
+    AshJsonApi.Resource.Verifiers.VerifyFieldReferences,
     AshJsonApi.Resource.Verifiers.VerifyQueryParams
   ]
 

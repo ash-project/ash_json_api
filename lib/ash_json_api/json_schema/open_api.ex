@@ -198,7 +198,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp all_resources_requiring_filter_schemas(domains) do
       domains
       |> Enum.flat_map(&Ash.Domain.Info.resources/1)
-      |> Enum.reject(&Enum.empty?(AshJsonApi.Resource.Info.routes(&1, domains)))
+      |> Enum.reject(fn resource ->
+        resource
+        |> AshJsonApi.Resource.Info.routes(domains)
+        |> Enum.filter(&route_visible?(resource, &1))
+        |> Enum.empty?()
+      end)
       |> with_all_related_resources()
       |> Enum.filter(fn resource ->
         AshJsonApi.Resource.Info.type(resource) &&
@@ -209,7 +214,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp with_all_related_resources(resources, checked \\ []) do
       resources
       |> Enum.reject(&(&1 in checked))
-      |> Enum.flat_map(&Ash.Resource.Info.public_relationships/1)
+      |> Enum.flat_map(fn resource ->
+        resource
+        |> Ash.Resource.Info.public_relationships()
+        |> filter_shown_fields(resource)
+      end)
       |> Enum.map(& &1.destination)
       |> Enum.reject(&(&1 in resources))
       |> case do
@@ -233,7 +242,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       domains
       |> Stream.flat_map(&Ash.Domain.Info.resources/1)
       |> Stream.reject(&Enum.empty?(AshJsonApi.Resource.Info.routes(&1, domains)))
-      |> Stream.flat_map(&Ash.Resource.Info.relationships/1)
+      |> Stream.flat_map(fn resource ->
+        resource
+        |> Ash.Resource.Info.relationships()
+        |> filter_shown_fields(resource)
+      end)
       |> Stream.filter(& &1.public?)
       |> Enum.any?(&(&1.destination == resource))
     end
@@ -250,6 +263,18 @@ if Code.ensure_loaded?(OpenApiSpex) do
       action = Ash.Resource.Info.action(resource, route.action)
 
       action && action.type == :read
+    end
+
+    defp show_field?(resource, %{name: name}) do
+      AshJsonApi.Resource.Info.show_field?(resource, name)
+    end
+
+    defp show_field?(resource, field) do
+      AshJsonApi.Resource.Info.show_field?(resource, field)
+    end
+
+    defp filter_shown_fields(fields, resource) do
+      Enum.filter(fields, &show_field?(resource, &1))
     end
 
     defp resource_filter_schemas(domains, resource, acc) do
@@ -381,6 +406,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
         fields || AshJsonApi.Resource.Info.default_fields(resource) ||
           Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name)
 
+      fields = Enum.filter(fields, &show_field?(resource, &1))
+
       {properties, acc} = resource_attributes(resource, fields, :json, acc)
 
       schema =
@@ -399,6 +426,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp required_attributes(resource) do
       resource
       |> Ash.Resource.Info.public_attributes()
+      |> filter_shown_fields(resource)
       |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
       |> Enum.map(fn attr ->
         AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name)
@@ -420,6 +448,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         Ash.Resource.Info.public_aggregates(resource)
         |> AshJsonApi.JsonSchema.set_aggregate_constraints(resource)
       )
+      |> filter_shown_fields(resource)
       |> Enum.map(fn
         %Ash.Resource.Aggregate{} = agg ->
           field =
@@ -1343,6 +1372,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp resource_relationships(resource) do
       resource
       |> Ash.Resource.Info.public_relationships()
+      |> filter_shown_fields(resource)
       |> Enum.filter(fn %{destination: destination} ->
         AshJsonApi.Resource.Info.type(destination)
       end)
@@ -1517,7 +1547,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
         domain
         |> resources()
         |> Enum.flat_map_reduce(acc, fn resource, acc ->
-          routes = AshJsonApi.Resource.Info.routes(resource, all_domains)
+          routes =
+            resource
+            |> AshJsonApi.Resource.Info.routes(all_domains)
+            |> Enum.filter(&route_visible?(resource, &1))
 
           {route_operations, acc} =
             Enum.map_reduce(routes, acc, fn route, acc ->
@@ -1533,6 +1566,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> Map.new(fn {path, route_ops} -> {path, struct!(PathItem, route_ops)} end)
 
       {final_paths, final_acc}
+    end
+
+    defp route_visible?(_resource, %{relationship: nil}), do: true
+
+    defp route_visible?(resource, %{relationship: relationship}) do
+      show_field?(resource, relationship)
     end
 
     @spec route_operation(
@@ -1745,6 +1784,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
               end)
             )
             |> Enum.filter(& &1)
+            |> Enum.reject(fn
+              %Ash.Resource.Attribute{name: name} ->
+                !show_field?(resource, name) && to_string(name) not in route_params
+
+              _ ->
+                false
+            end)
             |> Enum.reduce({[], acc}, fn argument_or_attribute, {list, acc} ->
               {schema, acc} =
                 resource_write_attribute_type(argument_or_attribute, resource, action.type, acc)
@@ -1859,6 +1905,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         sorts =
           resource
           |> AshJsonApi.JsonSchema.sortable_fields()
+          |> filter_shown_fields(resource)
           |> Enum.flat_map(fn attr ->
             name = AshJsonApi.Resource.Info.field_to_json_key(resource, attr.name)
             [name, "-" <> name, "\\+\\+" <> name, "--" <> name]
@@ -1992,6 +2039,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         resource
         |> AshJsonApi.Resource.Info.includes()
         |> all_paths()
+        |> Enum.filter(&visible_relationship_path?(resource, &1))
         |> Enum.map(&Enum.join(&1, "."))
 
       %Parameter{
@@ -2016,6 +2064,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
         # Get all paginated relationship paths
         paginated_paths =
           paginated_includes
+          |> Enum.filter(fn
+            path when is_list(path) -> visible_relationship_path?(resource, path)
+            atom when is_atom(atom) -> visible_relationship_path?(resource, [atom])
+          end)
           |> Enum.map(fn
             path when is_list(path) -> Enum.join(path, ".")
             atom when is_atom(atom) -> to_string(atom)
@@ -2041,11 +2093,10 @@ if Code.ensure_loaded?(OpenApiSpex) do
       type = AshJsonApi.Resource.Info.type(resource)
 
       example =
-        Enum.join(
-          AshJsonApi.Resource.Info.default_fields(resource) ||
-            Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name),
-          ","
-        )
+        (AshJsonApi.Resource.Info.default_fields(resource) ||
+           Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name))
+        |> Enum.filter(&show_field?(resource, &1))
+        |> Enum.join(",")
 
       %Parameter{
         name: :fields,
@@ -2068,6 +2119,26 @@ if Code.ensure_loaded?(OpenApiSpex) do
           }
         }
       }
+    end
+
+    defp visible_relationship_path?(resource, path) do
+      path
+      |> List.wrap()
+      |> Enum.reduce_while(resource, fn relationship_name, current_resource ->
+        relationship = Ash.Resource.Info.public_relationship(current_resource, relationship_name)
+
+        cond do
+          is_nil(relationship) ->
+            {:halt, false}
+
+          !show_field?(current_resource, relationship_name) ->
+            {:halt, false}
+
+          true ->
+            {:cont, relationship.destination}
+        end
+      end)
+      |> then(&(&1 != false))
     end
 
     @spec read_argument_parameters(
@@ -2394,12 +2465,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
             []
 
           :update ->
-            action.require_attributes
+            Enum.filter(action.require_attributes, &show_field?(resource, &1))
 
           _ ->
             resource
             |> Ash.Resource.Info.attributes()
             |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+            |> filter_shown_fields(resource)
             |> Enum.reject(
               &(&1.name in filtered_arguments || &1.allow_nil? || not is_nil(&1.default) ||
                   &1.generated? ||
@@ -2417,6 +2489,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       require_attributes =
         Map.get(action, :require_attributes, [])
+        |> Enum.filter(&show_field?(resource, &1))
         |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
 
       Enum.uniq(attribute_names ++ argument_names ++ require_attributes)
@@ -2438,6 +2511,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           resource
           |> Ash.Resource.Info.attributes()
           |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+          |> filter_shown_fields(resource)
           |> Enum.reduce({%{}, acc}, fn attribute, {attrs, acc} ->
             {schema, acc} =
               resource_write_attribute_type(attribute, resource, action.type, acc, format)
@@ -2492,6 +2566,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp required_relationship_attributes(resource, relationship_arguments, action) do
       action.arguments
       |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
+      |> filter_shown_fields(resource)
       |> Enum.reject(& &1.allow_nil?)
       |> Enum.map(fn arg ->
         AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
@@ -2503,6 +2578,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp write_relationships(resource, relationship_arguments, action) do
       action.arguments
       |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
+      |> filter_shown_fields(resource)
       |> Map.new(fn argument ->
         data = resource_write_relationship_field_data(resource, argument)
 
@@ -2747,11 +2823,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
       do: relationship_destination(resource, include) |> List.wrap()
 
     defp relationship_destination(resource, include) do
-      resource
-      |> Ash.Resource.Info.public_relationship(include)
-      |> case do
-        %{destination: destination} -> destination
-        _ -> nil
+      if show_field?(resource, include) do
+        resource
+        |> Ash.Resource.Info.public_relationship(include)
+        |> case do
+          %{destination: destination} -> destination
+          _ -> nil
+        end
+      else
+        nil
       end
     end
 
@@ -2765,6 +2845,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp filter_attribute_types(resource, acc) do
       resource
       |> Ash.Resource.Info.public_attributes()
+      |> filter_shown_fields(resource)
       |> Enum.filter(&filterable?(&1, resource))
       |> Enum.reduce({[], acc}, fn attribute, {results, acc} ->
         {result, acc} = filter_type(attribute, resource, acc)
@@ -2775,6 +2856,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp filter_aggregate_types(resource, acc) do
       resource
       |> Ash.Resource.Info.public_aggregates()
+      |> filter_shown_fields(resource)
       |> Enum.filter(&filterable?(&1, resource))
       |> Enum.reduce({[], acc}, fn aggregate, {results, acc} ->
         {result, acc} = filter_type(aggregate, resource, acc)
@@ -2785,6 +2867,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp filter_calculation_types(resource, acc) do
       resource
       |> Ash.Resource.Info.public_calculations()
+      |> filter_shown_fields(resource)
       |> Enum.filter(&filterable?(&1, resource))
       |> Enum.reduce({[], acc}, fn calculation, {results, acc} ->
         {result, acc} = filter_type(calculation, resource, acc)
@@ -2987,6 +3070,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       resource
       |> Ash.Resource.Info.public_relationships()
+      |> filter_shown_fields(resource)
       |> Enum.filter(
         &(&1.destination in all_resources &&
             AshJsonApi.Resource.Info.derive_filter?(&1.destination) &&
@@ -3006,6 +3090,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       if Ash.DataLayer.data_layer_can?(resource, :expression_calculation) do
         resource
         |> Ash.Resource.Info.public_calculations()
+        |> filter_shown_fields(resource)
         |> Enum.filter(&filterable?(&1, resource))
         |> Enum.map(fn calculation ->
           {calculation.name,
@@ -3021,6 +3106,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp attribute_filter_fields(resource) do
       resource
       |> Ash.Resource.Info.public_attributes()
+      |> filter_shown_fields(resource)
       |> Enum.filter(&filterable?(&1, resource))
       |> Enum.map(fn attribute ->
         {attribute.name,
@@ -3034,6 +3120,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       if Ash.DataLayer.data_layer_can?(resource, :aggregate_filter) do
         resource
         |> Ash.Resource.Info.public_aggregates()
+        |> filter_shown_fields(resource)
         |> Enum.filter(&filterable?(&1, resource))
         |> Enum.map(fn aggregate ->
           {aggregate.name,

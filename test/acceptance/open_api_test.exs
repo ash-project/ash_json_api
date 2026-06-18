@@ -266,6 +266,122 @@ defmodule Test.Acceptance.OpenApiTest do
     end
   end
 
+  defmodule HiddenSpecAuthor do
+    use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.HiddenSpecDomain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("hidden-spec-author")
+
+      routes do
+        base("/hidden_spec_authors")
+        index(:read)
+      end
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:read, :create])
+    end
+
+    attributes do
+      uuid_primary_key(:id, writable?: true, public?: true)
+      attribute(:name, :string, allow_nil?: false, public?: true)
+    end
+  end
+
+  defmodule HiddenSpecPost do
+    use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.HiddenSpecDomain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("hidden-spec-post")
+      includes([:visible_author, :hidden_author])
+      paginated_includes([:visible_author, :hidden_author])
+      default_fields([:name, :secret, :secret_calc])
+      hide_fields([:secret, :secret_calc, :hidden_author])
+
+      routes do
+        base("/hidden_spec_posts")
+        get(:read)
+        index(:read)
+        post(:create, relationship_arguments: [{:id, :visible_author}, {:id, :hidden_author}])
+        related(:visible_author, :read)
+        related(:hidden_author, :read)
+      end
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:read])
+
+      create :create do
+        primary? true
+        accept([:id, :name, :secret])
+        argument(:visible_author, :uuid, allow_nil?: false)
+        argument(:hidden_author, :uuid, allow_nil?: false)
+
+        change(manage_relationship(:visible_author, type: :append_and_remove))
+        change(manage_relationship(:hidden_author, type: :append_and_remove))
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id, writable?: true, public?: true)
+      attribute(:name, :string, allow_nil?: false, public?: true)
+      attribute(:secret, :string, allow_nil?: false, public?: true)
+    end
+
+    calculations do
+      calculate(:secret_calc, :string, concat([:name, :name], "-"), public?: true)
+    end
+
+    relationships do
+      belongs_to(:visible_author, Test.Acceptance.OpenApiTest.HiddenSpecAuthor,
+        allow_nil?: false,
+        public?: true
+      )
+
+      belongs_to(:hidden_author, Test.Acceptance.OpenApiTest.HiddenSpecAuthor,
+        allow_nil?: false,
+        public?: true
+      )
+    end
+  end
+
+  defmodule HiddenSpecDomain do
+    use Ash.Domain,
+      otp_app: :ash_json_api,
+      extensions: [
+        AshJsonApi.Domain
+      ]
+
+    json_api do
+      log_errors?(false)
+    end
+
+    resources do
+      resource(HiddenSpecAuthor)
+      resource(HiddenSpecPost)
+    end
+  end
+
   defmodule Blogs do
     use Ash.Domain,
       otp_app: :ash_json_api,
@@ -331,6 +447,68 @@ defmodule Test.Acceptance.OpenApiTest do
     # A custom description read from the resource
     author = api_spec.components.schemas["author"]
     assert author.description == "This is an author!"
+  end
+
+  test "hide_fields hides fields from the generated OpenAPI specification" do
+    api_spec =
+      AshJsonApi.Controllers.OpenApi.spec(%{private: %{}},
+        domains: [HiddenSpecDomain]
+      )
+
+    schema = api_spec.components.schemas["hidden-spec-post"]
+    attributes = schema.properties.attributes.properties
+    relationships = schema.properties.relationships.properties
+
+    assert Map.has_key?(attributes, "name")
+    refute Map.has_key?(attributes, "secret")
+    refute Map.has_key?(attributes, "secret_calc")
+
+    assert Map.has_key?(relationships, :visible_author)
+    refute Map.has_key?(relationships, :hidden_author)
+
+    filter_schema = api_spec.components.schemas["hidden-spec-post-filter"]
+    assert Map.has_key?(filter_schema.properties, :name)
+    assert Map.has_key?(filter_schema.properties, :visible_author)
+    refute Map.has_key?(filter_schema.properties, :secret)
+    refute Map.has_key?(filter_schema.properties, :secret_calc)
+    refute Map.has_key?(filter_schema.properties, :hidden_author)
+    refute Map.has_key?(api_spec.components.schemas, "hidden-spec-post-filter-secret")
+    refute Map.has_key?(api_spec.components.schemas, "hidden-spec-post-filter-secret_calc")
+
+    operation = api_spec.paths["/hidden_spec_posts"].get
+
+    sort = Enum.find(operation.parameters, &(&1.name == "sort"))
+    assert sort.schema.pattern =~ "name"
+    refute sort.schema.pattern =~ "secret"
+
+    fields = Enum.find(operation.parameters, &(&1.name == "fields"))
+    assert fields.schema.example == %{"hidden-spec-post" => "name"}
+
+    include = Enum.find(operation.parameters, &(&1.name == "include"))
+    assert include.schema.pattern =~ "visible_author"
+    refute include.schema.pattern =~ "hidden_author"
+
+    included_page = Enum.find(operation.parameters, &(&1.name == "included_page"))
+    assert included_page.description =~ "visible_author"
+    refute included_page.description =~ "hidden_author"
+
+    refute Map.has_key?(api_spec.paths, "/hidden_spec_posts/{id}/hidden_author")
+    assert Map.has_key?(api_spec.paths, "/hidden_spec_posts/{id}/visible_author")
+
+    create_schema =
+      api_spec.paths["/hidden_spec_posts"].post.requestBody.content["application/vnd.api+json"].schema
+
+    create_attributes = create_schema.properties.data.properties.attributes
+    create_relationships = create_schema.properties.data.properties.relationships
+
+    assert Map.has_key?(create_attributes.properties, "name")
+    refute Map.has_key?(create_attributes.properties, "secret")
+    refute "secret" in create_attributes.required
+
+    assert Map.has_key?(create_relationships.properties, "visible_author")
+    refute Map.has_key?(create_relationships.properties, "hidden_author")
+    assert "visible_author" in create_relationships.required
+    refute "hidden_author" in create_relationships.required
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do

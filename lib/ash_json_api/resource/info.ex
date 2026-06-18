@@ -70,6 +70,24 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :default_fields, nil, true)
   end
 
+  @doc "Fields to hide from the generated API specification"
+  def hide_fields(resource) do
+    Extension.get_opt(resource, [:json_api], :hide_fields, [], true)
+  end
+
+  @doc "Fields to show in the generated API specification"
+  def show_fields(resource) do
+    Extension.get_opt(resource, [:json_api], :show_fields, nil, true)
+  end
+
+  @doc "Whether or not a given field should be shown in the generated API specification"
+  def show_field?(resource, field) do
+    hide_fields = hide_fields(resource)
+    show_fields = show_fields(resource) || [field]
+
+    field not in hide_fields and field in show_fields
+  end
+
   @doc """
   Returns the `relationship_meta_in` config for the resource.
   """
