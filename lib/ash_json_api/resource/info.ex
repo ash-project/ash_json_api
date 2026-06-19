@@ -70,17 +70,21 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :default_fields, nil, true)
   end
 
-  @doc "Fields to hide from the generated API specification"
+  @doc "Fields to hide from generated API specifications and JSON:API responses"
   def hide_fields(resource) do
     Extension.get_opt(resource, [:json_api], :hide_fields, [], true)
   end
 
-  @doc "Fields to show in the generated API specification"
+  @doc "Fields to show in generated API specifications and JSON:API responses"
   def show_fields(resource) do
     Extension.get_opt(resource, [:json_api], :show_fields, nil, true)
   end
 
-  @doc "Whether or not a given field should be shown in the generated API specification"
+  @doc "Whether or not a given field should be exposed in JSON:API"
+  def show_field?(resource, %{name: name}) do
+    show_field?(resource, name)
+  end
+
   def show_field?(resource, field) do
     hide_fields = hide_fields(resource)
     show_fields = show_fields(resource) || [field]
@@ -189,7 +193,10 @@ defmodule AshJsonApi.Resource.Info do
         Ash.Resource.Info.public_aggregates(resource)
 
     Enum.find_value(all_fields, fn field ->
-      if apply_field_name_mapping(names, field.name) == json_key, do: field.name
+      if show_field?(resource, field.name) &&
+           apply_field_name_mapping(names, field.name) == json_key do
+        field.name
+      end
     end)
   end
 

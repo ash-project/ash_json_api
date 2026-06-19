@@ -109,11 +109,16 @@ defmodule AshJsonApi.Router do
     router.domains()
     |> Enum.flat_map(&Ash.Domain.Info.resources/1)
     |> Enum.flat_map(fn resource ->
-      resource |> AshJsonApi.Resource.Info.routes() |> Enum.map(&Map.put(&1, :resource, resource))
+      resource
+      |> AshJsonApi.Resource.Info.routes()
+      |> Enum.map(&Map.put(&1, :resource, resource))
+      |> Enum.filter(&route_visible?/1)
     end)
     |> then(fn routes ->
       Enum.concat(
-        Enum.flat_map(router.domains(), &AshJsonApi.Domain.Info.routes/1),
+        router.domains()
+        |> Enum.flat_map(&AshJsonApi.Domain.Info.routes/1)
+        |> Enum.filter(&route_visible?/1),
         routes
       )
     end)
@@ -161,5 +166,11 @@ defmodule AshJsonApi.Router do
 
   defp match_path?(_, _) do
     false
+  end
+
+  defp route_visible?(%{relationship: nil}), do: true
+
+  defp route_visible?(%{resource: resource, relationship: relationship}) do
+    AshJsonApi.Resource.Info.show_field?(resource, relationship)
   end
 end

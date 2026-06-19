@@ -9,7 +9,10 @@ defmodule AshJsonApi.Resource.Persisters.DefineRouter do
   alias Spark.Dsl.Transformer
 
   def transform(dsl) do
-    routes = AshJsonApi.Resource.Info.routes(dsl)
+    routes =
+      dsl
+      |> AshJsonApi.Resource.Info.routes()
+      |> Enum.filter(&route_visible?(dsl, &1))
 
     route_matchers =
       routes
@@ -43,6 +46,12 @@ defmodule AshJsonApi.Resource.Persisters.DefineRouter do
            end
          ]
      )}
+  end
+
+  defp route_visible?(_resource, %{relationship: nil}), do: true
+
+  defp route_visible?(resource, %{relationship: relationship}) do
+    AshJsonApi.Resource.Info.show_field?(resource, relationship)
   end
 
   # sobelow_skip ["DOS.StringToAtom"]

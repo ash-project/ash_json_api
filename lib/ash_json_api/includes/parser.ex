@@ -30,7 +30,46 @@ defmodule AshJsonApi.Includes.Parser do
   defp allowed_preloads(resource) do
     resource
     |> AshJsonApi.Resource.Info.includes()
+    |> filter_hidden_includes(resource)
     |> to_nested_map()
+  end
+
+  defp filter_hidden_includes(includes, resource) when is_list(includes) do
+    includes
+    |> Enum.flat_map(fn include ->
+      case filter_hidden_include(include, resource) do
+        nil -> []
+        include -> [include]
+      end
+    end)
+  end
+
+  defp filter_hidden_include({include, further}, resource) do
+    case public_relationship(resource, include) do
+      %{destination: destination} ->
+        {include, filter_hidden_includes(List.wrap(further), destination)}
+
+      nil ->
+        nil
+    end
+  end
+
+  defp filter_hidden_include(include, resource) do
+    if public_relationship(resource, include) do
+      include
+    end
+  end
+
+  defp public_relationship(resource, relationship_name) do
+    case Ash.Resource.Info.public_relationship(resource, relationship_name) do
+      %{name: name} = relationship ->
+        if AshJsonApi.Resource.Info.show_field?(resource, name) do
+          relationship
+        end
+
+      nil ->
+        nil
+    end
   end
 
   defp to_nested_map(list) when is_list(list) do
