@@ -687,22 +687,28 @@ defmodule AshJsonApi.Request do
 
   defp parse_field_inputs(request), do: request
 
-  if function_exported?(Ash.Resource.Info, :public_related, 2) do
-    defp public_related(resource, relationship) do
-      Ash.Resource.Info.public_related(resource, relationship)
-    end
-  else
-    defp public_related(resource, relationship) when not is_list(relationship) do
-      public_related(resource, [relationship])
-    end
+  defp public_related(resource, relationship) when not is_list(relationship) do
+    public_related(resource, [relationship])
+  end
 
-    defp public_related(resource, []), do: resource
+  defp public_related(resource, []), do: resource
 
-    defp public_related(resource, [path | rest]) do
-      case Ash.Resource.Info.public_relationship(resource, path) do
-        %{destination: destination} -> public_related(destination, rest)
-        nil -> nil
-      end
+  defp public_related(resource, [path | rest]) do
+    case public_relationship(resource, path) do
+      %{destination: destination} -> public_related(destination, rest)
+      nil -> nil
+    end
+  end
+
+  defp public_relationship(resource, relationship_name) do
+    case Ash.Resource.Info.public_relationship(resource, relationship_name) do
+      %{name: name} = relationship ->
+        if AshJsonApi.Resource.Info.show_field?(resource, name) do
+          relationship
+        end
+
+      nil ->
+        nil
     end
   end
 
@@ -730,48 +736,56 @@ defmodule AshJsonApi.Request do
           )
 
         calculation ->
-          Enum.reduce(arguments, request, fn {arg_name, arg_value}, request ->
-            calc_arg_names = AshJsonApi.Resource.Info.calculation_argument_names(resource)
+          if AshJsonApi.Resource.Info.show_field?(resource, calculation.name) do
+            Enum.reduce(arguments, request, fn {arg_name, arg_value}, request ->
+              calc_arg_names = AshJsonApi.Resource.Info.calculation_argument_names(resource)
 
-            calculation_arg =
-              Enum.find(calculation.arguments, fn argument ->
-                AshJsonApi.Resource.Info.apply_argument_name_mapping(
-                  calc_arg_names,
-                  calculation.name,
-                  argument.name
-                ) == arg_name
-              end)
-
-            case calculation_arg do
-              nil ->
-                add_error(
-                  request,
-                  InvalidField.exception(type: type, parameter?: true, field: arg_name),
-                  request.route.type
-                )
-
-              _ ->
-                cur_resource_field_inputs = Map.get(request.field_inputs, resource, %{})
-
-                cur_calculation_field_inputs =
-                  Map.get(cur_resource_field_inputs, calculation.name, %{})
-
-                updated_calculation_field_inputs =
-                  Map.put(cur_calculation_field_inputs, calculation_arg.name, arg_value)
-
-                updated_resource_field_inputs =
-                  Map.put(
-                    cur_resource_field_inputs,
+              calculation_arg =
+                Enum.find(calculation.arguments, fn argument ->
+                  AshJsonApi.Resource.Info.apply_argument_name_mapping(
+                    calc_arg_names,
                     calculation.name,
-                    updated_calculation_field_inputs
+                    argument.name
+                  ) == arg_name
+                end)
+
+              case calculation_arg do
+                nil ->
+                  add_error(
+                    request,
+                    InvalidField.exception(type: type, parameter?: true, field: arg_name),
+                    request.route.type
                   )
 
-                updated_field_inputs =
-                  Map.put(request.field_inputs, resource, updated_resource_field_inputs)
+                _ ->
+                  cur_resource_field_inputs = Map.get(request.field_inputs, resource, %{})
 
-                %{request | field_inputs: updated_field_inputs}
-            end
-          end)
+                  cur_calculation_field_inputs =
+                    Map.get(cur_resource_field_inputs, calculation.name, %{})
+
+                  updated_calculation_field_inputs =
+                    Map.put(cur_calculation_field_inputs, calculation_arg.name, arg_value)
+
+                  updated_resource_field_inputs =
+                    Map.put(
+                      cur_resource_field_inputs,
+                      calculation.name,
+                      updated_calculation_field_inputs
+                    )
+
+                  updated_field_inputs =
+                    Map.put(request.field_inputs, resource, updated_resource_field_inputs)
+
+                  %{request | field_inputs: updated_field_inputs}
+              end
+            end)
+          else
+            add_error(
+              request,
+              InvalidField.exception(type: type, parameter?: true, field: calculation_name),
+              request.route.type
+            )
+          end
       end
     end)
   end
@@ -788,12 +802,13 @@ defmodule AshJsonApi.Request do
             resource
             |> Ash.Resource.Info.public_attributes()
             |> Enum.find(fn a ->
-              AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) == key
+              AshJsonApi.Resource.Info.show_field?(resource, a.name) &&
+                  AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) == key
             end) ->
           fields = Map.update(request.fields, resource, [attr.name], &[attr.name | &1])
           %{request | fields: fields}
 
-        rel = Ash.Resource.Info.public_relationship(resource, key) ->
+        rel = public_relationship(resource, key) ->
           fields = Map.update(request.fields, resource, [rel.name], &[rel.name | &1])
           %{request | fields: fields}
 
@@ -801,7 +816,8 @@ defmodule AshJsonApi.Request do
             resource
             |> Ash.Resource.Info.public_aggregates()
             |> Enum.find(fn a ->
-              AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) == key
+              AshJsonApi.Resource.Info.show_field?(resource, a.name) &&
+                  AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) == key
             end) ->
           fields = Map.update(request.fields, resource, [agg.name], &[agg.name | &1])
           %{request | fields: fields}
@@ -810,7 +826,8 @@ defmodule AshJsonApi.Request do
             resource
             |> Ash.Resource.Info.public_calculations()
             |> Enum.find(fn c ->
-              AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, c.name) == key
+              AshJsonApi.Resource.Info.show_field?(resource, c.name) &&
+                  AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, c.name) == key
             end) ->
           fields = Map.update(request.fields, resource, [calc.name], &[calc.name | &1])
           %{request | fields: fields}
@@ -873,8 +890,9 @@ defmodule AshJsonApi.Request do
                   resource
                   |> Ash.Resource.Info.public_attributes()
                   |> Enum.find(fn a ->
-                    AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) ==
-                        field_name
+                    AshJsonApi.Resource.Info.show_field?(resource, a.name) &&
+                        AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) ==
+                          field_name
                   end) ->
                 %{request | sort: [{attr.name, order} | request.sort]}
 
@@ -882,8 +900,9 @@ defmodule AshJsonApi.Request do
                   resource
                   |> Ash.Resource.Info.public_aggregates()
                   |> Enum.find(fn a ->
-                    AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) ==
-                        field_name
+                    AshJsonApi.Resource.Info.show_field?(resource, a.name) &&
+                        AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, a.name) ==
+                          field_name
                   end) ->
                 %{request | sort: [{agg.name, order} | request.sort]}
 
@@ -891,8 +910,9 @@ defmodule AshJsonApi.Request do
                   resource
                   |> Ash.Resource.Info.public_calculations()
                   |> Enum.find(fn c ->
-                    AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, c.name) ==
-                        field_name
+                    AshJsonApi.Resource.Info.show_field?(resource, c.name) &&
+                        AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, c.name) ==
+                          field_name
                   end) ->
                 %{request | sort: [{calc.name, order} | request.sort]}
 
@@ -981,7 +1001,9 @@ defmodule AshJsonApi.Request do
        ) do
     includes =
       Enum.reduce(
-        AshJsonApi.Resource.Info.always_include_linkage(resource),
+        resource
+        |> AshJsonApi.Resource.Info.always_include_linkage()
+        |> filter_shown_fields(resource),
         includes,
         fn key, includes ->
           if Keyword.has_key?(includes, key) do
@@ -1018,6 +1040,7 @@ defmodule AshJsonApi.Request do
             |> Ash.Resource.Info.public_attributes()
             |> Enum.map(& &1.name)
         )
+        |> filter_shown_fields(related)
         |> Enum.map(fn field ->
           case Map.get(related_field_inputs, field) do
             nil -> field
@@ -1416,6 +1439,10 @@ defmodule AshJsonApi.Request do
 
   defp relationship_change_value(name, value) do
     {:error, InvalidRelationshipInput.exception(relationship: name, input: value)}
+  end
+
+  defp filter_shown_fields(fields, resource) do
+    Enum.filter(fields, &AshJsonApi.Resource.Info.show_field?(resource, &1))
   end
 
   defp url(conn) do

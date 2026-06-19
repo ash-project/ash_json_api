@@ -570,6 +570,7 @@ defmodule AshJsonApi.Serializer do
   defp serialize_relationships(request, %resource{} = record) do
     resource
     |> Ash.Resource.Info.public_relationships()
+    |> filter_shown_fields(resource)
     |> Enum.into(%{}, fn relationship ->
       value =
         %{
@@ -1092,6 +1093,7 @@ defmodule AshJsonApi.Serializer do
           default_attributes(resource)
       end
       |> Enum.concat(load_fields)
+      |> filter_shown_fields(resource)
 
     Enum.reduce(fields, %{}, fn field_name, acc ->
       field = Ash.Resource.Info.field(resource, field_name)
@@ -1325,5 +1327,9 @@ defmodule AshJsonApi.Serializer do
 
   defp get_field_value(record, field) do
     Map.get(record, field.name)
+  end
+
+  defp filter_shown_fields(fields, resource) do
+    Enum.filter(fields, &AshJsonApi.Resource.Info.show_field?(resource, &1))
   end
 end

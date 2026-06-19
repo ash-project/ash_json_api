@@ -561,12 +561,12 @@ defmodule AshJsonApi.Resource do
         type: {:list, :atom},
         default: [],
         doc:
-          "A list of fields to hide from the generated OpenAPI specification. Applies to attributes, relationships, calculations, and aggregates."
+          "A list of fields to hide from generated API specifications and JSON:API responses. Applies to attributes, relationships, calculations, and aggregates."
       ],
       show_fields: [
         type: {:list, :atom},
         doc:
-          "A list of fields to show in the generated OpenAPI specification. If not specified, all public fields are shown except those in `hide_fields`."
+          "A list of fields to show in generated API specifications and JSON:API responses. If not specified, all public fields are shown except those in `hide_fields`."
       ],
       derive_sort?: [
         type: :boolean,
@@ -797,9 +797,16 @@ defmodule AshJsonApi.Resource do
   def route(resource, domains, criteria \\ %{}) do
     resource
     |> routes(domains)
+    |> Enum.filter(&route_visible?(resource, &1))
     |> Enum.find(fn route ->
       Map.take(route, Map.keys(criteria)) == criteria
     end)
+  end
+
+  defp route_visible?(_resource, %{relationship: nil}), do: true
+
+  defp route_visible?(resource, %{relationship: relationship}) do
+    AshJsonApi.Resource.Info.show_field?(resource, relationship)
   end
 
   @doc false
