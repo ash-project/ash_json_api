@@ -102,6 +102,68 @@ defmodule Test.Acceptance.FieldVisibilityTest do
     end
   end
 
+  defmodule ShowOnlyPost do
+    use Ash.Resource,
+      domain: Test.Acceptance.FieldVisibilityTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      primary_read_warning?: false,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("visibility-show-post")
+      includes([:visible_author, :extra_author])
+      default_fields([:title, :summary, :secret_calc])
+      show_fields([:title, :visible_author])
+
+      routes do
+        base("/visibility_show_posts")
+        get(:read)
+        related(:visible_author, :read)
+        related(:extra_author, :read)
+      end
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:create, :update, :destroy])
+
+      read :read do
+        primary? true
+        prepare(build(load: [:secret_calc, :visible_author, :extra_author]))
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:title, :string, allow_nil?: false, public?: true)
+      attribute(:summary, :string, allow_nil?: false, public?: true)
+    end
+
+    calculations do
+      calculate(:secret_calc, :string, concat([:title, :summary], ":"), public?: true)
+    end
+
+    relationships do
+      belongs_to :visible_author, Test.Acceptance.FieldVisibilityTest.Author do
+        allow_nil?(false)
+        public?(true)
+        attribute_writable?(true)
+      end
+
+      belongs_to :extra_author, Test.Acceptance.FieldVisibilityTest.Author do
+        allow_nil?(false)
+        public?(true)
+        attribute_writable?(true)
+      end
+    end
+  end
+
   defmodule Domain do
     use Ash.Domain,
       otp_app: :ash_json_api,
@@ -116,6 +178,7 @@ defmodule Test.Acceptance.FieldVisibilityTest do
     resources do
       resource(Author)
       resource(Post)
+      resource(ShowOnlyPost)
     end
   end
 
@@ -148,7 +211,17 @@ defmodule Test.Acceptance.FieldVisibilityTest do
       })
       |> Ash.create!()
 
-    %{post: post, visible_author: visible_author}
+    show_only_post =
+      ShowOnlyPost
+      |> Ash.Changeset.for_create(:create, %{
+        title: "Shown",
+        summary: "not shown",
+        visible_author_id: visible_author.id,
+        extra_author_id: hidden_author.id
+      })
+      |> Ash.create!()
+
+    %{post: post, show_only_post: show_only_post, visible_author: visible_author}
   end
 
   test "hidden fields are omitted from get responses", %{post: post} do
@@ -237,5 +310,42 @@ defmodule Test.Acceptance.FieldVisibilityTest do
 
     assert response.resp_body["data"]["id"] == visible_author.id
     assert response.resp_body["data"]["type"] == "visibility-author"
+  end
+
+  test "show_fields only exposes allowlisted fields", %{show_only_post: post} do
+    response =
+      Domain
+      |> get("/visibility_show_posts/#{post.id}", status: 200)
+
+    attributes = response.resp_body["data"]["attributes"]
+    relationships = response.resp_body["data"]["relationships"]
+
+    assert attributes["title"] == "Shown"
+    refute Map.has_key?(attributes, "summary")
+    refute Map.has_key?(attributes, "secret_calc")
+
+    assert Map.has_key?(relationships, "visible_author")
+    refute Map.has_key?(relationships, "extra_author")
+  end
+
+  test "show_fields rejects non-allowlisted sparse fieldsets", %{show_only_post: post} do
+    Domain
+    |> get("/visibility_show_posts/#{post.id}?fields[visibility-show-post]=summary", status: 400)
+    |> assert_has_error(%{
+      "code" => "invalid_field"
+    })
+  end
+
+  test "show_fields rejects non-allowlisted includes", %{show_only_post: post} do
+    Domain
+    |> get("/visibility_show_posts/#{post.id}?include=extra_author", status: 400)
+    |> assert_has_error(%{
+      "code" => "invalid_includes"
+    })
+  end
+
+  test "show_fields hides non-allowlisted relationship routes", %{show_only_post: post} do
+    Domain
+    |> get("/visibility_show_posts/#{post.id}/extra_author", status: 404)
   end
 end
