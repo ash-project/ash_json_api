@@ -25,6 +25,7 @@ defmodule AshJsonApi.JsonSchema do
             {new_refs, route_schemas} =
               resource
               |> AshJsonApi.Resource.Info.routes(domains)
+              |> Enum.filter(&route_visible?(resource, &1))
               |> Enum.reduce({[], []}, fn route, {refs, route_schemas} ->
                 {new_refs, new_route_schema} =
                   route_schema(route, domain, resource, opts)
@@ -278,6 +279,7 @@ defmodule AshJsonApi.JsonSchema do
   defp required_attributes(resource) do
     resource
     |> Ash.Resource.Info.public_attributes()
+    |> filter_shown_fields(resource)
     |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
     |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))
   end
@@ -290,6 +292,7 @@ defmodule AshJsonApi.JsonSchema do
       Ash.Resource.Info.public_aggregates(resource)
       |> set_aggregate_constraints(resource)
     )
+    |> filter_shown_fields(resource)
     |> Enum.reject(&AshJsonApi.Resource.only_primary_key?(resource, &1.name))
     |> Enum.reduce(%{}, fn attr, acc ->
       Map.put(
@@ -332,6 +335,7 @@ defmodule AshJsonApi.JsonSchema do
   defp resource_relationships(resource) do
     resource
     |> Ash.Resource.Info.public_relationships()
+    |> filter_shown_fields(resource)
     |> Enum.filter(fn relationship ->
       AshJsonApi.Resource.Info.type(relationship.destination)
     end)
@@ -719,6 +723,24 @@ defmodule AshJsonApi.JsonSchema do
     action && action.type == :read
   end
 
+  defp show_field?(resource, %{name: name}) do
+    AshJsonApi.Resource.Info.show_field?(resource, name)
+  end
+
+  defp show_field?(resource, field) do
+    AshJsonApi.Resource.Info.show_field?(resource, field)
+  end
+
+  defp filter_shown_fields(fields, resource) do
+    Enum.filter(fields, &show_field?(resource, &1))
+  end
+
+  defp route_visible?(_resource, %{relationship: nil}), do: true
+
+  defp route_visible?(resource, %{relationship: relationship}) do
+    show_field?(resource, relationship)
+  end
+
   defp add_route_properties(keys, resource, properties) do
     Enum.reduce(properties, keys, fn property, keys ->
       spec =
@@ -760,7 +782,7 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp sort_format(resource) do
-    sorts = sortable_fields(resource)
+    sorts = resource |> sortable_fields() |> filter_shown_fields(resource)
 
     "(#{Enum.map_join(sorts, "|", &AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))}),*"
   end
@@ -985,6 +1007,7 @@ defmodule AshJsonApi.JsonSchema do
         resource
         |> Ash.Resource.Info.attributes()
         |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+        |> filter_shown_fields(resource)
         |> Enum.reduce(%{}, fn attribute, acc ->
           Map.put(
             acc,
@@ -1023,6 +1046,7 @@ defmodule AshJsonApi.JsonSchema do
   defp required_relationship_attributes(resource, relationship_arguments, action) do
     action.arguments
     |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
+    |> filter_shown_fields(resource)
     |> Enum.reject(& &1.allow_nil?)
     |> Enum.map(&AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, &1.name))
   end
@@ -1030,6 +1054,7 @@ defmodule AshJsonApi.JsonSchema do
   defp write_relationships(resource, relationship_arguments, action) do
     action.arguments
     |> Enum.filter(&has_relationship_argument?(relationship_arguments, &1.name))
+    |> filter_shown_fields(resource)
     |> Enum.reduce(%{}, fn argument, acc ->
       data = resource_relationship_field_data(resource, argument)
 

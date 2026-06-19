@@ -151,6 +151,120 @@ defmodule Test.Acceptance.JsonSchemaTest do
     end
   end
 
+  defmodule HiddenSpecAuthor do
+    use Ash.Resource,
+      domain: Test.Acceptance.JsonSchemaTest.HiddenSpecDomain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("hidden-json-author")
+
+      routes do
+        base("/hidden_json_authors")
+        index(:read)
+      end
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:read, :create])
+    end
+
+    attributes do
+      uuid_primary_key(:id, writable?: true, public?: true)
+      attribute(:name, :string, allow_nil?: false, public?: true)
+    end
+  end
+
+  defmodule HiddenSpecPost do
+    use Ash.Resource,
+      domain: Test.Acceptance.JsonSchemaTest.HiddenSpecDomain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("hidden-json-post")
+      default_fields([:name, :secret, :secret_calc])
+      hide_fields([:secret, :secret_calc, :hidden_author])
+
+      routes do
+        base("/hidden_json_posts")
+        get(:read)
+        index(:read)
+        post(:create, relationship_arguments: [{:id, :visible_author}, {:id, :hidden_author}])
+        related(:visible_author, :read)
+        related(:hidden_author, :read)
+      end
+    end
+
+    actions do
+      default_accept(:*)
+      defaults([:read])
+
+      create :create do
+        primary? true
+        accept([:id, :name, :secret])
+        argument(:visible_author, :uuid, allow_nil?: false)
+        argument(:hidden_author, :uuid, allow_nil?: false)
+
+        change(manage_relationship(:visible_author, type: :append_and_remove))
+        change(manage_relationship(:hidden_author, type: :append_and_remove))
+      end
+    end
+
+    attributes do
+      uuid_primary_key(:id, writable?: true, public?: true)
+      attribute(:name, :string, allow_nil?: false, public?: true)
+      attribute(:secret, :string, allow_nil?: false, public?: true)
+    end
+
+    calculations do
+      calculate(:secret_calc, :string, concat([:name, :name], "-"), public?: true)
+    end
+
+    relationships do
+      belongs_to(:visible_author, Test.Acceptance.JsonSchemaTest.HiddenSpecAuthor,
+        allow_nil?: false,
+        public?: true
+      )
+
+      belongs_to(:hidden_author, Test.Acceptance.JsonSchemaTest.HiddenSpecAuthor,
+        allow_nil?: false,
+        public?: true
+      )
+    end
+  end
+
+  defmodule HiddenSpecDomain do
+    use Ash.Domain,
+      otp_app: :ash_json_api,
+      extensions: [
+        AshJsonApi.Domain
+      ]
+
+    json_api do
+      log_errors?(false)
+    end
+
+    resources do
+      resource(HiddenSpecAuthor)
+      resource(HiddenSpecPost)
+    end
+  end
+
   defmodule Blogs do
     use Ash.Domain,
       otp_app: :ash_json_api,
@@ -187,6 +301,53 @@ defmodule Test.Acceptance.JsonSchemaTest do
                    !String.starts_with?(href, "//")
                end
              )
+    end
+
+    test "hide_fields hides fields from the generated JSON schema" do
+      json_api = AshJsonApi.JsonSchema.generate([HiddenSpecDomain])
+
+      post_schema = json_api["definitions"]["hidden-json-post"]
+      attributes = post_schema["properties"]["attributes"]["properties"]
+      relationships = post_schema["properties"]["relationships"]["properties"]
+
+      assert Map.has_key?(attributes, "name")
+      refute Map.has_key?(attributes, "secret")
+      refute Map.has_key?(attributes, "secret_calc")
+      refute "secret" in post_schema["properties"]["attributes"]["required"]
+
+      assert Map.has_key?(relationships, "visible_author")
+      refute Map.has_key?(relationships, "hidden_author")
+
+      hrefs = Enum.map(json_api["links"], & &1["href"])
+      assert Enum.any?(hrefs, &String.contains?(&1, "/hidden_json_posts/{id}/visible_author"))
+      refute Enum.any?(hrefs, &String.contains?(&1, "/hidden_json_posts/{id}/hidden_author"))
+
+      index_link =
+        Enum.find(json_api["links"], fn link ->
+          link["rel"] == "index" && String.starts_with?(link["href"], "/hidden_json_posts")
+        end)
+
+      assert index_link["hrefSchema"]["properties"]["sort"]["format"] =~ "name"
+      refute index_link["hrefSchema"]["properties"]["sort"]["format"] =~ "secret"
+
+      create_link =
+        Enum.find(json_api["links"], fn link ->
+          link["rel"] == "post" && String.starts_with?(link["href"], "/hidden_json_posts")
+        end)
+
+      create_attributes = create_link["schema"]["properties"]["data"]["properties"]["attributes"]
+
+      create_relationships =
+        create_link["schema"]["properties"]["data"]["properties"]["relationships"]
+
+      assert Map.has_key?(create_attributes["properties"], "name")
+      refute Map.has_key?(create_attributes["properties"], "secret")
+      refute "secret" in create_attributes["required"]
+
+      assert Map.has_key?(create_relationships["properties"], "visible_author")
+      refute Map.has_key?(create_relationships["properties"], "hidden_author")
+      assert "visible_author" in create_relationships["required"]
+      refute "hidden_author" in create_relationships["required"]
     end
 
     test "handles self-referential embedded resources without infinite loop" do
