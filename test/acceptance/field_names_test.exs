@@ -737,6 +737,35 @@ defmodule Test.Acceptance.FieldNamesTest do
     end
   end
 
+  # ─── OpenAPI filter schema ────────────────────────────────────────────────────
+
+  describe "field_names – OpenAPI filter schema" do
+    test "filter properties use the renamed attribute keys" do
+      api_spec =
+        AshJsonApi.Controllers.OpenApi.spec(%{private: %{}}, domains: [Domain])
+
+      filter_schema = api_spec.components.schemas["post-filter"]
+
+      assert Map.has_key?(filter_schema.properties, "subject")
+      assert Map.has_key?(filter_schema.properties, "content")
+      refute Map.has_key?(filter_schema.properties, "title")
+      refute Map.has_key?(filter_schema.properties, "body")
+    end
+
+    test "filter property $refs and component schema ids use the renamed keys" do
+      api_spec =
+        AshJsonApi.Controllers.OpenApi.spec(%{private: %{}}, domains: [Domain])
+
+      filter_schema = api_spec.components.schemas["post-filter"]
+
+      assert filter_schema.properties["subject"]."$ref" ==
+               "#/components/schemas/post-filter-subject"
+
+      assert Map.has_key?(api_spec.components.schemas, "post-filter-subject")
+      refute Map.has_key?(api_spec.components.schemas, "post-filter-title")
+    end
+  end
+
   # ─── Sparse fieldsets ─────────────────────────────────────────────────────────
 
   describe "field_names – sparse fieldsets (fields[])" do

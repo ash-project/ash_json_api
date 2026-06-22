@@ -3039,7 +3039,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp attribute_filter_field_type(resource, attribute) do
-      AshJsonApi.Resource.Info.type(resource) <> "-filter-" <> to_string(attribute.name)
+      AshJsonApi.Resource.Info.type(resource) <>
+        "-filter-" <> AshJsonApi.Resource.Info.field_to_json_key(resource, attribute.name)
     end
 
     defp resource_filter_fields(resource, domains) do
@@ -3093,7 +3094,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> filter_shown_fields(resource)
         |> Enum.filter(&filterable?(&1, resource))
         |> Enum.map(fn calculation ->
-          {calculation.name,
+          {AshJsonApi.Resource.Info.field_to_json_key(resource, calculation.name),
            %Reference{
              "$ref": "#/components/schemas/#{attribute_filter_field_type(resource, calculation)}"
            }}
@@ -3109,7 +3110,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> filter_shown_fields(resource)
       |> Enum.filter(&filterable?(&1, resource))
       |> Enum.map(fn attribute ->
-        {attribute.name,
+        {AshJsonApi.Resource.Info.field_to_json_key(resource, attribute.name),
          %Reference{
            "$ref": "#/components/schemas/#{attribute_filter_field_type(resource, attribute)}"
          }}
@@ -3123,7 +3124,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> filter_shown_fields(resource)
         |> Enum.filter(&filterable?(&1, resource))
         |> Enum.map(fn aggregate ->
-          {aggregate.name,
+          {AshJsonApi.Resource.Info.field_to_json_key(resource, aggregate.name),
            %Reference{
              "$ref": "#/components/schemas/#{attribute_filter_field_type(resource, aggregate)}"
            }}
