@@ -1258,10 +1258,22 @@ defmodule AshJsonApi.Serializer do
           req = %{fields: %{}, route: %{}, domain: domain}
           serialize_attributes(req, value, opts)
         else
-          value
+          dump_struct_value(value, type, constraints)
         end
     end
   end
+
+  # A struct whose type is a non-resource Ash type (e.g. a TypedStruct or an
+  # embedded type) isn't JSON-encodable as-is. Dump it through the type into a
+  # native map; non-struct values pass through unchanged.
+  defp dump_struct_value(value, type, constraints) when is_struct(value) do
+    case Ash.Type.dump_to_embedded(type, value, constraints || []) do
+      {:ok, dumped} -> dumped
+      _ -> value
+    end
+  end
+
+  defp dump_struct_value(value, _type, _constraints), do: value
 
   defp flatten_new_type(type, constraints) do
     if Ash.Type.NewType.new_type?(type) do

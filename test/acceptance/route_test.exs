@@ -5,6 +5,15 @@
 defmodule Test.Acceptance.RouteTest do
   use ExUnit.Case, async: true
 
+  defmodule Greeting do
+    use Ash.TypedStruct
+
+    typed_struct do
+      field(:message, :string, allow_nil?: false)
+      field(:count, :integer)
+    end
+  end
+
   defmodule Actions do
     use Ash.Resource,
       domain: Test.Acceptance.RouteTest.Domain,
@@ -16,6 +25,7 @@ defmodule Test.Acceptance.RouteTest do
         route(:get, "/say_hello", :say_hello, query_params: [:to])
         route(:post, "/required_say_hello/:to", :with_required)
         route(:post, "/trigger_job", :trigger_job)
+        route(:get, "/say_hello_struct/:to", :say_hello_struct)
       end
     end
 
@@ -40,6 +50,15 @@ defmodule Test.Acceptance.RouteTest do
       action :trigger_job do
         run(fn _input, _ ->
           :ok
+        end)
+      end
+
+      action :say_hello_struct, Test.Acceptance.RouteTest.Greeting do
+        argument(:to, :string, allow_nil?: false)
+
+        run(fn input, _ ->
+          {:ok,
+           %Test.Acceptance.RouteTest.Greeting{message: "Hello, #{input.arguments.to}!", count: 1}}
         end)
       end
     end
@@ -92,6 +111,13 @@ defmodule Test.Acceptance.RouteTest do
            |> post("/trigger_job", %{}, status: 201)
            |> Map.get(:resp_body)
            |> Kernel.==(%{"success" => true})
+  end
+
+  test "generic actions returning a TypedStruct are serialized without a Jason encoder" do
+    assert Domain
+           |> get("/say_hello_struct/fred", status: 200)
+           |> Map.get(:resp_body)
+           |> Kernel.==(%{"message" => "Hello, fred!", "count" => 1})
   end
 
   test "generic actions with required inputs" do
