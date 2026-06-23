@@ -467,10 +467,10 @@ defmodule Test.Acceptance.OpenApiTest do
     refute Map.has_key?(relationships, :hidden_author)
 
     filter_schema = api_spec.components.schemas["hidden-spec-post-filter"]
-    assert Map.has_key?(filter_schema.properties, :name)
+    assert Map.has_key?(filter_schema.properties, "name")
     assert Map.has_key?(filter_schema.properties, :visible_author)
-    refute Map.has_key?(filter_schema.properties, :secret)
-    refute Map.has_key?(filter_schema.properties, :secret_calc)
+    refute Map.has_key?(filter_schema.properties, "secret")
+    refute Map.has_key?(filter_schema.properties, "secret_calc")
     refute Map.has_key?(filter_schema.properties, :hidden_author)
     refute Map.has_key?(api_spec.components.schemas, "hidden-spec-post-filter-secret")
     refute Map.has_key?(api_spec.components.schemas, "hidden-spec-post-filter-secret_calc")
@@ -694,35 +694,35 @@ defmodule Test.Acceptance.OpenApiTest do
                type: :deepObject,
                description: "Filters the query to results matching the given filter object",
                properties: %{
-                 author: %Reference{"$ref": "#/components/schemas/author-filter"},
-                 author_id: %Reference{
+                 :author => %Reference{"$ref": "#/components/schemas/author-filter"},
+                 "author_id" => %Reference{
                    "$ref": "#/components/schemas/post-filter-author_id"
                  },
-                 count_of_tags: %Reference{
+                 "count_of_tags" => %Reference{
                    "$ref": "#/components/schemas/post-filter-count_of_tags"
                  },
-                 email: %Reference{"$ref": "#/components/schemas/post-filter-email"},
-                 hidden: %Reference{"$ref": "#/components/schemas/post-filter-hidden"},
-                 id: %Reference{"$ref": "#/components/schemas/post-filter-id"},
-                 name: %Reference{"$ref": "#/components/schemas/post-filter-name"},
-                 and: %Schema{
+                 "email" => %Reference{"$ref": "#/components/schemas/post-filter-email"},
+                 "hidden" => %Reference{"$ref": "#/components/schemas/post-filter-hidden"},
+                 "id" => %Reference{"$ref": "#/components/schemas/post-filter-id"},
+                 "name" => %Reference{"$ref": "#/components/schemas/post-filter-name"},
+                 :and => %Schema{
                    type: :array,
                    items: %Reference{
                      "$ref": "#/components/schemas/post-filter"
                    },
                    uniqueItems: true
                  },
-                 or: %Schema{
+                 :or => %Schema{
                    type: :array,
                    items: %Reference{
                      "$ref": "#/components/schemas/post-filter"
                    },
                    uniqueItems: true
                  },
-                 name_twice: %Reference{
+                 "name_twice" => %Reference{
                    "$ref": "#/components/schemas/post-filter-name_twice"
                  },
-                 not: %Reference{"$ref": "#/components/schemas/post-filter"}
+                 :not => %Reference{"$ref": "#/components/schemas/post-filter"}
                },
                additionalProperties: false,
                example: ""
