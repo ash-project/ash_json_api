@@ -98,6 +98,55 @@ defmodule AshJsonApi.SerializerTest do
                %{"id" => nil, "title" => "title"}
     end
 
+    test "serializes a struct with a fields constraint" do
+      fields = [
+        amount: [type: :integer],
+        currency: [type: :string]
+      ]
+
+      assert Serializer.serialize_value(
+               %{amount: 10, currency: "USD"},
+               Ash.Type.Struct,
+               [fields: fields],
+               nil
+             ) ==
+               %{"amount" => 10, "currency" => "USD"}
+    end
+
+    test "serializes nested struct/map fields and array fields" do
+      fields = [
+        amount: [type: :decimal],
+        tags: [type: {:array, :string}],
+        nested: [
+          type: :map,
+          constraints: [fields: [label: [type: :string]]]
+        ]
+      ]
+
+      assert Serializer.serialize_value(
+               %{amount: Decimal.new("10.5"), tags: ["a", "b"], nested: %{label: "hello"}},
+               Ash.Type.Struct,
+               [fields: fields],
+               nil
+             ) ==
+               %{"amount" => "10.5", "tags" => ["a", "b"], "nested" => %{"label" => "hello"}}
+    end
+
+    test "serializes a map with a fields constraint" do
+      fields = [
+        amount: [type: :integer],
+        currency: [type: :string]
+      ]
+
+      assert Serializer.serialize_value(
+               %{amount: 10, currency: "USD"},
+               Ash.Type.Map,
+               [fields: fields],
+               nil
+             ) ==
+               %{"amount" => 10, "currency" => "USD"}
+    end
+
     test "serializes a resource" do
       post_id = Ash.UUID.generate()
 

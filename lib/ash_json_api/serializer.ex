@@ -1247,19 +1247,50 @@ defmodule AshJsonApi.Serializer do
   end
 
   defp do_serialize_value(value, type, constraints, domain, opts) do
-    with Ash.Type.Struct <- type,
-         instance_of when not is_nil(instance_of) <- constraints[:instance_of],
-         true <- Ash.Resource.Info.resource?(instance_of) do
-      req = %{fields: %{}, route: %{}, domain: domain}
-      serialize_attributes(req, value, opts)
-    else
-      _ ->
-        if Ash.Resource.Info.resource?(type) do
-          req = %{fields: %{}, route: %{}, domain: domain}
-          serialize_attributes(req, value, opts)
-        else
-          value
-        end
+    cond do
+      type == Ash.Type.Struct and not is_nil(constraints[:instance_of]) and
+          Ash.Resource.Info.resource?(constraints[:instance_of]) ->
+        req = %{fields: %{}, route: %{}, domain: domain}
+        serialize_attributes(req, value, opts)
+
+      type in [Ash.Type.Struct, Ash.Type.Map] and is_list(constraints[:fields]) and
+          is_map(value) ->
+        serialize_constrained_fields(value, constraints[:fields], domain, opts)
+
+      Ash.Resource.Info.resource?(type) ->
+        req = %{fields: %{}, route: %{}, domain: domain}
+        serialize_attributes(req, value, opts)
+
+      true ->
+        value
+    end
+  end
+
+  defp serialize_constrained_fields(value, fields, domain, opts) do
+    Enum.reduce(fields, %{}, fn {name, config}, acc ->
+      case fetch_field_value(value, name) do
+        {:ok, field_value} ->
+          serialized =
+            serialize_value(
+              field_value,
+              Ash.Type.get_type(config[:type]),
+              config[:constraints] || [],
+              domain,
+              opts
+            )
+
+          Map.put(acc, to_string(name), serialized)
+
+        :error ->
+          acc
+      end
+    end)
+  end
+
+  defp fetch_field_value(value, name) do
+    case Map.fetch(value, name) do
+      {:ok, field_value} -> {:ok, field_value}
+      :error -> Map.fetch(value, to_string(name))
     end
   end
 
