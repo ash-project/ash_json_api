@@ -11,6 +11,25 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.7.0](https://github.com/ash-project/ash_json_api/compare/v1.6.6...v1.7.0) (2026-06-23)
+
+
+
+
+### Features:
+
+* Add field visibility DSL (#440) by olivermt [(#440)](https://github.com/ash-project/ash_json_api/pull/440)
+
+### Bug Fixes:
+
+* Apply field_names mapping to OpenAPI filter schema (#444) by [@barnabasJ](https://github.com/barnabasJ) [(#444)](https://github.com/ash-project/ash_json_api/pull/444)
+
+* Filter hidden fields from result when using the field hiding dsl (#442) by olivermt [(#442)](https://github.com/ash-project/ash_json_api/pull/442)
+
+### Improvements:
+
+* serialize non-resource-structs by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.6.6](https://github.com/ash-project/ash_json_api/compare/v1.6.5...v1.6.6) (2026-05-21)
 
 
