@@ -126,6 +126,7 @@ defmodule AshJsonApi.Request do
     |> parse_action_arguments()
     |> parse_relationships()
     |> parse_resource_identifiers()
+    |> parse_bulk_data()
   end
 
   def load_opts(request) do
@@ -1400,6 +1401,145 @@ defmodule AshJsonApi.Request do
 
   defp parse_resource_identifiers(request) do
     %{request | resource_identifiers: nil}
+  end
+
+  defp parse_bulk_data(%{route: %{type: :bulk_update}, body: %{"data" => data}} = request)
+       when is_list(data) do
+    expected_type = AshJsonApi.Resource.Info.type(request.resource)
+
+    {inputs, request} =
+      data
+      |> Enum.with_index()
+      |> Enum.reduce({[], request}, fn {member, index}, {inputs, request} ->
+        case parse_bulk_member(request, member, index, expected_type) do
+          {:ok, input} ->
+            {[input | inputs], request}
+
+          {:error, error} ->
+            {inputs, add_error(request, error, request.route.type)}
+        end
+      end)
+
+    assign(request, :bulk_inputs, Enum.reverse(inputs))
+  end
+
+  defp parse_bulk_data(%{route: %{type: :bulk_update}} = request) do
+    add_error(
+      request,
+      bulk_body_error("Expected `data` to be an array of resource objects", "/data"),
+      request.route.type
+    )
+  end
+
+  defp parse_bulk_data(request), do: request
+
+  defp parse_bulk_member(request, member, index, expected_type) when is_map(member) do
+    with :ok <- validate_bulk_member_type(member, expected_type, index),
+         {:ok, id} <- fetch_bulk_member_id(request, member, index) do
+      attributes = Map.get(member, "attributes", %{})
+      {:ok, {id, build_bulk_input(request, attributes)}}
+    end
+  end
+
+  defp parse_bulk_member(_request, _member, index, _expected_type) do
+    {:error, bulk_body_error("Expected a resource object", "/data/#{index}")}
+  end
+
+  defp validate_bulk_member_type(member, expected_type, index) do
+    case Map.fetch(member, "type") do
+      {:ok, ^expected_type} ->
+        :ok
+
+      :error ->
+        :ok
+
+      {:ok, _other} ->
+        {:error,
+         bulk_body_error(
+           "Expected member type to be \"#{expected_type}\"",
+           "/data/#{index}/type"
+         )}
+    end
+  end
+
+  defp fetch_bulk_member_id(request, member, index) do
+    case Map.fetch(member, "id") do
+      {:ok, id} when is_binary(id) ->
+        case normalize_bulk_id(request.resource, id) do
+          {:ok, normalized} ->
+            {:ok, normalized}
+
+          :error ->
+            {:error, bulk_body_error("Invalid composite primary key", "/data/#{index}/id")}
+        end
+
+      _ ->
+        {:error, bulk_body_error("Expected member to have an `id`", "/data/#{index}/id")}
+    end
+  end
+
+  defp normalize_bulk_id(resource, id) do
+    case AshJsonApi.Resource.Info.primary_key_fields(resource) do
+      fields when fields in [nil, []] ->
+        {:ok, id}
+
+      [_single] ->
+        {:ok, id}
+
+      fields ->
+        delimiter = AshJsonApi.Resource.Info.primary_key_delimiter(resource)
+        values = String.split(id, delimiter)
+
+        if length(values) == length(fields) do
+          {:ok, fields |> Enum.zip(values) |> Map.new()}
+        else
+          :error
+        end
+    end
+  end
+
+  defp build_bulk_input(request, attributes) when is_map(attributes) do
+    action = request.action
+    resource = request.resource
+    arg_names = AshJsonApi.Resource.Info.argument_names(resource)
+    attr_names = AshJsonApi.Resource.Info.field_names(resource)
+
+    Enum.reduce(attributes, %{}, fn {key, value}, acc ->
+      matching_argument =
+        Enum.find(action.arguments, fn argument ->
+          argument.public? &&
+            AshJsonApi.Resource.Info.apply_argument_name_mapping(
+              arg_names,
+              action.name,
+              argument.name
+            ) == key
+        end)
+
+      matching_accept =
+        action
+        |> Map.get(:accept, [])
+        |> Enum.find(fn attr_name ->
+          AshJsonApi.Resource.Info.apply_field_name_mapping(attr_names, attr_name) == key
+        end)
+
+      case matching_argument || matching_accept do
+        %Ash.Resource.Actions.Argument{name: name} -> Map.put(acc, name, value)
+        name when is_atom(name) and not is_nil(name) -> Map.put(acc, name, value)
+        _ -> acc
+      end
+    end)
+  end
+
+  defp build_bulk_input(_request, _attributes), do: %{}
+
+  defp bulk_body_error(detail, pointer) do
+    %AshJsonApi.Error{
+      status_code: 400,
+      code: "invalid_body",
+      title: "InvalidBody",
+      detail: detail,
+      source_pointer: pointer
+    }
   end
 
   defp relationship_change_value(name, value)

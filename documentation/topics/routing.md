@@ -16,6 +16,7 @@ AshJsonApi provides a set of route helpers that map HTTP requests to Ash actions
 | `index` | GET | `/` | `:read` | `:action` |
 | `post` | POST | `/` | `:create` | `:action`, `:read` |
 | `patch` | PATCH | `/:id` | `:update` | `:action` |
+| `bulk_update` | PATCH | `/bulk` | `:update` | — |
 | `delete` | DELETE | `/:id` | `:destroy` | `:action` |
 | `related` | GET | `/:id/<relationship>` | `:read` | — |
 | `relationship` | GET | `/:id/relationships/<relationship>` | `:read` | — |
@@ -119,6 +120,70 @@ Issues a PATCH request to `/:id` (by default). Looks up the record, then applies
 Options:
 - `read_action` — the read action used to look up the record before updating
 - `relationship_arguments` — arguments used to edit relationships inline
+
+### `bulk_update` — update many records, with per-record results
+
+```elixir
+bulk_update :update
+```
+
+Issues a PATCH request to `/bulk` (by default) whose body is an **array** of resource
+objects, each with its own `id` and `attributes`. It supports two modes via the `transaction`
+option:
+
+- **per-record** (`:per_record` (default) or `false`) — non-atomic. Each input is applied
+  independently using Ash's record-by-record bulk update (`Ash.update_all/3`), so successes
+  persist even when other inputs fail. The response is a
+  [207 Multi-Status](https://www.rfc-editor.org/rfc/rfc4918#section-11.1) document correlating
+  each input index to either a success record or an error.
+- **transactional batch** (`:batch` or `:all`) — atomic, all-or-nothing. The whole request is
+  wrapped in a transaction; if any input fails the entire request rolls back and no records are
+  updated.
+
+A request and its per-record response:
+
+```json
+// PATCH /posts/bulk
+{
+  "data": [
+    { "type": "post", "id": "1", "attributes": { "name": "First" } },
+    { "type": "post", "id": "2", "attributes": { "name": "Second" } }
+  ]
+}
+```
+
+```json
+// 207 Multi-Status
+{
+  "data":   [ { "type": "post", "id": "1", "attributes": { "name": "First" } } ],
+  "errors": [ { "status": "422", "source": { "pointer": "/data/1/attributes/name" } } ],
+  "meta":   { "total_requested": 2, "successful": 1, "failed": 1 }
+}
+```
+
+The status code depends on the outcome:
+
+- all inputs succeed → **`success_status`** (default **200**), body is a plain collection (`data` only)
+- some succeed, some fail (per-record mode only) → **`partial_success_status`** (default **207**), body has `data` + `errors` + `meta`
+- every input fails, or any input fails in atomic mode → a standard JSON:API **errors document** with the natural status (e.g. `400`/`404`), `errors` only
+
+> #### Spec note {: .info}
+>
+> The partial-success response intentionally returns `data` and `errors` in the same document.
+> This is an **extension** beyond the JSON:API base spec (which forbids `data` and `errors` from
+> coexisting) to support the [207 Multi-Status](https://www.rfc-editor.org/rfc/rfc4918#section-11.1)
+> behavior. All other responses are spec-conformant: full success is a normal collection and every
+> failure case is a normal errors document.
+
+Each error's `source.pointer` is `/data/<index>` (or `/data/<index>/attributes/<field>` for
+attribute errors), where `<index>` is the position of the failing input in the request array.
+
+Options:
+- `transaction` — how to wrap the bulk update (`:per_record` (default), `:batch`, `:all`, or `false`). `:per_record`/`false` are non-atomic (partial success); `:batch`/`:all` are atomic (all-or-nothing).
+- `batch_size` — number of records to update per batch, passed through to `Ash.update_all/3`
+- `success_status` — HTTP status when every record succeeds (default `200`)
+- `partial_success_status` — HTTP status when some records succeed and some fail (default `207`)
+- `read_action` — the read action used to look the records up before updating
 
 ### `delete` — destroy a record
 
