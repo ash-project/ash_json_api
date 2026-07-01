@@ -316,6 +316,7 @@ defmodule Test.Acceptance.OpenApiTest do
       paginated_includes([:visible_author, :hidden_author])
       default_fields([:name, :secret, :secret_calc])
       hide_fields([:secret, :secret_calc, :hidden_author])
+      show_fields([:name, :secret, :secret_calc, :visible_author, :hidden_author])
 
       routes do
         base("/hidden_spec_posts")

@@ -22,7 +22,6 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyFieldReferences do
 
     validate_fields!(resource, :show_fields, show_fields, public_fields)
     validate_fields!(resource, :hide_fields, hide_fields, public_fields)
-    validate_show_hide_overlap!(resource, show_fields, hide_fields)
 
     :ok
   end
@@ -42,27 +41,5 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyFieldReferences do
           """
       end
     end)
-  end
-
-  defp validate_show_hide_overlap!(_resource, nil, _hide_fields), do: :ok
-
-  defp validate_show_hide_overlap!(resource, show_fields, hide_fields) do
-    overlap =
-      show_fields
-      |> MapSet.new()
-      |> MapSet.intersection(MapSet.new(hide_fields || []))
-      |> MapSet.to_list()
-      |> Enum.sort()
-
-    unless Enum.empty?(overlap) do
-      raise Spark.Error.DslError,
-        module: resource,
-        path: [:json_api],
-        message: """
-        Fields cannot appear in both `show_fields` and `hide_fields`.
-
-        Conflicting fields: #{inspect(overlap)}
-        """
-    end
   end
 end
