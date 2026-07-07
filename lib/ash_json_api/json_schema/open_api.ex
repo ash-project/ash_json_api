@@ -220,6 +220,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> filter_shown_fields(resource)
       end)
       |> Enum.map(& &1.destination)
+      # resources without a JSON:API type cannot appear in payloads, so they
+      # (and anything only reachable through them) get no schemas
+      |> Enum.filter(&AshJsonApi.Resource.Info.type/1)
       |> Enum.reject(&(&1 in resources))
       |> case do
         [] ->

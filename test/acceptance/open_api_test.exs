@@ -435,6 +435,10 @@ defmodule Test.Acceptance.OpenApiTest do
   test "resources without a json_api are not included in the schema", %{open_api_spec: api_spec} do
     schema_keys = api_spec.components.schemas |> Map.keys()
     assert "tags" not in schema_keys
+    # an untyped resource reachable through a public relationship (Post.tags)
+    # must not be swept in under a nil type
+    refute nil in schema_keys
+    refute "" in schema_keys
   end
 
   test "resource descriptions are used in the generated specification if provided", %{
