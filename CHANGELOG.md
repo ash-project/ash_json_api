@@ -11,6 +11,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.7.1](https://github.com/ash-project/ash_json_api/compare/v1.7.0...v1.7.1) (2026-07-07)
+
+
+
+
+### Bug Fixes:
+
+* don't include type-less resources in filter schemas by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.7.0](https://github.com/ash-project/ash_json_api/compare/v1.6.6...v1.7.0) (2026-06-23)
 
 
