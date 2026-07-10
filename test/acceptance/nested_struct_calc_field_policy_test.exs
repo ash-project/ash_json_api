@@ -37,33 +37,33 @@ defmodule Test.Acceptance.NestedStructCalcFieldPolicyTest do
       authorizers: [Ash.Policy.Authorizer]
 
     attributes do
-      uuid_primary_key :id, writable?: true
-      attribute :public_note, :string, public?: true
-      attribute :admin_note, :string, public?: true
+      uuid_primary_key(:id, writable?: true)
+      attribute(:public_note, :string, public?: true)
+      attribute(:admin_note, :string, public?: true)
     end
 
     policies do
       policy always() do
-        authorize_if always()
+        authorize_if(always())
       end
     end
 
     field_policies do
       field_policy :admin_note do
-        authorize_if AdminCheck
+        authorize_if(AdminCheck)
       end
 
       field_policy :* do
-        authorize_if always()
+        authorize_if(always())
       end
     end
 
     actions do
-      defaults [:read]
+      defaults([:read])
 
       create :create do
         primary? true
-        accept [:public_note, :admin_note]
+        accept([:public_note, :admin_note])
       end
     end
   end
@@ -91,16 +91,16 @@ defmodule Test.Acceptance.NestedStructCalcFieldPolicyTest do
     end
 
     attributes do
-      uuid_primary_key :id
-      attribute :name, :string, allow_nil?: false, public?: true
+      uuid_primary_key(:id)
+      attribute(:name, :string, allow_nil?: false, public?: true)
     end
 
     calculations do
       calculate :nested_doc, :struct do
-        public? true
-        constraints instance_of: NestedDoc
+        public?(true)
+        constraints(instance_of: NestedDoc)
 
-        calculation fn records, _context ->
+        calculation(fn records, _context ->
           Enum.map(records, fn _record ->
             %NestedDoc{
               id: Ash.UUID.generate(),
@@ -108,22 +108,22 @@ defmodule Test.Acceptance.NestedStructCalcFieldPolicyTest do
               admin_note: "should be hidden from non-admins"
             }
           end)
-        end
+        end)
       end
     end
 
     policies do
       policy always() do
-        authorize_if always()
+        authorize_if(always())
       end
     end
 
     actions do
-      defaults [:read]
+      defaults([:read])
 
       create :create do
         primary? true
-        accept [:name]
+        accept([:name])
       end
     end
   end

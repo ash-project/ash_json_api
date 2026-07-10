@@ -440,7 +440,9 @@ defmodule AshJsonApi.JsonSchema do
       embedded_type_input(attr, action_type)
     else
       if :erlang.function_exported(type, :json_write_schema, 1) do
-        type.json_write_schema(attr.constraints)
+        attr.constraints
+        |> type.json_write_schema()
+        |> stringify_keys()
       else
         resource_attribute_type(attr)
       end
@@ -502,7 +504,9 @@ defmodule AshJsonApi.JsonSchema do
 
     cond do
       function_exported?(type, :json_schema, 1) ->
-        type.json_schema(constraints)
+        constraints
+        |> type.json_schema()
+        |> stringify_keys()
 
       embedded?(type) ->
         %{
@@ -1280,6 +1284,18 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp sortable?(_, _), do: false
+
+  defp stringify_keys(%_{} = struct), do: struct
+
+  defp stringify_keys(map) when is_map(map) do
+    Map.new(map, fn
+      {key, value} when is_atom(key) -> {Atom.to_string(key), stringify_keys(value)}
+      {key, value} -> {key, stringify_keys(value)}
+    end)
+  end
+
+  defp stringify_keys(list) when is_list(list), do: Enum.map(list, &stringify_keys/1)
+  defp stringify_keys(other), do: other
 
   @doc false
   def embedded?({:array, resource_or_type}) do
