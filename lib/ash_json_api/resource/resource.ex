@@ -561,12 +561,12 @@ defmodule AshJsonApi.Resource do
         type: {:list, :atom},
         default: [],
         doc:
-          "A list of fields to hide from generated API specifications and JSON:API responses. Applies to attributes, relationships, calculations, and aggregates."
+          "A list of fields to hide from generated API specifications and JSON:API responses. Applies to attributes, relationships, calculations, and aggregates. Takes precedence over `show_fields`."
       ],
       show_fields: [
         type: {:list, :atom},
         doc:
-          "A list of fields to show in generated API specifications and JSON:API responses. If not specified, all public fields are shown except those in `hide_fields`."
+          "A list of fields to show in generated API specifications and JSON:API responses. If not specified, all public fields are shown except those in `hide_fields`. Fields in `hide_fields` are hidden even if listed here."
       ],
       derive_sort?: [
         type: :boolean,
