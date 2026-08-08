@@ -11,6 +11,7 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyActions do
     index: [:read, :action],
     post: [:create, :action, :read],
     patch: [:update, :action],
+    bulk_update: [:update],
     delete: [:destroy, :action],
     route: [:action],
     get_related: [:read],

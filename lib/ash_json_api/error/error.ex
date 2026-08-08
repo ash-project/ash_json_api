@@ -112,6 +112,51 @@ defmodule AshJsonApi.Error do
     apply_error_handler(errors, domain, resource)
   end
 
+  @doc false
+  def bulk_to_json_api_errors(domain, resource, error, type, index) do
+    domain
+    |> to_json_api_errors(resource, error, type)
+    |> Enum.map(&with_bulk_source_pointer(&1, index))
+  end
+
+  @doc false
+  def bulk_error_index(%{path: [index | _]}) when is_integer(index), do: index
+  def bulk_error_index(%{errors: [inner | _]}), do: bulk_error_index(inner)
+  def bulk_error_index(_), do: 0
+
+  @doc false
+  def with_bulk_source_pointer(%__MODULE__{source_pointer: pointer} = error, index) do
+    %{error | source_pointer: bulk_source_pointer(pointer, index)}
+  end
+
+  defp bulk_source_pointer(pointer, index) when pointer in [nil, :undefined] do
+    "/data/#{index}"
+  end
+
+  defp bulk_source_pointer("/data/attributes/" <> rest, index) do
+    "/data/#{index}/attributes/#{strip_leading_index(rest)}"
+  end
+
+  defp bulk_source_pointer("/data/relationships/" <> rest, index) do
+    "/data/#{index}/relationships/#{strip_leading_index(rest)}"
+  end
+
+  defp bulk_source_pointer("/data/" <> rest, index) do
+    "/data/#{index}/#{strip_leading_index(rest)}"
+  end
+
+  defp bulk_source_pointer(pointer, _index), do: pointer
+
+  defp strip_leading_index(rest) do
+    case String.split(rest, "/", parts: 2) do
+      [maybe_index, tail] ->
+        if maybe_index =~ ~r/^\d+$/, do: tail, else: rest
+
+      _ ->
+        rest
+    end
+  end
+
   defp apply_error_handler(errors, nil, _resource), do: errors
 
   defp apply_error_handler(errors, domain, resource) do
