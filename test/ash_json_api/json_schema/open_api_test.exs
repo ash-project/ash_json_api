@@ -73,6 +73,7 @@ defmodule AshJsonApi.OpenApiTest do
 
     calculations do
       calculate(:calc, :string, expr("calc"), description: "A calculation")
+      calculate(:always_flag, :boolean, expr(true), public?: true, allow_nil?: false)
     end
   end
 
@@ -82,6 +83,17 @@ defmodule AshJsonApi.OpenApiTest do
     resources do
       resource Author
       resource Post
+    end
+  end
+
+  describe "resource schemas" do
+    test "non-nilable calculations are not nullable" do
+      spec = AshJsonApi.OpenApi.spec(domain: [Blogs])
+      post = spec.components.schemas["post"]
+      flag = post.properties.attributes.properties["always_flag"]
+
+      refute Map.has_key?(flag, "anyOf")
+      refute Map.has_key?(flag, "nullable")
     end
   end
 
