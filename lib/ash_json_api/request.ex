@@ -639,36 +639,9 @@ defmodule AshJsonApi.Request do
 
   defp parse_fields(%{query_params: %{"fields" => fields}} = request) when is_map(fields) do
     Enum.reduce(fields, request, fn {type, fields}, request ->
-      # Get all relevant resources better here, i.e using the includes keyword
-      # this could miss relationships to things in other apis
-      request.domain
-      |> Ash.Domain.Info.resources()
-      |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
-      |> case do
+      case resource_for_type(request, type) do
         nil ->
-          request.domain
-          |> Spark.otp_app()
-          |> case do
-            nil ->
-              add_error(request, InvalidType.exception(type: type), request.route.type)
-
-            otp_app ->
-              otp_app
-              |> Application.get_env(:ash_domains, [])
-              |> Enum.find_value(fn domain ->
-                domain != request.domain &&
-                  domain
-                  |> Ash.Domain.Info.resources()
-                  |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
-              end)
-              |> then(fn
-                nil ->
-                  add_error(request, InvalidType.exception(type: type), request.route.type)
-
-                resource ->
-                  add_fields(request, resource, fields, true)
-              end)
-          end
+          add_error(request, InvalidType.exception(type: type), request.route.type)
 
         resource ->
           add_fields(request, resource, fields, true)
@@ -686,6 +659,59 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_field_inputs(request), do: request
+
+  # Resolves a JSON:API type name to a resource, in order of specificity:
+  # the route's domain, destinations reachable through the request's validated
+  # include paths, the router's other domains, and finally any domain
+  # configured under the route domain's otp_app.
+  defp resource_for_type(request, type) do
+    find_resource_with_type(Ash.Domain.Info.resources(request.domain), type) ||
+      find_resource_with_type(included_resources(request), type) ||
+      find_resource_with_type(all_domain_resources(request), type) ||
+      otp_app_resource_with_type(request, type)
+  end
+
+  defp find_resource_with_type(resources, type) do
+    Enum.find(resources, &(AshJsonApi.Resource.Info.type(&1) == type))
+  end
+
+  # All intermediate and final destinations along the validated include paths:
+  # ["comments", "author"] contributes both destinations.
+  defp included_resources(request) do
+    request.includes
+    |> Enum.flat_map(&resources_on_path(request.resource, &1))
+    |> Enum.uniq()
+  end
+
+  defp resources_on_path(_resource, []), do: []
+
+  defp resources_on_path(resource, [segment | rest]) do
+    case public_related(resource, [segment]) do
+      nil -> []
+      destination -> [destination | resources_on_path(destination, rest)]
+    end
+  end
+
+  defp all_domain_resources(request) do
+    request.all_domains
+    |> Enum.reject(&(&1 == request.domain))
+    |> Enum.flat_map(&Ash.Domain.Info.resources/1)
+  end
+
+  defp otp_app_resource_with_type(request, type) do
+    case Spark.otp_app(request.domain) do
+      nil ->
+        nil
+
+      otp_app ->
+        otp_app
+        |> Application.get_env(:ash_domains, [])
+        |> Enum.find_value(fn domain ->
+          domain != request.domain &&
+            find_resource_with_type(Ash.Domain.Info.resources(domain), type)
+        end)
+    end
+  end
 
   defp public_related(resource, relationship) when not is_list(relationship) do
     public_related(resource, [relationship])
@@ -713,19 +739,20 @@ defmodule AshJsonApi.Request do
   end
 
   defp add_field_inputs(request, type, field_inputs) do
-    resource =
-      request.domain
-      |> Ash.Domain.Info.resources()
-      |> Enum.find(&(AshJsonApi.Resource.Info.type(&1) == type))
+    case resource_for_type(request, type) do
+      nil ->
+        add_error(request, InvalidType.exception(type: type), request.route.type)
 
+      resource ->
+        add_field_inputs_for_resource(request, resource, type, field_inputs)
+    end
+  end
+
+  defp add_field_inputs_for_resource(request, resource, type, field_inputs) do
     Enum.reduce(field_inputs, request, fn {calculation_name, arguments}, request ->
       resolved_name =
-        if resource do
-          AshJsonApi.Resource.Info.json_key_to_field(resource, calculation_name) ||
-            calculation_name
-        else
+        AshJsonApi.Resource.Info.json_key_to_field(resource, calculation_name) ||
           calculation_name
-        end
 
       case Ash.Resource.Info.public_calculation(resource, resolved_name) do
         nil ->
