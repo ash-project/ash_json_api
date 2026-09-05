@@ -2980,6 +2980,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> Enum.concat(Ash.DataLayer.functions(resource))
         |> Enum.filter(& &1.predicate?())
         |> restrict_for_lists(type)
+        |> restrict_range_functions(type)
         |> Enum.reduce({[], acc}, fn operator, {fields, acc} ->
           {operator_fields, acc} =
             filter_fields(operator, type, array_type?, calculation, resource, acc)
@@ -3022,6 +3023,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> Enum.concat(Ash.DataLayer.functions(resource))
         |> Enum.filter(& &1.predicate?())
         |> restrict_for_lists(type)
+        |> restrict_range_functions(type)
         |> Enum.reduce({[], acc}, fn operator, {fields, acc} ->
           {operator_fields, acc} =
             filter_fields(operator, type, array_type?, attribute_or_aggregate, resource, acc)
@@ -3169,6 +3171,30 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     defp restrict_for_lists(operators, _), do: operators
+
+    # Range predicates declare their subject as `:any` so they can be applied to
+    # any range type, which would otherwise list them as filters on every field.
+    @range_functions [
+      Ash.Query.Function.RangeAdjacent,
+      Ash.Query.Function.RangeContains,
+      Ash.Query.Function.RangeOverlaps
+    ]
+
+    defp restrict_range_functions(operators, type) do
+      if range_type?(type) do
+        operators
+      else
+        Enum.reject(operators, &(&1 in @range_functions))
+      end
+    end
+
+    defp range_type?(Ash.Type.Range), do: true
+
+    defp range_type?(type) when is_atom(type) do
+      Ash.Type.NewType.new_type?(type) && Ash.Type.NewType.subtype_of(type) == Ash.Type.Range
+    end
+
+    defp range_type?(_), do: false
 
     defp constraints_to_item_constraints(
            {:array, _},

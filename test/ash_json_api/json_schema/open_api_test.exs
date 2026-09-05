@@ -55,6 +55,11 @@ defmodule AshJsonApi.OpenApiTest do
     attributes do
       uuid_primary_key(:id, writable?: true)
       attribute(:view_count, :integer, public?: true, description: "View count of the post")
+
+      attribute(:published_during, Ash.Type.Range,
+        public?: true,
+        constraints: [inner_type: :date]
+      )
     end
 
     relationships do
@@ -67,7 +72,7 @@ defmodule AshJsonApi.OpenApiTest do
 
       create :create do
         primary? true
-        accept([:id, :view_count])
+        accept([:id, :view_count, :published_during])
       end
     end
 
@@ -187,6 +192,22 @@ defmodule AshJsonApi.OpenApiTest do
   end
 
   describe "raw_filter_type/2" do
+    test "range predicates are only offered for range fields" do
+      view_count = Ash.Resource.Info.attribute(Post, :view_count)
+      {view_count_schema, _} = OpenApi.raw_filter_type(view_count, Post, %{})
+
+      refute Map.has_key?(view_count_schema.properties, :range_contains)
+      refute Map.has_key?(view_count_schema.properties, :range_overlaps)
+      refute Map.has_key?(view_count_schema.properties, :range_adjacent)
+
+      published_during = Ash.Resource.Info.attribute(Post, :published_during)
+      {range_schema, _} = OpenApi.raw_filter_type(published_during, Post, %{})
+
+      assert Map.has_key?(range_schema.properties, :range_contains)
+      assert Map.has_key?(range_schema.properties, :range_overlaps)
+      assert Map.has_key?(range_schema.properties, :range_adjacent)
+    end
+
     test "with attribute" do
       resource = Post
       attribute = Ash.Resource.Info.attribute(Post, :view_count)
