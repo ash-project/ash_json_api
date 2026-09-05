@@ -98,6 +98,49 @@ defmodule Test.Acceptance.ErrorValidationTest do
     end
   end
 
+  describe "filter errors raised while reading" do
+    test "unknown filter field returns no_such_field with source parameter" do
+      response =
+        Domain
+        |> get("/posts/with_filter_sort?filter[foo]=value", status: 400)
+
+      assert [error] = response.resp_body["errors"]
+      assert error["code"] == "no_such_field"
+      assert error["title"] == "NoSuchField"
+      assert error["detail"] == "no such field foo"
+      assert error["meta"] == %{"field" => "foo"}
+      assert error["source"] == %{"parameter" => "filter"}
+      assert error["status"] == "400"
+    end
+
+    test "unknown filter predicate returns no_such_filter_predicate with source parameter" do
+      response =
+        Domain
+        |> get("/posts/with_filter_sort?filter[title][foo]=value", status: 400)
+
+      assert [error] = response.resp_body["errors"]
+      assert error["code"] == "no_such_filter_predicate"
+      assert error["title"] == "NoSuchFilterPredicate"
+      assert error["detail"] == "no such filter predicate foo"
+      assert error["meta"] == %{"key" => "foo"}
+      assert error["source"] == %{"parameter" => "filter"}
+      assert error["status"] == "400"
+    end
+
+    test "invalid filter value returns invalid_filter_value with source parameter" do
+      response =
+        Domain
+        |> get("/posts/with_filter_sort?filter[title][in]=x", status: 400)
+
+      assert [error] = response.resp_body["errors"]
+      assert error["code"] == "invalid_filter_value"
+      assert error["title"] == "InvalidFilterValue"
+      assert String.starts_with?(error["detail"], "Invalid filter value")
+      assert error["source"] == %{"parameter" => "filter"}
+      assert error["status"] == "400"
+    end
+  end
+
   describe "InvalidSort errors" do
     test "returns proper error when sort is invalid type on derive_sort?: true route" do
       # This triggers the error: derive_sort?: true but sort is array (not string)

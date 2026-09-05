@@ -181,6 +181,14 @@ defmodule AshJsonApi.Error do
     [built_error]
   end
 
+  # Errors raised while applying query parameters to a read (e.g. `filter` or
+  # `sort`) carry the parameter name as the head of their path, so we surface
+  # that as `source.parameter` rather than a body pointer.
+  def with_source_pointer(built_error, %{path: [param | _]}, _resource, :read)
+      when param in [:filter, :sort] do
+    [%{built_error | source_parameter: to_string(param)}]
+  end
+
   def with_source_pointer(built_error, %{fields: fields, path: path}, resource, type)
       when is_list(fields) and fields != [] do
     Enum.map(fields, fn field ->
@@ -341,9 +349,35 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.NoSuchField do
     %AshJsonApi.Error{
       id: Ash.UUID.generate(),
       status_code: 400,
-      code: "invalid_query",
-      title: "InvalidQuery",
-      detail: "no such query parameter #{error.field}",
+      code: "no_such_field",
+      title: "NoSuchField",
+      detail: "no such field #{error.field}",
+      meta: error.vars |> Map.new() |> Map.put(:field, error.field)
+    }
+  end
+end
+
+defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.NoSuchFilterPredicate do
+  def to_json_api_error(error) do
+    %AshJsonApi.Error{
+      id: Ash.UUID.generate(),
+      status_code: 400,
+      code: "no_such_filter_predicate",
+      title: "NoSuchFilterPredicate",
+      detail: "no such filter predicate #{error.key}",
+      meta: error.vars |> Map.new() |> Map.put(:key, error.key)
+    }
+  end
+end
+
+defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.InvalidFilterValue do
+  def to_json_api_error(error) do
+    %AshJsonApi.Error{
+      id: Ash.UUID.generate(),
+      status_code: 400,
+      code: "invalid_filter_value",
+      title: "InvalidFilterValue",
+      detail: Ash.Error.Query.InvalidFilterValue.message(error),
       meta: Map.new(error.vars)
     }
   end
