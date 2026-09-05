@@ -336,6 +336,19 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.NotFound do
   end
 end
 
+defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.NoSuchField do
+  def to_json_api_error(error) do
+    %AshJsonApi.Error{
+      id: Ash.UUID.generate(),
+      status_code: 400,
+      code: "invalid_query",
+      title: "InvalidQuery",
+      detail: "no such query parameter #{error.field}",
+      meta: Map.new(error.vars)
+    }
+  end
+end
+
 defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.Required do
   def to_json_api_error(error) do
     %AshJsonApi.Error{
