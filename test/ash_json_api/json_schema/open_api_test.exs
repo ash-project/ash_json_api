@@ -266,4 +266,11 @@ defmodule AshJsonApi.OpenApiTest do
              }
     end
   end
+
+  describe "schemas/1,2" do
+    test "with a single argument" do
+      assert schemas = AshJsonApi.OpenApi.schemas(Blogs)
+      assert ^schemas = AshJsonApi.OpenApi.schemas([Blogs])
+    end
+  end
 end

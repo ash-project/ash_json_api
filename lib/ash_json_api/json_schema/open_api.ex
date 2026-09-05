@@ -192,7 +192,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     end
 
     def schemas(domain) do
-      schemas(List.wrap(domain))
+      schemas(List.wrap(domain), empty_acc())
     end
 
     defp all_resources_requiring_filter_schemas(domains) do
