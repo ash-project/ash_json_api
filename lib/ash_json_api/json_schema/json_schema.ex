@@ -761,6 +761,12 @@ defmodule AshJsonApi.JsonSchema do
   defp add_read_arguments(props, route, resource) do
     action = Ash.Resource.Info.action(resource, route.action)
 
+    route_params =
+      route.route
+      |> Path.split()
+      |> Enum.filter(&String.starts_with?(&1, ":"))
+      |> Enum.map(&String.trim_leading(&1, ":"))
+
     {
       action.arguments
       |> Enum.filter(& &1.public?)
@@ -770,9 +776,21 @@ defmodule AshJsonApi.JsonSchema do
 
         Map.put(props, json_key, resource_write_attribute_type(argument, argument.type))
       end),
+      # Arguments supplied via path params are already required by the path itself
       action.arguments
       |> Enum.filter(& &1.public?)
-      |> Enum.reject(& &1.allow_nil?)
+      |> Enum.reject(fn argument ->
+        argument.allow_nil? ||
+          Enum.any?(
+            route_params,
+            &AshJsonApi.Resource.Info.path_param_matches_argument?(
+              resource,
+              action.name,
+              argument.name,
+              &1
+            )
+          )
+      end)
       |> Enum.map(&AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, &1.name))
     }
   end
@@ -1022,7 +1040,7 @@ defmodule AshJsonApi.JsonSchema do
       end
 
     arguments
-    |> without_path_arguments(action, route)
+    |> without_path_arguments(resource, action, route)
     |> Enum.reduce(attributes, fn argument, attributes ->
       Map.put(
         attributes,
@@ -1032,7 +1050,10 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp without_path_arguments(arguments, %{type: type}, %{route: route, type: route_type})
+  defp without_path_arguments(arguments, resource, %{type: type} = action, %{
+         route: route,
+         type: route_type
+       })
        when type == :action or route_type == :post do
     route_params =
       route
@@ -1041,11 +1062,19 @@ defmodule AshJsonApi.JsonSchema do
       |> Enum.map(&String.trim_leading(&1, ":"))
 
     Enum.reject(arguments, fn argument ->
-      to_string(argument.name) in route_params
+      Enum.any?(
+        route_params,
+        &AshJsonApi.Resource.Info.path_param_matches_argument?(
+          resource,
+          action.name,
+          argument.name,
+          &1
+        )
+      )
     end)
   end
 
-  defp without_path_arguments(arguments, _, _), do: arguments
+  defp without_path_arguments(arguments, _, _, _), do: arguments
 
   defp required_relationship_attributes(resource, relationship_arguments, action) do
     action.arguments

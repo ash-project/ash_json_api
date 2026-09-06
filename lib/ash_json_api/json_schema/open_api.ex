@@ -1773,7 +1773,15 @@ if Code.ensure_loaded?(OpenApiSpex) do
             end
             |> Enum.concat(
               Enum.map(route_params, fn route_param ->
-                case Enum.find(action.arguments, &(to_string(&1.name) == route_param)) do
+                case Enum.find(
+                       action.arguments,
+                       &AshJsonApi.Resource.Info.path_param_matches_argument?(
+                         resource,
+                         action.name,
+                         &1.name,
+                         route_param
+                       )
+                     ) do
                   nil ->
                     if Enum.any?(Map.get(action, :accept, []), &(to_string(&1) == route_param)) do
                       Ash.Resource.Info.attribute(resource, route_param)
@@ -1798,8 +1806,25 @@ if Code.ensure_loaded?(OpenApiSpex) do
               {schema, acc} =
                 resource_write_attribute_type(argument_or_attribute, resource, action.type, acc)
 
+              matching_route_param =
+                case argument_or_attribute do
+                  %Ash.Resource.Actions.Argument{name: name} ->
+                    Enum.find(
+                      route_params,
+                      &AshJsonApi.Resource.Info.path_param_matches_argument?(
+                        resource,
+                        action.name,
+                        name,
+                        &1
+                      )
+                    )
+
+                  %{name: name} ->
+                    Enum.find(route_params, &(&1 == to_string(name)))
+                end
+
               location =
-                if to_string(argument_or_attribute.name) in route_params do
+                if matching_route_param do
                   :path
                 else
                   :query
@@ -1815,7 +1840,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
               {[
                  %Parameter{
-                   name: to_string(argument_or_attribute.name),
+                   name: matching_route_param || to_string(argument_or_attribute.name),
                    in: location,
                    description: argument_or_attribute.description,
                    required: location == :path || !argument_or_attribute.allow_nil?,
@@ -2159,8 +2184,22 @@ if Code.ensure_loaded?(OpenApiSpex) do
       |> Enum.reduce({[], acc}, fn argument, {params, acc} ->
         {schema, acc} = resource_attribute_type(argument, resource, acc)
 
+        json_key =
+          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, argument.name)
+
+        matching_route_param =
+          Enum.find(
+            route_params,
+            &AshJsonApi.Resource.Info.path_param_matches_argument?(
+              resource,
+              action.name,
+              argument.name,
+              &1
+            )
+          )
+
         location =
-          if to_string(argument.name) in route_params do
+          if matching_route_param do
             :path
           else
             :query
@@ -2174,7 +2213,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
 
         param = %Parameter{
-          name: argument.name,
+          name: matching_route_param || json_key,
           in: location,
           description: argument.description,
           required: location == :path || !argument.allow_nil?,
@@ -2459,7 +2498,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       filtered_arguments =
         arguments
         |> Enum.filter(& &1.public?)
-        |> without_path_arguments(route)
+        |> without_path_arguments(resource, action, route)
         |> without_query_params(route)
 
       attribute_names =
@@ -2528,7 +2567,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       arguments
       |> Enum.filter(& &1.public?)
-      |> without_path_arguments(route)
+      |> without_path_arguments(resource, action, route)
       |> without_query_params(route)
       |> Enum.reduce({attributes, acc}, fn argument, {attributes, acc} ->
         {schema, acc} = resource_write_attribute_type(argument, resource, :create, acc, format)
@@ -2540,7 +2579,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
     end
 
-    defp without_path_arguments(arguments, %{route: route}) do
+    defp without_path_arguments(arguments, resource, action, %{route: route}) do
       route_params =
         route
         |> Path.split()
@@ -2548,11 +2587,19 @@ if Code.ensure_loaded?(OpenApiSpex) do
         |> Enum.map(&String.trim_leading(&1, ":"))
 
       Enum.reject(arguments, fn argument ->
-        to_string(argument.name) in route_params
+        Enum.any?(
+          route_params,
+          &AshJsonApi.Resource.Info.path_param_matches_argument?(
+            resource,
+            action.name,
+            argument.name,
+            &1
+          )
+        )
       end)
     end
 
-    defp without_path_arguments(arguments, _), do: arguments
+    defp without_path_arguments(arguments, _, _, _), do: arguments
 
     defp without_query_params(inputs, %{query_params: query_params}) do
       query_params = List.wrap(query_params)

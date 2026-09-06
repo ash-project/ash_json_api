@@ -652,6 +652,9 @@ defmodule AshJsonApi.Resource do
         or a 2-arity function that receives `(action_name, argument_name)` atoms and
         returns the desired JSON:API name (atom or string).
 
+        Route path parameters may refer to an argument by its renamed name
+        (e.g. `get :by_post, route: "/:postId"`) or by its original name.
+
         ```elixir
         argument_names :camelize  # publish_at → publishAt
         argument_names :dasherize # publish_at → publish-at

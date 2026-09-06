@@ -91,7 +91,7 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyActions do
       end
 
       if action.type == :action do
-        verify_return_type!(module, module, route, action)
+        verify_return_type!(module, module, route, action, dsl)
       end
     end)
 
@@ -99,7 +99,11 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyActions do
   end
 
   @doc false
-  def verify_return_type!(module, resource, route, action) do
+  # `dsl_or_resource` is used for looking up json_api configuration (e.g. `argument_names`).
+  # When verifying a resource that is still being compiled, this must be the dsl state.
+  def verify_return_type!(module, resource, route, action, dsl_or_resource \\ nil) do
+    dsl_or_resource = dsl_or_resource || resource
+
     case route.type do
       :route ->
         :ok
@@ -131,7 +135,15 @@ defmodule AshJsonApi.Resource.Verifiers.VerifyActions do
         end
 
       type when type in [:patch, :delete] ->
-        argument_names = Enum.map(action.arguments, &to_string(&1.name))
+        argument_names =
+          Enum.flat_map(
+            action.arguments,
+            &AshJsonApi.Resource.Info.argument_path_param_names(
+              dsl_or_resource,
+              action.name,
+              &1.name
+            )
+          )
 
         path_params =
           route.route

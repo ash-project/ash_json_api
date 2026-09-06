@@ -1136,7 +1136,8 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_query_params(
-         %{route: %{type: :route, method: method} = route, action: action} = request
+         %{route: %{type: :route, method: method} = route, action: action, resource: resource} =
+           request
        )
        when method in [:get, "GET"] do
     path_param_names =
@@ -1148,7 +1149,17 @@ defmodule AshJsonApi.Request do
     action_arg_entries =
       action.arguments
       |> Enum.filter(& &1.public?)
-      |> Enum.reject(fn arg -> to_string(arg.name) in path_param_names end)
+      |> Enum.reject(fn arg ->
+        Enum.any?(
+          path_param_names,
+          &AshJsonApi.Resource.Info.path_param_matches_argument?(
+            resource,
+            action.name,
+            arg.name,
+            &1
+          )
+        )
+      end)
       |> Enum.map(fn arg -> {arg.name, to_string(arg.name)} end)
 
     route_param_entries =
@@ -1301,14 +1312,17 @@ defmodule AshJsonApi.Request do
     end)
   end
 
-  defp parse_action_arguments(%{action: %{type: :action} = action} = request) do
+  defp parse_action_arguments(%{action: %{type: :action} = action, resource: resource} = request) do
     action.arguments
     |> Enum.filter(& &1.public?)
     |> Enum.reduce(request, fn argument, request ->
       name = to_string(argument.name)
 
+      path_param_names =
+        AshJsonApi.Resource.Info.argument_path_param_names(resource, action.name, argument.name)
+
       with :error <- Map.fetch(request.query_params, name),
-           :error <- Map.fetch(request.path_params, name) do
+           :error <- fetch_first(request.path_params, path_param_names) do
         request
       else
         {:ok, value} ->
@@ -1318,6 +1332,15 @@ defmodule AshJsonApi.Request do
   end
 
   defp parse_action_arguments(request), do: request
+
+  defp fetch_first(map, keys) do
+    Enum.find_value(keys, :error, fn key ->
+      case Map.fetch(map, key) do
+        {:ok, value} -> {:ok, value}
+        :error -> nil
+      end
+    end)
+  end
 
   defp parse_relationships(
          %{

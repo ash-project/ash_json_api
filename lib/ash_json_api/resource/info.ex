@@ -210,6 +210,23 @@ defmodule AshJsonApi.Resource.Info do
   end
 
   @doc """
+  Returns the names a path parameter may use to refer to the given action argument.
+
+  This is the `argument_names`-mapped JSON:API key, followed by the raw argument name
+  (kept for backwards compatibility with routes written before renaming was supported).
+  """
+  def argument_path_param_names(resource, action_name, arg_name) do
+    Enum.uniq([argument_to_json_key(resource, action_name, arg_name), to_string(arg_name)])
+  end
+
+  @doc """
+  Returns true if `path_param` refers to the given action argument, honoring `argument_names`.
+  """
+  def path_param_matches_argument?(resource, action_name, arg_name, path_param) do
+    path_param in argument_path_param_names(resource, action_name, arg_name)
+  end
+
+  @doc """
   Converts a JSON:API string key to an Ash argument atom name for the given action,
   applying the reverse of any `argument_names` mapping. Returns `nil` if not found.
   """

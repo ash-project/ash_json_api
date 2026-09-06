@@ -667,10 +667,25 @@ defmodule AshJsonApi.Controllers.Helpers do
             {:cont, {:ok, params, filter}}
           end
         else
-          # Normal parameter handling
-          case Enum.find(action.arguments, &(to_string(&1.name) == key)) do
+          # Normal parameter handling. Prefer the `argument_names`-mapped key, falling
+          # back to the raw argument name for backwards compatibility.
+          argument =
+            Enum.find(action.arguments, fn argument ->
+              AshJsonApi.Resource.Info.argument_to_json_key(
+                resource,
+                action.name,
+                argument.name
+              ) == key
+            end) || Enum.find(action.arguments, &(to_string(&1.name) == key))
+
+          case argument do
             nil ->
-              case Ash.Resource.Info.attribute(resource, key) do
+              attribute =
+                Enum.find(Ash.Resource.Info.attributes(resource), fn attribute ->
+                  AshJsonApi.Resource.Info.field_to_json_key(resource, attribute.name) == key
+                end) || Ash.Resource.Info.attribute(resource, key)
+
+              case attribute do
                 nil ->
                   {:halt,
                    {:error,

@@ -114,6 +114,7 @@ Once configured, name mapping is applied consistently across:
 - **Sort parameters** — `?sort=firstName` works when `:first_name` is renamed to `firstName`.
 - **Filter parameters** — `?filter[firstName]=Ada` maps back to the `:first_name` attribute via a ref transformer passed to `Ash.Filter.parse_input/3`.
 - **Sparse fieldsets** — `?fields[user]=firstName,lastName` selects the renamed fields.
+- **Route path parameters** — a route like `get :by_post, route: "/:postId"` resolves `postId` to the `:post_id` argument when it is renamed. The original argument name is also accepted, so existing routes keep working when you add a mapping.
 - **Error source pointers** — validation errors point to `/data/attributes/firstName` instead of `/data/attributes/first_name`.
 - **JSON Schema & OpenAPI** — generated schemas use the renamed property names.
 
