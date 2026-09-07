@@ -404,7 +404,7 @@ related :comments, :read
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`relationship`](#json_api-routes-related-relationship){: #json_api-routes-related-relationship .spark-required} | `atom` |  |  |
-| [`action`](#json_api-routes-related-action){: #json_api-routes-related-action .spark-required} | `atom` |  | The action to call when this route is hit |
+| [`action`](#json_api-routes-related-action){: #json_api-routes-related-action .spark-required} | `atom` |  | The action to call when this route is hit - This is the read action on the *source* resource, used to fetch the parent record. Use `read_action` on the relationship to control how the related records are loaded. |
 ### Options
 
 | Name | Type | Default | Docs |
@@ -457,7 +457,7 @@ relationship :comments, :read
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`relationship`](#json_api-routes-relationship-relationship){: #json_api-routes-relationship-relationship .spark-required} | `atom` |  |  |
-| [`action`](#json_api-routes-relationship-action){: #json_api-routes-relationship-action .spark-required} | `atom` |  | The action to call when this route is hit |
+| [`action`](#json_api-routes-relationship-action){: #json_api-routes-relationship-action .spark-required} | `atom` |  | The action to call when this route is hit - This is the read action on the *source* resource, used to fetch the parent record. Use `read_action` on the relationship to control how the related records are loaded. |
 ### Options
 
 | Name | Type | Default | Docs |

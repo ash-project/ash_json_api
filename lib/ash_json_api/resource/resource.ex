@@ -232,6 +232,10 @@ defmodule AshJsonApi.Resource do
       @route_schema
       |> Spark.Options.Helpers.make_optional!(:route)
       |> Spark.Options.Helpers.append_doc!(:route, "Defaults to /:id/[relationship_name]")
+      |> Spark.Options.Helpers.append_doc!(
+        :action,
+        "This is the read action on the *source* resource, used to fetch the parent record. Use `read_action` on the relationship to control how the related records are loaded."
+      )
       |> Keyword.put(:relationship,
         type: :atom,
         required: true
@@ -265,6 +269,10 @@ defmodule AshJsonApi.Resource do
       |> Spark.Options.Helpers.append_doc!(
         :route,
         " Defaults to /:id/relationships/[relationship_name]"
+      )
+      |> Spark.Options.Helpers.append_doc!(
+        :action,
+        "This is the read action on the *source* resource, used to fetch the parent record. Use `read_action` on the relationship to control how the related records are loaded."
       )
       |> Keyword.put(:relationship,
         type: :atom,

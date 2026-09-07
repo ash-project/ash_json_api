@@ -17,8 +17,8 @@ AshJsonApi provides a set of route helpers that map HTTP requests to Ash actions
 | `post` | POST | `/` | `:create` | `:action`, `:read` |
 | `patch` | PATCH | `/:id` | `:update` | `:action` |
 | `delete` | DELETE | `/:id` | `:destroy` | `:action` |
-| `related` | GET | `/:id/<relationship>` | `:read` | — |
-| `relationship` | GET | `/:id/relationships/<relationship>` | `:read` | — |
+| `related` | GET | `/:id/<relationship>` | `:read` (on the source resource) | — |
+| `relationship` | GET | `/:id/relationships/<relationship>` | `:read` (on the source resource) | — |
 | `post_to_relationship` | POST | `/:id/relationships/<relationship>` | `:update` | — |
 | `patch_relationship` | PATCH | `/:id/relationships/<relationship>` | `:update` | — |
 | `delete_from_relationship` | DELETE | `/:id/relationships/<relationship>` | `:update` | — |
@@ -165,6 +165,18 @@ patch_relationship :comments
 # DELETE /tickets/:id/relationships/comments — remove from relationship
 delete_from_relationship :comments
 ```
+
+The action given to `related` and `relationship` is a read action on the *source* resource (here, `Ticket`). It is used to fetch the parent record from the `:id` in the path, and it must be a `public?` read action on that resource. It is *not* an action on the destination resource.
+
+To control which action loads the related records, set `read_action` on the relationship itself:
+
+```elixir
+relationships do
+  has_many :comments, Comment, read_action: :published
+end
+```
+
+With that in place, `related :comments, :read` fetches the ticket with `Ticket`'s `:read` action and loads its comments with `Comment`'s `:published` action.
 
 ## Generic actions with `route`
 

@@ -190,11 +190,36 @@ defmodule AshJsonApi.Controllers.Router do
               action_type: route.action_type,
               route: route,
               relationship: route.relationship,
-              action: Ash.Resource.Info.action(resource, route.action)
+              action: route_action!(resource, route)
             )
         end
     end
   end
+
+  @doc false
+  def route_action!(_resource, %{action: nil}), do: nil
+
+  def route_action!(resource, route) do
+    Ash.Resource.Info.action(resource, route.action) ||
+      raise ArgumentError, """
+      Route #{route.method |> to_string() |> String.upcase()} #{route.route} refers to action \
+      #{inspect(route.action)}, but #{inspect(resource)} has no such action.
+
+      #{route_action_hint(route)}\
+      """
+  end
+
+  defp route_action_hint(%{type: type, relationship: relationship})
+       when type in [:get_related, :relationship] do
+    """
+    For `related` and `relationship` routes, the action is the read action on \
+    the source resource that is used to fetch the parent record from the path. \
+    To control the action used to load the relationship itself, set \
+    `read_action` on the `#{inspect(relationship)}` relationship definition.
+    """
+  end
+
+  defp route_action_hint(_route), do: ""
 
   defp open_api_request?(conn, open_api) do
     AshJsonApi.OpenApiSpexChecker.has_open_api?() && conn.method == "GET" &&
