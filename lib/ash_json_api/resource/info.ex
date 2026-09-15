@@ -75,7 +75,7 @@ defmodule AshJsonApi.Resource.Info do
     Extension.get_opt(resource, [:json_api], :hide_fields, [], true)
   end
 
-  @doc "Fields to show in generated API specifications and JSON:API responses"
+  @doc "Fields to show in generated API specifications and JSON:API responses. `hide_fields` takes precedence."
   def show_fields(resource) do
     Extension.get_opt(resource, [:json_api], :show_fields, nil, true)
   end
