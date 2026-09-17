@@ -25,3 +25,5 @@ if Mix.env() == :dev do
     manage_readme_version: "documentation/tutorials/getting-started-with-ash-json-api.md",
     version_tag_prefix: "v"
 end
+
+config :ash, default_string_length_count: :codepoints
