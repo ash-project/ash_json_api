@@ -146,7 +146,9 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 3.19 and >= 3.19.1")},
+      # TODO: switch back to a hex requirement once the ash release with
+      # parameterized function signatures (`{:range, :same}`) ships.
+      {:ash, ash_version(git: "https://github.com/ash-project/ash.git")},
       {:spark, ">= 2.2.10"},
       {:igniter, "~> 0.3 and >= 0.3.58", optional: true},
       {:plug, "~> 1.11"},
