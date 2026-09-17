@@ -639,8 +639,6 @@ defmodule Test.Acceptance.PatchTest do
 
   describe "patch removing posts" do
     setup do
-      id = Ecto.UUID.generate()
-
       author =
         Author
         |> Ash.Changeset.for_create(:create, %{id: Ecto.UUID.generate(), name: "John"})
@@ -649,7 +647,7 @@ defmodule Test.Acceptance.PatchTest do
       posts =
         Enum.map(1..2, fn _ ->
           Post
-          |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: id})
+          |> Ash.Changeset.for_create(:create, %{name: "Valid Post", id: Ecto.UUID.generate()})
           |> Ash.Changeset.force_change_attribute(:author_id, author.id)
           |> Ash.Changeset.force_change_attribute(:hidden, "hidden")
           |> Ash.create!()
