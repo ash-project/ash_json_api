@@ -738,6 +738,15 @@ defmodule AshJsonApi.Request do
     end
   end
 
+  defp invalid_field_inputs(type, source_parameter) do
+    InvalidField.exception(
+      type: type,
+      parameter?: true,
+      source_parameter: source_parameter,
+      detail: "Invalid field inputs for type #{type}: expected #{source_parameter}[name]=value"
+    )
+  end
+
   defp add_field_inputs(request, type, field_inputs) do
     case resource_for_type(request, type) do
       nil ->
@@ -746,6 +755,13 @@ defmodule AshJsonApi.Request do
       resource ->
         add_field_inputs_for_resource(request, resource, type, field_inputs)
     end
+  end
+
+  # `field_inputs[post][]=x` decodes to a list. Each type takes a map of
+  # calculation names to a map of arguments.
+  defp add_field_inputs_for_resource(request, _resource, type, field_inputs)
+       when not is_map(field_inputs) do
+    add_error(request, invalid_field_inputs(type, "field_inputs[#{type}]"), request.route.type)
   end
 
   defp add_field_inputs_for_resource(request, resource, type, field_inputs) do
@@ -759,6 +775,13 @@ defmodule AshJsonApi.Request do
           add_error(
             request,
             InvalidField.exception(type: type, parameter?: true, field: calculation_name),
+            request.route.type
+          )
+
+        _calculation when not is_map(arguments) ->
+          add_error(
+            request,
+            invalid_field_inputs(type, "field_inputs[#{type}][#{calculation_name}]"),
             request.route.type
           )
 
@@ -815,6 +838,21 @@ defmodule AshJsonApi.Request do
           end
       end
     end)
+  end
+
+  # `fields[post][]=title` decodes to a list. Only a comma-separated string is valid.
+  defp add_fields(request, resource, fields, parameter?) when not is_binary(fields) do
+    type = AshJsonApi.Resource.Info.type(resource)
+
+    add_error(
+      request,
+      InvalidField.exception(
+        type: type,
+        parameter?: parameter?,
+        detail: "Invalid fields for type #{type}: expected a comma separated string"
+      ),
+      request.route.type
+    )
   end
 
   defp add_fields(request, resource, fields, parameter?) do
