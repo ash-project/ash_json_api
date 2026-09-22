@@ -7,7 +7,8 @@ defmodule AshJsonApi.Includes.Parser do
 
   defstruct [:allowed, :disallowed]
 
-  def parse_and_validate_includes(resource, %{"include" => include_string}) do
+  def parse_and_validate_includes(resource, %{"include" => include_string})
+      when is_binary(include_string) do
     allowed = allowed_preloads(resource)
 
     include_string
@@ -24,6 +25,11 @@ defmodule AshJsonApi.Includes.Parser do
       end
     end)
   end
+
+  # `include[]=comments` or `include[a]=b` decode to a list or a map. Only a
+  # comma-separated string is a valid include, so report the value as it was given.
+  def parse_and_validate_includes(_, %{"include" => include}) when not is_nil(include),
+    do: %__MODULE__{allowed: [], disallowed: [include]}
 
   def parse_and_validate_includes(_, _), do: %__MODULE__{allowed: [], disallowed: []}
 

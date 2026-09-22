@@ -1000,7 +1000,7 @@ defmodule AshJsonApi.Controllers.Helpers do
   # This doesn't need to use chain, because its stateless and safe to
   # do anytime. Returning multiple errors is a nice feature of JSON API
   def fetch_pagination_parameters(%{query_params: %{"page" => page}} = request)
-      when is_binary(page) do
+      when not is_map(page) do
     Request.add_error(
       request,
       Error.InvalidPagination.exception(
@@ -1038,7 +1038,10 @@ defmodule AshJsonApi.Controllers.Helpers do
         :error ->
           Request.add_error(
             request,
-            Error.InvalidPagination.exception(source_parameter: "page[#{parameter}]"),
+            Error.InvalidPagination.exception(
+              detail: "page[#{parameter}] must be #{pagination_type_description(type)}",
+              source_parameter: "page[#{parameter}]"
+            ),
             :read
           )
       end
@@ -1048,7 +1051,11 @@ defmodule AshJsonApi.Controllers.Helpers do
     end
   end
 
-  defp cast_pagination_parameter(value, :integer) do
+  defp pagination_type_description(:integer), do: "an integer"
+  defp pagination_type_description(:boolean), do: "true or false"
+  defp pagination_type_description(:string), do: "a string"
+
+  defp cast_pagination_parameter(value, :integer) when is_binary(value) do
     case Integer.parse(value) do
       {integer, ""} ->
         {:ok, integer}

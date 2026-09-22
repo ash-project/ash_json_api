@@ -35,6 +35,13 @@ defmodule Test.Acceptance.ErrorValidationTest do
       attribute(:content, :string, public?: true)
     end
 
+    calculations do
+      calculate :title_with_suffix, :string, expr(title <> ^arg(:suffix)) do
+        public?(true)
+        argument(:suffix, :string, allow_nil?: false)
+      end
+    end
+
     actions do
       defaults([:read, :create, :update, :destroy])
     end
@@ -95,6 +102,65 @@ defmodule Test.Acceptance.ErrorValidationTest do
       assert error["detail"] == "Invalid filter"
       assert error["source"]["parameter"] == "filter"
       assert error["status"] == "400"
+    end
+  end
+
+  describe "query parameters with the wrong shape" do
+    defp error_for(path, code) do
+      response = get(Domain, path, status: 400)
+      error = Enum.find(response.resp_body["errors"], &(&1["code"] == code))
+      assert error, "Expected a #{code} error, got: #{inspect(response.resp_body["errors"])}"
+      assert error["status"] == "400"
+      error
+    end
+
+    test "a list-valued include is invalid_includes" do
+      error = error_for("/posts/with_filter_sort?include[]=comments", "invalid_includes")
+      assert error["source"] == %{"parameter" => "include"}
+    end
+
+    test "a list-valued sparse fieldset is invalid_field" do
+      error = error_for("/posts/with_filter_sort?fields[post][]=title", "invalid_field")
+      assert error["detail"] == "Invalid fields for type post: expected a comma separated string"
+      assert error["source"] == %{"parameter" => "fields[post]"}
+    end
+
+    test "a list-valued page is invalid_pagination" do
+      error = error_for("/posts/with_filter_sort?page[]=1", "invalid_pagination")
+      assert error["detail"] =~ "bracket notation"
+    end
+
+    test "a list-valued page[limit] is invalid_pagination" do
+      error = error_for("/posts/with_filter_sort?page[limit][]=1", "invalid_pagination")
+      assert error["detail"] == "Invalid pagination: page[limit] must be an integer"
+      assert error["source"] == %{"parameter" => "page[limit]"}
+    end
+
+    test "a page[limit] that is not an integer is invalid_pagination" do
+      error = error_for("/posts/with_filter_sort?page[limit]=abc", "invalid_pagination")
+      assert error["detail"] == "Invalid pagination: page[limit] must be an integer"
+      assert error["source"] == %{"parameter" => "page[limit]"}
+    end
+
+    test "a page[count] that is not a boolean is invalid_pagination" do
+      error = error_for("/posts/with_filter_sort?page[count]=maybe", "invalid_pagination")
+      assert error["detail"] == "Invalid pagination: page[count] must be true or false"
+      assert error["source"] == %{"parameter" => "page[count]"}
+    end
+
+    test "list-valued field_inputs for a type is invalid_field" do
+      error = error_for("/posts/with_filter_sort?field_inputs[post][]=x", "invalid_field")
+      assert error["source"] == %{"parameter" => "field_inputs[post]"}
+    end
+
+    test "list-valued arguments for a calculation are invalid_field" do
+      error =
+        error_for(
+          "/posts/with_filter_sort?field_inputs[post][title_with_suffix][]=x",
+          "invalid_field"
+        )
+
+      assert error["source"] == %{"parameter" => "field_inputs[post][title_with_suffix]"}
     end
   end
 
