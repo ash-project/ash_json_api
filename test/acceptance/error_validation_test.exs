@@ -207,6 +207,31 @@ defmodule Test.Acceptance.ErrorValidationTest do
     end
   end
 
+  describe "InvalidFilterValue rendering" do
+    test "the detail is built from the value and never includes the context" do
+      # ash_postgres puts the whole Ecto query in `context` when a cast fails
+      error =
+        Ash.Error.Query.InvalidFilterValue.exception(
+          value: "not-a-uuid",
+          context: %{from: {"posts", TestPost}, wheres: [:do_not_render]}
+        )
+
+      rendered = AshJsonApi.ToJsonApiError.to_json_api_error(error)
+
+      assert rendered.code == "invalid_filter_value"
+      assert rendered.detail == ~s(Invalid filter value "not-a-uuid")
+      refute rendered.detail =~ "do_not_render"
+    end
+
+    test "a plain-string message is appended to the detail" do
+      error =
+        Ash.Error.Query.InvalidFilterValue.exception(value: "x", message: "No matching types")
+
+      assert AshJsonApi.ToJsonApiError.to_json_api_error(error).detail ==
+               ~s(Invalid filter value "x": No matching types)
+    end
+  end
+
   describe "InvalidSort errors" do
     test "returns proper error when sort is invalid type on derive_sort?: true route" do
       # This triggers the error: derive_sort?: true but sort is array (not string)
