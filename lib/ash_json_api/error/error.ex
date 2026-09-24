@@ -371,16 +371,25 @@ defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.NoSuchFilterPredicate do
 end
 
 defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.InvalidFilterValue do
+  # The error's own `message/1` interpolates `context`, which a data layer may set to
+  # the whole query (ash_postgres puts the Ecto query there when a cast fails), so the
+  # detail is built here from the value alone. The `message` field is appended only
+  # when it is a plain string, such as "No matching types" from Ash's own parser.
   def to_json_api_error(error) do
     %AshJsonApi.Error{
       id: Ash.UUID.generate(),
       status_code: 400,
       code: "invalid_filter_value",
       title: "InvalidFilterValue",
-      detail: Ash.Error.Query.InvalidFilterValue.message(error),
+      detail: detail(error),
       meta: Map.new(error.vars)
     }
   end
+
+  defp detail(%{value: value, message: message}) when is_binary(message),
+    do: "Invalid filter value #{inspect(value)}: #{message}"
+
+  defp detail(%{value: value}), do: "Invalid filter value #{inspect(value)}"
 end
 
 defimpl AshJsonApi.ToJsonApiError, for: Ash.Error.Query.Required do
