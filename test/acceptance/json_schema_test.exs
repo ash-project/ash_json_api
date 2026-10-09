@@ -113,6 +113,10 @@ defmodule Test.Acceptance.JsonSchemaTest do
       )
     end
 
+    calculations do
+      calculate(:always_flag, :boolean, expr(true), public?: true, allow_nil?: false)
+    end
+
     relationships do
       belongs_to(:author, Test.Acceptance.JsonSchemaTest.Author, allow_nil?: false, public?: true)
     end
@@ -348,6 +352,14 @@ defmodule Test.Acceptance.JsonSchemaTest do
       refute Map.has_key?(create_relationships["properties"], "hidden_author")
       assert "visible_author" in create_relationships["required"]
       refute "hidden_author" in create_relationships["required"]
+    end
+
+    test "does not make non-nilable calculations nullable", %{json_api: json_api} do
+      post_schema = json_api["definitions"]["post"]
+      attributes = post_schema["properties"]["attributes"]["properties"]
+
+      assert Map.has_key?(attributes, "always_flag")
+      refute Map.has_key?(attributes["always_flag"], "anyOf")
     end
 
     test "handles self-referential embedded resources without infinite loop" do
