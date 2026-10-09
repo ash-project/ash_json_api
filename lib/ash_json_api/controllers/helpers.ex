@@ -455,6 +455,191 @@ defmodule AshJsonApi.Controllers.Helpers do
     end)
   end
 
+  @doc false
+  def bulk_update_records(request) do
+    chain(request, fn request ->
+      route = request.route
+      inputs = request.assigns.bulk_inputs || []
+      atomic? = route.transaction in [:batch, :all]
+
+      case lookup_bulk_records(request, inputs) do
+        {:error, error} ->
+          Request.add_error(request, error, :read)
+
+        {_found, not_found_errors} when atomic? and not_found_errors != [] ->
+          finalize_bulk_result(request, [], not_found_errors, length(inputs), atomic?)
+
+        {found, not_found_errors} ->
+          found_inputs = Enum.map(found, fn {_idx, record, attrs} -> {record, attrs} end)
+
+          index_map =
+            found
+            |> Enum.with_index()
+            |> Map.new(fn {{req_idx, _record, _attrs}, found_idx} -> {found_idx, req_idx} end)
+
+          result =
+            Ash.update_all(
+              found_inputs,
+              request.action.name,
+              bulk_update_opts(request, route, atomic?)
+            )
+
+          records =
+            (result.records || [])
+            |> Enum.map(fn record ->
+              {Map.get(index_map, bulk_update_index(record), 0), record}
+            end)
+            |> Enum.sort_by(&elem(&1, 0))
+            |> Enum.map(&elem(&1, 1))
+
+          update_all_errors =
+            Enum.map(result.errors || [], fn error ->
+              req_idx = Map.get(index_map, AshJsonApi.Error.bulk_error_index(error), 0)
+              {req_idx, error}
+            end)
+
+          finalize_bulk_result(
+            request,
+            records,
+            update_all_errors ++ not_found_errors,
+            length(inputs),
+            atomic?
+          )
+      end
+    end)
+  end
+
+  defp bulk_update_opts(request, route, atomic?) do
+    opts =
+      Request.opts(request,
+        transaction: route.transaction,
+        stop_on_error?: atomic?,
+        authorize_changeset_with: Request.authorize_bulk_with(request.resource),
+        return_records?: true,
+        return_errors?: true,
+        notify?: true,
+        context: request.context || %{},
+        load: fields(request, request.resource) ++ (request.includes_keyword || [])
+      )
+
+    if route.batch_size do
+      Keyword.put(opts, :batch_size, route.batch_size)
+    else
+      opts
+    end
+  end
+
+  defp finalize_bulk_result(request, records, bulk_errors, total, atomic?) do
+    {records, bulk_errors} =
+      if atomic? and bulk_errors != [] do
+        {[], bulk_errors}
+      else
+        {records, bulk_errors}
+      end
+
+    successful = length(records)
+    failed = total - successful
+
+    cond do
+      failed == 0 ->
+        request
+        |> Request.assign(:result, records)
+        |> Request.assign(:bulk_status, :success)
+
+      not atomic? and successful > 0 ->
+        request
+        |> Request.assign(:result, records)
+        |> Request.assign(:bulk_status, :partial_success)
+        |> Request.assign(:bulk_errors, bulk_errors)
+        |> Request.assign(:bulk_meta, %{
+          total_requested: total,
+          successful: successful,
+          failed: failed
+        })
+
+      true ->
+        Enum.reduce(bulk_errors, request, fn {index, error}, request ->
+          Request.add_error(
+            request,
+            AshJsonApi.Error.bulk_to_json_api_errors(
+              request.domain,
+              request.resource,
+              error,
+              :update,
+              index
+            ),
+            request.route.type
+          )
+        end)
+    end
+  end
+
+  defp bulk_update_index(%{__metadata__: %{bulk_update_index: index}}) when is_integer(index),
+    do: index
+
+  defp bulk_update_index(_), do: 0
+
+  defp lookup_bulk_records(request, inputs) do
+    resource = request.resource
+    pkey = Ash.Resource.Info.primary_key(resource)
+
+    read_action =
+      if request.route.read_action do
+        request.route.read_action
+      else
+        Ash.Resource.Info.primary_action!(resource, :read).name
+      end
+
+    pseudo_records = Enum.map(inputs, fn {id, _attrs} -> id_to_pkey_map(pkey, id) end)
+
+    query =
+      resource
+      |> Ash.Query.do_filter(Ash.pkey_filter(pseudo_records, pkey))
+      |> Ash.Query.set_context(request.context || %{})
+      |> Ash.Query.for_read(
+        read_action,
+        %{},
+        Keyword.put(Request.opts(request), :page, false)
+      )
+
+    case Ash.read(query, Request.opts(request)) do
+      {:ok, records} ->
+        by_pkey = Map.new(records, &{record_pkey_key(&1, pkey), &1})
+
+        {found, missing} =
+          inputs
+          |> Enum.with_index()
+          |> Enum.reduce({[], []}, fn {{id, attrs}, req_idx}, {found, missing} ->
+            case Map.get(by_pkey, input_pkey_key(pkey, id)) do
+              nil ->
+                error =
+                  Ash.Error.Query.NotFound.exception(primary_key: id, resource: resource)
+
+                {found, [{req_idx, error} | missing]}
+
+              record ->
+                {[{req_idx, record, attrs} | found], missing}
+            end
+          end)
+
+        {Enum.reverse(found), Enum.reverse(missing)}
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  defp id_to_pkey_map(_pkey, id) when is_map(id), do: id
+  defp id_to_pkey_map([single], id), do: %{single => id}
+  defp id_to_pkey_map(_pkey, id), do: %{id: id}
+
+  defp record_pkey_key(record, pkey), do: Enum.map(pkey, &to_string(Map.get(record, &1)))
+
+  defp input_pkey_key(pkey, id) do
+    map = id_to_pkey_map(pkey, id)
+    Enum.map(pkey, &to_string(Map.get(map, &1)))
+  end
+
   def add_to_relationship(request, relationship_name) do
     chain(request, fn %{assigns: %{result: result}} ->
       action = Ash.Resource.Info.primary_action!(request.resource, :update).name

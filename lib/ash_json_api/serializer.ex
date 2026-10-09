@@ -109,6 +109,39 @@ defmodule AshJsonApi.Serializer do
     |> Jason.encode!()
   end
 
+  def serialize_bulk_result(request, includes) do
+    records = request.assigns.result || []
+    base_meta = Map.get(request.assigns, :metadata, %{})
+
+    json_api = %{version: "1.0"}
+    links = %{self: request.url}
+    bulk_meta = Map.merge(base_meta || %{}, request.assigns.bulk_meta)
+
+    %{
+      data: Enum.map(records, &serialize_one_record(request, &1)),
+      jsonapi: json_api,
+      links: links
+    }
+    |> add_includes(request, includes)
+    |> Map.put(:errors, serialize_bulk_errors(request, request.assigns.bulk_errors || []))
+    |> Map.put(:meta, bulk_meta)
+    |> Jason.encode!()
+  end
+
+  defp serialize_bulk_errors(request, bulk_errors) do
+    bulk_errors
+    |> Enum.flat_map(fn {index, error} ->
+      AshJsonApi.Error.bulk_to_json_api_errors(
+        request.domain,
+        request.resource,
+        error,
+        :update,
+        index
+      )
+    end)
+    |> Enum.map(&serialize_one_error(&1, request))
+  end
+
   def serialize_errors(request, error_or_errors, meta \\ nil) do
     json_api = %{version: "1.0"}
 
