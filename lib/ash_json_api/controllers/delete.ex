@@ -21,7 +21,11 @@ defmodule AshJsonApi.Controllers.Delete do
 
     conn
     |> Request.from(resource, action, domain, all_domains, route, options[:prefix])
-    |> Helpers.destroy_record()
+    |> then(fn request ->
+      if request.action.type == :update,
+        do: Helpers.update_record(request),
+        else: Helpers.destroy_record(request)
+    end)
     |> Helpers.fetch_includes()
     |> Helpers.fetch_metadata()
     |> Helpers.render_or_render_errors(conn, fn conn, request ->

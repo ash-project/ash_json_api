@@ -403,7 +403,7 @@ delete resource \\ nil, action
 ```
 
 
-A DELETE route to destroy a record
+A DELETE route to destroy or update a record
 
 
 
@@ -969,7 +969,7 @@ delete resource, action
 ```
 
 
-A DELETE route to destroy a record
+A DELETE route to destroy or update a record
 
 
 
