@@ -119,7 +119,8 @@ defmodule Test.Acceptance.FieldVisibilityTest do
       type("visibility-show-post")
       includes([:visible_author, :extra_author])
       default_fields([:title, :summary, :secret_calc])
-      show_fields([:title, :visible_author])
+      hide_fields([:summary])
+      show_fields([:title, :summary, :visible_author])
 
       routes do
         base("/visibility_show_posts")
@@ -312,7 +313,9 @@ defmodule Test.Acceptance.FieldVisibilityTest do
     assert response.resp_body["data"]["type"] == "visibility-author"
   end
 
-  test "show_fields only exposes allowlisted fields", %{show_only_post: post} do
+  test "show_fields only exposes allowlisted fields and hide_fields wins", %{
+    show_only_post: post
+  } do
     response =
       Domain
       |> get("/visibility_show_posts/#{post.id}", status: 200)
@@ -329,6 +332,18 @@ defmodule Test.Acceptance.FieldVisibilityTest do
   end
 
   test "show_fields rejects non-allowlisted sparse fieldsets", %{show_only_post: post} do
+    Domain
+    |> get("/visibility_show_posts/#{post.id}?fields[visibility-show-post]=secret_calc",
+      status: 400
+    )
+    |> assert_has_error(%{
+      "code" => "invalid_field"
+    })
+  end
+
+  test "hide_fields rejects sparse fieldsets even when the field is in show_fields", %{
+    show_only_post: post
+  } do
     Domain
     |> get("/visibility_show_posts/#{post.id}?fields[visibility-show-post]=summary", status: 400)
     |> assert_has_error(%{
