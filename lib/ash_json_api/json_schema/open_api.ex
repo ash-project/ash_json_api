@@ -429,6 +429,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
     defp required_attributes(resource) do
       resource
       |> Ash.Resource.Info.public_attributes()
+      |> Enum.concat(Ash.Resource.Info.public_calculations(resource))
       |> filter_shown_fields(resource)
       |> Enum.reject(&(&1.allow_nil? || AshJsonApi.Resource.only_primary_key?(resource, &1.name)))
       |> Enum.map(fn attr ->
