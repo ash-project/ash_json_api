@@ -94,6 +94,7 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
       routes do
         base("/people")
         relationship :tags, :read
+        relationship :best_friend, :read
         # Exercise the relationship POST route
         post_to_relationship(:tags)
         patch_relationship(:tags)
@@ -124,6 +125,8 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
     end
 
     relationships do
+      belongs_to(:best_friend, __MODULE__, public?: true)
+
       many_to_many :tags, AshJsonApi.Acceptance.RelationshipsTest.Tag do
         public?(true)
         through(AshJsonApi.Acceptance.RelationshipsTest.PersonTag)
@@ -160,6 +163,27 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
 
   @domain Domain
   @router Router
+
+  test "the relationship route for a to-one relationship returns its resource identifier" do
+    {:ok, friend} =
+      Person
+      |> Ash.Changeset.for_create(:create, %{name: "friend"})
+      |> Ash.create()
+
+    {:ok, person} =
+      Person
+      |> Ash.Changeset.for_create(:create, %{name: "person"})
+      |> Ash.Changeset.force_change_attribute(:best_friend_id, friend.id)
+      |> Ash.create()
+
+    @domain
+    |> get("/people/#{person.id}/relationships/best_friend", router: @router, status: 200)
+    |> assert_data_equals(%{"type" => "person", "id" => friend.id})
+
+    @domain
+    |> get("/people/#{friend.id}/relationships/best_friend", router: @router, status: 200)
+    |> assert_data_equals(nil)
+  end
 
   test "post_to_relationship accepts resource identifiers with id only" do
     {:ok, tag} =

@@ -29,9 +29,16 @@ defmodule AshJsonApi.Serializer do
       %{self: at_host(request, request.url)}
       |> add_related_link(request, source_record, relationship)
 
+    # related records are fetched as a list, even for a to-one relationship
+    data =
+      case List.wrap(record) do
+        [] -> nil
+        [record | _] -> serialize_relationship_data(record, source_record, relationship)
+      end
+
     %{
       links: links,
-      data: serialize_relationship_data(record, source_record, relationship)
+      data: data
     }
     |> Jason.encode!()
   end
