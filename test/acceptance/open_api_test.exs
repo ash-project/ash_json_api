@@ -185,17 +185,26 @@ defmodule Test.Acceptance.OpenApiTest do
         get(:read)
         index(:read)
         post(:create, relationship_arguments: [{:id, :author}])
+        patch_relationship(:author)
       end
     end
 
     actions do
       default_accept(:*)
-      defaults([:read, :update, :destroy])
+      defaults([:read, :destroy])
 
       create :create do
         primary? true
         accept([:id, :name, :hidden])
         argument(:author, :uuid)
+
+        change(manage_relationship(:author, type: :append_and_remove))
+      end
+
+      update :update do
+        primary? true
+        require_atomic?(false)
+        argument(:author, :map)
 
         change(manage_relationship(:author, type: :append_and_remove))
       end
@@ -516,7 +525,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 13
+    assert map_size(api_spec.paths) == 14
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -1172,6 +1181,18 @@ defmodule Test.Acceptance.OpenApiTest do
       assert schema.properties.data.type == :object
       assert schema.properties.data.properties.attributes.required == ["name"]
       assert schema.properties.data.properties.attributes.type == :object
+    end
+
+    test "a to-one relationship route takes a single resource identifier", %{
+      open_api_spec: %OpenApi{} = api_spec
+    } do
+      %Operation{} = operation = api_spec.paths["/posts/{id}/relationships/author"].patch
+      %RequestBody{} = body = operation.requestBody
+      data = body.content["application/vnd.api+json"].schema.properties.data
+
+      assert data.type == :object
+      assert data.nullable
+      assert data.required == [:id, :type]
     end
 
     test "Response body schema", %{open_api_spec: %OpenApi{} = api_spec} do

@@ -2797,32 +2797,35 @@ if Code.ensure_loaded?(OpenApiSpex) do
     @spec relationship_resource_identifiers(relationship :: Relationships.relationship()) ::
             Schema.t()
     defp relationship_resource_identifiers(relationship) do
+      identifier = %{
+        type: :object,
+        required: [:id, :type],
+        additionalProperties: false,
+        properties: %{
+          id: %Schema{
+            type: :string
+          },
+          type: %Schema{
+            enum: [AshJsonApi.Resource.Info.type(relationship.destination)]
+          },
+          meta: %Schema{
+            type: :object,
+            additionalProperties: true
+          }
+        }
+      }
+
+      data =
+        case relationship.cardinality do
+          :one -> Map.put(identifier, :nullable, true)
+          :many -> %{type: :array, items: identifier}
+        end
+
       %Schema{
         type: :object,
         required: [:data],
         additionalProperties: false,
-        properties: %{
-          data: %{
-            type: :array,
-            items: %{
-              type: :object,
-              required: [:id, :type],
-              additionalProperties: false,
-              properties: %{
-                id: %Schema{
-                  type: :string
-                },
-                type: %Schema{
-                  enum: [AshJsonApi.Resource.Info.type(relationship.destination)]
-                },
-                meta: %Schema{
-                  type: :object,
-                  additionalProperties: true
-                }
-              }
-            }
-          }
-        }
+        properties: %{data: data}
       }
     end
 

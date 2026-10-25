@@ -1391,7 +1391,7 @@ defmodule AshJsonApi.Request do
        )
        when is_map(relationships) do
     Enum.reduce(relationships, request, fn {name, value}, request ->
-      with %{"data" => data} when is_map(data) or is_list(data) <- value,
+      with %{"data" => data} when is_map(data) or is_list(data) or is_nil(data) <- value,
            {:arg, arg} when not is_nil(arg) <-
              {:arg,
               Enum.find(

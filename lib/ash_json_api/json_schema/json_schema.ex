@@ -988,32 +988,38 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp relationship_resource_identifiers(relationship) when is_map(relationship) do
+    identifier = %{
+      "type" => "object",
+      "required" => ["id", "type"],
+      "additionalProperties" => false,
+      "properties" =>
+        %{
+          "type" => %{
+            "const" => AshJsonApi.Resource.Info.type(relationship.destination)
+          },
+          "meta" => %{
+            "type" => "object"
+            #   "properties" => join_attribute_properties(relationship),
+            #   "additionalProperties" => false
+          }
+        }
+        |> add_id_field(relationship.destination)
+    }
+
+    many = %{"type" => "array", "items" => identifier}
+
+    data =
+      case relationship.cardinality do
+        # a list was the only accepted input before, so it still is
+        :one -> %{"anyOf" => [%{"type" => "null"}, identifier, many]}
+        :many -> many
+      end
+
     %{
       "type" => "object",
       "required" => ["data"],
       "additionalProperties" => false,
-      "properties" => %{
-        "data" => %{
-          "type" => "array",
-          "items" => %{
-            "type" => "object",
-            "required" => ["id", "type"],
-            "additionalProperties" => false,
-            "properties" =>
-              %{
-                "type" => %{
-                  "const" => AshJsonApi.Resource.Info.type(relationship.destination)
-                },
-                "meta" => %{
-                  "type" => "object"
-                  #   "properties" => join_attribute_properties(relationship),
-                  #   "additionalProperties" => false
-                }
-              }
-              |> add_id_field(relationship.destination)
-          }
-        }
-      }
+      "properties" => %{"data" => data}
     }
   end
 

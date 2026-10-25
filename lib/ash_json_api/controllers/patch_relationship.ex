@@ -50,7 +50,10 @@ defmodule AshJsonApi.Controllers.PatchRelationship do
     |> Helpers.replace_relationship(relationship.name)
     |> Helpers.fetch_metadata()
     |> Helpers.render_or_render_errors(conn, fn conn, request ->
-      Response.render_many_relationship(conn, request, 200, relationship)
+      case relationship.cardinality do
+        :one -> Response.render_one_relationship(conn, request, 200, relationship)
+        :many -> Response.render_many_relationship(conn, request, 200, relationship)
+      end
     end)
   end
 end

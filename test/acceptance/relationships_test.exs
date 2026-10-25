@@ -95,6 +95,8 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
         base("/people")
         relationship :tags, :read
         relationship :best_friend, :read
+        patch_relationship(:best_friend)
+        patch(:update, relationship_arguments: [:best_friend])
         # Exercise the relationship POST route
         post_to_relationship(:tags)
         patch_relationship(:tags)
@@ -110,7 +112,9 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
         require_atomic?(false)
         accept([:name])
         argument(:tags, {:array, :uuid})
+        argument(:best_friend, :map)
         change(manage_relationship(:tags, type: :append_and_remove))
+        change(manage_relationship(:best_friend, type: :append_and_remove))
       end
 
       create :create do
@@ -183,6 +187,83 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
     @domain
     |> get("/people/#{friend.id}/relationships/best_friend", router: @router, status: 200)
     |> assert_data_equals(nil)
+  end
+
+  describe "patching a to-one relationship" do
+    setup do
+      [friend, other_friend] =
+        for name <- ["friend", "other friend"] do
+          Person
+          |> Ash.Changeset.for_create(:create, %{name: name})
+          |> Ash.create!()
+        end
+
+      person =
+        Person
+        |> Ash.Changeset.for_create(:create, %{name: "person"})
+        |> Ash.Changeset.force_change_attribute(:best_friend_id, friend.id)
+        |> Ash.create!()
+
+      %{person: person, other_friend: other_friend}
+    end
+
+    test "sets it with a resource identifier", %{person: person, other_friend: other_friend} do
+      @domain
+      |> patch(
+        "/people/#{person.id}/relationships/best_friend",
+        %{"data" => %{"type" => "person", "id" => other_friend.id}},
+        router: @router,
+        status: 200
+      )
+      |> assert_data_equals(%{"type" => "person", "id" => other_friend.id})
+
+      assert Ash.get!(Person, person.id).best_friend_id == other_friend.id
+    end
+
+    test "sets it with a list of one resource identifier", %{
+      person: person,
+      other_friend: other_friend
+    } do
+      @domain
+      |> patch(
+        "/people/#{person.id}/relationships/best_friend",
+        %{"data" => [%{"type" => "person", "id" => other_friend.id}]},
+        router: @router,
+        status: 200
+      )
+      |> assert_data_equals(%{"type" => "person", "id" => other_friend.id})
+
+      assert Ash.get!(Person, person.id).best_friend_id == other_friend.id
+    end
+
+    test "clears it with null", %{person: person} do
+      @domain
+      |> patch("/people/#{person.id}/relationships/best_friend", %{"data" => nil},
+        router: @router,
+        status: 200
+      )
+      |> assert_data_equals(nil)
+
+      assert is_nil(Ash.get!(Person, person.id).best_friend_id)
+    end
+
+    test "clears it with null in a relationship argument", %{person: person} do
+      @domain
+      |> patch(
+        "/people/#{person.id}",
+        %{
+          "data" => %{
+            "type" => "person",
+            "id" => person.id,
+            "relationships" => %{"best_friend" => %{"data" => nil}}
+          }
+        },
+        router: @router,
+        status: 200
+      )
+
+      assert is_nil(Ash.get!(Person, person.id).best_friend_id)
+    end
   end
 
   test "post_to_relationship accepts resource identifiers with id only" do
