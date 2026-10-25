@@ -97,6 +97,7 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
         relationship :best_friend, :read
         patch_relationship(:best_friend)
         patch(:update, relationship_arguments: [:best_friend])
+        patch(:set_tags, route: "/:id/tags", relationship_arguments: [{:id, :tag_ids}])
         # Exercise the relationship POST route
         post_to_relationship(:tags)
         patch_relationship(:tags)
@@ -115,6 +116,12 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
         argument(:best_friend, :map)
         change(manage_relationship(:tags, type: :append_and_remove))
         change(manage_relationship(:best_friend, type: :append_and_remove))
+      end
+
+      update :set_tags do
+        require_atomic?(false)
+        argument(:tag_ids, {:array, :uuid})
+        change(manage_relationship(:tag_ids, :tags, type: :append_and_remove))
       end
 
       create :create do
@@ -264,6 +271,41 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
 
       assert is_nil(Ash.get!(Person, person.id).best_friend_id)
     end
+  end
+
+  test "an {:id, argument} relationship argument takes a list of resource identifiers" do
+    [t1, t2] =
+      for name <- ["t_ids_1", "t_ids_2"] do
+        Tag
+        |> Ash.Changeset.for_create(:create, %{name: name})
+        |> Ash.create!()
+      end
+
+    person =
+      Person
+      |> Ash.Changeset.for_create(:create, %{name: "p_ids"})
+      |> Ash.create!()
+
+    @domain
+    |> patch(
+      "/people/#{person.id}/tags",
+      %{
+        "data" => %{
+          "type" => "person",
+          "id" => person.id,
+          "relationships" => %{
+            "tag_ids" => %{
+              "data" => [%{"type" => "tag", "id" => t1.id}, %{"type" => "tag", "id" => t2.id}]
+            }
+          }
+        }
+      },
+      router: @router,
+      status: 200
+    )
+
+    assert person |> Ash.load!(:tags) |> Map.get(:tags) |> Enum.map(& &1.id) |> Enum.sort() ==
+             Enum.sort([t1.id, t2.id])
   end
 
   test "post_to_relationship accepts resource identifiers with id only" do

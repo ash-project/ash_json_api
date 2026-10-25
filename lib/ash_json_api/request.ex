@@ -1403,10 +1403,14 @@ defmodule AshJsonApi.Request do
              relationship_change_value(name, data) do
         case find_relationship_argument(relationship_arguments, arg.name) do
           {:id, _arg} ->
-            %{
-              request
-              | arguments: Map.put(request.arguments || %{}, arg.name, change_value["id"])
-            }
+            id =
+              if is_list(change_value) do
+                Enum.map(change_value, & &1["id"])
+              else
+                change_value["id"]
+              end
+
+            %{request | arguments: Map.put(request.arguments || %{}, arg.name, id)}
 
           _ ->
             %{
