@@ -550,7 +550,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           end
 
         {:error, error} ->
-          {:error, error}
+          Request.add_error(request, error, :delete_from_relationship)
       end
     end)
   end

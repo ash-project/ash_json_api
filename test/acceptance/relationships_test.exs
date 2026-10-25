@@ -472,6 +472,28 @@ defmodule AshJsonApi.Acceptance.RelationshipsTest do
     |> assert_valid_resource_objects("tag", [t1.id, t2.id])
   end
 
+  test "delete_from_relationship returns the update's error" do
+    {:ok, tag} =
+      Tag
+      |> Ash.Changeset.for_create(:create, %{name: "t_unrelated"})
+      |> Ash.create()
+
+    {:ok, person} =
+      Person
+      |> Ash.Changeset.for_create(:create, %{name: "p_delete_error"})
+      |> Ash.create()
+
+    # removing a tag that isn't related to the person fails the update
+    @domain
+    |> delete(
+      "/people/#{person.id}/relationships/tags",
+      router: @router,
+      status: 404,
+      body: %{"data" => [%{"type" => "tag", "id" => tag.id}]}
+    )
+    |> assert_has_error(%{"code" => "not_found"})
+  end
+
   test "delete_from_relationship removes only specified identifiers" do
     {:ok, t1} =
       Tag
