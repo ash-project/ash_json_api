@@ -2724,6 +2724,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
 
         :index ->
+          {items, acc} = item_reference(route, resource, acc)
+
           schema = %Schema{
             type: :object,
             additionalProperties: false,
@@ -2732,7 +2734,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 description:
                   "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
                 type: :array,
-                items: item_reference(route, resource),
+                items: items,
                 uniqueItems: true
               },
               included: included_resource_schemas(resource),
@@ -2767,10 +2769,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> then(&{&1, acc})
 
         _ ->
+          {data, acc} = item_reference(route, resource, acc)
+
           schema = %Schema{
             additionalProperties: false,
             properties: %{
-              data: item_reference(route, resource),
+              data: data,
               included: included_resource_schemas(resource),
               meta: %Schema{
                 type: :object,
@@ -2783,16 +2787,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp item_reference(%{default_fields: nil}, resource) do
-      %Reference{
-        "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
-      }
+    defp item_reference(%{default_fields: nil}, resource, acc) do
+      {%Reference{
+         "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
+       }, acc}
     end
 
-    defp item_reference(%{default_fields: default_fields}, resource) do
-      {schema, _acc} = resource_object_schema(resource, default_fields, %{})
-      schema
-    end
+    defp item_reference(%{default_fields: default_fields}, resource, acc),
+      do: resource_object_schema(resource, default_fields, acc)
 
     @spec relationship_resource_identifiers(relationship :: Relationships.relationship()) ::
             Schema.t()

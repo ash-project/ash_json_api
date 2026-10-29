@@ -6,7 +6,7 @@ defmodule Test.Acceptance.OpenApiTest do
   use ExUnit.Case, async: true
 
   import Plug.Test
-  alias OpenApiSpex.{OpenApi, Operation, Parameter, Reference, RequestBody, Schema}
+  alias OpenApiSpex.{OpenApi, Operation, Parameter, Reference, RequestBody, Response, Schema}
 
   defmodule Bio do
     use Ash.Resource,
@@ -248,6 +248,37 @@ defmodule Test.Acceptance.OpenApiTest do
     end
   end
 
+  defmodule Profile do
+    use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.Blogs,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [
+        AshJsonApi.Resource
+      ]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("profile")
+
+      routes do
+        base("/profiles")
+        get(:read, default_fields: [:bio])
+      end
+    end
+
+    actions do
+      defaults([:read])
+    end
+
+    attributes do
+      uuid_primary_key(:id, public?: true)
+      attribute(:bio, :struct, public?: true, constraints: [instance_of: Bio])
+    end
+  end
+
   defmodule Tag do
     use Ash.Resource,
       domain: Test.Acceptance.OpenApiTest.Blogs,
@@ -407,6 +438,7 @@ defmodule Test.Acceptance.OpenApiTest do
       resource(Author)
       resource(Tag)
       resource(AuthorNoFilter)
+      resource(Profile)
     end
   end
 
@@ -525,7 +557,7 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   test "API routes are mapped to OpenAPI Operations", %{open_api_spec: %OpenApi{} = api_spec} do
-    assert map_size(api_spec.paths) == 14
+    assert map_size(api_spec.paths) == 15
 
     assert %{"/authors" => _, "/authors/{id}" => _, "/posts" => _, "/posts/{id}" => _} =
              api_spec.paths
@@ -1076,6 +1108,15 @@ defmodule Test.Acceptance.OpenApiTest do
   end
 
   describe "Get route" do
+    test "a route with default_fields describes its resource inline, struct attributes included",
+         %{open_api_spec: %OpenApi{} = api_spec} do
+      %Operation{} = operation = api_spec.paths["/profiles/{id}"].get
+      %Response{} = response = operation.responses[200]
+      schema = response.content["application/vnd.api+json"].schema
+
+      assert %{"bio" => _} = schema.properties.data.properties.attributes.properties
+    end
+
     test "id parameter", %{open_api_spec: %OpenApi{} = api_spec} do
       %Operation{} = operation = api_spec.paths["/posts/{id}"].get
       %Parameter{} = filter = operation.parameters |> Enum.find(&(&1.name == "id"))
