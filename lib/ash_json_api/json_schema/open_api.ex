@@ -147,7 +147,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
           description: "General Error",
           content: %{
             "application/vnd.api+json" => %MediaType{
-              schema: %Reference{"$ref": "#/components/schemas/errors"}
+              schema: %Schema{
+                type: :object,
+                required: [:errors],
+                properties: %{
+                  errors: %Reference{"$ref": "#/components/schemas/errors"},
+                  jsonapi: %Schema{
+                    type: :object
+                  }
+                }
+              }
             }
           }
         }
