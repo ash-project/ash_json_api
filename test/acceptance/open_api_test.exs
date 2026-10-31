@@ -473,6 +473,24 @@ defmodule Test.Acceptance.OpenApiTest do
     assert api_spec.info.title == "foobar"
   end
 
+  test "errors response schema wraps errors array in an object", %{open_api_spec: api_spec} do
+    assert %Response{
+             description: "General Error",
+             content: %{
+               "application/vnd.api+json" => %OpenApiSpex.MediaType{
+                 schema: %Schema{
+                   type: :object,
+                   required: [:errors],
+                   properties: %{
+                     errors: %Reference{"$ref": "#/components/schemas/errors"},
+                     jsonapi: %Schema{type: :object}
+                   }
+                 }
+               }
+             }
+           } = api_spec.components.responses["errors"]
+  end
+
   test "resources without a json_api are not included in the schema", %{open_api_spec: api_spec} do
     schema_keys = api_spec.components.schemas |> Map.keys()
     assert "tags" not in schema_keys
