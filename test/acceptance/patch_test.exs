@@ -980,7 +980,14 @@ defmodule Test.Acceptance.PatchTest do
 
       {_, schema} = AshJsonApi.JsonSchema.route_schema(route, Domain, Post, [])
 
-      assert get_in(schema, ["schema", "properties", "data", "properties", "attributes", "required"]) ==
+      assert get_in(schema, [
+               "schema",
+               "properties",
+               "data",
+               "properties",
+               "attributes",
+               "required"
+             ]) ==
                ["name"]
     end
   end
