@@ -2512,11 +2512,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       attribute_names =
         case action.type do
-          type when type in [:action, :read] ->
+          type when type in [:action, :read, :update] ->
             []
-
-          :update ->
-            Enum.filter(action.require_attributes, &show_field?(resource, &1))
 
           _ ->
             resource

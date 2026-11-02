@@ -212,6 +212,10 @@ defmodule Test.Acceptance.PatchTest do
           route "/validated_update/:id"
         end
 
+        patch :retitle do
+          route "/:id/retitle"
+        end
+
         related :author, :read
         patch_relationship :author
       end
@@ -237,6 +241,11 @@ defmodule Test.Acceptance.PatchTest do
 
       update :update_email do
         accept([:email, :name])
+      end
+
+      update :retitle do
+        accept([:name])
+        require_attributes([:name])
       end
 
       action :fake_update, :struct do
@@ -942,6 +951,37 @@ defmodule Test.Acceptance.PatchTest do
       # which should be filtered out for single-record operations
       assert error["source"]["pointer"] == "/data/attributes/name"
       refute error["source"]["pointer"] =~ ~r"/\d+/"
+    end
+
+    test "patch to an update action with require_attributes succeeds and produces unique string required keys",
+         %{post: post} do
+      response =
+        Domain
+        |> patch(
+          "/posts/#{post.id}/retitle",
+          %{
+            data: %{
+              type: "post",
+              id: post.id,
+              attributes: %{
+                name: "Retitled Post"
+              }
+            }
+          },
+          status: 200
+        )
+
+      assert %{"data" => %{"attributes" => %{"name" => "Retitled Post"}}} = response.resp_body
+
+      route =
+        Post
+        |> AshJsonApi.Resource.Info.routes(Domain)
+        |> Enum.find(&(&1.action == :retitle))
+
+      {_, schema} = AshJsonApi.JsonSchema.route_schema(route, Domain, Post, [])
+
+      assert get_in(schema, ["schema", "properties", "data", "properties", "attributes", "required"]) ==
+               ["name"]
     end
   end
 end
