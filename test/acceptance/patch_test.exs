@@ -212,6 +212,10 @@ defmodule Test.Acceptance.PatchTest do
           route "/validated_update/:id"
         end
 
+        patch :retitle do
+          route "/retitle/:id"
+        end
+
         related :author, :read
         patch_relationship :author
       end
@@ -237,6 +241,11 @@ defmodule Test.Acceptance.PatchTest do
 
       update :update_email do
         accept([:email, :name])
+      end
+
+      update :retitle do
+        accept([:email, :name])
+        require_attributes([:name])
       end
 
       action :fake_update, :struct do
@@ -434,6 +443,40 @@ defmodule Test.Acceptance.PatchTest do
         }
       )
       |> assert_attribute_equals("email", "dummy@test.com")
+    end
+
+    test "patch to an action with require_attributes succeeds when the attribute is given", %{
+      post: post
+    } do
+      Domain
+      |> patch("/posts/retitle/#{post.id}", %{data: %{attributes: %{name: "Retitled"}}},
+        status: 200
+      )
+      |> assert_attribute_equals("name", "Retitled")
+    end
+
+    test "patch to an action with require_attributes fails when the attribute is missing", %{
+      post: post
+    } do
+      response =
+        Domain
+        |> patch("/posts/retitle/#{post.id}", %{data: %{attributes: %{email: "dummy@test.com"}}},
+          status: 400
+        )
+
+      assert [%{"code" => "required", "source" => %{"pointer" => "/data/attributes/name"}}] =
+               response.resp_body["errors"]
+    end
+
+    test "require_attributes on an update action appear once in the OpenAPI required list" do
+      api_spec = AshJsonApi.Controllers.OpenApi.spec(%{private: %{}}, domains: [Domain])
+
+      schema =
+        api_spec.paths["/posts/retitle/{id}"].patch.requestBody.content[
+          "application/vnd.api+json"
+        ].schema
+
+      assert schema.properties.data.properties.attributes.required == ["name"]
     end
 
     test "patch allows setting values to nil", %{post: post} do

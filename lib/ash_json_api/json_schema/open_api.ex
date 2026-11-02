@@ -2512,11 +2512,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       attribute_names =
         case action.type do
-          type when type in [:action, :read] ->
+          # update actions only require what's in `require_attributes`, which is added below
+          type when type in [:action, :read, :update] ->
             []
-
-          :update ->
-            Enum.filter(action.require_attributes, &show_field?(resource, &1))
 
           _ ->
             resource

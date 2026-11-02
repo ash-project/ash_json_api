@@ -29,6 +29,7 @@ defmodule Test.Acceptance.FieldNamesTest do
         index :read
         post :create
         patch :update
+        patch :retitle, route: "/:id/retitle"
       end
     end
 
@@ -42,6 +43,11 @@ defmodule Test.Acceptance.FieldNamesTest do
     actions do
       default_accept([:title, :body, :view_count])
       defaults([:read, :create, :update, :destroy])
+
+      update :retitle do
+        accept([:title, :body])
+        require_attributes([:title])
+      end
 
       read :search do
         argument(:title_filter, :string, allow_nil?: true)
@@ -544,6 +550,40 @@ defmodule Test.Acceptance.FieldNamesTest do
       assert response.status == 200
       attrs = response.resp_body["data"]["attributes"]
       assert attrs["subject"] == "Updated"
+    end
+
+    test "update with require_attributes accepts the renamed key" do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{title: "Old", body: "Old body"})
+        |> Ash.create!()
+
+      response =
+        Domain
+        |> patch("/posts/#{post.id}/retitle", %{
+          data: %{type: "post", id: post.id, attributes: %{subject: "Retitled"}}
+        })
+
+      assert response.status == 200
+      assert response.resp_body["data"]["attributes"]["subject"] == "Retitled"
+    end
+
+    test "update with require_attributes reports the renamed key when missing" do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{title: "Old", body: "Old body"})
+        |> Ash.create!()
+
+      response =
+        Domain
+        |> patch(
+          "/posts/#{post.id}/retitle",
+          %{data: %{type: "post", id: post.id, attributes: %{content: "New body"}}},
+          status: 400
+        )
+
+      assert [%{"code" => "required", "source" => %{"pointer" => "/data/attributes/subject"}}] =
+               response.resp_body["errors"]
     end
 
     test "create with original (non-renamed) attribute key is rejected as no such input" do
