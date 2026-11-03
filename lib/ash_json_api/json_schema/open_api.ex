@@ -147,7 +147,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
           description: "General Error",
           content: %{
             "application/vnd.api+json" => %MediaType{
-              schema: %Reference{"$ref": "#/components/schemas/errors"}
+              schema: %Schema{
+                type: :object,
+                required: [:errors],
+                properties: %{
+                  errors: %Reference{"$ref": "#/components/schemas/errors"},
+                  jsonapi: %Schema{
+                    type: :object
+                  }
+                }
+              }
             }
           }
         }
@@ -2539,48 +2548,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {schema, acc}
     end
 
-    @doc false
-    def required_write_attributes(resource, arguments, action, route \\ nil) do
-      filtered_arguments =
-        arguments
-        |> Enum.filter(& &1.public?)
-        |> without_path_arguments(resource, action, route)
-        |> without_query_params(route)
-
-      attribute_names =
-        case action.type do
-          type when type in [:action, :read] ->
-            []
-
-          :update ->
-            Enum.filter(action.require_attributes, &show_field?(resource, &1))
-
-          _ ->
-            resource
-            |> Ash.Resource.Info.attributes()
-            |> Enum.filter(&(&1.name in action.accept && &1.writable?))
-            |> filter_shown_fields(resource)
-            |> Enum.reject(
-              &(&1.name in filtered_arguments || &1.allow_nil? || not is_nil(&1.default) ||
-                  &1.generated? ||
-                  &1.name in Map.get(action, :allow_nil_input, []))
-            )
-            |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))
-        end
-
-      argument_names =
-        filtered_arguments
-        |> Enum.reject(& &1.allow_nil?)
-        |> Enum.map(fn arg ->
-          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
-        end)
-
-      require_attributes =
-        Map.get(action, :require_attributes, [])
-        |> Enum.filter(&show_field?(resource, &1))
-        |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
-
-      Enum.uniq(attribute_names ++ argument_names ++ require_attributes)
+    defp required_write_attributes(resource, arguments, action, route \\ nil) do
+      AshJsonApi.JsonSchema.required_write_attributes(resource, arguments, action, route)
     end
 
     @spec write_attributes(
@@ -2613,8 +2582,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       arguments
       |> Enum.filter(& &1.public?)
-      |> without_path_arguments(resource, action, route)
-      |> without_query_params(route)
+      |> AshJsonApi.JsonSchema.without_route_path_arguments(resource, action, route)
+      |> AshJsonApi.JsonSchema.without_query_params(route)
       |> Enum.reduce({attributes, acc}, fn argument, {attributes, acc} ->
         {schema, acc} = resource_write_attribute_type(argument, resource, :create, acc, format)
 
@@ -2624,35 +2593,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
         {Map.put(attributes, json_key, schema), acc}
       end)
     end
-
-    defp without_path_arguments(arguments, resource, action, %{route: route}) do
-      route_params =
-        route
-        |> Path.split()
-        |> Enum.filter(&String.starts_with?(&1, ":"))
-        |> Enum.map(&String.trim_leading(&1, ":"))
-
-      Enum.reject(arguments, fn argument ->
-        Enum.any?(
-          route_params,
-          &AshJsonApi.Resource.Info.path_param_matches_argument?(
-            resource,
-            action.name,
-            argument.name,
-            &1
-          )
-        )
-      end)
-    end
-
-    defp without_path_arguments(arguments, _, _, _), do: arguments
-
-    defp without_query_params(inputs, %{query_params: query_params}) do
-      query_params = List.wrap(query_params)
-      Enum.reject(inputs, &(&1.name in query_params))
-    end
-
-    defp without_query_params(inputs, _), do: inputs
 
     @spec required_relationship_attributes(
             resource :: module,
@@ -2770,6 +2710,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
 
         :index ->
+          {items, acc} = item_reference(route, resource, acc)
+
           schema = %Schema{
             type: :object,
             additionalProperties: false,
@@ -2778,7 +2720,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 description:
                   "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
                 type: :array,
-                items: item_reference(route, resource),
+                items: items,
                 uniqueItems: true
               },
               included: included_resource_schemas(resource),
@@ -2813,10 +2755,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> then(&{&1, acc})
 
         _ ->
+          {data, acc} = item_reference(route, resource, acc)
+
           schema = %Schema{
             additionalProperties: false,
             properties: %{
-              data: item_reference(route, resource),
+              data: data,
               included: included_resource_schemas(resource),
               meta: %Schema{
                 type: :object,
@@ -2829,16 +2773,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp item_reference(%{default_fields: nil}, resource) do
-      %Reference{
-        "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
-      }
+    defp item_reference(%{default_fields: nil}, resource, acc) do
+      {%Reference{
+         "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
+       }, acc}
     end
 
-    defp item_reference(%{default_fields: default_fields}, resource) do
-      {schema, _acc} = resource_object_schema(resource, default_fields, %{})
-      schema
-    end
+    defp item_reference(%{default_fields: default_fields}, resource, acc),
+      do: resource_object_schema(resource, default_fields, acc)
 
     @spec relationship_resource_identifiers(relationship :: Relationships.relationship()) ::
             Schema.t()
