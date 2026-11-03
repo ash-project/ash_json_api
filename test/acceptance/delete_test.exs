@@ -44,6 +44,10 @@ defmodule Test.Acceptance.DeleteTest do
           route "/delete_fake/:id"
         end
 
+        delete :close do
+          route "/:id/close"
+        end
+
         index(:read)
       end
     end
@@ -51,6 +55,10 @@ defmodule Test.Acceptance.DeleteTest do
     actions do
       default_accept(:*)
       defaults([:read, :create, :update, :destroy])
+
+      update :close do
+        change(set_attribute(:name, "closed"))
+      end
 
       action :fake_delete, :struct do
         constraints(instance_of: __MODULE__)
@@ -134,6 +142,13 @@ defmodule Test.Acceptance.DeleteTest do
     test "a generic action returns a 200 as well", %{post: post} do
       Domain
       |> delete("/posts/delete_fake/#{post.id}", status: 200)
+    end
+
+    test "a delete route can run an update action", %{post: post} do
+      Domain
+      |> delete("/posts/#{post.id}/close", status: 200)
+
+      assert Ash.get!(Post, post.id).name == "closed"
     end
   end
 end
