@@ -556,7 +556,7 @@ defmodule AshJsonApi.Serializer do
   defp add_meta(json_record, record, request, opts) do
     metadata_fields =
       if Keyword.get(opts, :top_level?, true) and
-          request.resource == record.__struct__ do
+           request.resource == record.__struct__ do
         Map.get(request.action || %{}, :metadata, [])
       else
         []

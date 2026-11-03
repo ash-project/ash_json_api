@@ -309,6 +309,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
       post_schema = json_api["definitions"]["hidden-json-post"]
       attributes = post_schema["properties"]["attributes"]["properties"]
       relationships = post_schema["properties"]["relationships"]["properties"]
+      meta = post_schema["properties"]["meta"]
 
       assert Map.has_key?(attributes, "name")
       refute Map.has_key?(attributes, "secret")
@@ -317,6 +318,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
 
       assert Map.has_key?(relationships, "visible_author")
       refute Map.has_key?(relationships, "hidden_author")
+      assert meta == %{"type" => "object", "additionalProperties" => true}
 
       hrefs = Enum.map(json_api["links"], & &1["href"])
       assert Enum.any?(hrefs, &String.contains?(&1, "/hidden_json_posts/{id}/visible_author"))
