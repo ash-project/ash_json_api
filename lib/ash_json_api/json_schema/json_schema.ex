@@ -891,26 +891,28 @@ defmodule AshJsonApi.JsonSchema do
         "data" => %{
           "type" => "object",
           "additionalProperties" => false,
-          "properties" => %{
-            "type" => %{
-              "const" => AshJsonApi.Resource.Info.type(resource)
-            },
-            "attributes" =>
-              %{
+          "properties" =>
+            %{
+              "type" => %{
+                "const" => AshJsonApi.Resource.Info.type(resource)
+              },
+              "attributes" =>
+                %{
+                  "type" => "object",
+                  "additionalProperties" => false,
+                  "required" => required_write_attributes,
+                  "properties" =>
+                    write_attributes(resource, non_relationship_arguments, action, route)
+                }
+                |> add_null_for_non_required(),
+              "relationships" => %{
                 "type" => "object",
+                "required" => required_relationship_attributes,
                 "additionalProperties" => false,
-                "required" => required_write_attributes,
-                "properties" =>
-                  write_attributes(resource, non_relationship_arguments, action, route)
+                "properties" => write_relationships(resource, relationship_arguments, action)
               }
-              |> add_null_for_non_required(),
-            "relationships" => %{
-              "type" => "object",
-              "required" => required_relationship_attributes,
-              "additionalProperties" => false,
-              "properties" => write_relationships(resource, relationship_arguments, action)
             }
-          }
+            |> add_id_field(resource)
         }
       }
     }

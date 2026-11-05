@@ -354,6 +354,68 @@ defmodule Test.Acceptance.PostTest do
 
   describe "post" do
     @describetag :attributes
+    test "create with id in data" do
+      id = Ecto.UUID.generate()
+
+      Domain
+      |> post("/posts", %{
+        data: %{
+          type: "post",
+          id: id,
+          attributes: %{name: "Post with data id"}
+        }
+      })
+      |> assert_id_equals(id)
+    end
+
+    test "create with id in attributes" do
+      id = Ecto.UUID.generate()
+
+      Domain
+      |> post("/posts", %{
+        data: %{
+          type: "post",
+          attributes: %{id: id, name: "Post with attribute id"}
+        }
+      })
+      |> assert_id_equals(id)
+    end
+
+    test "create with matching ids in data and attributes" do
+      id = Ecto.UUID.generate()
+
+      Domain
+      |> post("/posts", %{
+        data: %{
+          type: "post",
+          id: id,
+          attributes: %{id: id, name: "Post with matching ids"}
+        }
+      })
+      |> assert_id_equals(id)
+    end
+
+    test "create with conflicting ids in data and attributes returns an error" do
+      data_id = Ecto.UUID.generate()
+      attribute_id = Ecto.UUID.generate()
+
+      response =
+        Domain
+        |> post(
+          "/posts",
+          %{
+            data: %{
+              type: "post",
+              id: data_id,
+              attributes: %{id: attribute_id, name: "Post with conflicting ids"}
+            }
+          },
+          status: 400
+        )
+
+      assert %{"errors" => [_error | _]} = response.resp_body
+    end
+
     test "create with all attributes in accept list" do
       id = Ecto.UUID.generate()
 
