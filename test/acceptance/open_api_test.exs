@@ -993,6 +993,10 @@ defmodule Test.Acceptance.OpenApiTest do
                      description: "An attributes object for a author"
                    },
                    id: %{type: :string},
+                   meta: %Schema{
+                     type: :object,
+                     additionalProperties: true
+                   },
                    type: %Schema{type: :string},
                    relationships: %Schema{
                      type: :object,
@@ -1091,6 +1095,10 @@ defmodule Test.Acceptance.OpenApiTest do
                    description: "An attributes object for a post"
                  },
                  id: %{type: :string},
+                 meta: %Schema{
+                   type: :object,
+                   additionalProperties: true
+                 },
                  type: %Schema{type: :string},
                  relationships: %Schema{
                    type: :object,

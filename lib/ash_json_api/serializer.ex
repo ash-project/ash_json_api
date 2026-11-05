@@ -540,7 +540,7 @@ defmodule AshJsonApi.Serializer do
       relationships: serialize_relationships(request, record),
       links: %{} |> add_one_record_self_link(request, record)
     }
-    |> add_meta(record)
+    |> add_meta(record, request, opts)
   end
 
   defp add_one_record_self_link(links, request, %resource{} = record) do
@@ -560,9 +560,34 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp add_meta(json_record, record) do
+  defp add_meta(json_record, record, request, opts) do
+    metadata_fields =
+      if Keyword.get(opts, :top_level?, true) and
+           request.resource == record.__struct__ do
+        Map.get(request.action || %{}, :metadata, [])
+      else
+        []
+      end
+
     meta =
-      %{}
+      metadata_fields
+      |> Enum.reduce(%{}, fn field, acc ->
+        case Map.fetch(record.__metadata__ || %{}, field.name) do
+          {:ok, value} ->
+            serialized_value =
+              serialize_value(
+                value,
+                Ash.Type.get_type(field.type),
+                field.constraints,
+                request.domain
+              )
+
+            Map.put(acc, field.name, serialized_value)
+
+          :error ->
+            acc
+        end
+      end)
       |> add_keyset(record)
 
     Map.put(json_record, :meta, meta)

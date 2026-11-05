@@ -158,7 +158,11 @@ defmodule AshJsonApi.JsonSchema do
             "additionalProperties" => false
           },
           "attributes" => attributes(resource),
-          "relationships" => relationships(resource)
+          "relationships" => relationships(resource),
+          "meta" => %{
+            "type" => "object",
+            "additionalProperties" => true
+          }
         }
         |> add_id_field(resource),
       "additionalProperties" => false
