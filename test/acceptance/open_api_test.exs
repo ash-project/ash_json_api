@@ -422,6 +422,31 @@ defmodule Test.Acceptance.OpenApiTest do
     end
   end
 
+  defmodule Timestamped do
+    use Ash.Resource,
+      domain: Test.Acceptance.OpenApiTest.Blogs,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshJsonApi.Resource]
+
+    ets do
+      private?(true)
+    end
+
+    json_api do
+      type("timestamped")
+    end
+
+    actions do
+      defaults([:read])
+    end
+
+    attributes do
+      uuid_primary_key(:id)
+      attribute(:seconds, :utc_datetime, public?: true, allow_nil?: false)
+      attribute(:microseconds, :utc_datetime_usec, public?: true, allow_nil?: false)
+    end
+  end
+
   defmodule Blogs do
     use Ash.Domain,
       otp_app: :ash_json_api,
@@ -439,6 +464,7 @@ defmodule Test.Acceptance.OpenApiTest do
       resource(Tag)
       resource(AuthorNoFilter)
       resource(Profile)
+      resource(Timestamped)
     end
   end
 
@@ -489,6 +515,16 @@ defmodule Test.Acceptance.OpenApiTest do
                }
              }
            } = api_spec.components.responses["errors"]
+  end
+
+  test "utc datetime attributes are strings with the date-time format, at any precision", %{
+    open_api_spec: api_spec
+  } do
+    attributes = api_spec.components.schemas["timestamped"].properties.attributes.properties
+
+    for attribute <- ["seconds", "microseconds"] do
+      assert %{type: :string, format: "date-time"} = attributes[attribute]
+    end
   end
 
   test "resources without a json_api are not included in the schema", %{open_api_spec: api_spec} do
