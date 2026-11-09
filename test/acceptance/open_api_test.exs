@@ -491,6 +491,27 @@ defmodule Test.Acceptance.OpenApiTest do
            } = api_spec.components.responses["errors"]
   end
 
+  test "response documents describe their top-level links and jsonapi members", %{
+    open_api_spec: api_spec
+  } do
+    for {path, method, status} <- [
+          {"/posts", :get, 200},
+          {"/posts/{id}", :get, 200},
+          {"/posts", :post, 201}
+        ] do
+      operation = Map.fetch!(api_spec.paths[path], method)
+      response = operation.responses[status]
+      schema = response.content["application/vnd.api+json"].schema
+
+      assert %Schema{
+               type: :object,
+               additionalProperties: %Schema{type: :string, nullable: true}
+             } = schema.properties.links
+
+      assert %Schema{type: :object} = schema.properties.jsonapi
+    end
+  end
+
   test "resources without a json_api are not included in the schema", %{open_api_spec: api_spec} do
     schema_keys = api_spec.components.schemas |> Map.keys()
     assert "tags" not in schema_keys
