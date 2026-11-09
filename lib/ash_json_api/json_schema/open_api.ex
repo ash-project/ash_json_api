@@ -880,6 +880,13 @@ if Code.ensure_loaded?(OpenApiSpex) do
        }, acc}
     end
 
+    defp resource_attribute_type(%{type: Ash.Type.UtcDatetimeUsec}, _resource, acc, _format) do
+      {%Schema{
+         type: :string,
+         format: "date-time"
+       }, acc}
+    end
+
     defp resource_attribute_type(%{type: Ash.Type.NaiveDatetime}, _resource, acc, _format) do
       {%Schema{
          type: :string,

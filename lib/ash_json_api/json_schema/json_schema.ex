@@ -480,6 +480,13 @@ defmodule AshJsonApi.JsonSchema do
     }
   end
 
+  defp resource_attribute_type(%{type: Ash.Type.UtcDatetimeUsec}) do
+    %{
+      "type" => "string",
+      "format" => "date-time"
+    }
+  end
+
   defp resource_attribute_type(%{type: Ash.Type.UUID}) do
     %{
       "type" => "string",
