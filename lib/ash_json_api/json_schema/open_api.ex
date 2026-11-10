@@ -403,7 +403,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type: %Schema{type: :string},
           id: %{type: :string},
           attributes: attributes_schema,
-          relationships: relationships(resource)
+          relationships: relationships(resource),
+          meta: %Schema{
+            type: :object,
+            additionalProperties: true
+          }
         },
         additionalProperties: false
       }
@@ -2723,6 +2727,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 items: items,
                 uniqueItems: true
               },
+              links: top_level_links_schema(),
+              jsonapi: %Schema{type: :object},
               included: included_resource_schemas(resource),
               meta: %Schema{
                 type: :object,
@@ -2761,6 +2767,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
             additionalProperties: false,
             properties: %{
               data: data,
+              links: top_level_links_schema(),
+              jsonapi: %Schema{type: :object},
               included: included_resource_schemas(resource),
               meta: %Schema{
                 type: :object,
@@ -2771,6 +2779,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
           {schema, acc}
       end
+    end
+
+    # A pagination link is null when there is no such page, as JSON:API requires.
+    defp top_level_links_schema do
+      %Schema{
+        type: :object,
+        additionalProperties: %Schema{type: :string, nullable: true}
+      }
     end
 
     defp item_reference(%{default_fields: nil}, resource, acc) do

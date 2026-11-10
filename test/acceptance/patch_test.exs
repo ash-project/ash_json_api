@@ -228,6 +228,21 @@ defmodule Test.Acceptance.PatchTest do
       create :create do
         primary? true
         accept([:id, :name])
+
+        metadata(:signedurl, :string)
+
+        change(fn changeset, _context ->
+          Ash.Changeset.after_action(changeset, fn _changeset, result ->
+            result =
+              Ash.Resource.put_metadata(
+                result,
+                :signedurl,
+                "https://example.com/signed-url"
+              )
+
+            {:ok, result}
+          end)
+        end)
       end
 
       update :update do
@@ -532,6 +547,27 @@ defmodule Test.Acceptance.PatchTest do
       Domain
       |> get("/posts/#{post.id}", status: 200)
       |> assert_attribute_missing("hidden")
+    end
+
+    test "includes action metadata in the resource meta field", %{post: record} do
+      assert Ash.Resource.get_metadata(record, :signedurl) == "https://example.com/signed-url"
+
+      response =
+        Domain
+        |> post("/posts", %{
+          data: %{
+            type: "post",
+            attributes: %{
+              name: "Metadata Post"
+            }
+          }
+        })
+
+      assert response.status == 201
+
+      assert response.resp_body["data"]["meta"] == %{
+               "signedurl" => "https://example.com/signed-url"
+             }
     end
   end
 
