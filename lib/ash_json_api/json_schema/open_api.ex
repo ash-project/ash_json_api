@@ -715,7 +715,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {schema, acc} =
             resource_write_attribute_type(fake_attr, resource, action_type, acc, format)
 
-          {[schema | list], acc}
+          {[put_union_tag_property(schema, config) | list], acc}
         end)
 
       schema_with_description =
@@ -723,6 +723,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           "anyOf" => Enum.reverse(subtypes)
         }
         |> unwrap_any_of()
+        |> put_union_discriminator(constraints[:types])
         |> with_attribute_description(attr)
 
       {schema_with_description, acc}
@@ -956,7 +957,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             |> Map.put(:description, config[:description] || nil)
 
           {schema, acc} = resource_attribute_type(fake_attr, resource, acc, format)
-          {[schema | types], acc}
+          {[put_union_tag_property(schema, config) | types], acc}
         end)
 
       result =
@@ -964,6 +965,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           "anyOf" => Enum.reverse(subtypes)
         }
         |> unwrap_any_of()
+        |> put_union_discriminator(constraints[:types])
         |> with_attribute_description(attr)
 
       {result, acc}
@@ -1318,10 +1320,54 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
+    defp put_union_tag_property(
+           %Schema{type: :object, properties: properties} = schema,
+           config
+         )
+         when is_map(properties) do
+      tag = config[:tag]
+      tag_value = config[:tag_value]
+
+      if tag && !is_nil(tag_value) do
+        tag = to_string(tag)
+
+        %{
+          schema
+          | properties:
+              Map.put(properties, tag, %Schema{type: :string, enum: [to_string(tag_value)]}),
+            required: Enum.uniq([tag | schema.required || []])
+        }
+      else
+        schema
+      end
+    end
+
+    defp put_union_tag_property(schema, _config), do: schema
+
+    defp put_union_discriminator(%{"anyOf" => options} = schema, types) do
+      tags =
+        types
+        |> Enum.map(fn {_name, config} -> !is_nil(config[:tag_value]) && config[:tag] end)
+        |> Enum.uniq()
+
+      with [tag] when tag not in [nil, false] <- tags,
+           tag = to_string(tag),
+           true <- Enum.all?(options, &match?(%Schema{properties: %{^tag => _}}, &1)) do
+        Map.put(schema, "discriminator", %{"propertyName" => tag})
+      else
+        _ -> schema
+      end
+    end
+
+    defp put_union_discriminator(schema, _types), do: schema
+
     defp unwrap_any_of(%{"anyOf" => options} = schema) do
       {options_remaining, options_to_add} =
         Enum.reduce(options, {[], []}, fn schema, {options, to_add} ->
           case schema do
+            %{"anyOf" => _, "discriminator" => _} = schema ->
+              {[schema | options], to_add}
+
             %{"anyOf" => _} = schema ->
               case unwrap_any_of(schema) do
                 %{"anyOf" => nested_options} ->
