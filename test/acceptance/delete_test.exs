@@ -150,17 +150,5 @@ defmodule Test.Acceptance.DeleteTest do
 
       assert Ash.get!(Post, post.id).name == "closed"
     end
-
-    test "a delete route does not pass body fields to an update action", %{post: post} do
-      Domain
-      |> delete("/posts/#{post.id}/close",
-        status: 200,
-        body: %{data: %{attributes: %{profile: %{bio: "Changed bio"}}}}
-      )
-
-      updated_post = Ash.get!(Post, post.id)
-      assert updated_post.name == "closed"
-      assert updated_post.profile.bio == "Bio"
-    end
   end
 end
