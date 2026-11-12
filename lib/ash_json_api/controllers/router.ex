@@ -221,8 +221,11 @@ defmodule AshJsonApi.Controllers.Router do
 
   defp route_action_hint(_route), do: ""
 
-  defp open_api_request?(conn, open_api) do
-    AshJsonApi.OpenApiSpexChecker.has_open_api?() && conn.method == "GET" &&
-      Enum.any?(open_api, &(&1 == conn.path_info))
+  if AshJsonApi.OpenApiSpexChecker.has_open_api?() do
+    defp open_api_request?(conn, open_api) do
+      conn.method == "GET" && Enum.any?(open_api, &(&1 == conn.path_info))
+    end
+  else
+    defp open_api_request?(_conn, _open_api), do: false
   end
 end

@@ -4,7 +4,6 @@
 
 defmodule AshJsonApi.Request do
   @moduledoc false
-  require Logger
 
   alias AshJsonApi.Error.{
     InvalidBody,
@@ -22,8 +21,6 @@ defmodule AshJsonApi.Request do
 
   alias AshJsonApi.Includes
   alias Plug.Conn
-
-  require Ash.Query
 
   import Ash.PlugHelpers, only: [get_actor: 1, get_tenant: 1, get_context: 1]
 
@@ -1318,9 +1315,6 @@ defmodule AshJsonApi.Request do
 
         {accept, value} when is_atom(accept) ->
           %{request | attributes: Map.put(request.attributes || %{}, accept, value)}
-
-        {nil, _value} ->
-          request
       end
     end)
   end

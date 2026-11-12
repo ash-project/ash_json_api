@@ -45,7 +45,7 @@ defmodule AshJsonApi.Serializer do
 
   @spec serialize_many(
           AshJsonApi.Request.t(),
-          Ash.Page.page() | list(Ash.Resource.record()),
+          Ash.Page.page() | list(Ash.Resource.Record.t()),
           Keyword.t(),
           map()
         ) :: String.t()
@@ -354,9 +354,6 @@ defmodule AshJsonApi.Serializer do
       is_binary(after_cursor) ->
         Map.put(query, "page", %{after: after_cursor, limit: limit})
 
-      is_nil(limit) and is_binary(before_cursor) ->
-        Map.put(query, "page", %{before: before_cursor})
-
       is_binary(before_cursor) ->
         Map.put(query, "page", %{before: before_cursor, limit: limit})
 
@@ -492,7 +489,7 @@ defmodule AshJsonApi.Serializer do
   defp prev_page(%Ash.Page.Offset{} = paginator) do
     offset =
       if paginator.limit do
-        max(paginator.offset - (paginator.limit || 0), 0)
+        max(paginator.offset - paginator.limit, 0)
       else
         0
       end
