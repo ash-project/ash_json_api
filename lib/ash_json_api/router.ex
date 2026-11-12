@@ -86,7 +86,8 @@ defmodule AshJsonApi.Router do
       plug(Plug.Parsers,
         parsers: [:json],
         pass: ["application/vnd.api+json"],
-        json_decoder: Jason
+        json_decoder: Jason,
+        body_reader: {AshJsonApi.Router, :read_body, []}
       )
 
       plug(:dispatch)
@@ -101,6 +102,18 @@ defmodule AshJsonApi.Router do
           AshJsonApi.OpenApi.spec(@opts)
         end
       end
+    end
+  end
+
+  @doc false
+  def read_body(conn, opts) do
+    case Plug.Conn.read_body(conn, opts) do
+      {:ok, body, %{method: "DELETE"} = conn} ->
+        conn = Plug.Conn.put_private(conn, :ash_json_api_delete_body?, body != "")
+        {:ok, body, conn}
+
+      result ->
+        result
     end
   end
 

@@ -150,5 +150,12 @@ defmodule Test.Acceptance.DeleteTest do
 
       assert Ash.get!(Post, post.id).name == "closed"
     end
+
+    test "a delete update rejects a request body", %{post: post} do
+      Domain
+      |> delete("/posts/#{post.id}/close", status: 400, body: %{})
+
+      assert Ash.get!(Post, post.id).name == post.name
+    end
   end
 end
