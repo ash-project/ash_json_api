@@ -345,14 +345,7 @@ defmodule AshJsonApi.JsonSchema do
     end)
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
-      links = resource_relationship_link_data(resource, rel)
-
-      object =
-        if links do
-          %{"data" => data, "links" => links}
-        else
-          %{"data" => data}
-        end
+      object = %{"data" => data}
 
       Map.put(
         acc,
@@ -360,10 +353,6 @@ defmodule AshJsonApi.JsonSchema do
         object
       )
     end)
-  end
-
-  defp resource_relationship_link_data(_resource, _rel) do
-    nil
   end
 
   defp add_id_field(map, resource) do

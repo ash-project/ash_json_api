@@ -54,8 +54,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
-    require Logger
-
     @typep content_type_format() :: :json | :multipart
     @typep acc() :: map()
 
@@ -1440,21 +1438,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
       |> Map.new(fn rel ->
         data = resource_relationship_field_data(resource, rel)
-        links = resource_relationship_link_data(resource, rel)
 
-        object =
-          if links do
-            %Schema{properties: %{data: data, links: links}}
-          else
-            %Schema{properties: %{data: data}}
-          end
-
-        {rel.name, object}
+        {rel.name, %Schema{properties: %{data: data}}}
       end)
-    end
-
-    defp resource_relationship_link_data(_resource, _rel) do
-      nil
     end
 
     @spec resource_relationship_field_data(
