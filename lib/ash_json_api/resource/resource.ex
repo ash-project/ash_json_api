@@ -193,7 +193,7 @@ defmodule AshJsonApi.Resource do
   @delete %Spark.Dsl.Entity{
     name: :delete,
     args: [:action],
-    describe: "A DELETE route to destroy a record",
+    describe: "A DELETE route to destroy or update a record",
     examples: [
       "delete :destroy",
       "delete :destroy, path_param_is_composite_key: :id"

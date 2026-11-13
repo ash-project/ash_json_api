@@ -21,7 +21,27 @@ defmodule AshJsonApi.Controllers.Delete do
 
     conn
     |> Request.from(resource, action, domain, all_domains, route, options[:prefix])
-    |> Helpers.destroy_record()
+    |> then(fn request ->
+      cond do
+        request.action.type != :update ->
+          Helpers.destroy_record(request)
+
+        conn.body_params != %{} ->
+          error =
+            AshJsonApi.Error.new(
+              status_code: 400,
+              code: "invalid_body",
+              title: "InvalidBody",
+              detail:
+                "DELETE requests that run update actions accept no body or an empty JSON object."
+            )
+
+          Request.add_error(request, error, :delete)
+
+        true ->
+          Helpers.update_record(request)
+      end
+    end)
     |> Helpers.fetch_includes()
     |> Helpers.fetch_metadata()
     |> Helpers.render_or_render_errors(conn, fn conn, request ->
