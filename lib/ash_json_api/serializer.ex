@@ -255,6 +255,10 @@ defmodule AshJsonApi.Serializer do
 
   defp add_includes(payload, %{includes_keyword: []}, _), do: payload
 
+  # `always_include_linkage` adds linkage-only entries to `includes_keyword`,
+  # but without an `include` param there is nothing to put in `included`
+  defp add_includes(payload, %{includes: %{allowed: []}}, []), do: payload
+
   defp add_includes(payload, request, includes) do
     includes = Enum.map(includes, &serialize_one_record(request, &1, top_level?: false))
     Map.put(payload, :included, includes)
