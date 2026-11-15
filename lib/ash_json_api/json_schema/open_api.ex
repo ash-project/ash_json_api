@@ -1936,7 +1936,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
               {[
                  %Parameter{
-                   name: matching_route_param || to_string(argument_or_attribute.name),
+                   name:
+                     matching_route_param ||
+                       query_param_name(to_string(argument_or_attribute.name), schema),
                    in: location,
                    description: argument_or_attribute.description,
                    required: location == :path || !argument_or_attribute.allow_nil?,
@@ -2309,7 +2311,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
 
         param = %Parameter{
-          name: matching_route_param || json_key,
+          name: matching_route_param || query_param_name(json_key, schema),
           in: location,
           description: argument.description,
           required: location == :path || !argument.allow_nil?,
@@ -2320,6 +2322,17 @@ if Code.ensure_loaded?(OpenApiSpex) do
         {[param | params], acc}
       end)
       |> then(fn {params, acc} -> {Enum.reverse(params), acc} end)
+    end
+
+    # Plug keeps only the last value of a repeated key (`?ids=1&ids=2`), and
+    # decodes a list only from `?ids[]=1&ids[]=2`, so array query parameters
+    # are documented under the bracketed name
+    defp query_param_name(name, schema) do
+      if Map.get(schema, :type) == :array do
+        name <> "[]"
+      else
+        name
+      end
     end
 
     @spec request_body(Route.t(), resource :: module) :: {nil | RequestBody.t(), map()}
