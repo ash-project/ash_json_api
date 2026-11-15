@@ -2293,9 +2293,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       all_schemas = Map.merge(json_acc.schemas, multipart_acc.schemas)
 
       body =
-        if route.type == :route &&
-             (route.method in [:delete, :get] ||
-                Enum.empty?(json_body_schema.properties.data.properties)) do
+        if no_request_body?(route, json_body_schema) do
           nil
         else
           body_required =
@@ -2343,6 +2341,23 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       {body, all_schemas}
     end
+
+    defp no_request_body?(%{type: :route, method: method}, _json_body_schema)
+         when method in [:delete, :get],
+         do: true
+
+    defp no_request_body?(%{type: :route}, json_body_schema) do
+      Enum.empty?(json_body_schema.properties.data.properties)
+    end
+
+    # A post whose action takes all of its input from the path or query string
+    defp no_request_body?(%{type: :post}, json_body_schema) do
+      data = json_body_schema.properties.data.properties
+
+      Enum.empty?(data.attributes.properties) && Enum.empty?(data.relationships.properties)
+    end
+
+    defp no_request_body?(_route, _json_body_schema), do: false
 
     @spec request_body_schema(
             Route.t(),
