@@ -804,6 +804,23 @@ defmodule Test.Acceptance.FieldNamesTest do
       assert Map.has_key?(api_spec.components.schemas, "post-filter-subject")
       refute Map.has_key?(api_spec.components.schemas, "post-filter-title")
     end
+
+    test "fields parameter example uses the renamed attribute keys" do
+      api_spec =
+        AshJsonApi.Controllers.OpenApi.spec(%{private: %{}}, domains: [Domain])
+
+      fields =
+        api_spec.paths["/posts"].get.parameters
+        |> Enum.find(&(&1.name == "fields"))
+
+      example_fields = String.split(fields.schema.example["post"], ",")
+
+      assert "subject" in example_fields
+      assert "content" in example_fields
+      refute "title" in example_fields
+      refute "body" in example_fields
+      assert fields.schema.properties["post"].example == fields.schema.example["post"]
+    end
   end
 
   # ─── Sparse fieldsets ─────────────────────────────────────────────────────────

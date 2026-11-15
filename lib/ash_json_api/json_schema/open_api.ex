@@ -2169,7 +2169,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         (AshJsonApi.Resource.Info.default_fields(resource) ||
            Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name))
         |> Enum.filter(&show_field?(resource, &1))
-        |> Enum.join(",")
+        |> Enum.map_join(",", &AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
 
       %Parameter{
         name: :fields,
