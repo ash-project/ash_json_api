@@ -643,6 +643,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         type: :array,
         items: schema
       }
+      |> with_array_length_constraints(attr)
       |> with_attribute_description(attr)
       |> then(&{&1, acc})
     end
@@ -801,12 +802,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
       )
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.String}, _resource, acc, _format) do
-      {%Schema{type: :string}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.String} = attr, _resource, acc, _format) do
+      {with_string_length_constraints(%Schema{type: :string}, attr), acc}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.CiString}, _resource, acc, _format) do
-      {%Schema{type: :string}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.CiString} = attr, _resource, acc, _format) do
+      {with_string_length_constraints(%Schema{type: :string}, attr), acc}
     end
 
     defp resource_attribute_type(%{type: Ash.Type.Boolean}, _resource, acc, _format) do
@@ -817,8 +818,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {%Schema{type: :string}, acc}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Integer}, _resource, acc, _format) do
-      {%Schema{type: :integer}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.Integer} = attr, _resource, acc, _format) do
+      {with_numeric_constraints(%Schema{type: :integer}, attr), acc}
     end
 
     defp resource_attribute_type(
@@ -861,8 +862,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Float}, _resource, acc, _format) do
-      {%Schema{type: :number, format: :float}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.Float} = attr, _resource, acc, _format) do
+      {with_numeric_constraints(%Schema{type: :number, format: :float}, attr), acc}
     end
 
     defp resource_attribute_type(%{type: Ash.Type.Date}, _resource, acc, _format) do
@@ -982,10 +983,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           format
         )
 
-      {%Schema{
-         type: :array,
-         items: items_schema
-       }, acc}
+      {with_array_length_constraints(%Schema{type: :array, items: items_schema}, attr), acc}
     end
 
     defp resource_attribute_type(
@@ -1116,6 +1114,59 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {%Schema{}, acc}
       end
     end
+
+    # Documents an attribute's or argument's constraints in its schema. The
+    # generated document is OpenAPI 3.0, so exclusive bounds are booleans
+    # alongside `minimum`/`maximum`. Decimals are documented as strings, so
+    # their bounds are left out.
+    defp with_numeric_constraints(schema, attr) do
+      constraints = Map.get(attr, :constraints) || []
+
+      schema
+      |> put_bound(
+        :minimum,
+        :exclusiveMinimum,
+        constraints[:min],
+        constraints[:greater_than],
+        &>=/2
+      )
+      |> put_bound(:maximum, :exclusiveMaximum, constraints[:max], constraints[:less_than], &<=/2)
+    end
+
+    defp put_bound(schema, _key, _exclusive_key, nil, nil, _tighter?), do: schema
+
+    defp put_bound(schema, key, exclusive_key, inclusive, exclusive, tighter?) do
+      if exclusive && (is_nil(inclusive) || tighter?.(exclusive, inclusive)) do
+        schema |> Map.put(key, exclusive) |> Map.put(exclusive_key, true)
+      else
+        Map.put(schema, key, inclusive)
+      end
+    end
+
+    # OpenAPI counts string length in characters, so lengths counted in bytes
+    # can't be expressed
+    defp with_string_length_constraints(schema, attr) do
+      constraints = Map.get(attr, :constraints) || []
+
+      if constraints[:length_count] == :bytes do
+        schema
+      else
+        schema
+        |> put_if_present(:minLength, constraints[:min_length])
+        |> put_if_present(:maxLength, constraints[:max_length])
+      end
+    end
+
+    defp with_array_length_constraints(schema, attr) do
+      constraints = Map.get(attr, :constraints) || []
+
+      schema
+      |> put_if_present(:minItems, constraints[:min_length])
+      |> put_if_present(:maxItems, constraints[:max_length])
+    end
+
+    defp put_if_present(schema, _key, nil), do: schema
+    defp put_if_present(schema, key, value), do: Map.put(schema, key, value)
 
     defp embedded_type_input(
            %{type: embedded_resource} = attribute,
@@ -3243,6 +3294,32 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp constraints_to_item_constraints(_, attribute_or_aggregate), do: attribute_or_aggregate
 
+    @bound_constraints [:min, :max, :greater_than, :less_than, :min_length, :max_length]
+
+    # Filter values aren't checked against the field's constraints (e.g.
+    # `greater_than: 500` is a valid filter on a field with `max: 100`), so
+    # their bounds don't belong in filter schemas
+    defp without_bound_constraints(%{constraints: constraints} = field)
+         when is_list(constraints) do
+      %{field | constraints: drop_bound_constraints(constraints)}
+    end
+
+    defp without_bound_constraints(field), do: field
+
+    defp drop_bound_constraints(constraints) do
+      constraints
+      |> Keyword.drop(@bound_constraints)
+      |> then(fn constraints ->
+        case constraints[:items] do
+          items when is_list(items) ->
+            Keyword.put(constraints, :items, drop_bound_constraints(items))
+
+          _ ->
+            constraints
+        end
+      end)
+    end
+
     defp get_expressable_types(operator_or_function, field_type, array_type?) do
       if :attributes
          |> operator_or_function.__info__()
@@ -3303,7 +3380,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       expressable_types = get_expressable_types(operator, type, array_type?)
 
       if Enum.any?(expressable_types, &(&1 == :same)) do
-        {schema, acc} = resource_attribute_type(attribute_or_aggregate, resource, acc)
+        {schema, acc} =
+          attribute_or_aggregate
+          |> without_bound_constraints()
+          |> resource_attribute_type(resource, acc)
+
         {[{operator.name(), schema}], acc}
       else
         type =
