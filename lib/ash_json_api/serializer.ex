@@ -29,16 +29,23 @@ defmodule AshJsonApi.Serializer do
       %{self: at_host(request, request.url)}
       |> add_related_link(request, source_record, relationship)
 
+    # related records are fetched as a list, even for a to-one relationship
+    data =
+      case List.wrap(record) do
+        [] -> nil
+        [record | _] -> serialize_relationship_data(record, source_record, relationship)
+      end
+
     %{
       links: links,
-      data: serialize_relationship_data(record, source_record, relationship)
+      data: data
     }
     |> Jason.encode!()
   end
 
   @spec serialize_many(
           AshJsonApi.Request.t(),
-          Ash.Page.page() | list(Ash.Resource.record()),
+          Ash.Page.page() | list(Ash.Resource.Record.t()),
           Keyword.t(),
           map()
         ) :: String.t()
@@ -248,6 +255,10 @@ defmodule AshJsonApi.Serializer do
 
   defp add_includes(payload, %{includes_keyword: []}, _), do: payload
 
+  # `always_include_linkage` adds linkage-only entries to `includes_keyword`,
+  # but without an `include` param there is nothing to put in `included`
+  defp add_includes(payload, %{includes: %{allowed: []}}, []), do: payload
+
   defp add_includes(payload, request, includes) do
     includes = Enum.map(includes, &serialize_one_record(request, &1, top_level?: false))
     Map.put(payload, :included, includes)
@@ -346,9 +357,6 @@ defmodule AshJsonApi.Serializer do
 
       is_binary(after_cursor) ->
         Map.put(query, "page", %{after: after_cursor, limit: limit})
-
-      is_nil(limit) and is_binary(before_cursor) ->
-        Map.put(query, "page", %{before: before_cursor})
 
       is_binary(before_cursor) ->
         Map.put(query, "page", %{before: before_cursor, limit: limit})
@@ -485,7 +493,7 @@ defmodule AshJsonApi.Serializer do
   defp prev_page(%Ash.Page.Offset{} = paginator) do
     offset =
       if paginator.limit do
-        max(paginator.offset - (paginator.limit || 0), 0)
+        max(paginator.offset - paginator.limit, 0)
       else
         0
       end
@@ -533,7 +541,7 @@ defmodule AshJsonApi.Serializer do
       relationships: serialize_relationships(request, record),
       links: %{} |> add_one_record_self_link(request, record)
     }
-    |> add_meta(record)
+    |> add_meta(record, request, opts)
   end
 
   defp add_one_record_self_link(links, request, %resource{} = record) do
@@ -553,9 +561,34 @@ defmodule AshJsonApi.Serializer do
     end
   end
 
-  defp add_meta(json_record, record) do
+  defp add_meta(json_record, record, request, opts) do
+    metadata_fields =
+      if Keyword.get(opts, :top_level?, true) and
+           request.resource == record.__struct__ do
+        Map.get(request.action || %{}, :metadata, [])
+      else
+        []
+      end
+
     meta =
-      %{}
+      metadata_fields
+      |> Enum.reduce(%{}, fn field, acc ->
+        case Map.fetch(record.__metadata__ || %{}, field.name) do
+          {:ok, value} ->
+            serialized_value =
+              serialize_value(
+                value,
+                Ash.Type.get_type(field.type),
+                field.constraints,
+                request.domain
+              )
+
+            Map.put(acc, field.name, serialized_value)
+
+          :error ->
+            acc
+        end
+      end)
       |> add_keyset(record)
 
     Map.put(json_record, :meta, meta)
@@ -1225,13 +1258,14 @@ defmodule AshJsonApi.Serializer do
         inner_value
 
       config ->
-        serialize_value(
-          inner_value,
+        inner_value
+        |> serialize_value(
           Ash.Type.get_type(config[:type]),
           config[:constraints] || [],
           domain,
           opts
         )
+        |> put_union_tag(config)
     end
   end
 
@@ -1243,6 +1277,19 @@ defmodule AshJsonApi.Serializer do
       serialize_value(value, Ash.Type.Union, constraints, domain, opts)
     else
       do_serialize_value(value, type, constraints, domain, opts)
+    end
+  end
+
+  defp put_union_tag(serialized, config) do
+    tag = config[:tag]
+    tag_value = config[:tag_value]
+
+    if tag && !is_nil(tag_value) && is_map(serialized) do
+      serialized
+      |> Map.drop([tag, to_string(tag)])
+      |> Map.put(to_string(tag), tag_value)
+    else
+      serialized
     end
   end
 

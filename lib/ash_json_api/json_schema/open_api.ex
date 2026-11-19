@@ -54,8 +54,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
       Tag
     }
 
-    require Logger
-
     @typep content_type_format() :: :json | :multipart
     @typep acc() :: map()
 
@@ -147,7 +145,16 @@ if Code.ensure_loaded?(OpenApiSpex) do
           description: "General Error",
           content: %{
             "application/vnd.api+json" => %MediaType{
-              schema: %Reference{"$ref": "#/components/schemas/errors"}
+              schema: %Schema{
+                type: :object,
+                required: [:errors],
+                properties: %{
+                  errors: %Reference{"$ref": "#/components/schemas/errors"},
+                  jsonapi: %Schema{
+                    type: :object
+                  }
+                }
+              }
             }
           }
         }
@@ -394,7 +401,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
           type: %Schema{type: :string},
           id: %{type: :string},
           attributes: attributes_schema,
-          relationships: relationships(resource)
+          relationships: relationships(resource),
+          meta: %Schema{
+            type: :object,
+            additionalProperties: true
+          }
         },
         additionalProperties: false
       }
@@ -632,6 +643,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         type: :array,
         items: schema
       }
+      |> with_array_length_constraints(attr)
       |> with_attribute_description(attr)
       |> then(&{&1, acc})
     end
@@ -702,7 +714,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {schema, acc} =
             resource_write_attribute_type(fake_attr, resource, action_type, acc, format)
 
-          {[schema | list], acc}
+          {[put_union_tag_property(schema, config) | list], acc}
         end)
 
       schema_with_description =
@@ -710,6 +722,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           "anyOf" => Enum.reverse(subtypes)
         }
         |> unwrap_any_of()
+        |> put_union_discriminator(constraints[:types])
         |> with_attribute_description(attr)
 
       {schema_with_description, acc}
@@ -789,12 +802,12 @@ if Code.ensure_loaded?(OpenApiSpex) do
       )
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.String}, _resource, acc, _format) do
-      {%Schema{type: :string}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.String} = attr, _resource, acc, _format) do
+      {with_string_length_constraints(%Schema{type: :string}, attr), acc}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.CiString}, _resource, acc, _format) do
-      {%Schema{type: :string}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.CiString} = attr, _resource, acc, _format) do
+      {with_string_length_constraints(%Schema{type: :string}, attr), acc}
     end
 
     defp resource_attribute_type(%{type: Ash.Type.Boolean}, _resource, acc, _format) do
@@ -805,8 +818,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {%Schema{type: :string}, acc}
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Integer}, _resource, acc, _format) do
-      {%Schema{type: :integer}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.Integer} = attr, _resource, acc, _format) do
+      {with_numeric_constraints(%Schema{type: :integer}, attr), acc}
     end
 
     defp resource_attribute_type(
@@ -849,8 +862,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp resource_attribute_type(%{type: Ash.Type.Float}, _resource, acc, _format) do
-      {%Schema{type: :number, format: :float}, acc}
+    defp resource_attribute_type(%{type: Ash.Type.Float} = attr, _resource, acc, _format) do
+      {with_numeric_constraints(%Schema{type: :number, format: :float}, attr), acc}
     end
 
     defp resource_attribute_type(%{type: Ash.Type.Date}, _resource, acc, _format) do
@@ -943,7 +956,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
             |> Map.put(:description, config[:description] || nil)
 
           {schema, acc} = resource_attribute_type(fake_attr, resource, acc, format)
-          {[schema | types], acc}
+          {[put_union_tag_property(schema, config) | types], acc}
         end)
 
       result =
@@ -951,6 +964,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           "anyOf" => Enum.reverse(subtypes)
         }
         |> unwrap_any_of()
+        |> put_union_discriminator(constraints[:types])
         |> with_attribute_description(attr)
 
       {result, acc}
@@ -969,10 +983,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           format
         )
 
-      {%Schema{
-         type: :array,
-         items: items_schema
-       }, acc}
+      {with_array_length_constraints(%Schema{type: :array, items: items_schema}, attr), acc}
     end
 
     defp resource_attribute_type(
@@ -1103,6 +1114,59 @@ if Code.ensure_loaded?(OpenApiSpex) do
           {%Schema{}, acc}
       end
     end
+
+    # Documents an attribute's or argument's constraints in its schema. The
+    # generated document is OpenAPI 3.0, so exclusive bounds are booleans
+    # alongside `minimum`/`maximum`. Decimals are documented as strings, so
+    # their bounds are left out.
+    defp with_numeric_constraints(schema, attr) do
+      constraints = Map.get(attr, :constraints) || []
+
+      schema
+      |> put_bound(
+        :minimum,
+        :exclusiveMinimum,
+        constraints[:min],
+        constraints[:greater_than],
+        &>=/2
+      )
+      |> put_bound(:maximum, :exclusiveMaximum, constraints[:max], constraints[:less_than], &<=/2)
+    end
+
+    defp put_bound(schema, _key, _exclusive_key, nil, nil, _tighter?), do: schema
+
+    defp put_bound(schema, key, exclusive_key, inclusive, exclusive, tighter?) do
+      if exclusive && (is_nil(inclusive) || tighter?.(exclusive, inclusive)) do
+        schema |> Map.put(key, exclusive) |> Map.put(exclusive_key, true)
+      else
+        Map.put(schema, key, inclusive)
+      end
+    end
+
+    # OpenAPI counts string length in characters, so lengths counted in bytes
+    # can't be expressed
+    defp with_string_length_constraints(schema, attr) do
+      constraints = Map.get(attr, :constraints) || []
+
+      if constraints[:length_count] == :bytes do
+        schema
+      else
+        schema
+        |> put_if_present(:minLength, constraints[:min_length])
+        |> put_if_present(:maxLength, constraints[:max_length])
+      end
+    end
+
+    defp with_array_length_constraints(schema, attr) do
+      constraints = Map.get(attr, :constraints) || []
+
+      schema
+      |> put_if_present(:minItems, constraints[:min_length])
+      |> put_if_present(:maxItems, constraints[:max_length])
+    end
+
+    defp put_if_present(schema, _key, nil), do: schema
+    defp put_if_present(schema, key, value), do: Map.put(schema, key, value)
 
     defp embedded_type_input(
            %{type: embedded_resource} = attribute,
@@ -1305,10 +1369,54 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
+    defp put_union_tag_property(
+           %Schema{type: :object, properties: properties} = schema,
+           config
+         )
+         when is_map(properties) do
+      tag = config[:tag]
+      tag_value = config[:tag_value]
+
+      if tag && !is_nil(tag_value) do
+        tag = to_string(tag)
+
+        %{
+          schema
+          | properties:
+              Map.put(properties, tag, %Schema{type: :string, enum: [to_string(tag_value)]}),
+            required: Enum.uniq([tag | schema.required || []])
+        }
+      else
+        schema
+      end
+    end
+
+    defp put_union_tag_property(schema, _config), do: schema
+
+    defp put_union_discriminator(%{"anyOf" => options} = schema, types) do
+      tags =
+        types
+        |> Enum.map(fn {_name, config} -> !is_nil(config[:tag_value]) && config[:tag] end)
+        |> Enum.uniq()
+
+      with [tag] when tag not in [nil, false] <- tags,
+           tag = to_string(tag),
+           true <- Enum.all?(options, &match?(%Schema{properties: %{^tag => _}}, &1)) do
+        Map.put(schema, "discriminator", %{"propertyName" => tag})
+      else
+        _ -> schema
+      end
+    end
+
+    defp put_union_discriminator(schema, _types), do: schema
+
     defp unwrap_any_of(%{"anyOf" => options} = schema) do
       {options_remaining, options_to_add} =
         Enum.reduce(options, {[], []}, fn schema, {options, to_add} ->
           case schema do
+            %{"anyOf" => _, "discriminator" => _} = schema ->
+              {[schema | options], to_add}
+
             %{"anyOf" => _} = schema ->
               case unwrap_any_of(schema) do
                 %{"anyOf" => nested_options} ->
@@ -1381,21 +1489,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end)
       |> Map.new(fn rel ->
         data = resource_relationship_field_data(resource, rel)
-        links = resource_relationship_link_data(resource, rel)
 
-        object =
-          if links do
-            %Schema{properties: %{data: data, links: links}}
-          else
-            %Schema{properties: %{data: data}}
-          end
-
-        {rel.name, object}
+        {rel.name, %Schema{properties: %{data: data}}}
       end)
-    end
-
-    defp resource_relationship_link_data(_resource, _rel) do
-      nil
     end
 
     @spec resource_relationship_field_data(
@@ -1840,7 +1936,9 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
               {[
                  %Parameter{
-                   name: matching_route_param || to_string(argument_or_attribute.name),
+                   name:
+                     matching_route_param ||
+                       query_param_name(to_string(argument_or_attribute.name), schema),
                    in: location,
                    description: argument_or_attribute.description,
                    required: location == :path || !argument_or_attribute.allow_nil?,
@@ -2124,7 +2222,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
         (AshJsonApi.Resource.Info.default_fields(resource) ||
            Enum.map(Ash.Resource.Info.public_attributes(resource), & &1.name))
         |> Enum.filter(&show_field?(resource, &1))
-        |> Enum.join(",")
+        |> Enum.map_join(",", &AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
 
       %Parameter{
         name: :fields,
@@ -2213,7 +2311,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
 
         param = %Parameter{
-          name: matching_route_param || json_key,
+          name: matching_route_param || query_param_name(json_key, schema),
           in: location,
           description: argument.description,
           required: location == :path || !argument.allow_nil?,
@@ -2224,6 +2322,17 @@ if Code.ensure_loaded?(OpenApiSpex) do
         {[param | params], acc}
       end)
       |> then(fn {params, acc} -> {Enum.reverse(params), acc} end)
+    end
+
+    # Plug keeps only the last value of a repeated key (`?ids=1&ids=2`), and
+    # decodes a list only from `?ids[]=1&ids[]=2`, so array query parameters
+    # are documented under the bracketed name
+    defp query_param_name(name, schema) do
+      if Map.get(schema, :type) == :array do
+        name <> "[]"
+      else
+        name
+      end
     end
 
     @spec request_body(Route.t(), resource :: module) :: {nil | RequestBody.t(), map()}
@@ -2248,9 +2357,7 @@ if Code.ensure_loaded?(OpenApiSpex) do
       all_schemas = Map.merge(json_acc.schemas, multipart_acc.schemas)
 
       body =
-        if route.type == :route &&
-             (route.method in [:delete, :get] ||
-                Enum.empty?(json_body_schema.properties.data.properties)) do
+        if no_request_body?(route, json_body_schema) do
           nil
         else
           body_required =
@@ -2298,6 +2405,23 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       {body, all_schemas}
     end
+
+    defp no_request_body?(%{type: :route, method: method}, _json_body_schema)
+         when method in [:delete, :get],
+         do: true
+
+    defp no_request_body?(%{type: :route}, json_body_schema) do
+      Enum.empty?(json_body_schema.properties.data.properties)
+    end
+
+    # A post whose action takes all of its input from the path or query string
+    defp no_request_body?(%{type: :post}, json_body_schema) do
+      data = json_body_schema.properties.data.properties
+
+      Enum.empty?(data.attributes.properties) && Enum.empty?(data.relationships.properties)
+    end
+
+    defp no_request_body?(_route, _json_body_schema), do: false
 
     @spec request_body_schema(
             Route.t(),
@@ -2493,48 +2617,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
       {schema, acc}
     end
 
-    @doc false
-    def required_write_attributes(resource, arguments, action, route \\ nil) do
-      filtered_arguments =
-        arguments
-        |> Enum.filter(& &1.public?)
-        |> without_path_arguments(resource, action, route)
-        |> without_query_params(route)
-
-      attribute_names =
-        case action.type do
-          type when type in [:action, :read] ->
-            []
-
-          :update ->
-            Enum.filter(action.require_attributes, &show_field?(resource, &1))
-
-          _ ->
-            resource
-            |> Ash.Resource.Info.attributes()
-            |> Enum.filter(&(&1.name in action.accept && &1.writable?))
-            |> filter_shown_fields(resource)
-            |> Enum.reject(
-              &(&1.name in filtered_arguments || &1.allow_nil? || not is_nil(&1.default) ||
-                  &1.generated? ||
-                  &1.name in Map.get(action, :allow_nil_input, []))
-            )
-            |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))
-        end
-
-      argument_names =
-        filtered_arguments
-        |> Enum.reject(& &1.allow_nil?)
-        |> Enum.map(fn arg ->
-          AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
-        end)
-
-      require_attributes =
-        Map.get(action, :require_attributes, [])
-        |> Enum.filter(&show_field?(resource, &1))
-        |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
-
-      Enum.uniq(attribute_names ++ argument_names ++ require_attributes)
+    defp required_write_attributes(resource, arguments, action, route \\ nil) do
+      AshJsonApi.JsonSchema.required_write_attributes(resource, arguments, action, route)
     end
 
     @spec write_attributes(
@@ -2567,8 +2651,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
       arguments
       |> Enum.filter(& &1.public?)
-      |> without_path_arguments(resource, action, route)
-      |> without_query_params(route)
+      |> AshJsonApi.JsonSchema.without_route_path_arguments(resource, action, route)
+      |> AshJsonApi.JsonSchema.without_query_params(route)
       |> Enum.reduce({attributes, acc}, fn argument, {attributes, acc} ->
         {schema, acc} = resource_write_attribute_type(argument, resource, :create, acc, format)
 
@@ -2578,35 +2662,6 @@ if Code.ensure_loaded?(OpenApiSpex) do
         {Map.put(attributes, json_key, schema), acc}
       end)
     end
-
-    defp without_path_arguments(arguments, resource, action, %{route: route}) do
-      route_params =
-        route
-        |> Path.split()
-        |> Enum.filter(&String.starts_with?(&1, ":"))
-        |> Enum.map(&String.trim_leading(&1, ":"))
-
-      Enum.reject(arguments, fn argument ->
-        Enum.any?(
-          route_params,
-          &AshJsonApi.Resource.Info.path_param_matches_argument?(
-            resource,
-            action.name,
-            argument.name,
-            &1
-          )
-        )
-      end)
-    end
-
-    defp without_path_arguments(arguments, _, _, _), do: arguments
-
-    defp without_query_params(inputs, %{query_params: query_params}) do
-      query_params = List.wrap(query_params)
-      Enum.reject(inputs, &(&1.name in query_params))
-    end
-
-    defp without_query_params(inputs, _), do: inputs
 
     @spec required_relationship_attributes(
             resource :: module,
@@ -2724,6 +2779,8 @@ if Code.ensure_loaded?(OpenApiSpex) do
           end
 
         :index ->
+          {items, acc} = item_reference(route, resource, acc)
+
           schema = %Schema{
             type: :object,
             additionalProperties: false,
@@ -2732,9 +2789,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
                 description:
                   "An array of resource objects representing a #{AshJsonApi.Resource.Info.type(resource)}",
                 type: :array,
-                items: item_reference(route, resource),
+                items: items,
                 uniqueItems: true
               },
+              links: top_level_links_schema(),
+              jsonapi: %Schema{type: :object},
               included: included_resource_schemas(resource),
               meta: %Schema{
                 type: :object,
@@ -2767,10 +2826,14 @@ if Code.ensure_loaded?(OpenApiSpex) do
           |> then(&{&1, acc})
 
         _ ->
+          {data, acc} = item_reference(route, resource, acc)
+
           schema = %Schema{
             additionalProperties: false,
             properties: %{
-              data: item_reference(route, resource),
+              data: data,
+              links: top_level_links_schema(),
+              jsonapi: %Schema{type: :object},
               included: included_resource_schemas(resource),
               meta: %Schema{
                 type: :object,
@@ -2783,46 +2846,55 @@ if Code.ensure_loaded?(OpenApiSpex) do
       end
     end
 
-    defp item_reference(%{default_fields: nil}, resource) do
-      %Reference{
-        "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
+    # A pagination link is null when there is no such page, as JSON:API requires.
+    defp top_level_links_schema do
+      %Schema{
+        type: :object,
+        additionalProperties: %Schema{type: :string, nullable: true}
       }
     end
 
-    defp item_reference(%{default_fields: default_fields}, resource) do
-      {schema, _acc} = resource_object_schema(resource, default_fields, %{})
-      schema
+    defp item_reference(%{default_fields: nil}, resource, acc) do
+      {%Reference{
+         "$ref": "#/components/schemas/#{AshJsonApi.Resource.Info.type(resource)}"
+       }, acc}
     end
+
+    defp item_reference(%{default_fields: default_fields}, resource, acc),
+      do: resource_object_schema(resource, default_fields, acc)
 
     @spec relationship_resource_identifiers(relationship :: Relationships.relationship()) ::
             Schema.t()
     defp relationship_resource_identifiers(relationship) do
+      identifier = %{
+        type: :object,
+        required: [:id, :type],
+        additionalProperties: false,
+        properties: %{
+          id: %Schema{
+            type: :string
+          },
+          type: %Schema{
+            enum: [AshJsonApi.Resource.Info.type(relationship.destination)]
+          },
+          meta: %Schema{
+            type: :object,
+            additionalProperties: true
+          }
+        }
+      }
+
+      data =
+        case relationship.cardinality do
+          :one -> Map.put(identifier, :nullable, true)
+          :many -> %{type: :array, items: identifier}
+        end
+
       %Schema{
         type: :object,
         required: [:data],
         additionalProperties: false,
-        properties: %{
-          data: %{
-            type: :array,
-            items: %{
-              type: :object,
-              required: [:id, :type],
-              additionalProperties: false,
-              properties: %{
-                id: %Schema{
-                  type: :string
-                },
-                type: %Schema{
-                  enum: [AshJsonApi.Resource.Info.type(relationship.destination)]
-                },
-                meta: %Schema{
-                  type: :object,
-                  additionalProperties: true
-                }
-              }
-            }
-          }
-        }
+        properties: %{data: data}
       }
     end
 
@@ -3235,6 +3307,32 @@ if Code.ensure_loaded?(OpenApiSpex) do
 
     defp constraints_to_item_constraints(_, attribute_or_aggregate), do: attribute_or_aggregate
 
+    @bound_constraints [:min, :max, :greater_than, :less_than, :min_length, :max_length]
+
+    # Filter values aren't checked against the field's constraints (e.g.
+    # `greater_than: 500` is a valid filter on a field with `max: 100`), so
+    # their bounds don't belong in filter schemas
+    defp without_bound_constraints(%{constraints: constraints} = field)
+         when is_list(constraints) do
+      %{field | constraints: drop_bound_constraints(constraints)}
+    end
+
+    defp without_bound_constraints(field), do: field
+
+    defp drop_bound_constraints(constraints) do
+      constraints
+      |> Keyword.drop(@bound_constraints)
+      |> then(fn constraints ->
+        case constraints[:items] do
+          items when is_list(items) ->
+            Keyword.put(constraints, :items, drop_bound_constraints(items))
+
+          _ ->
+            constraints
+        end
+      end)
+    end
+
     defp get_expressable_types(operator_or_function, field_type, array_type?) do
       if :attributes
          |> operator_or_function.__info__()
@@ -3295,7 +3393,11 @@ if Code.ensure_loaded?(OpenApiSpex) do
       expressable_types = get_expressable_types(operator, type, array_type?)
 
       if Enum.any?(expressable_types, &(&1 == :same)) do
-        {schema, acc} = resource_attribute_type(attribute_or_aggregate, resource, acc)
+        {schema, acc} =
+          attribute_or_aggregate
+          |> without_bound_constraints()
+          |> resource_attribute_type(resource, acc)
+
         {[{operator.name(), schema}], acc}
       else
         type =

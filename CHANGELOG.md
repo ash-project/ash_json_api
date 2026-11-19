@@ -11,6 +11,41 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.8.0](https://github.com/ash-project/ash_json_api/compare/v1.7.1...v1.8.0) (2026-10-25)
+
+
+
+
+### Features:
+
+* Implement `AshJsonApi.ToJsonApiError` for `Ash.Error.Query.NoSuchField` (#452) by AlphaKeks [(#452)](https://github.com/ash-project/ash_json_api/pull/452)
+
+### Bug Fixes:
+
+* render the update's error from delete_from_relationship by [@zachdaniel](https://github.com/zachdaniel)
+
+* pass a list of ids for {:id, argument} relationship arguments given a list by [@zachdaniel](https://github.com/zachdaniel)
+
+* accept a single resource identifier or null for to-one relationship routes by [@zachdaniel](https://github.com/zachdaniel)
+
+* render to-one relationship routes as a single resource identifier by [@zachdaniel](https://github.com/zachdaniel)
+
+* build the InvalidFilterValue detail without the error's message (#458) by grempe [(#458)](https://github.com/ash-project/ash_json_api/pull/458)
+
+* answer 400 for query parameters with the wrong shape (#457) by grempe [(#457)](https://github.com/ash-project/ash_json_api/pull/457)
+
+* don't crash on action mismatch in related routes by [@zachdaniel](https://github.com/zachdaniel)
+
+* honor renames in path parameters and everywhere else by [@zachdaniel](https://github.com/zachdaniel)
+
+* only offer range filter predicates on range fields by [@zachdaniel](https://github.com/zachdaniel)
+
+* Fix infinite recursion (#453) by AlphaKeks [(#453)](https://github.com/ash-project/ash_json_api/pull/453)
+
+* resolve sparse fieldset types through include paths and router domains (#450) by [@barnabasJ](https://github.com/barnabasJ) [(#450)](https://github.com/ash-project/ash_json_api/pull/450)
+
+* stringify keys on custom json types by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v1.7.1](https://github.com/ash-project/ash_json_api/compare/v1.7.0...v1.7.1) (2026-07-07)
 
 

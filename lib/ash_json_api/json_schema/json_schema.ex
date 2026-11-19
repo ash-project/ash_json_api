@@ -158,7 +158,11 @@ defmodule AshJsonApi.JsonSchema do
             "additionalProperties" => false
           },
           "attributes" => attributes(resource),
-          "relationships" => relationships(resource)
+          "relationships" => relationships(resource),
+          "meta" => %{
+            "type" => "object",
+            "additionalProperties" => true
+          }
         }
         |> add_id_field(resource),
       "additionalProperties" => false
@@ -341,14 +345,7 @@ defmodule AshJsonApi.JsonSchema do
     end)
     |> Enum.reduce(%{}, fn rel, acc ->
       data = resource_relationship_field_data(resource, rel)
-      links = resource_relationship_link_data(resource, rel)
-
-      object =
-        if links do
-          %{"data" => data, "links" => links}
-        else
-          %{"data" => data}
-        end
+      object = %{"data" => data}
 
       Map.put(
         acc,
@@ -356,10 +353,6 @@ defmodule AshJsonApi.JsonSchema do
         object
       )
     end)
-  end
-
-  defp resource_relationship_link_data(_resource, _rel) do
-    nil
   end
 
   defp add_id_field(map, resource) do
@@ -988,37 +981,83 @@ defmodule AshJsonApi.JsonSchema do
   end
 
   defp relationship_resource_identifiers(relationship) when is_map(relationship) do
+    identifier = %{
+      "type" => "object",
+      "required" => ["id", "type"],
+      "additionalProperties" => false,
+      "properties" =>
+        %{
+          "type" => %{
+            "const" => AshJsonApi.Resource.Info.type(relationship.destination)
+          },
+          "meta" => %{
+            "type" => "object"
+            #   "properties" => join_attribute_properties(relationship),
+            #   "additionalProperties" => false
+          }
+        }
+        |> add_id_field(relationship.destination)
+    }
+
+    many = %{"type" => "array", "items" => identifier}
+
+    data =
+      case relationship.cardinality do
+        # a list was the only accepted input before, so it still is
+        :one -> %{"anyOf" => [%{"type" => "null"}, identifier, many]}
+        :many -> many
+      end
+
     %{
       "type" => "object",
       "required" => ["data"],
       "additionalProperties" => false,
-      "properties" => %{
-        "data" => %{
-          "type" => "array",
-          "items" => %{
-            "type" => "object",
-            "required" => ["id", "type"],
-            "additionalProperties" => false,
-            "properties" =>
-              %{
-                "type" => %{
-                  "const" => AshJsonApi.Resource.Info.type(relationship.destination)
-                },
-                "meta" => %{
-                  "type" => "object"
-                  #   "properties" => join_attribute_properties(relationship),
-                  #   "additionalProperties" => false
-                }
-              }
-              |> add_id_field(relationship.destination)
-          }
-        }
-      }
+      "properties" => %{"data" => data}
     }
   end
 
-  defp required_write_attributes(resource, arguments, action, route \\ nil) do
-    AshJsonApi.OpenApi.required_write_attributes(resource, arguments, action, route)
+  # Shared with `AshJsonApi.OpenApi`. This must live here rather than there, because that
+  # module is only compiled when the optional `open_api_spex` dependency is present.
+  @doc false
+  def required_write_attributes(resource, arguments, action, route \\ nil) do
+    filtered_arguments =
+      arguments
+      |> Enum.filter(& &1.public?)
+      |> without_route_path_arguments(resource, action, route)
+      |> without_query_params(route)
+
+    attribute_names =
+      case action.type do
+        # update actions only require what's in `require_attributes`, which is added below
+        type when type in [:action, :read, :update] ->
+          []
+
+        _ ->
+          resource
+          |> Ash.Resource.Info.attributes()
+          |> Enum.filter(&(&1.name in action.accept && &1.writable?))
+          |> filter_shown_fields(resource)
+          |> Enum.reject(
+            &(&1.name in filtered_arguments || &1.allow_nil? || not is_nil(&1.default) ||
+                &1.generated? ||
+                &1.name in Map.get(action, :allow_nil_input, []))
+          )
+          |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1.name))
+      end
+
+    argument_names =
+      filtered_arguments
+      |> Enum.reject(& &1.allow_nil?)
+      |> Enum.map(fn arg ->
+        AshJsonApi.Resource.Info.argument_to_json_key(resource, action.name, arg.name)
+      end)
+
+    require_attributes =
+      Map.get(action, :require_attributes, [])
+      |> Enum.filter(&show_field?(resource, &1))
+      |> Enum.map(&AshJsonApi.Resource.Info.field_to_json_key(resource, &1))
+
+    Enum.uniq(attribute_names ++ argument_names ++ require_attributes)
   end
 
   defp write_attributes(resource, arguments, action, route \\ nil) do
@@ -1050,11 +1089,20 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp without_path_arguments(arguments, resource, %{type: type} = action, %{
-         route: route,
-         type: route_type
-       })
+  defp without_path_arguments(
+         arguments,
+         resource,
+         %{type: type} = action,
+         %{type: route_type} = route
+       )
        when type == :action or route_type == :post do
+    without_route_path_arguments(arguments, resource, action, route)
+  end
+
+  defp without_path_arguments(arguments, _, _, _), do: arguments
+
+  @doc false
+  def without_route_path_arguments(arguments, resource, action, %{route: route}) do
     route_params =
       route
       |> Path.split()
@@ -1074,7 +1122,15 @@ defmodule AshJsonApi.JsonSchema do
     end)
   end
 
-  defp without_path_arguments(arguments, _, _, _), do: arguments
+  def without_route_path_arguments(arguments, _, _, _), do: arguments
+
+  @doc false
+  def without_query_params(inputs, %{query_params: query_params}) do
+    query_params = List.wrap(query_params)
+    Enum.reject(inputs, &(&1.name in query_params))
+  end
+
+  def without_query_params(inputs, _), do: inputs
 
   defp required_relationship_attributes(resource, relationship_arguments, action) do
     action.arguments

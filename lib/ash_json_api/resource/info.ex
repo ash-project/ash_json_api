@@ -273,16 +273,43 @@ defmodule AshJsonApi.Resource.Info do
   `Ash.Filter.parse_input/3` and `Ash.Query.filter_input/3`. The returned function maps
   user-facing JSON:API field/argument names back to their internal Ash atom names using
   the resource's `field_names` and `argument_names` configuration.
+
+  Fields hidden by `hide_fields`/`show_fields` cannot be referenced, except the fields
+  that make up the JSON:API `id`, so they fail like a field that does not exist.
+
+  ## Options
+
+    * `:allow_hidden?` - Allow references to hidden fields. Defaults to `false`. Used for
+      the filters built from a route's own path params, which may name a hidden field.
   """
-  def filter_ref_transformer do
+  def filter_ref_transformer(opts \\ []) do
+    allow_hidden? = Keyword.get(opts, :allow_hidden?, false)
+
     fn resource, ref ->
       case ref do
         {:calculation_argument, calc_name, arg_name} ->
           json_key_to_calculation_argument(resource, calc_name, to_string(arg_name))
 
         field_name ->
-          json_key_to_field(resource, to_string(field_name))
+          json_key = to_string(field_name)
+
+          json_key_to_field(resource, json_key) ||
+            if(!allow_hidden?, do: hidden_field_ref(resource, json_key))
       end
+    end
+  end
+
+  # Ash falls back to the original name when the transformer returns `nil`, which would
+  # still resolve a hidden field, so a hidden field maps to a name that matches no field.
+  defp hidden_field_ref(resource, json_key) do
+    case Ash.Resource.Info.public_field(resource, json_key) do
+      %{name: name} ->
+        id_fields = Ash.Resource.Info.primary_key(resource) ++ primary_key_fields(resource)
+
+        if !show_field?(resource, name) and name not in id_fields, do: ""
+
+      nil ->
+        nil
     end
   end
 

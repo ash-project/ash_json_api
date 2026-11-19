@@ -70,6 +70,7 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfLinkage do
         index(:read)
       end
 
+      includes([:author])
       always_include_linkage([:author, :comments])
     end
 
@@ -163,12 +164,11 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfLinkage do
                    "relationships" => %{
                      "author" => %{"data" => nil}
                    }
-                 },
-                 "included" => included
+                 }
                }
-             } = get(Domain, "/posts/#{post.id}/", status: 200)
+             } = response = get(Domain, "/posts/#{post.id}/", status: 200)
 
-      assert included == []
+      refute Map.has_key?(response.resp_body, "included")
     end
 
     test "resource endpoint with always_include_linkage of to-one relationship" do
@@ -192,12 +192,11 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfLinkage do
                    "relationships" => %{
                      "author" => %{"data" => %{"id" => ^author_id, "type" => "author"}}
                    }
-                 },
-                 "included" => included
+                 }
                }
-             } = get(Domain, "/posts/#{post.id}/", status: 200)
+             } = response = get(Domain, "/posts/#{post.id}/", status: 200)
 
-      assert included == []
+      refute Map.has_key?(response.resp_body, "included")
     end
 
     test "resource endpoint with always_include_linkage of empty to-many relationship" do
@@ -213,12 +212,11 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfLinkage do
                    "relationships" => %{
                      "comments" => %{"data" => []}
                    }
-                 },
-                 "included" => included
+                 }
                }
-             } = get(Domain, "/posts/#{post.id}/", status: 200)
+             } = response = get(Domain, "/posts/#{post.id}/", status: 200)
 
-      assert included == []
+      refute Map.has_key?(response.resp_body, "included")
     end
 
     test "resource endpoint with always_include_linkage of to-many relationship" do
@@ -250,16 +248,35 @@ defmodule AshJsonApiTest.FetchingData.InclusionOfLinkage do
                    "relationships" => %{
                      "comments" => %{"data" => linkage}
                    }
-                 },
-                 "included" => included
+                 }
                }
-             } = get(Domain, "/posts/#{post.id}/", status: 200)
+             } = response = get(Domain, "/posts/#{post.id}/", status: 200)
 
       assert Enum.member?(linkage, %{"id" => comment1_id, "type" => "comment"})
       assert Enum.member?(linkage, %{"id" => comment2_id, "type" => "comment"})
       assert Enum.count(linkage) == 2
 
-      assert included == []
+      refute Map.has_key?(response.resp_body, "included")
+    end
+
+    test "index endpoint with always_include_linkage and no include omits included" do
+      Post
+      |> Ash.Changeset.for_create(:create, %{name: "foo"})
+      |> Ash.create!()
+
+      assert %{resp_body: %{"data" => [_]} = resp_body} = get(Domain, "/posts", status: 200)
+
+      refute Map.has_key?(resp_body, "included")
+    end
+
+    test "an explicit include with nothing to include still returns an empty included" do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      assert %{resp_body: %{"included" => []}} =
+               get(Domain, "/posts/#{post.id}?include=author", status: 200)
     end
   end
 end

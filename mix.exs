@@ -9,7 +9,7 @@ defmodule AshJsonApi.MixProject do
   The JSON:API extension for the Ash Framework.
   """
 
-  @version "1.7.1"
+  @version "1.8.0"
 
   def project do
     [
@@ -146,9 +146,7 @@ defmodule AshJsonApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # TODO: switch back to a hex requirement once the ash release with
-      # parameterized function signatures (`{:range, :same}`) ships.
-      {:ash, ash_version(git: "https://github.com/ash-project/ash.git")},
+      {:ash, ash_version("~> 3.37 and >= 3.37.1")},
       {:spark, ">= 2.2.10"},
       {:igniter, "~> 0.3 and >= 0.3.58", optional: true},
       {:plug, "~> 1.11"},

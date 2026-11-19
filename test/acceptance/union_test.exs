@@ -56,6 +56,17 @@ defmodule Test.Acceptance.UnionTest do
       ]
   end
 
+  defmodule ReadingValue do
+    use Ash.Type.NewType,
+      subtype_of: :union,
+      constraints: [
+        types: [
+          heart_rate: [type: HeartRate, tag: :type, tag_value: "heart_rate"],
+          blood_pressure: [type: BloodPressure, tag: :type, tag_value: "blood_pressure"]
+        ]
+      ]
+  end
+
   defmodule Measurement do
     use Ash.Resource,
       domain: Test.Acceptance.UnionTest.Domain,
@@ -80,6 +91,7 @@ defmodule Test.Acceptance.UnionTest do
       uuid_primary_key(:id)
       attribute(:value, MeasurementValue, public?: true, allow_nil?: false)
       attribute(:values, {:array, MeasurementValue}, public?: true, default: [])
+      attribute(:reading, ReadingValue, public?: true)
     end
 
     actions do
@@ -125,7 +137,7 @@ defmodule Test.Acceptance.UnionTest do
     response = Domain |> get("/measurements/#{m.id}", status: 200)
     attrs = response.resp_body["data"]["attributes"]
 
-    assert attrs["value"] == %{"bpm" => 72}
+    assert attrs["value"] == %{"type" => "heart_rate", "bpm" => 72}
   end
 
   test "renders a primitive value inside a union" do
@@ -158,8 +170,38 @@ defmodule Test.Acceptance.UnionTest do
     attrs = response.resp_body["data"]["attributes"]
 
     assert attrs["values"] == [
-             %{"bpm" => 80},
-             %{"systolic" => 120, "diastolic" => 80}
+             %{"type" => "heart_rate", "bpm" => 80},
+             %{"type" => "blood_pressure", "systolic" => 120, "diastolic" => 80}
            ]
+  end
+
+  describe "open api schema" do
+    setup do
+      spec = AshJsonApi.OpenApi.spec(domain: [Domain])
+      %{attributes: spec.components.schemas["measurement"].properties.attributes.properties}
+    end
+
+    test "adds the tag as a required property on each tagged union type", %{
+      attributes: attributes
+    } do
+      %{"anyOf" => types} = attributes["value"]
+      heart_rate = Enum.find(types, &match?(%{properties: %{"bpm" => _}}, &1))
+
+      assert heart_rate.properties["type"].enum == ["heart_rate"]
+      assert "type" in heart_rate.required
+    end
+
+    test "does not set a discriminator when some union types are untagged", %{
+      attributes: attributes
+    } do
+      refute Map.has_key?(attributes["value"], "discriminator")
+    end
+
+    test "sets a discriminator when every union type shares a tag", %{attributes: attributes} do
+      %{"anyOf" => types} = attributes["reading"]
+      union = Enum.find(types, &Map.has_key?(&1, "discriminator"))
+
+      assert union["discriminator"] == %{"propertyName" => "type"}
+    end
   end
 end

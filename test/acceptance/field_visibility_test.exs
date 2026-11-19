@@ -61,6 +61,7 @@ defmodule Test.Acceptance.FieldVisibilityTest do
       routes do
         base("/visibility_posts")
         get(:read)
+        get(:read, route: "/by_secret/:secret")
         index(:read)
         related(:visible_author, :read)
         related(:hidden_author, :read)
@@ -124,6 +125,7 @@ defmodule Test.Acceptance.FieldVisibilityTest do
       routes do
         base("/visibility_show_posts")
         get(:read)
+        index(:read)
         related(:visible_author, :read)
         related(:extra_author, :read)
       end
@@ -271,6 +273,60 @@ defmodule Test.Acceptance.FieldVisibilityTest do
     |> assert_has_error(%{
       "code" => "invalid_sort"
     })
+  end
+
+  test "visible fields can still be used in a derived filter", %{post: post} do
+    response =
+      Domain
+      |> get("/visibility_posts?filter[title]=Public&filter[visible_author][name]=visible",
+        status: 200
+      )
+
+    assert [%{"id" => id}] = response.resp_body["data"]
+    assert id == post.id
+  end
+
+  test "hidden fields cannot be used in a derived filter" do
+    for {query, field} <- [
+          {"filter[secret]=private", "secret"},
+          {"filter[secret][eq]=private", "secret"},
+          {"filter[secret_calc]=Public:private", "secret_calc"},
+          {"filter[or][0][secret]=private", "secret"},
+          {"filter[hidden_author][name]=hidden", "hidden_author"}
+        ] do
+      response =
+        Domain
+        |> get("/visibility_posts?#{query}", status: 400)
+
+      assert [error] = response.resp_body["errors"]
+      assert error["code"] == "no_such_field"
+      assert error["meta"] == %{"field" => field}
+    end
+  end
+
+  test "show_fields rejects non-allowlisted fields in a derived filter" do
+    Domain
+    |> get("/visibility_show_posts?filter[summary]=not%20shown", status: 400)
+    |> assert_has_error(%{
+      "code" => "no_such_field"
+    })
+  end
+
+  test "show_fields still allows filtering on the id", %{show_only_post: post} do
+    response =
+      Domain
+      |> get("/visibility_show_posts?filter[id]=#{post.id}", status: 200)
+
+    assert [%{"id" => id}] = response.resp_body["data"]
+    assert id == post.id
+  end
+
+  test "a route's path params can still name a hidden field", %{post: post} do
+    response =
+      Domain
+      |> get("/visibility_posts/by_secret/private", status: 200)
+
+    assert response.resp_body["data"]["id"] == post.id
   end
 
   test "hidden relationships cannot be included", %{post: post} do

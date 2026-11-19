@@ -5,7 +5,6 @@
 defmodule Mix.Tasks.AshJsonApi.Routes do
   use Mix.Task
 
-  require Logger
   alias AshJsonApi.Router.ConsoleFormatter
 
   @moduledoc """

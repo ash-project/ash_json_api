@@ -550,7 +550,7 @@ defmodule AshJsonApi.Controllers.Helpers do
           end
 
         {:error, error} ->
-          {:error, error}
+          Request.add_error(request, error, :delete_from_relationship)
       end
     end)
   end
@@ -738,7 +738,8 @@ defmodule AshJsonApi.Controllers.Helpers do
         query =
           if filter do
             case Ash.Filter.parse_input(resource, filter,
-                   ref_transformer: AshJsonApi.Resource.Info.filter_ref_transformer()
+                   ref_transformer:
+                     AshJsonApi.Resource.Info.filter_ref_transformer(allow_hidden?: true)
                  ) do
               {:ok, parsed} ->
                 {:ok, Ash.Query.filter(resource, ^parsed)}
@@ -838,7 +839,8 @@ defmodule AshJsonApi.Controllers.Helpers do
             query =
               if filter do
                 case Ash.Filter.parse_input(resource, filter,
-                       ref_transformer: AshJsonApi.Resource.Info.filter_ref_transformer()
+                       ref_transformer:
+                         AshJsonApi.Resource.Info.filter_ref_transformer(allow_hidden?: true)
                      ) do
                   {:ok, parsed} ->
                     {:ok, Ash.Query.filter(resource, ^parsed)}
