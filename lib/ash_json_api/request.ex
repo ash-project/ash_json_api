@@ -1234,6 +1234,49 @@ defmodule AshJsonApi.Request do
 
   defp parse_attributes(
          %{
+           route: %{type: :post},
+           resource: resource,
+           body: %{"data" => %{"id" => id} = data}
+         } = request
+       )
+       when is_binary(id) do
+    attributes = Map.get(data, "attributes", %{})
+
+    if is_map(attributes) do
+      request =
+        case Map.fetch(attributes, "id") do
+          {:ok, ^id} ->
+            request
+
+          {:ok, _attribute_id} ->
+            add_error(
+              request,
+              InvalidField.exception(
+                type: AshJsonApi.Resource.Info.type(resource),
+                field: :id,
+                detail: "data.id and data.attributes.id must match"
+              ),
+              request.route.type
+            )
+
+          :error ->
+            request
+        end
+
+      original_body = request.body
+
+      request =
+        %{request | body: %{"data" => Map.delete(data, "id")}}
+        |> parse_attributes()
+
+      %{request | body: original_body, attributes: Map.put(request.attributes, :id, id)}
+    else
+      request
+    end
+  end
+
+  defp parse_attributes(
+         %{
            route: %{type: :route},
            action: action,
            resource: resource,
