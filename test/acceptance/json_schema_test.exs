@@ -199,6 +199,7 @@ defmodule Test.Acceptance.JsonSchemaTest do
       type("hidden-json-post")
       default_fields([:name, :secret, :secret_calc])
       hide_fields([:secret, :secret_calc, :hidden_author])
+      show_fields([:name, :secret, :secret_calc, :visible_author, :hidden_author])
 
       routes do
         base("/hidden_json_posts")
