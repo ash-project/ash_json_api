@@ -61,13 +61,19 @@ defmodule AshJsonApi.Includes.Includer do
           Enum.map(
             preloaded_without_linkage,
             fn record ->
-              relationship_value = Map.get(record, relationship, [])
-              related = extract_records_from_relationship(relationship_value)
+              case Map.get(record, relationship, []) do
+                # Without linkage the serializer leaves out the relationship's `data`
+                %Ash.ForbiddenField{} ->
+                  record
 
-              # Store both the extracted records and the original value (which might be a Page)
-              record
-              |> add_linkage(relationship, related)
-              |> add_page_info(relationship, relationship_value)
+                relationship_value ->
+                  related = extract_records_from_relationship(relationship_value)
+
+                  # Store both the extracted records and the original value (which might be a Page)
+                  record
+                  |> add_linkage(relationship, related)
+                  |> add_page_info(relationship, relationship_value)
+              end
             end
           )
 
@@ -102,6 +108,8 @@ defmodule AshJsonApi.Includes.Includer do
        when struct in [Ash.Page.Offset, Ash.Page.Keyset] do
     List.wrap(results)
   end
+
+  defp extract_records_from_relationship(%Ash.ForbiddenField{}), do: []
 
   defp extract_records_from_relationship(value) do
     List.wrap(value)
