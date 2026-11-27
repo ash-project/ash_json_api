@@ -48,6 +48,11 @@ defmodule Test.Acceptance.DeleteTest do
           route "/:id/close"
         end
 
+        delete :guarded_destroy do
+          route "/:id/guarded"
+          query_params [:confirm]
+        end
+
         index(:read)
       end
     end
@@ -58,6 +63,28 @@ defmodule Test.Acceptance.DeleteTest do
 
       update :close do
         change(set_attribute(:name, "closed"))
+      end
+
+      destroy :guarded_destroy do
+        require_atomic?(false)
+        argument(:confirm, :boolean, allow_nil?: false, default: false)
+        argument(:force, :boolean, allow_nil?: false, default: false)
+
+        validate(fn changeset, _ ->
+          if Ash.Changeset.get_argument(changeset, :confirm) do
+            :ok
+          else
+            {:error, field: :confirm, message: "confirmation required"}
+          end
+        end)
+
+        validate(fn changeset, _ ->
+          if Ash.Changeset.get_argument(changeset, :force) do
+            {:error, field: :force, message: "force was bound"}
+          else
+            :ok
+          end
+        end)
       end
 
       action :fake_delete, :struct do
@@ -166,6 +193,66 @@ defmodule Test.Acceptance.DeleteTest do
       )
 
       assert Ash.get!(Post, post.id).name == post.name
+    end
+  end
+
+  describe "query_params on a destroy route" do
+    setup do
+      post =
+        Post
+        |> Ash.Changeset.for_create(:create, %{name: "foo"})
+        |> Ash.create!()
+
+      %{post: post}
+    end
+
+    test "a listed query param sets the destroy argument", %{post: post} do
+      Domain
+      |> delete("/posts/#{post.id}/guarded?confirm=true", status: 200)
+
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Query.NotFound{}]}} =
+               Ash.get(Post, post.id)
+    end
+
+    test "without the query param the argument takes its default", %{post: post} do
+      Domain
+      |> delete("/posts/#{post.id}/guarded", status: 400)
+      |> assert_has_error(%{
+        "code" => "invalid_argument",
+        "detail" => "confirmation required"
+      })
+
+      assert Ash.get!(Post, post.id)
+    end
+
+    test "a query param not listed on the route is not bound", %{post: post} do
+      Domain
+      |> delete("/posts/#{post.id}/guarded?confirm=true&force=true", status: 200)
+
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Query.NotFound{}]}} =
+               Ash.get(Post, post.id)
+    end
+
+    test "arguments in a request body are not bound", %{post: post} do
+      Domain
+      |> delete("/posts/#{post.id}/guarded?confirm=true",
+        status: 200,
+        body: %{data: %{attributes: %{force: true}}}
+      )
+
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Query.NotFound{}]}} =
+               Ash.get(Post, post.id)
+    end
+
+    test "filter and sort query params are not passed as destroy inputs", %{post: post} do
+      Domain
+      |> delete("/posts/#{post.id}/guarded?confirm=true&filter[name]=foo&sort=name",
+        status: 200,
+        body: %{data: %{attributes: %{}}}
+      )
+
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Query.NotFound{}]}} =
+               Ash.get(Post, post.id)
     end
   end
 end

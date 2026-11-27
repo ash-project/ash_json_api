@@ -612,7 +612,7 @@ defmodule AshJsonApi.Controllers.Helpers do
             query
             |> Ash.bulk_destroy(
               request.action.name,
-              %{},
+              Map.take(request.arguments || %{}, List.wrap(request.route.query_params)),
               Request.opts(request,
                 return_errors?: true,
                 authorize_changeset_with: Request.authorize_bulk_with(query.resource),
